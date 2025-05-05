@@ -1,6 +1,6 @@
 'use client';
-import React, { ReactNode, useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { RxHamburgerMenu } from 'react-icons/rx';
 import { FaHome, FaChevronDown } from 'react-icons/fa';
 import { SlClose } from 'react-icons/sl';
@@ -16,29 +16,27 @@ interface HeaderResponsiveProps {
 
 const HeaderResponsive: React.FC<HeaderResponsiveProps> = ({ Title_NavbarMobile }) => {
   const pathname = usePathname();
-  const router = useRouter();
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [rightVisible, setRightVisible] = useState(false);
   const [openSearch, setOpenSearch] = useState(false);
   const [activeItem, setActiveItem] = useState('Trang Chủ');
   const [showMenu, setShowMenu] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollYRef = useRef(0);
 
   useEffect(() => {
+    // Set active menu item
     const foundItem = menuItems.find((item) => item.link === pathname || item.submenu?.some((sub) => sub.link === pathname));
     if (foundItem) setActiveItem(foundItem.name);
-  }, [pathname]);
 
-  useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      setShowMenu(currentScrollY < lastScrollY || currentScrollY <= 50);
-      setLastScrollY(currentScrollY);
+      setShowMenu(currentScrollY < lastScrollYRef.current || currentScrollY <= 50);
+      lastScrollYRef.current = currentScrollY;
     };
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
+  }, [pathname]);
   const handleMenuClick = (name: string) => {
     setOpenSubmenu((prev) => (prev === name ? null : name));
   };

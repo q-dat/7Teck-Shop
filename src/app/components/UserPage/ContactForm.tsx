@@ -3,13 +3,14 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { images } from '@/app/assets';
+import { FaFacebookMessenger } from 'react-icons/fa';
 
 const ContactForm: React.FC = () => {
   return (
     <div className="fixed bottom-[58px] right-1 z-[99999] space-y-2 xl:bottom-5 xl:right-2">
       <div>
         <Link title="Liên hệ qua Messenger" target="_blank" href={'https://www.messenger.com/t/dangkhoa.pham.93'} aria-label="Liên hệ qua Messenger">
-          <Image width={45} height={45} src={images.LogoMessenger} alt="Messenger" className="h-full w-[45px] rounded-xl xl:w-[50px]" />
+          <FaFacebookMessenger className="text-[50px] text-[#1f6bf6]" />
         </Link>
       </div>
       <div>
