@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { Popup } from '../../assets/images';
 import Image from 'next/image';
+import { images } from '@/app/assets';
 
 const NotificationPopup: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -51,7 +51,7 @@ const NotificationPopup: React.FC = () => {
                   <p>Đóng:</p>
                   <p>{secondsLeft}s</p>
                 </div>
-                <Image className="h-full w-full rounded-lg object-cover" src={Popup} alt="Greeting" />
+                <Image className="h-full w-full rounded-lg object-cover" src={images.Popup} alt="Greeting" />
               </div>
             </div>
           </div>

@@ -1,13 +1,13 @@
 'use client';
+import { images } from '@/app/assets';
 import React from 'react';
 import { ParallaxBanner } from 'react-scroll-parallax';
-import { bannerBackground, bannerForeground } from '../../assets/images';
 
 const ParallaxSectionFC: React.FC = () => {
   return (
     <ParallaxBanner
       layers={[
-        { image: `${bannerBackground}`, speed: -20 },
+        { image: `${images.bannerBackground}`, speed: -20 },
         {
           speed: -15,
           children: (
@@ -16,7 +16,7 @@ const ParallaxSectionFC: React.FC = () => {
             </div>
           ),
         },
-        { image: `${bannerForeground}`, speed: -10 },
+        { image: `${images.bannerForeground}`, speed: -10 },
       ]}
       className="aspect-[2/1] h-[300px] xl:rounded-md"
     />

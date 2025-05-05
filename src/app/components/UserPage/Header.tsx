@@ -1,7 +1,6 @@
 'use client';
 import React, { memo, useEffect, useState } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
-import { Logo } from '../../assets/images';
 import { RiArrowLeftRightFill } from 'react-icons/ri';
 import { IoLogoFacebook, IoSearch } from 'react-icons/io5';
 import { RiExternalLinkFill } from 'react-icons/ri';
@@ -13,6 +12,7 @@ import menuItems from '../utils/menuItems';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { images } from '@/app/assets';
 
 const items = [
   {
@@ -129,7 +129,7 @@ const Header: React.FC = () => {
       >
         <nav className="h-full">
           <Link aria-label="Home" href="/" onClick={() => setActiveItem('Trang Chủ')}>
-            <Image className="h-full w-full rounded-full object-contain filter" loading="lazy" src={Logo} alt="LOGO" />
+            <Image className="h-full w-full rounded-full object-contain filter" loading="lazy" src={images.Logo} alt="LOGO" />
           </Link>
         </nav>
         <div className="flex flex-row items-center justify-center gap-2">

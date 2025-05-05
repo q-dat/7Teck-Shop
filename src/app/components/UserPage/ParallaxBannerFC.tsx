@@ -1,11 +1,11 @@
 'use client';
+import { images } from '@/app/assets';
 import React from 'react';
 import { BannerLayer, ParallaxBanner } from 'react-scroll-parallax';
-import { bannerBackground, bannerForeground } from '../../assets/images';
 
 const ParallaxBannerFC: React.FC = () => {
   const background: BannerLayer = {
-    image: `${bannerBackground}`,
+    image: `${images.bannerBackground}`,
     translateY: [0, 50],
     opacity: [1, 0.3],
     scale: [1.05, 1, 'easeOutCubic'],
@@ -31,7 +31,7 @@ const ParallaxBannerFC: React.FC = () => {
   };
 
   const foreground: BannerLayer = {
-    image: `${bannerForeground}`,
+    image: `${images.bannerForeground}`,
     translateY: [0, 15],
     scale: [1, 1.1, 'easeOutCubic'],
     shouldAlwaysCompleteAnimation: true,
