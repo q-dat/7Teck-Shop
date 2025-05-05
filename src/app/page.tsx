@@ -1,7 +1,5 @@
-export default function HomePage() {
-  return (
-    <div>
-      <p className="">HomePage</p>
-    </div>
-  );
+import ClientHomePage from './ClientHomePage';
+
+export default async function Home() {
+  return <ClientHomePage />;
 }

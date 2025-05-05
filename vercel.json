@@ -1,54 +1,54 @@
 {
-    "redirects": [
-      {
-        "source": "/:path*",
-        "has": [
-          {
-            "type": "header",
-            "key": "x-forwarded-proto",
-            "value": "http"
-          }
-        ],
-        "destination": "https://www.7teck.vn/:path*",
-        "permanent": true
-      },
-      {
-        "source": "/:path*",
-        "has": [
-          {
-            "type": "host",
-            "value": "lazzie.shop"
-          }
-        ],
-        "destination": "https://www.7teck.vn/:path*",
-        "permanent": true
-      },
-      {
-        "source": "/:path*",
-        "has": [
-          {
-            "type": "host",
-            "value": "www.7teck.vn"
-          },
-          {
-            "type": "header",
-            "key": "x-forwarded-proto",
-            "value": "http"
-          }
-        ],
-        "destination": "https://www.7teck.vn/:path*",
-        "permanent": true
-      }
-    ],
-    "headers": [
-      {
-        "source": "/:path*",
-        "headers": [
-          {
-            "key": "Strict-Transport-Security",
-            "value": "max-age=63072000; includeSubDomains; preload"
-          }
-        ]
-      }
-    ]
-  }
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "x-forwarded-proto",
+          "value": "http"
+        }
+      ],
+      "destination": "https://www.7teck.vn/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "lazzie.shop"
+        }
+      ],
+      "destination": "https://www.7teck.vn/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.7teck.vn"
+        },
+        {
+          "type": "header",
+          "key": "x-forwarded-proto",
+          "value": "http"
+        }
+      ],
+      "destination": "https://www.7teck.vn/:path*",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/:path*",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        }
+      ]
+    }
+  ]
+}

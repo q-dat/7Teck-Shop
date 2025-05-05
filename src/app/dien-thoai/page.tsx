@@ -1,7 +1,4 @@
-import React from 'react'
-
+'use client';
 export default function PhonePage() {
-  return (
-    <div>PhonePage</div>
-  )
+  return <div>PhonePage</div>;
 }
