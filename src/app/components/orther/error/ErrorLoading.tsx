@@ -1,5 +1,5 @@
 'use client';
-import { images } from '../../../../../public';
+import { images } from '../../../assets';
 import Image from 'next/image';
 import { IoMdRefreshCircle } from 'react-icons/io';
 

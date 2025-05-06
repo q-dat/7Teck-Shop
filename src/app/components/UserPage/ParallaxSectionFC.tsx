@@ -1,5 +1,5 @@
 'use client';
-import { images } from '../../../../public';
+import { images } from '../../assets';
 import React from 'react';
 import { ParallaxBanner } from 'react-scroll-parallax';
 

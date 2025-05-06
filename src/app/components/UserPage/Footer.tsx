@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { FaMapLocationDot } from 'react-icons/fa6';
 import { FaFacebook, FaFacebookMessenger, FaPhone } from 'react-icons/fa';
 import { IoMail } from 'react-icons/io5';
-import { images } from '../../../../public';
+import { images } from '../../assets';
 
 const FooterFC = () => {
   return (
