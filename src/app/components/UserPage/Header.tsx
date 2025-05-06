@@ -12,7 +12,7 @@ import menuItems from '../utils/menuItems';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { images } from '@/app/assets';
+import { images } from '../../../../public';
 
 const items = [
   {
@@ -129,7 +129,7 @@ const Header: React.FC = () => {
       >
         <nav className="h-full">
           <Link aria-label="Home" href="/" onClick={() => setActiveItem('Trang Chủ')}>
-            <Image className="h-full w-full rounded-full object-contain filter" loading="lazy" src={images.Logo} alt="LOGO" />
+            <Image width={60} height={60} className="h-full w-full rounded-full object-contain filter" loading="lazy" src={images.Logo} alt="LOGO" />
           </Link>
         </nav>
         <div className="flex flex-row items-center justify-center gap-2">

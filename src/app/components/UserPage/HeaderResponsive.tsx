@@ -8,7 +8,7 @@ import { IoSearch } from 'react-icons/io5';
 import menuItems from '../utils/menuItems';
 import Link from 'next/link';
 import Image from 'next/image';
-import { images } from '@/app/assets';
+import { images } from '../../../../public';
 
 interface HeaderResponsiveProps {
   Title_NavbarMobile: ReactNode;
@@ -100,7 +100,7 @@ const HeaderResponsive: React.FC<HeaderResponsiveProps> = ({ Title_NavbarMobile 
       >
         <div className="p-4">
           <Link href="/" onClick={() => setActiveItem('Trang Chủ')} aria-label="Trang chủ">
-            <Image src={images.Logo} alt="LOGO" className="h-auto w-[80px]" />
+            <Image height={80} width={80} src={images.Logo} alt="LOGO" className="h-auto w-[80px]" />
           </Link>
         </div>
         <div className="flex flex-col space-y-2 px-2">

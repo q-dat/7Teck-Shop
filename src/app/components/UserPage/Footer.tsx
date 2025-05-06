@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { FaMapLocationDot } from 'react-icons/fa6';
 import { FaFacebook, FaFacebookMessenger, FaPhone } from 'react-icons/fa';
 import { IoMail } from 'react-icons/io5';
-import { images } from '@/app/assets';
+import { images } from '../../../../public';
 
 const FooterFC = () => {
   return (
@@ -12,7 +12,7 @@ const FooterFC = () => {
       <footer className="flex flex-col justify-between gap-10 bg-black px-2 pb-0 pt-10 text-white xl:flex-row xl:px-desktop-padding xl:pb-10">
         {/* Logo */}
         <div className="w-full">
-          <Image loading="lazy" src={images.Logo} alt="LOGO" className="rounded-full border border-white" width={140} height={140} />
+          <Image width={140} height={140} loading="lazy" src={images.Logo} alt="LOGO" className="rounded-full border border-white" />
         </div>
 
         {/* Thông tin */}
