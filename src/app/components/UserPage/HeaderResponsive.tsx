@@ -8,7 +8,7 @@ import { IoSearch } from 'react-icons/io5';
 import menuItems from '../utils/menuItems';
 import Link from 'next/link';
 import Image from 'next/image';
-import { images } from '../../assets/images';
+import { images } from '../../../../public/images';
 
 interface HeaderResponsiveProps {
   Title_NavbarMobile: ReactNode;

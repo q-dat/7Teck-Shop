@@ -12,7 +12,7 @@ import menuItems from '../utils/menuItems';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { images } from '../../assets/images';
+import { images } from '../../../../public/images';
 
 const items = [
   {
