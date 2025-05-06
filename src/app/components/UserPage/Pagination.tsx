@@ -17,9 +17,8 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
       <div className="text-primary">
         {currentPage > 1 ? (
           <button
-            className="p-2 rounded-md shadow-headerMenu shadow-gray-50"
+            className="rounded-md p-2 shadow-headerMenu shadow-gray-50"
             color="primary"
-          
             // disabled={currentPage === 1}
             onClick={onPrevPage}
           >
@@ -37,9 +36,8 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
       <div className="text-primary">
         {currentPage < totalPages ? (
           <button
-            className="p-2 rounded-md shadow-headerMenu shadow-gray-50"
+            className="rounded-md p-2 shadow-headerMenu shadow-gray-50"
             color="primary"
-          
             // disabled={currentPage === totalPages}
             onClick={onNextPage}
           >

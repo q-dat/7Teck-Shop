@@ -8,11 +8,11 @@ import { HiLocationMarker } from 'react-icons/hi';
 import { HiPhoneArrowUpRight } from 'react-icons/hi2';
 import { TbPigMoney } from 'react-icons/tb';
 import { GiRibbonMedal } from 'react-icons/gi';
-import menuItems from '../utils/menuItems';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { images } from '../../../../public/images';
+import { images } from '../../../../../public/images';
+import menuItems from '../../utils/menuItems';
 
 const items = [
   {
