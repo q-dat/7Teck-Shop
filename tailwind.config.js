@@ -29,6 +29,12 @@ export default {
         sub: ['Roboto', 'sans-serif'], //secondary
       },
       colors: {
+        primary: '#a92d30',
+        secondary: '#009485',
+        info: '#312e91',
+        success: '#009485',
+        warning: '#ff9900',
+        error: '#e53e3e',
         //Lưu ý về màu sắc: do logo nhiều màu nên tone màu của web sẽ sẽ là bg-white và text-black
         white: ' #FFFFFF',
         black: '#333333',
