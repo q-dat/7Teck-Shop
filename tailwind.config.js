@@ -20,7 +20,6 @@ export default {
       '2xl': '1536px',
     },
     extend: {
-      table: false,
       //p-desktop-padding
       spacing: {
         'desktop-padding': '80px',
@@ -30,12 +29,6 @@ export default {
         sub: ['Roboto', 'sans-serif'], //secondary
       },
       colors: {
-        primary: '#a92d30',
-        secondary: '#009485',
-        info: '#312e91',
-        success: '#009485',
-        warning: '#ff9900',
-        error: '#e53e3e',
         //Lưu ý về màu sắc: do logo nhiều màu nên tone màu của web sẽ sẽ là bg-white và text-black
         white: ' #FFFFFF',
         black: '#333333',
@@ -72,5 +65,26 @@ export default {
   corePlugins: {
     animation: true,
   },
-  plugins: [require('tailwind-scrollbar'), require('tailwind-scrollbar-hide')],
+  plugins: [require('daisyui'), require('tailwind-scrollbar'), require('tailwind-scrollbar-hide')],
+
+  daisyui: {
+    themes: [
+      {
+        mytheme: {
+          primary: '#a92d30',
+          secondary: '#009485',
+          info: '#312e91',
+          success: '#009485',
+          warning: '#ff9900',
+          error: '#e53e3e',
+        },
+      },
+    ],
+    base: true,
+    styled: true,
+    utils: true,
+    prefix: '',
+    logs: true,
+    themeRoot: ':root',
+  },
 };

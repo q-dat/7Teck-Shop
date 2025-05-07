@@ -1,4 +1,6 @@
+'use client';
 import React from 'react';
+import { Footer } from 'react-daisyui';
 import { FaMapLocationDot } from 'react-icons/fa6';
 import { FaFacebook, FaFacebookMessenger, FaPhone } from 'react-icons/fa';
 import { IoMail } from 'react-icons/io5';
@@ -6,29 +8,21 @@ import { images } from '../../../../../public/images';
 import Link from 'next/link';
 import Image from 'next/image';
 
-const FooterTitle: React.FC<{ title: string }> = ({ title }) => {
-  return (
-    <div>
-      <p className="mb-2 inline-block border-b border-gray-400 font-bold uppercase text-gray-400"> {title}</p>
-    </div>
-  );
-};
-
 const FooterFC: React.FC = () => {
   return (
     <div className="mb-[50px] xl:mb-0">
-      <footer className="item-center flex flex-col justify-between bg-black px-2 pb-0 pt-10 text-white xl:flex-row xl:px-desktop-padding xl:pb-10">
+      <Footer className="item-center flex flex-col justify-between bg-black px-2 pb-0 pt-10 text-white xl:flex-row xl:px-desktop-padding xl:pb-10">
         {/* Logo */}
         <div className="flex w-full flex-col gap-2 text-sm">
           <Image src={images.Logo} width={140} height={140} alt="LOGO" className="h-[140px] w-[140px] rounded-full border border-white" />
         </div>
         {/* 1 */}
-        <div className="flex w-full flex-col gap-2 text-sm">
-          <FooterTitle title="Thông tin" />
-          <Link className="font-light hover:font-semibold" href="/iphone">
+        <div className="w-full">
+          <Footer.Title className="border-b-[1px]">Thông Tin</Footer.Title>
+          <Link className="font-light hover:font-semibold" href="/dient-thoai">
             Điện Thoại IPhone
           </Link>
-          <Link className="font-light hover:font-semibold" href="/ipad">
+          <Link className="font-light hover:font-semibold" href="/may-tinh-bang">
             iPad/ Máy Tính Bảng
           </Link>
           <Link className="font-light hover:font-semibold" href="/windows">
@@ -42,16 +36,16 @@ const FooterFC: React.FC = () => {
           </Link>
         </div>
         {/* 2 */}
-        <div className="flex w-full flex-col gap-2 text-sm">
-          <FooterTitle title="Chính Sách Bán Hàng" />
+        <div className="w-full">
+          <Footer.Title className="border-b-[1px]">Chính Sách Bán Hàng</Footer.Title>
           <Link className="font-light hover:font-semibold" href="/chinh-sach-bao-hanh">
             Chính Sách Bảo Hành
           </Link>
         </div>
         {/* 3 */}
-        <div className="flex w-full flex-col gap-2 text-sm">
-          <FooterTitle title="Liên Hệ & Mua Hàng" />
-          <div className="mb-2 flex flex-row items-center justify-start gap-5 text-3xl">
+        <div className="w-full">
+          <Footer.Title className="border-b-[1px]">Liên Hệ & Mua Hàng</Footer.Title>
+          <div className="mb-2 flex flex-row items-center justify-center gap-5 text-3xl">
             <Link title="Liên hệ qua Fanpage" target="_blank" href={'https://www.facebook.com/7teck.vn'} className="rounded-full">
               <FaFacebook />
             </Link>
@@ -75,8 +69,8 @@ const FooterFC: React.FC = () => {
           </Link>
         </div>
         {/* 4 */}
-        <div className="flex w-full flex-col gap-2 text-sm">
-          <FooterTitle title="Địa Chỉ" />
+        <div className="w-full">
+          <Footer.Title className="border-b-[1px]">Địa chỉ</Footer.Title>
           <div className="flex w-full flex-col gap-2 font-light">
             <p className="flex items-start gap-2">
               <FaMapLocationDot className="text-xl" />
@@ -84,7 +78,7 @@ const FooterFC: React.FC = () => {
             </p>
           </div>
         </div>
-      </footer>
+      </Footer>
       <div className="border-t-[1px] border-gray-600 bg-black py-2 text-center text-white">
         Copyright © 2024 7Teck
         {/* Designed & developed by Điểu Quốc Đạt. */}

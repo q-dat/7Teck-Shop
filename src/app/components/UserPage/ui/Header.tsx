@@ -1,5 +1,6 @@
 'use client';
 import React, { memo, useEffect, useState } from 'react';
+import { Button, Menu } from 'react-daisyui';
 import { FaChevronDown } from 'react-icons/fa';
 import { RiArrowLeftRightFill } from 'react-icons/ri';
 import { IoLogoFacebook, IoSearch } from 'react-icons/io5';
@@ -9,10 +10,10 @@ import { HiPhoneArrowUpRight } from 'react-icons/hi2';
 import { TbPigMoney } from 'react-icons/tb';
 import { GiRibbonMedal } from 'react-icons/gi';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
+import menuItems from '../../utils/menuItems';
 import Link from 'next/link';
 import { images } from '../../../../../public/images';
-import menuItems from '../../utils/menuItems';
+import Image from 'next/image';
 
 const items = [
   {
@@ -132,11 +133,11 @@ const Header: React.FC = () => {
             <Image width={60} height={60} className="h-full w-full rounded-full object-contain filter" loading="lazy" src={images.Logo} alt="LOGO" />
           </Link>
         </nav>
-        <div className="flex flex-row items-center justify-center gap-2">
+        <Menu className="flex flex-row items-center justify-center gap-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
-              <div
+              <Menu.Item
                 key={item.name}
                 className="group relative"
                 onMouseEnter={() => item.submenu && handleMouseEnter(item.name)}
@@ -144,7 +145,7 @@ const Header: React.FC = () => {
               >
                 <Link
                   href={item.link}
-                  className={`relative flex w-full items-center justify-center gap-1 rounded-none border-none p-3 ${
+                  className={`btn relative flex w-full items-center justify-center gap-1 rounded-none border-none ${
                     item.name === activeItem
                       ? 'bg-primary bg-opacity-20 text-sm font-bold text-primary'
                       : 'border-none bg-transparent text-sm font-light text-primary shadow-none hover:scale-110 hover:border hover:border-primary hover:bg-gray-50 hover:bg-opacity-30'
@@ -159,21 +160,24 @@ const Header: React.FC = () => {
                 </Link>
                 {/* SubMenu */}
                 {item.submenu && (
-                  <div className="absolute top-full m-0 hidden w-[260px] transform flex-col gap-2 rounded-sm bg-white bg-opacity-90 p-1 shadow-mainMenu transition-transform duration-300 ease-in-out group-hover:flex">
+                  <Menu className="absolute top-full m-0 hidden w-[260px] transform flex-col gap-2 rounded-sm bg-white bg-opacity-90 p-1 shadow-mainMenu transition-transform duration-300 ease-in-out group-hover:flex">
                     {item.submenu.map((subItem, index) => (
                       <Link key={index} href={subItem.link} className="flex flex-row gap-0">
-                        <button className="flex w-full flex-row items-center justify-start rounded-sm border-none bg-primary p-2 text-sm font-light text-white shadow-headerMenu hover:h-[50px] hover:bg-primary hover:bg-opacity-50">
+                        <Button
+                          size="sm"
+                          className="flex w-full flex-row items-center justify-start rounded-sm border-none bg-primary text-sm font-light text-white shadow-headerMenu hover:h-[50px] hover:bg-primary hover:bg-opacity-50"
+                        >
                           {subItem.icon && <subItem.icon />}
                           {subItem.name}
-                        </button>
+                        </Button>
                       </Link>
                     ))}
-                  </div>
+                  </Menu>
                 )}
-              </div>
+              </Menu.Item>
             );
           })}
-        </div>
+        </Menu>
         <div className="flex items-center justify-center gap-5">
           {/* DarkMode Button */}
           {/* <DarkMode /> */}
