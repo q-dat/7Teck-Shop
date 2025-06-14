@@ -59,10 +59,10 @@ export default function ClientUsedTabletPage({ tabletCatalogs }: ClientUsedTable
           Array.from({ length: 12 }).map((_, index) => (
             <div key={index} className="w-[195px] p-2">
               <div className="animate-pulse space-y-2">
-                <div className="h-[200px] w-full rounded-md bg-gray-300" />
-                <div className="h-4 w-3/4 rounded bg-gray-300" />
-                <div className="h-4 w-full rounded bg-gray-300" />
-                <div className="h-4 w-5/6 rounded bg-gray-300" />
+                <div className="h-[200px] w-full rounded-md bg-primary/20" />
+                <div className="h-2 w-3/4 bg-primary/20" />
+                <div className="h-2 w-full bg-primary/20" />
+                <div className="h-2 w-5/6 bg-primary/20" />
               </div>
             </div>
           ))
@@ -83,7 +83,7 @@ export default function ClientUsedTabletPage({ tabletCatalogs }: ClientUsedTable
                     width={100}
                     alt="Hình ảnh"
                     loading="lazy"
-                    className="filter absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl"
+                    className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl filter"
                     src={tabletCatalog?.t_cat_img}
                   />
                   <Image
