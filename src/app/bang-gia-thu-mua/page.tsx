@@ -1,9 +1,9 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import HeaderResponsive from '../../components/UserPage/HeaderResponsive';
+import HeaderResponsive from '../../components/userPage/HeaderResponsive';
 import { Button, Table } from 'react-daisyui';
 import { IProductPriceList } from '../../types/type/price-list/price-list';
-import { scrollToTopSmoothly } from '../../components/utils/scrollToTopSmoothly';
+import { scrollToTopSmoothly } from '../../utils/scrollToTopSmoothly';
 import Link from 'next/link';
 
 const PriceListPage: React.FC = () => {
@@ -13,8 +13,7 @@ const PriceListPage: React.FC = () => {
     macbookProducts?: Record<string, IProductPriceList[]>;
     windowsProducts?: Record<string, IProductPriceList[]>;
   };
-  const priceLists: PriceListCategory[] = [];
-  // 
+  //
   const [loading, setLoading] = useState(true);
 
   const [catalogs, setCatalogs] = useState<{
@@ -37,6 +36,8 @@ const PriceListPage: React.FC = () => {
   });
 
   useEffect(() => {
+    const priceLists: PriceListCategory[] = [];
+
     scrollToTopSmoothly();
     if (priceLists.length === 0) {
       const fetchData = async () => {

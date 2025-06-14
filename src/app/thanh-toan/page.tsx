@@ -1,12 +1,12 @@
 'use client';
 import React, { useEffect, useRef } from 'react';
-import HeaderResponsive from '../../components/UserPage/HeaderResponsive';
+import HeaderResponsive from '../../components/userPage/HeaderResponsive';
 import { Textarea, Button } from 'react-daisyui';
-import InputForm from '../../components/UserPage/InputForm';
-import LabelForm from '../../components/UserPage/LabelForm';
-import { scrollToTopSmoothly } from '../../components/utils/scrollToTopSmoothly';
+import { scrollToTopSmoothly } from '../../utils/scrollToTopSmoothly';
 import { Toastify } from '@/helper/Toastify';
 import Link from 'next/link';
+import InputForm from '@/components/userPage/InputForm';
+import LabelForm from '@/components/userPage/LabelForm';
 
 const PurchasePage: React.FC = () => {
   const [result, setResult] = React.useState<string>('');

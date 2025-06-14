@@ -1,6 +1,6 @@
 'use client';
 import React, { memo, useEffect, useState } from 'react';
-import { Button, Menu } from 'react-daisyui';
+import { Button, Input, Menu } from 'react-daisyui';
 import { FaChevronDown } from 'react-icons/fa';
 import { RiArrowLeftRightFill } from 'react-icons/ri';
 import { IoLogoFacebook, IoSearch } from 'react-icons/io5';
@@ -9,11 +9,12 @@ import { HiLocationMarker } from 'react-icons/hi';
 import { HiPhoneArrowUpRight } from 'react-icons/hi2';
 import { TbPigMoney } from 'react-icons/tb';
 import { GiRibbonMedal } from 'react-icons/gi';
+import menuItems from '@/utils/menuItems';
 import { usePathname } from 'next/navigation';
-import menuItems from '../../utils/menuItems';
 import Link from 'next/link';
-import Image from 'next/image';
 import { images } from '../../../../public/images';
+import Image from 'next/image';
+import { hotlineUrl } from '@/utils/socialLinks';
 
 const items = [
   {
@@ -43,10 +44,9 @@ const items = [
 ];
 const Header: React.FC = () => {
   const pathname = usePathname();
-
-  // SubMenu
+  // Translation
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
-
+  // SubMenu
   const handleMouseEnter = (name: string) => {
     setOpenSubmenu(name);
   };
@@ -54,10 +54,9 @@ const Header: React.FC = () => {
   const handleMouseLeave = () => {
     setOpenSubmenu(null);
   };
-
   // Naviga Active
   const [activeItem, setActiveItem] = useState('Trang Chủ');
-
+  //
   useEffect(() => {
     const foundItem = menuItems.find((item) => item.link === pathname || item.submenu?.some((sub) => sub.link === pathname));
     if (foundItem) {
@@ -66,7 +65,7 @@ const Header: React.FC = () => {
   }, [pathname]);
 
   return (
-    <div className="fixed z-[99999] hidden w-full flex-col xl:block">
+    <div className="fixed left-0 top-0 z-[99999] hidden w-full flex-col xl:block">
       {/* Benefits */}
       <div className="h-[30px] bg-[#FFC107] text-black xl:px-desktop-padding">
         <div className="flex h-full w-full flex-row items-center justify-around">
@@ -82,7 +81,6 @@ const Header: React.FC = () => {
       </div>
       {/* */}
       <div
-        // className={`flex h-[40px] w-full transform flex-row items-center justify-between border-b bg-primary px-10 text-xs text-white transition-transform delay-100 duration-300 ease-in-out hover:text-white ${showMenu ? 'translate-y-0' : '-translate-y-full'}`}
         className={`flex h-[40px] w-full transform flex-row items-center justify-between border-b bg-primary text-xs text-white transition-transform delay-100 duration-300 ease-in-out hover:text-white xl:px-desktop-padding`}
       >
         <div className="w-full">
@@ -99,8 +97,9 @@ const Header: React.FC = () => {
         {/* Input Search */}
         <div className="relative flex w-full flex-row items-center justify-center gap-1 rounded-full bg-white pl-2">
           <IoSearch className="text-xl text-primary" />
-          <input
-            className="w-full border-none bg-transparent p-2 pl-1 text-sm text-black placeholder-primary shadow-none focus:placeholder-black focus:outline-none"
+          <Input
+            size="sm"
+            className="w-full border-none bg-transparent pl-1 text-sm text-black placeholder-primary shadow-none focus:placeholder-black focus:outline-none"
             placeholder="Bạn muốn tìm gì..."
           />
         </div>
@@ -117,20 +116,19 @@ const Header: React.FC = () => {
             </Link>
           </div>
           <div className="flex items-center">
-            <Link href="tel:0983699993" className="flex items-center gap-[1px] font-light">
-              <HiPhoneArrowUpRight className="text-xs" /> (+84) 983.699.993
+            <Link href={hotlineUrl} className="flex items-center gap-[1px] font-light">
+              <HiPhoneArrowUpRight className="text-xs" /> (+84) 333.133.050
             </Link>
           </div>
         </div>
       </div>
       {/* Menu */}
       <header
-        // className={`h-[60px] w-full transform flex-row items-center justify-evenly bg-white py-2 shadow-md transition-transform delay-100 duration-300 ease-in-out xl:flex ${showMenu ? 'translate-y-0' : '-translate-y-[40px]'}`}
         className={`h-[60px] w-full transform flex-row items-center justify-between bg-white py-2 shadow-md transition-transform delay-100 duration-300 ease-in-out xl:flex xl:px-desktop-padding`}
       >
         <nav className="h-full">
           <Link aria-label="Home" href="/" onClick={() => setActiveItem('Trang Chủ')}>
-            <Image width={60} height={60} className="h-full w-full rounded-full object-contain filter" loading="lazy" src={images.Logo} alt="LOGO" />
+            <Image width={60} height={60} className="filter h-full w-full rounded-full object-contain" loading="lazy" src={images.Logo} alt="LOGO" />
           </Link>
         </nav>
         <Menu className="flex flex-row items-center justify-center gap-2">

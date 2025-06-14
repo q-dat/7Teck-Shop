@@ -1,13 +1,14 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import HeaderResponsive from '../../components/UserPage/HeaderResponsive';
+import HeaderResponsive from '../../components/userPage/HeaderResponsive';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
-import Pagination from '../../components/UserPage/Pagination';
-import { scrollToTopSmoothly } from '../../components/utils/scrollToTopSmoothly';
+import Pagination from '../../components/userPage/Pagination';
+import { scrollToTopSmoothly } from '../../utils/scrollToTopSmoothly';
 import ErrorLoading from '../../components/orther/error/ErrorLoading';
 import Link from 'next/link';
 import { IGallery } from '@/types/type/gallery/gallery';
+import Image from 'next/image';
 
 const GalleryPage: React.FC = () => {
   const galleries: IGallery[] = [];
@@ -63,7 +64,9 @@ const GalleryPage: React.FC = () => {
             {currentGallerys.map((gallery, index) => (
               <Zoom key={index}>
                 <div className="w-full overflow-hidden rounded-md">
-                  <img
+                  <Image
+                    width={100}
+                    height={100}
                     alt=""
                     src={`${gallery.gallery}`}
                     className="h-auto w-full rounded-md border border-dashed border-black object-contain transition-transform duration-1000 ease-in-out hover:scale-110"

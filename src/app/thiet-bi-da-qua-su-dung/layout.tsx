@@ -1,12 +1,11 @@
-import FooterFC from '@/components/UserPage/ui/Footer';
-import Header from '@/components/UserPage/ui/Header';
-import { Metadata } from 'next';
+import FooterFC from '@/components/userPage/ui/Footer';
+import Header from '@/components/userPage/ui/Header';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div>
       <Header />
-      <div className="mt-[80px] px-2 xl:mt-[160px] xl:px-desktop-padding">{children}</div>
+      <div className="bg-primary-white">{children}</div>
       <FooterFC />
     </div>
   );

@@ -1,11 +1,11 @@
 'use client';
-import Pagination from '@/components/UserPage/Pagination';
-import { scrollToTopSmoothly } from '@/components/utils/scrollToTopSmoothly';
-import { slugify } from '@/components/utils/slugify';
+import Pagination from '@/components/userPage/Pagination';
+import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { slugify } from '@/utils/slugify';
 import { IMacbookCatalog } from '@/types/type/macbook-catalog/macbook-catalog';
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
-import { Placeholder } from 'semantic-ui-react';
+import Image from 'next/image';
 
 interface ClientUsedMacbookPageProps {
   macbookCatalogs: IMacbookCatalog[];
@@ -26,7 +26,7 @@ export default function ClientUsedMacbookPage({ macbookCatalogs }: ClientUsedMac
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [macbookCatalogs]);
 
   const router = useRouter();
   // Panigation
@@ -53,17 +53,17 @@ export default function ClientUsedMacbookPage({ macbookCatalogs }: ClientUsedMac
 
   return (
     <div className="my-5 rounded-md bg-white p-2">
-      <div className="py-2 text-2xl font-semibold">Macbook</div>
+      <div className="py-2 text-2xl font-semibold text-black">Macbook</div>
       <div className="grid grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
         {loading ? (
           Array.from({ length: 12 }).map((_, index) => (
             <div key={index} className="w-[195px] p-2">
-              <Placeholder>
-                <Placeholder.Image square />
-                <Placeholder.Line />
-                <Placeholder.Line length="full" />
-                <Placeholder.Line length="full" />
-              </Placeholder>
+              <div className="animate-pulse space-y-2">
+                <div className="h-[200px] w-full rounded-md bg-gray-300" />
+                <div className="h-4 w-3/4 rounded bg-gray-300" />
+                <div className="h-4 w-full rounded bg-gray-300" />
+                <div className="h-4 w-5/6 rounded bg-gray-300" />
+              </div>
             </div>
           ))
         ) : currentMacbook.length === 0 ? (
@@ -78,13 +78,17 @@ export default function ClientUsedMacbookPage({ macbookCatalogs }: ClientUsedMac
                 className="group flex h-full w-full flex-col justify-between rounded-md border border-white bg-white text-black"
               >
                 <div className="relative h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none">
-                  <img
+                  <Image
+                    height={100}
+                    width={100}
                     alt="Hình ảnh"
                     loading="lazy"
                     className="filter absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl"
                     src={macbookCatalog?.m_cat_img}
                   />
-                  <img
+                  <Image
+                    height={100}
+                    width={100}
                     alt="Hình ảnh"
                     loading="lazy"
                     className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"

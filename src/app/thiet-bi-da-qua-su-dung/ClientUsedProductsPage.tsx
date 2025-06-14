@@ -5,7 +5,7 @@ import ClientUsedPhonePage from './ClientUsedPhonePage';
 import ClientUsedTabletPage from './ClientUsedTabletPage';
 import ClientUsedMacbookPage from './ClientUsedMacbookPage';
 import ClientUsedWindowsPage from './ClientUsedWindowsPage';
-import HeaderResponsive from '@/components/UserPage/HeaderResponsive';
+import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import Link from 'next/link';
 import { IPhoneCatalog } from '@/types/type/phone-catalog/phone-catalog';
 import { ITabletCatalog } from '@/types/type/tablet-catalog/tablet-catalog';
@@ -19,9 +19,15 @@ const categories = [
   { id: 'used-macbook', label: 'Macbook' },
   { id: 'used-windows', label: 'Windows' },
 ];
+interface CategoryMenuProps {
+  isOpen: boolean;
+  toggleMenu: () => void;
+  selectedCategory: string;
+  scrollToSection: (id: string) => void;
+}
 
 // Component điều hướng menu
-const CategoryMenu = memo(({ isOpen, toggleMenu, selectedCategory, scrollToSection }: any) => (
+const CategoryMenuComponent = memo(({ isOpen, toggleMenu, selectedCategory, scrollToSection }: CategoryMenuProps) => (
   <div
     onClick={toggleMenu}
     className={`fixed left-0 top-1/3 z-[999] mx-1 w-auto overflow-hidden rounded-r-[50%] border-2 border-b-0 border-l-0 border-t-0 border-primary bg-gradient-to-r from-transparent to-white py-[25px] text-primary transition-transform duration-300 ${
@@ -48,9 +54,11 @@ const CategoryMenu = memo(({ isOpen, toggleMenu, selectedCategory, scrollToSecti
     </div>
   </div>
 ));
+CategoryMenuComponent.displayName = 'CategoryMenuComponent';
+const CategoryMenu = memo(CategoryMenuComponent);
 
 // Component hiển thị danh mục sản phẩm
-const CategorySection = memo(
+const CategorySectionComponent = memo(
   ({
     isOpen,
     phoneCatalogs,
@@ -80,7 +88,8 @@ const CategorySection = memo(
     </div>
   )
 );
-
+CategorySectionComponent.displayName = 'CategorySectionComponent';
+const CategorySection = memo(CategorySectionComponent);
 interface ClientUsedProductsPageProps {
   phoneCatalogs: IPhoneCatalog[];
   tabletCatalogs: ITabletCatalog[];
@@ -139,7 +148,7 @@ export default function ClientUsedProductsPage({ phoneCatalogs, tabletCatalogs, 
     <div>
       <HeaderResponsive Title_NavbarMobile="Thiết Bị Đã Qua Sử Dụng" />
       <div className="py-[60px] xl:pt-0">
-        <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
+        <div className="breadcrumbs px-[10px] text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
             <li>
               <Link aria-label="Trang chủ" href="/">
