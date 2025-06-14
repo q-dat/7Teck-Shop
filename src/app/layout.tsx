@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   icons: {
-    icon: '/favicon.png',
+    icon: '/favicon.ico',
   },
   title: 'Deal Rẻ Mỗi Ngày, Chất Lượng Chính Hãng! - Biểu tượng phong cách nam, Đồng hồ sang trọng, Mỹ phẩm cao cấp',
   description: 'Mua ví COACH nam, đồng hồ và mỹ phẩm cao cấp chính hãng tại Lazzie Shop. Giá tốt, giao nhanh!',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     siteName: 'Lazzie Shop',
     images: [
       {
-        url: '/favicon.png',
+        url: '/favicon.ico',
         width: 1200,
         height: 630,
         alt: 'Lazzie Shop - Phụ Kiện Nam Cao Cấp',
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Deal Rẻ Mỗi Ngày, Chất Lượng Chính Hãng! - Biểu tượng phong cách nam, Đồng hồ sang trọng, Mỹ phẩm cao cấp',
     description: 'Mua ví COACH nam, đồng hồ và mỹ phẩm cao cấp chính hãng tại Lazzie Shop. Giá tốt, giao nhanh!',
-    images: ['/favicon.png'],
+    images: ['/favicon.ico'],
   },
 };
 
@@ -73,8 +73,8 @@ export default function RootLayout({
     <html lang="en" data-theme="mytheme">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ErrorBoundary>
-          <div className="flex min-h-screen flex-col bg-primary-white">
-            <div className="flex-1 mt-[60px] bg-primary-white selection:bg-primary selection:text-black xl:pt-[130px]">{children}</div>
+          <div className="flex min-h-screen flex-col bg-primary-white xl:pt-[130px]">
+            <div className="flex-1 bg-primary-white py-[60px] selection:bg-primary selection:text-black xl:pt-0">{children}</div>
           </div>
           <ToastContainer style={{ marginTop: '50px' }} />
         </ErrorBoundary>
