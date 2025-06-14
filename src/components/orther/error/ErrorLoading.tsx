@@ -1,7 +1,7 @@
 'use client';
-import { images } from '../../../../../public/images';
 import Image from 'next/image';
 import { IoMdRefreshCircle } from 'react-icons/io';
+import { images } from '../../../../public/images';
 
 const ErrorLoading = () => {
   const navigate = () => {

@@ -12,8 +12,8 @@ import { GiRibbonMedal } from 'react-icons/gi';
 import { usePathname } from 'next/navigation';
 import menuItems from '../../utils/menuItems';
 import Link from 'next/link';
-import { images } from '../../../../../public/images';
 import Image from 'next/image';
+import { images } from '../../../../public/images';
 
 const items = [
   {

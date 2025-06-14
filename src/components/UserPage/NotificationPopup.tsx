@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { images } from '../../../../public/images';
+import { images } from '../../../public/images';
 
 const NotificationPopup: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);

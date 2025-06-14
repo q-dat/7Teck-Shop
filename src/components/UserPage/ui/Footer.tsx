@@ -4,9 +4,9 @@ import { Footer } from 'react-daisyui';
 import { FaMapLocationDot } from 'react-icons/fa6';
 import { FaFacebook, FaFacebookMessenger, FaPhone } from 'react-icons/fa';
 import { IoMail } from 'react-icons/io5';
-import { images } from '../../../../../public/images';
 import Link from 'next/link';
 import Image from 'next/image';
+import { images } from '../../../../public/images';
 
 const FooterFC: React.FC = () => {
   return (

@@ -1,7 +1,7 @@
 'use client';
-import { images } from '../../../../public/images';
 import React from 'react';
 import { BannerLayer, ParallaxBanner } from 'react-scroll-parallax';
+import { images } from '../../../public/images';
 
 const ParallaxBannerFC: React.FC = () => {
   const background: BannerLayer = {

@@ -2,8 +2,8 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { images } from '../../../../public/images';
 import { FaFacebookMessenger } from 'react-icons/fa';
+import { images } from '../../../public/images';
 
 const ContactForm: React.FC = () => {
   return (
