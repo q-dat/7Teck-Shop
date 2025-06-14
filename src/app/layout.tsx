@@ -3,6 +3,12 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { ToastContainer } from 'react-toastify';
 import ErrorBoundary from '@/components/orther/error/ErrorBoundary';
+import ScrollToTopButton from '@/components/orther/scrollToTop/ScrollToTopButton';
+import ContactForm from '@/components/userPage/ContactForm';
+import NavBottom from '@/components/userPage/NavBottom';
+import NotificationPopup from '@/components/userPage/NotificationPopup';
+import FooterFC from '@/components/userPage/ui/Footer';
+import Header from '@/components/userPage/ui/Header';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -74,7 +80,13 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ErrorBoundary>
           <div className="flex min-h-screen flex-col bg-primary-white xl:pt-[130px]">
+            <Header />
             <div className="flex-1 bg-primary-white py-[60px] selection:bg-primary selection:text-black xl:pt-0">{children}</div>
+            <NotificationPopup />
+            <ScrollToTopButton />
+            <NavBottom />
+            <ContactForm />
+            <FooterFC />
           </div>
           <ToastContainer style={{ marginTop: '50px' }} />
         </ErrorBoundary>
