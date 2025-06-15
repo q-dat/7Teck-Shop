@@ -2,18 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import HeaderResponsive from '../../components/userPage/HeaderResponsive';
 import { Button, Table } from 'react-daisyui';
-import { IProductPriceList } from '../../types/type/price-list/price-list';
-import { scrollToTopSmoothly } from '../../utils/scrollToTopSmoothly';
+import { IPriceList, IProductPriceList } from '@/types/type/price-list/price-list';
+import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { getAllPriceLists } from '@/services/priceListService';
+import ErrorLoading from '@/components/orther/error/ErrorLoading';
 import Link from 'next/link';
 
-const PriceListPage: React.FC = () => {
-  type PriceListCategory = {
-    phoneProducts?: Record<string, IProductPriceList[]>;
-    tabletProducts?: Record<string, IProductPriceList[]>;
-    macbookProducts?: Record<string, IProductPriceList[]>;
-    windowsProducts?: Record<string, IProductPriceList[]>;
-  };
-  //
+export default function PriceListPage() {
+  const [priceLists, setPriceLists] = useState<IPriceList[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [catalogs, setCatalogs] = useState<{
@@ -36,52 +32,53 @@ const PriceListPage: React.FC = () => {
   });
 
   useEffect(() => {
-    const priceLists: PriceListCategory[] = [];
+    const fetchData = async () => {
+      scrollToTopSmoothly();
+      try {
+        const data = await getAllPriceLists();
+        setPriceLists(data);
 
-    scrollToTopSmoothly();
-    if (priceLists.length === 0) {
-      const fetchData = async () => {
-        setLoading(true);
-        // await getAllPriceLists();
-        setLoading(false);
-      };
+        const aggregatedData = {
+          phoneProducts: {} as Record<string, IProductPriceList[]>,
+          tabletProducts: {} as Record<string, IProductPriceList[]>,
+          macbookProducts: {} as Record<string, IProductPriceList[]>,
+          windowsProducts: {} as Record<string, IProductPriceList[]>,
+        };
 
-      fetchData();
-    } else {
-      setLoading(false);
-    }
+        ['phoneProducts', 'tabletProducts', 'macbookProducts', 'windowsProducts'].forEach((categoryType) => {
+          priceLists.forEach((list) => {
+            const productsByCategory = list[categoryType as keyof typeof list] || {};
 
-    const aggregatedData = {
-      phoneProducts: {} as Record<string, IProductPriceList[]>,
-      tabletProducts: {} as Record<string, IProductPriceList[]>,
-      macbookProducts: {} as Record<string, IProductPriceList[]>,
-      windowsProducts: {} as Record<string, IProductPriceList[]>,
-    };
-
-    ['phoneProducts', 'tabletProducts', 'macbookProducts', 'windowsProducts'].forEach((categoryType) => {
-      priceLists.forEach((list) => {
-        const productsByCategory = list[categoryType as keyof typeof list] || {};
-
-        Object.entries(productsByCategory).forEach(([category, products]) => {
-          if (Array.isArray(products)) {
-            aggregatedData[categoryType as keyof typeof aggregatedData][category] =
-              aggregatedData[categoryType as keyof typeof aggregatedData][category] || [];
-            aggregatedData[categoryType as keyof typeof aggregatedData][category].push(...(products as IProductPriceList[]));
-          }
+            Object.entries(productsByCategory).forEach(([category, products]) => {
+              if (Array.isArray(products)) {
+                aggregatedData[categoryType as keyof typeof aggregatedData][category] =
+                  aggregatedData[categoryType as keyof typeof aggregatedData][category] || [];
+                aggregatedData[categoryType as keyof typeof aggregatedData][category].push(...(products as IProductPriceList[]));
+              }
+            });
+          });
         });
-      });
-    });
 
-    setCatalogs(aggregatedData);
+        setCatalogs(aggregatedData);
 
-    setActiveTabs({
-      phoneProducts: Object.keys(aggregatedData.phoneProducts)[0] || '',
-      tabletProducts: Object.keys(aggregatedData.tabletProducts)[0] || '',
-      macbookProducts: Object.keys(aggregatedData.macbookProducts)[0] || '',
-      windowsProducts: Object.keys(aggregatedData.windowsProducts)[0] || '',
-    });
-  }, []);
+        setActiveTabs({
+          phoneProducts: Object.keys(aggregatedData.phoneProducts)[0] || '',
+          tabletProducts: Object.keys(aggregatedData.tabletProducts)[0] || '',
+          macbookProducts: Object.keys(aggregatedData.macbookProducts)[0] || '',
+          windowsProducts: Object.keys(aggregatedData.windowsProducts)[0] || '',
+        });
+      } catch (error) {
+        console.error('Failed to fetch price list:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [priceLists]);
 
+  if (!loading && priceLists.length === 0) {
+    return <ErrorLoading />;
+  }
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile="Bảng Giá Thu Mua" />
@@ -168,6 +165,4 @@ const PriceListPage: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default PriceListPage;
+}
