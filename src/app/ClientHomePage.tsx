@@ -1,7 +1,6 @@
 'use client';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import { memo, useEffect, useState } from 'react';
-import { images } from '../../public/images';
 import ClientPhoneFC from './ClientPhoneFC';
 import ClientTabletFC from './ClientTabletFC';
 import ClientMacbookFC from './ClientMacbookFC';
@@ -13,6 +12,7 @@ import { ITablet } from '@/types/type/tablet/tablet';
 import { IWindows } from '@/types/type/windows/windows';
 import { IPost } from '@/types/type/post/post';
 import Image from 'next/image';
+import { images } from '../../public/images';
 
 // Component Banner
 const BannerComponent = memo(() => (
@@ -27,9 +27,9 @@ const BannerComponent = memo(() => (
       </h2>
     </div>
     <picture className="h-full w-full">
-      <source srcSet={images.BannerDesktop} media="(min-width: 1024px)" />
-      <source srcSet={images.BannerTablet} media="(min-width: 601px)" />
-      <Image height={100} width={100} src={images.BannerMobile} alt="Banner" className="h-full w-full object-cover" loading="eager" />
+      <source srcSet={`${images.BannerDesktop}`} media="(min-width: 1024px)" />
+      <source srcSet={`${images.BannerTablet}`} media="(min-width: 601px)" />
+      <Image height={100} width={100} src={`${images.BannerMobile}`} alt="Banner" className="h-full w-full object-cover" loading="eager" />
     </picture>
   </div>
 ));
