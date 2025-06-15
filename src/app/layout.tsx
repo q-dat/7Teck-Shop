@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   icons: {
-    icon: '/favicon.ico',
+    icon: '/favicon.png',
   },
   title: 'Deal Rẻ Mỗi Ngày, Chất Lượng Chính Hãng! - Biểu tượng phong cách nam, Đồng hồ sang trọng, Mỹ phẩm cao cấp',
   description: 'Mua ví COACH nam, đồng hồ và mỹ phẩm cao cấp chính hãng tại Lazzie Shop. Giá tốt, giao nhanh!',
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     siteName: 'Lazzie Shop',
     images: [
       {
-        url: '/favicon.ico',
+        url: '/favicon.png',
         width: 1200,
         height: 630,
         alt: 'Lazzie Shop - Phụ Kiện Nam Cao Cấp',
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Deal Rẻ Mỗi Ngày, Chất Lượng Chính Hãng! - Biểu tượng phong cách nam, Đồng hồ sang trọng, Mỹ phẩm cao cấp',
     description: 'Mua ví COACH nam, đồng hồ và mỹ phẩm cao cấp chính hãng tại Lazzie Shop. Giá tốt, giao nhanh!',
-    images: ['/favicon.ico'],
+    images: ['/favicon.png'],
   },
 };
 
