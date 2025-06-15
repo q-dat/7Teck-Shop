@@ -6,6 +6,7 @@ import { IPhoneCatalog } from '@/types/type/phone-catalog/phone-catalog';
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 
 interface ClientUsedPhonePageProps {
   phoneCatalogs: IPhoneCatalog[];
@@ -56,16 +57,7 @@ export default function ClientUsedPhonePage({ phoneCatalogs }: ClientUsedPhonePa
       <div className="py-2 text-2xl font-semibold text-black">iPhone</div>
       <div className="grid grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
         {loading ? (
-          Array.from({ length: 12 }).map((_, index) => (
-            <div key={index} className="w-[195px] p-2">
-              <div className="animate-pulse space-y-2">
-                <div className="h-[200px] w-full rounded-md bg-primary/20" />
-                <div className="h-2 w-3/4 bg-primary/20" />
-                <div className="h-2 w-full bg-primary/20" />
-                <div className="h-2 w-5/6 bg-primary/20" />
-              </div>
-            </div>
-          ))
+          <ProductPlaceholders count={12} />
         ) : currentPhones.length === 0 ? (
           <>Không có dữ liệu!</>
         ) : (
