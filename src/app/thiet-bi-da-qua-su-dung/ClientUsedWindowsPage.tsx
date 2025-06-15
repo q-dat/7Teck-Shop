@@ -20,7 +20,6 @@ export default function ClientUsedWindowsPage({ windowsCatalogs }: ClientUsedWin
     if (windowsCatalogs.length === 0) {
       const fetchData = async () => {
         setLoading(true);
-        setLoading(false);
       };
 
       fetchData();

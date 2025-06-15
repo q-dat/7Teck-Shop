@@ -14,12 +14,12 @@ export async function getAllMacbooks(): Promise<IMacbook[]> {
     const data = await res.json();
     // console.log('Macbook API response:', data); // Debug response
 
-    if (!data || typeof data !== 'object' || !Array.isArray(data.macbooks)) {
+    if (!data || typeof data !== 'object' || !Array.isArray(data.macbook)) {
       console.warn('Dữ liệu API Macbook không hợp lệ:', data);
       return [];
     }
 
-    return data.macbooks;
+    return data.macbook;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách macbook:', error);
     return [];

@@ -1,2 +1,5 @@
-export { default as NotFounds } from './404.webp';
-export { default as Sale } from './sale.svg';
+const imageRepresent = {
+  NotFounds: '/image-represent/404.webp',
+  Status: '/image-represent/status.svg',
+};
+export default imageRepresent;

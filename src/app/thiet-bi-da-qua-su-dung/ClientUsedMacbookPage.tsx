@@ -20,7 +20,6 @@ export default function ClientUsedMacbookPage({ macbookCatalogs }: ClientUsedMac
     if (macbookCatalogs.length === 0) {
       const fetchData = async () => {
         setLoading(true);
-        setLoading(false);
       };
 
       fetchData();

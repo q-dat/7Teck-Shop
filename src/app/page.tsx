@@ -1,5 +1,20 @@
+import { getAllmostViewedPhones } from '@/services/products/phoneService';
 import ClientHomePage from './ClientHomePage';
+import { getAllTablets } from '@/services/products/tabletService';
+import { getAllMacbooks } from '@/services/products/macbookService';
+import { getAllWindows } from '@/services/products/windowsService';
+import { getAllPosts } from '@/services/postService';
 
 export default async function Home() {
-  return <ClientHomePage />;
+  const mostViewedPhones = await getAllmostViewedPhones();
+  const tablets = await getAllTablets();
+  const macbook = await getAllMacbooks();
+  const windows = await getAllWindows();
+  const posts = await getAllPosts();
+
+  return (
+    <>
+      <ClientHomePage mostViewedPhones={mostViewedPhones} tablets={tablets} macbook={macbook} windows={windows} posts={posts} />
+    </>
+  );
 }

@@ -20,7 +20,6 @@ export default function ClientUsedTabletPage({ tabletCatalogs }: ClientUsedTable
     if (tabletCatalogs.length === 0) {
       const fetchData = async () => {
         setLoading(true);
-        setLoading(false);
       };
 
       fetchData();

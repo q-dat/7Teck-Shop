@@ -20,7 +20,6 @@ export default function ClientUsedPhonePage({ phoneCatalogs }: ClientUsedPhonePa
     if (phoneCatalogs.length === 0) {
       const fetchData = async () => {
         setLoading(true);
-        setLoading(false);
       };
 
       fetchData();
