@@ -39,7 +39,7 @@ export async function getWindowsById(id: string): Promise<IWindows | null> {
     const data = await res.json();
     // console.log('Windows by ID API response:', data); // Debug response
 
-    if (!data || typeof data !== 'object' || !data.window) {
+    if (!data || typeof data !== 'object' || !data.windows) {
       console.warn('Dữ liệu API Windows theo ID không hợp lệ:', data);
       return null;
     }
