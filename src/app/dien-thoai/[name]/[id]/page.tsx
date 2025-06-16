@@ -28,13 +28,13 @@ export default async function PhoneDetailPage({ params }: PageProps) {
     },
     offers: {
       '@type': 'Offer',
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/nam/${slugify(phone.name)}/${phone._id}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/nam/${slugify(phone.name)}`,
       priceCurrency: 'VND',
       price: phone.price.toString(),
       availability: 'https://schema.org/InStock',
     },
   };
-  
+
   return (
     <>
       <Head>

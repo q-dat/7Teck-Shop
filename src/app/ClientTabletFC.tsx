@@ -60,16 +60,16 @@ export default function ClientTabletFC({ tablets }: ClientTabletFCProps) {
                   <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/may-tinh-bang/${tabletUrl}/${tablet?._id}`}>
                     <div className="relative h-[200px] w-full cursor-pointer overflow-hidden">
                       <Image
-                        height={100}
-                        width={100}
+                        height={200}
+                        width={200}
                         alt="Hình ảnh"
                         loading="lazy"
                         className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl filter"
                         src={tablet.tablet_img}
                       />
                       <Image
-                        height={100}
-                        width={100}
+                        height={200}
+                        width={200}
                         alt="Hình ảnh"
                         loading="lazy"
                         className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
