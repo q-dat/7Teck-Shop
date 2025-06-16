@@ -8,7 +8,7 @@ import Link from 'next/link';
 import InputForm from '@/components/userPage/InputForm';
 import LabelForm from '@/components/userPage/LabelForm';
 
-const PurchasePage: React.FC = () => {
+export default function PurchasePage() {
   const [result, setResult] = React.useState<string>('');
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -138,6 +138,4 @@ const PurchasePage: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default PurchasePage;
+}

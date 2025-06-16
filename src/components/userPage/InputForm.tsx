@@ -1,5 +1,6 @@
 'use client';
 import React, { ReactNode } from 'react';
+import { Input } from 'react-daisyui';
 
 interface InputFormProps {
   id?: string | number;
@@ -25,7 +26,7 @@ const InputForm: React.FC<InputFormProps> = ({
 }) => {
   return (
     <div className="relative">
-      <input
+      <Input
         id=""
         name={name}
         className={`peer w-full focus:outline-none ${className}`}
