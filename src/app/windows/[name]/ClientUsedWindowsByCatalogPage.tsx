@@ -14,8 +14,8 @@ import imageRepresent from '../../../../public/image-represent';
 
 export default function ClientUsedWindowsByCatalogPage({ windows }: { windows: IWindows[] }) {
   const [loading, setLoading] = useState(true);
-  const { catalog } = useParams();
-  const filteredPhones = windows.filter((win) => slugify(win?.windows_name) === catalog);
+  const { name } = useParams();
+  const filteredPhones = windows.filter((win) => slugify(win?.windows_name) === name);
 
   useEffect(() => {
     scrollToTopSmoothly();
