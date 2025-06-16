@@ -1,5 +1,8 @@
 import React from 'react';
+import ClientMacbookPage from './ClientMacbookPage';
+import { getAllMacbook } from '@/services/products/macbookService';
 
-export default function ClientMacbookPage() {
-  return <div> ClientMacbookPage</div>;
+const macbook = await getAllMacbook();
+export default function MacbookPage() {
+  return <ClientMacbookPage macbook={macbook} />;
 }

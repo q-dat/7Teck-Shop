@@ -1,7 +1,7 @@
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { IMacbook } from '../../types/type/macbook/macbook';
 
-export async function getAllMacbooks(): Promise<IMacbook[]> {
+export async function getAllMacbook(): Promise<IMacbook[]> {
   try {
     const apiUrl = `${getServerApiUrl('/api/laptop-macbook')}`;
     const res = await fetch(apiUrl, {
