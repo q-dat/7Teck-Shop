@@ -1,5 +1,6 @@
 'use client';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
+import { LoadingLocal } from '@/components/orther/loading';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import { IPriceList, IProductPriceList } from '@/types/type/price-list/price-list';
 import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
@@ -95,7 +96,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
         </div>
         {/* Danh mục sản phẩm */}
         {loading ? (
-          <></>
+          <LoadingLocal />
         ) : (
           <div className="px-2 xl:px-desktop-padding">
             {['phoneProducts', 'macbookProducts', 'tabletProducts', 'windowsProducts'].map(

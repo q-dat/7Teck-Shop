@@ -1,5 +1,7 @@
 'use client';
+import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
 import React from 'react';
+import { Button } from 'react-daisyui';
 import { IoIosArrowDropleft, IoIosArrowDropright } from 'react-icons/io';
 
 interface PaginationProps {
@@ -16,14 +18,18 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
     <div className="mt-10 flex flex-row items-center justify-center gap-x-10 px-2 text-primary">
       <div className="text-primary">
         {currentPage > 1 ? (
-          <button
-            className="rounded-md p-2 shadow-headerMenu shadow-gray-50"
+          <Button
+            className="rounded-md shadow-headerMenu shadow-gray-50"
             color="primary"
+            size="sm"
             // disabled={currentPage === 1}
-            onClick={onPrevPage}
+            onClick={() => {
+              onPrevPage();
+              scrollToTopSmoothly();
+            }}
           >
             <IoIosArrowDropleft className="text-xl" /> Trang Trước
-          </button>
+          </Button>
         ) : (
           <div className="h-[36px] w-[120px]"></div>
         )}
@@ -35,14 +41,18 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
 
       <div className="text-primary">
         {currentPage < totalPages ? (
-          <button
-            className="rounded-md p-2 shadow-headerMenu shadow-gray-50"
+          <Button
+            className="rounded-md shadow-headerMenu shadow-gray-50"
             color="primary"
+            size="sm"
             // disabled={currentPage === totalPages}
-            onClick={onNextPage}
+            onClick={() => {
+              onNextPage();
+              scrollToTopSmoothly();
+            }}
           >
             Trang Tiếp <IoIosArrowDropright className="text-xl" />
-          </button>
+          </Button>
         ) : (
           <div className="h-[36px] w-[120px]"></div>
         )}

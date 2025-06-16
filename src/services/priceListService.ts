@@ -28,7 +28,7 @@ export async function getAllPriceLists(): Promise<IPriceList[]> {
 
 export async function getPriceListById(id: string): Promise<IPriceList | null> {
   try {
-    const apiUrl = getServerApiUrl(`/api/price-lists/${id}`);
+    const apiUrl = getServerApiUrl(`/api/price-list/${id}`);
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
@@ -39,12 +39,12 @@ export async function getPriceListById(id: string): Promise<IPriceList | null> {
     const data = await res.json();
     // console.log('PriceList by ID API response:', data); // Debug response
 
-    if (!data || typeof data !== 'object' || !data.priceLists) {
+    if (!data || typeof data !== 'object' || !data.priceList) {
       console.warn('Dữ liệu API PriceList theo ID không hợp lệ:', data);
       return null;
     }
 
-    return data.priceLists;
+    return data.priceList;
   } catch (error) {
     console.error('Lỗi khi lấy PriceList:', error);
     return null;
