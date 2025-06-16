@@ -5,6 +5,7 @@ import Pagination from '@/components/userPage/Pagination';
 import Zoom from '@/lib/Zoom';
 import { IGallery } from '@/types/type/gallery/gallery';
 import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import Image from 'next/image';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import Masonry from 'react-masonry-css';
@@ -71,10 +72,12 @@ export default function ClientGalleryPage({ galleries }: { galleries: IGallery[]
             {currentGallerys.map((gallery, index) => (
               <Zoom key={index + 1}>
                 <div className="mb-2 overflow-hidden rounded-md">
-                  <img
+                  <Image
+                    height={300}
+                    width={300}
                     src={`${gallery.gallery}`}
-                    alt=""
-                    className="w-full rounded-md border border-dashed border-black object-contain transition-transform duration-300 hover:scale-105"
+                    alt="Hình ảnh khách hàng"
+                    className="h-full w-full rounded-md border border-dashed border-black object-contain transition-transform duration-300 hover:scale-105"
                   />
                 </div>
               </Zoom>
