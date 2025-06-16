@@ -44,7 +44,7 @@ export async function getWindowsById(id: string): Promise<IWindows | null> {
       return null;
     }
 
-    return data.window;
+    return data.windows;
   } catch (error) {
     console.error('Lỗi khi lấy windows:', error);
     return null;
