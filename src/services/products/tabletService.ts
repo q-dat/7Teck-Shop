@@ -28,7 +28,7 @@ export async function getAllTablets(): Promise<ITablet[]> {
 
 export async function getTabletById(id: string): Promise<ITablet | null> {
   try {
-    const apiUrl = getServerApiUrl(`/api/tablets/${id}`);
+    const apiUrl = getServerApiUrl(`/api/tablet/${id}`);
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },

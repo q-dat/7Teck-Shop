@@ -53,7 +53,7 @@ export async function getAllPhones(): Promise<IPhone[]> {
 
 export async function getPhoneById(id: string): Promise<IPhone | null> {
   try {
-    const apiUrl = getServerApiUrl(`/api/phones/${id}`);
+    const apiUrl = getServerApiUrl(`/api/phone/${id}`);
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },

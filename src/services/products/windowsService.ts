@@ -28,7 +28,7 @@ export async function getAllWindows(): Promise<IWindows[]> {
 
 export async function getWindowById(id: string): Promise<IWindows | null> {
   try {
-    const apiUrl = getServerApiUrl(`/api/laptop-windows/${id}`);
+    const apiUrl = getServerApiUrl(`/api/windows/${id}`);
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },

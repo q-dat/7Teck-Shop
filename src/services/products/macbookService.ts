@@ -28,7 +28,7 @@ export async function getAllMacbooks(): Promise<IMacbook[]> {
 
 export async function getMacbookById(id: string): Promise<IMacbook | null> {
   try {
-    const apiUrl = getServerApiUrl(`/api/laptop-macbook/${id}`);
+    const apiUrl = getServerApiUrl(`/api/macbook/${id}`);
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
