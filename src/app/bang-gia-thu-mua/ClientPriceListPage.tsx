@@ -1,5 +1,4 @@
 'use client';
-import ErrorLoading from '@/components/orther/error/ErrorLoading';
 import { LoadingLocal } from '@/components/orther/loading';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import { IPriceList, IProductPriceList } from '@/types/type/price-list/price-list';
@@ -73,9 +72,6 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
     });
   }, [priceLists]);
 
-  if (!loading && priceLists.length === 0) {
-    return <ErrorLoading />;
-  }
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile="Bảng Giá Thu Mua" />

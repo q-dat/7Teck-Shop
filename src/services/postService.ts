@@ -28,7 +28,7 @@ export async function getAllPosts(): Promise<IPost[]> {
 
 export async function getPostById(id: string): Promise<IPost | null> {
   try {
-    const apiUrl = getServerApiUrl(`/api/posts/${id}`);
+    const apiUrl = getServerApiUrl(`/api/post/${id}`);
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },

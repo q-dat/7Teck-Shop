@@ -1,5 +1,4 @@
 'use client';
-import ErrorLoading from '@/components/orther/error/ErrorLoading';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import { IPhone } from '@/types/type/phone/phone';
@@ -53,9 +52,6 @@ export default function ClientPhonePage({ phones }: { phones: IPhone[] }) {
       setCurrentPage(currentPage - 1);
     }
   };
-  if (!loading && phones.length === 0) {
-    return <ErrorLoading />;
-  }
 
   return (
     <div>

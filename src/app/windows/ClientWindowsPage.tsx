@@ -11,7 +11,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from 'react-daisyui';
 import imageRepresent from '../../../public/image-represent';
-import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
 export default function ClientWindowsPage({ windows }: { windows: IWindows[] }) {
   const [loading, setLoading] = useState(true);
@@ -51,9 +50,7 @@ export default function ClientWindowsPage({ windows }: { windows: IWindows[] }) 
       setCurrentPage(currentPage - 1);
     }
   };
-  if (!loading && windows.length === 0) {
-    return <ErrorLoading />;
-  }
+
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile="Laptop Windows" />

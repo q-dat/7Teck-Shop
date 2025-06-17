@@ -9,7 +9,6 @@ import imageRepresent from '../../../public/image-represent';
 import Pagination from '@/components/userPage/Pagination';
 import { slugify } from '@/utils/slugify';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
-import ErrorLoading from '@/components/orther/error/ErrorLoading';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import { useRouter } from 'next/navigation';
 
@@ -51,9 +50,7 @@ export default function ClientMacbookPage({ macbook }: { macbook: IMacbook[] }) 
       setCurrentPage(currentPage - 1);
     }
   };
-  if (!loading && macbook.length === 0) {
-    return <ErrorLoading />;
-  }
+
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile="Laptop Macbook" />
