@@ -1,10 +1,12 @@
 import React from 'react';
 import { getAllPosts } from '@/services/postService';
 import ClientNewsPage from './ClientNewsPage';
+import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
-const posts = await getAllPosts();
-export default function NewsPage() {
-  return (
-    <ClientNewsPage posts={posts} />
-  )
+export default async function NewsPage() {
+  const posts = await getAllPosts();
+  if (!posts) {
+    return <ErrorLoading />;
+  }
+  return <ClientNewsPage posts={posts} />;
 }

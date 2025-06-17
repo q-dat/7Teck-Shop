@@ -3,8 +3,8 @@ import { getAllPriceLists } from '@/services/priceListService';
 import ClientPriceListPage from './ClientPriceListPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
-const priceLists = await getAllPriceLists();
-export default function PriceListPage() {
+export default async function PriceListPage() {
+  const priceLists = await getAllPriceLists();
   if (!priceLists) {
     return <ErrorLoading />;
   }

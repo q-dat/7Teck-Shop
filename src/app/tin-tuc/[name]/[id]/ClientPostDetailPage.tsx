@@ -6,8 +6,7 @@ import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
 import { slugify } from '@/utils/slugify';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useRouter } from 'next/router';
+import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { FaArrowLeftLong } from 'react-icons/fa6';
 
@@ -25,14 +24,17 @@ export default function ClientPostDetailPage({ posts, post }: ClientPostDetailPa
   useEffect(() => {
     scrollToTopSmoothly();
     const fetchPost = async () => {
-      if (id) {
-        setLoading(true);
-        setSelectedPost(post || null);
+      setLoading(true);
+      if (id && post) {
+        setSelectedPost(post);
+      } else {
+        setSelectedPost(null);
       }
+      setLoading(false);
     };
 
     fetchPost();
-  }, [id,post]);
+  }, [id, post]);
 
   // Các bài viết khác (loại bỏ bài hiện tại)
   const otherPosts: IPost[] = posts.filter((p) => p._id !== selectedPost?._id);

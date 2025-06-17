@@ -3,8 +3,8 @@ import ClientMacbookPage from './ClientMacbookPage';
 import { getAllMacbook } from '@/services/products/macbookService';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
-const macbook = await getAllMacbook();
-export default function MacbookPage() {
+export default async function MacbookPage() {
+  const macbook = await getAllMacbook();
   if (!macbook) {
     return <ErrorLoading />;
   }

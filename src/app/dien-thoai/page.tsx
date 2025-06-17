@@ -3,8 +3,8 @@ import ClientPhonePage from './ClientPhonePage';
 import { getAllPhones } from '@/services/products/phoneService';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
-const phones = await getAllPhones();
-export default function PhonePage() {
+export default async function PhonePage() {
+  const phones = await getAllPhones();
   if (!phones) {
     return <ErrorLoading />;
   }

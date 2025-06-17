@@ -3,8 +3,8 @@ import React from 'react';
 import ClientTabletPage from './ClientTabletPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
-const tablets = await getAllTablets();
-export default function TabletPage() {
+export default async function TabletPage() {
+  const tablets = await getAllTablets();
   if (!tablets) {
     return <ErrorLoading />;
   }

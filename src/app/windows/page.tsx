@@ -3,8 +3,8 @@ import React from 'react';
 import ClientWindowsPage from './ClientWindowsPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
-const windows = await getAllWindows();
-export default function WindowsPage() {
+export default async function WindowsPage() {
+  const windows = await getAllWindows();
   if (!windows) {
     return <ErrorLoading />;
   }
