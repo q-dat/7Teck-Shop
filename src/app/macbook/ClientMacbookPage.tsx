@@ -28,7 +28,7 @@ export default function ClientMacbookPage({ macbook }: { macbook: IMacbook[] }) 
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [macbook]);
 
   // Handle Click Macbook To Macbook Detail
   const router = useRouter();
