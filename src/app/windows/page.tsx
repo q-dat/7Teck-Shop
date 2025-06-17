@@ -1,7 +1,8 @@
-import React from 'react'
+import { getAllWindows } from '@/services/products/windowsService';
+import React from 'react';
+import ClientWindowsPage from './ClientWindowsPage';
 
-export default function ClientWindowsPage() {
-  return (
-    <div>ClientWindowsPage</div>
-  )
+const windows = await getAllWindows();
+export default function WindowsPage() {
+  return <ClientWindowsPage windows={windows} />;
 }
