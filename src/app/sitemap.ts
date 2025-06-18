@@ -1,5 +1,29 @@
 import { MetadataRoute } from 'next';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
+
+// Interface cho các mục trong phản hồi API
+interface Item {
+  _id: string;
+  name?: string;
+  tablet_name?: string;
+  macbook_name?: string;
+  windows_name?: string;
+  updatedAt?: string;
+  [key: string]: string | undefined; // Index signature để cho phép truy cập động
+}
+
+// Interface cho phản hồi API
+interface ApiResponse {
+  success?: boolean;
+  message?: string;
+  count?: number;
+  data?: Item[];
+  phones?: Item[];
+  tablets?: Item[];
+  macbook?: Item[];
+  windows?: Item[];
+  [key: string]: Item[] | boolean | string | number | undefined; // Index signature cho ApiResponse
+}
 
 // Hàm slugify để tạo URL thân thiện
 const slugify = (text: string): string =>
@@ -27,24 +51,21 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
   for (const endpoint of endpoints) {
     try {
       console.log(`Fetching API: ${baseUrl}${endpoint.url}`); // Debug
-      const res = await axios.get(`${baseUrl}${endpoint.url}`);
+      const res: AxiosResponse<ApiResponse> = await axios.get<ApiResponse>(`${baseUrl}${endpoint.url}`);
       // console.log(`API Response for ${endpoint.path}:`, res.data); // Debug
 
-      // Xử lý dữ liệu dựa trên format API
-      let data: any[] = [];
+      let data: Item[] = [];
       if ('success' in res.data && Array.isArray(res.data.data)) {
-        // Format cũ: { success, data }
         data = res.data.data;
       } else if (endpoint.dataField in res.data && Array.isArray(res.data[endpoint.dataField])) {
-        // Format mới: { message, count, [dataField] }
-        data = res.data[endpoint.dataField];
+        data = res.data[endpoint.dataField] as Item[];
       }
 
       if (data.length > 0) {
-        const segmentPaths = data.map((item: any) => {
+        const segmentPaths = data.map((item: Item) => {
           console.log(`Processing item: ${item[endpoint.nameField]} (${item._id})`); // Debug
           return {
-            url: `https://www.7teck.vn/${endpoint.path}/${slugify(item[endpoint.nameField])}/${item._id}`,
+            url: `https://www.7teck.vn/${endpoint.path}/${slugify(item[endpoint.nameField] || '')}/${item._id}`,
             lastModified: item.updatedAt ? new Date(item.updatedAt) : new Date(),
             changeFrequency: 'daily' as const,
             priority: 0.7,
@@ -64,7 +85,6 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Các trang tĩnh
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: 'https://www.7teck.vn',
@@ -140,11 +160,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Lấy các trang động từ API
   const dynamicPages = await getDynamicPaths();
   console.log('Total Pages:', [...staticPages, ...dynamicPages].length); // Debug
 
-  // Kết hợp và loại trừ các đường dẫn không mong muốn
   const allPages = [...staticPages, ...dynamicPages].filter((page) => !page.url.includes('/cms/'));
 
   return allPages.slice(0, 5000);
