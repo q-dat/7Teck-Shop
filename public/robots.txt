@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Disallow: /cms/*
+
+# Host
+Host: https://www.7teck.vn
+
+# Sitemaps
+Sitemap: https://www.7teck.vn/sitemap.xml
