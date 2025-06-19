@@ -2,9 +2,7 @@
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import { memo, useEffect, useState } from 'react';
 import ClientPhoneFC from './ClientPhoneFC';
-import ClientTabletFC from './ClientTabletFC';
-import ClientMacbookFC from './ClientMacbookFC';
-import ClientWindowsFC from './ClientWindowsFC';
+import ClientProductFC, { Product } from './ClientProductFC';
 import ClientPostSection from './ClientPostSection';
 import { IPhone } from '@/types/type/phone/phone';
 import { IMacbook } from '@/types/type/macbook/macbook';
@@ -14,12 +12,12 @@ import { IPost } from '@/types/type/post/post';
 import Image from 'next/image';
 import { images } from '../../public/images';
 
-// Component Banner
+// Thành phần Banner
 const BannerComponent = memo(() => (
   <div className="relative">
     <div className="absolute bottom-0 left-0 top-0 h-full w-full bg-black bg-opacity-10 pl-2 pt-[20%] md:pl-20 md:pt-5 xl:pl-[100px] xl:pt-[4%]">
       <h1 className="text-[25px] font-extrabold text-white xl:text-[40px]">
-        Đổi Điện Thoại Cũ , <br />
+        Đổi Điện Thoại Cũ, <br />
         Nhận Ngay Giá Tốt Nhất!
       </h1>
       <h2 className="w-[120px] bg-gradient-to-r from-primary via-primary to-transparent text-start text-[20px] font-thin italic text-white">
@@ -36,7 +34,7 @@ const BannerComponent = memo(() => (
 BannerComponent.displayName = 'BannerComponent';
 const Banner = memo(BannerComponent);
 
-// Component Background Fixed
+// Thành phần Background Fixed
 const BgFixedSectionComponent = memo(() => (
   <div
     className="relative my-10 h-[200px] w-full bg-cover bg-fixed bg-center bg-no-repeat xl:h-[300px]"
@@ -68,43 +66,110 @@ interface ClientHomePageProps {
 export default function ClientHomePage({ mostViewedPhones, tablets, macbook, windows, posts }: ClientHomePageProps) {
   const [loading, setLoading] = useState(true);
 
+  // Kiểm tra trạng thái tải dựa trên mostViewedPhones
   useEffect(() => {
     if (mostViewedPhones.length === 0) {
       const fetchData = async () => {
         setLoading(true);
       };
-
       fetchData();
     } else {
       setLoading(false);
     }
   }, [mostViewedPhones]);
 
+  // Ánh xạ dữ liệu
+
+  const transformTablets: Product[] = tablets.map((item) => ({
+    _id: item._id,
+    name: item.tablet_name || item.tablet_name || 'Unknown',
+    price: item.tablet_price || item.tablet_price || 0,
+    sale: item.tablet_sale || item.tablet_sale || null,
+    image: item.tablet_img || item.tablet_img || '',
+    status: item.tablet_status || item.tablet_status,
+  }));
+
+  const transformMacbook: Product[] = macbook.map((item) => ({
+    _id: item._id,
+    name: item.macbook_name || item.macbook_name || 'Unknown', // Fallback nếu không có macbook_name
+    price: item.macbook_price || item.macbook_price || 0,
+    sale: item.macbook_sale || item.macbook_sale || null,
+    image: item.macbook_img || item.macbook_img || '',
+    status: item.macbook_status || item.macbook_status,
+  }));
+
+  const transformWindows: Product[] = windows.map((item) => ({
+    _id: item._id,
+    name: item.windows_name || item.windows_name || 'Unknown',
+    price: item.windows_price || item.windows_price || 0,
+    sale: item.windows_sale || item.windows_sale || null,
+    image: item.windows_img || item.windows_img || '',
+    status: item.windows_status || item.windows_status,
+  }));
+
+  // Cấu hình danh mục sản phẩm
+  const productCategories: Array<{
+    products: Product[];
+    category: {
+      name: string;
+      url: string;
+      title: string;
+      ariaLabel: string;
+    };
+  }> = [
+    {
+      products: transformTablets,
+      category: {
+        name: 'iPad',
+        url: '/may-tinh-bang',
+        title: 'iPad - Giảm giá mạnh',
+        ariaLabel: 'Xem thêm sản phẩm iPad',
+      },
+    },
+    {
+      products: transformMacbook,
+      category: {
+        name: 'Macbook',
+        url: '/macbook',
+        title: 'Macbook - Giảm giá mạnh',
+        ariaLabel: 'Xem thêm sản phẩm laptop Macbook',
+      },
+    },
+    {
+      products: transformWindows,
+      category: {
+        name: 'Windows',
+        url: '/windows',
+        title: 'Windows - Giảm giá mạnh',
+        ariaLabel: 'Xem thêm sản phẩm laptop Windows',
+      },
+    },
+  ];
+
   return (
     <div>
+      {/* Thanh điều hướng responsive */}
       <HeaderResponsive Title_NavbarMobile="Trang Chủ" />
       <div className="pt-[60px] xl:pt-0">
+        {/* Banner quảng cáo */}
         <Banner />
+        {/* Phần lợi ích */}
         {/* <BenefitsSection /> */}
-        {/* Product Section */}
+        {/* Phần sản phẩm điện thoại */}
         {/* <div data-aos="fade-down"> */}
         <ClientPhoneFC mostViewedPhones={mostViewedPhones} loading={loading} />
         {/* </div> */}
-        {/* Bg Fixed */}
+        {/* Phần nền cố định */}
         {mostViewedPhones.length !== 0 && <BgFixedSection />}
-        {/* Discounted Products Section */}
+        {/* Phần sản phẩm giảm giá */}
         <div className="flex w-full flex-col items-center justify-center gap-5">
-          {[ClientTabletFC, ClientMacbookFC, ClientWindowsFC].map((Component, index) => (
-            <div
-              key={index}
-              //  data-aos="fade-up"
-              className="w-full"
-            >
-              <Component macbook={macbook} tablets={tablets} windows={windows} />
+          {productCategories.map((config, index) => (
+            <div key={index} /* data-aos="fade-up" */ className="w-full">
+              <ClientProductFC products={config.products} category={config.category} loading={loading} />
             </div>
           ))}
         </div>
-
+        {/* Phần bài viết */}
         <ClientPostSection posts={posts} />
       </div>
     </div>
