@@ -11,6 +11,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from 'react-daisyui';
 import { FaRegEye } from 'react-icons/fa';
 import imageRepresent from '../../../../public/image-represent';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 export default function ClientUsedTabletByCatalogPage({ tablets }: { tablets: ITablet[] }) {
   const [loading, setLoading] = useState(true);
@@ -97,10 +98,8 @@ export default function ClientUsedTabletByCatalogPage({ tablets }: { tablets: IT
                           </div>
                           <p className="xl:group-hover:text-secondary">Điện Thoại {tablet?.tablet_name}</p>
                           <p className="font-[500] text-red-700">
-                            {(tablet?.tablet_price * 1000).toLocaleString('vi-VN')}₫ &nbsp;
-                            <del className="text-xs font-light text-gray-400">
-                              {tablet?.tablet_sale && `${(tablet?.tablet_sale * 1000).toLocaleString('vi-VN')}₫`}
-                            </del>
+                            {formatCurrency(tablet?.tablet_price)} &nbsp;
+                            <del className="text-xs font-light text-gray-400">{tablet?.tablet_sale && `${tablet?.tablet_sale}`}</del>
                           </p>
                         </Link>
                         <Link role="navigation" aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">

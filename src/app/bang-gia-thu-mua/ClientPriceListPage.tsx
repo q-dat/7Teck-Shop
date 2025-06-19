@@ -2,6 +2,7 @@
 import { LoadingLocal } from '@/components/orther/loading';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import { IPriceList, IProductPriceList } from '@/types/type/price-list/price-list';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -145,7 +146,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                           <Table.Row key={index} className="border border-secondary">
                             <span>{product?.name}</span>
                             <span>{product?.storage}</span>
-                            <span>{(product?.price * 1000).toLocaleString('vi-VN')}đ</span>
+                            <span>{formatCurrency(product?.price)}</span>
                           </Table.Row>
                         ))}
                       </Table.Body>

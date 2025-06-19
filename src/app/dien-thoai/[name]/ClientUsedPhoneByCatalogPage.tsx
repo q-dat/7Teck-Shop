@@ -11,6 +11,7 @@ import { IPhone } from '@/types/type/phone/phone';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 export default function ClientUsedPhoneByCatalogPage({ phones }: { phones: IPhone[] }) {
   const [loading, setLoading] = useState(true);
@@ -97,10 +98,8 @@ export default function ClientUsedPhoneByCatalogPage({ phones }: { phones: IPhon
                           </div>
                           <p className="xl:group-hover:text-secondary">Điện Thoại {phone?.name}</p>
                           <p className="font-[500] text-red-700">
-                            {(phone?.price * 1000).toLocaleString('vi-VN')}₫ &nbsp;
-                            <del className="text-xs font-light text-gray-400">
-                              {phone?.sale && `${(phone?.sale * 1000).toLocaleString('vi-VN')}₫`}
-                            </del>
+                            {formatCurrency(phone?.price)}&nbsp;
+                            <del className="text-xs font-light text-gray-400">{phone?.sale && `${formatCurrency(phone?.sale)}`}</del>
                           </p>
                         </Link>
                         <Link role="navigation" aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">

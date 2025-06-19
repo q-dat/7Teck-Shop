@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface ClientUsedMacbookPageProps {
   macbookCatalogs: IMacbookCatalog[];
@@ -98,7 +99,7 @@ export default function ClientUsedMacbookPage({ macbookCatalogs }: ClientUsedMac
                   <div className="w-full p-1">
                     <p className="text-gray-700">
                       Từ:&nbsp;
-                      <span className="font-semibold text-red-700">{(macbookCatalog.m_cat_price * 1000).toLocaleString('vi-VN')}₫</span>
+                      <span className="font-semibold text-red-700">{formatCurrency(macbookCatalog.m_cat_price)}</span>
                     </p>
                   </div>
                 </div>

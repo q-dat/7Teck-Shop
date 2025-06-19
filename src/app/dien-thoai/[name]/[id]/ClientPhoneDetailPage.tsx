@@ -5,6 +5,7 @@ import Zoom from '@/lib/Zoom';
 import { phoneFieldMap } from '@/types/type/optionsData/phoneFieldMap';
 import { IPhone } from '@/types/type/phone/phone';
 import { scrollBy, updateScrollButtons, handleScrollButtons, handleThumbnailClick } from '@/utils/DetailPage/scrollUtils';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
 import { contact, hotlineUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
@@ -136,8 +137,8 @@ export default function ClientPhoneDetailPage({ phone }: { phone: IPhone }) {
                 <div className="w-full">
                   <h1 className="text-xl font-semibold text-black">Điện thoại {phone?.name}</h1>
                   <p className="text-3xl font-semibold text-red-500">
-                    <span>{(phone?.price * 1000).toLocaleString('vi-VN')}₫</span>
-                    {phone?.sale && <del className="pl-2 text-sm font-light text-gray-100">{(phone?.sale * 1000).toLocaleString('vi-VN')}₫</del>}
+                    <span>{formatCurrency(phone?.price)}</span>
+                    {phone?.sale && <del className="pl-2 text-sm font-light text-gray-100">{formatCurrency(phone?.sale)}</del>}
                   </p>
                   {phone?.color && (
                     <p className="space-x-1 text-gray-500">

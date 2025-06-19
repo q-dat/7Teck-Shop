@@ -5,6 +5,7 @@ import Zoom from '@/lib/Zoom';
 import { IMacbook } from '@/types/type/macbook/macbook';
 import { macbookFieldMap } from '@/types/type/optionsData/macbookFieldMap';
 import { scrollBy, handleScrollButtons, handleThumbnailClick, updateScrollButtons } from '@/utils/DetailPage/scrollUtils';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
 import { contact, hotlineUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
@@ -136,10 +137,8 @@ export default function ClientMacbookDetailPage({ mac }: { mac: IMacbook }) {
                 <div className="w-full">
                   <h1 className="text-xl font-semibold text-black">Laptop {mac?.macbook_name}</h1>
                   <p className="text-3xl font-semibold text-red-500">
-                    <span>{(mac?.macbook_price * 1000).toLocaleString('vi-VN')}₫</span>
-                    {mac?.macbook_sale && (
-                      <del className="text-sm font-light text-gray-100">{(mac?.macbook_sale * 1000).toLocaleString('vi-VN')} ₫</del>
-                    )}
+                    <span>{formatCurrency(mac?.macbook_price)}</span>
+                    {mac?.macbook_sale && <del className="text-sm font-light text-gray-100">{formatCurrency(mac?.macbook_sale)}</del>}
                   </p>
                   {mac?.macbook_color && (
                     <p className="space-x-1 text-gray-500">

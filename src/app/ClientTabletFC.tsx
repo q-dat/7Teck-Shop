@@ -10,6 +10,7 @@ import { IoIosArrowForward } from 'react-icons/io';
 import { ITablet } from '@/types/type/tablet/tablet';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import Image from 'next/image';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface ClientTabletFCProps {
   tablets: ITablet[];
@@ -89,10 +90,8 @@ export default function ClientTabletFC({ tablets }: ClientTabletFCProps) {
                     </Link>
                     <div className="w-full">
                       <p className="text-red-700">
-                        {(tablet?.tablet_price * 1000).toLocaleString('vi-VN')}₫ &nbsp;
-                        {tablet?.tablet_sale && (
-                          <del className="text-xs font-light text-gray-500">{(tablet?.tablet_sale * 1000).toLocaleString('vi-VN')} ₫</del>
-                        )}
+                        {formatCurrency(tablet?.tablet_price)}&nbsp;
+                        {tablet?.tablet_sale && <del className="text-xs font-light text-gray-500">{formatCurrency(tablet?.tablet_sale)}</del>}
                       </p>
                       <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">
                         <Button

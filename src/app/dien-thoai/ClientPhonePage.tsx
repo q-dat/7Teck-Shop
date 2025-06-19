@@ -11,6 +11,7 @@ import { Button } from 'react-daisyui';
 import imageRepresent from '../../../public/image-represent';
 import Image from 'next/image';
 import Pagination from '@/components/userPage/Pagination';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 export default function ClientPhonePage({ phones }: { phones: IPhone[] }) {
   const [loading, setLoading] = useState(true);
@@ -116,9 +117,9 @@ export default function ClientPhonePage({ phones }: { phones: IPhone[] }) {
                         <div className="w-full">
                           <p className="text-gray-700">
                             &nbsp;
-                            <span className="font-semibold text-red-700">{(phone?.price * 1000).toLocaleString('vi-VN')}₫</span>
+                            <span className="font-semibold text-red-700">{formatCurrency(phone?.price)}</span>
                             &nbsp;
-                            {phone?.sale && <del className="text-xs font-light text-gray-100">{(phone?.sale * 1000).toLocaleString('vi-VN')} ₫</del>}
+                            {phone?.sale && <del className="text-xs font-light text-gray-100">{formatCurrency(phone?.sale)}</del>}
                           </p>
                           <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">
                             <Button

@@ -5,6 +5,7 @@ import Zoom from '@/lib/Zoom';
 import { tabletFieldMap } from '@/types/type/optionsData/tabletFieldMap';
 import { ITablet } from '@/types/type/tablet/tablet';
 import { scrollBy, handleScrollButtons, handleThumbnailClick, updateScrollButtons } from '@/utils/DetailPage/scrollUtils';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
 import { contact, hotlineUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
@@ -135,10 +136,8 @@ export default function ClientTabletDetailPage({ tablet }: { tablet: ITablet }) 
                 <div className="w-full">
                   <h1 className="text-xl font-semibold text-black">Máy tính bảng {tablet?.tablet_name}</h1>
                   <p className="text-3xl font-semibold text-red-500">
-                    <span>{(tablet?.tablet_price * 1000).toLocaleString('vi-VN')}₫</span>
-                    {tablet?.tablet_sale && (
-                      <del className="text-sm font-light text-gray-100">{(tablet?.tablet_sale * 1000).toLocaleString('vi-VN')}₫</del>
-                    )}
+                    <span>{formatCurrency(tablet?.tablet_price)}</span>
+                    {tablet?.tablet_sale && <del className="text-sm font-light text-gray-100">{formatCurrency(tablet?.tablet_sale)}</del>}
                   </p>
                   {tablet?.tablet_color && (
                     <p className="space-x-1 text-gray-500">

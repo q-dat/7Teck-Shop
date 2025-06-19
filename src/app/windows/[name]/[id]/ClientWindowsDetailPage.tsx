@@ -5,6 +5,7 @@ import Zoom from '@/lib/Zoom';
 import { windowsFieldMap } from '@/types/type/optionsData/windowsFieldMap';
 import { IWindows } from '@/types/type/windows/windows';
 import { scrollBy, handleScrollButtons, handleThumbnailClick, updateScrollButtons } from '@/utils/DetailPage/scrollUtils';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
 import { contact, hotlineUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
@@ -135,10 +136,8 @@ export default function ClientWindowsDetailPage({ win }: { win: IWindows }) {
                 <div className="w-full">
                   <h1 className="text-xl font-semibold text-black">Laptop {win?.windows_name}</h1>
                   <p className="text-3xl font-semibold text-red-500">
-                    <span>{(win?.windows_price * 1000).toLocaleString('vi-VN')}₫</span>
-                    {win?.windows_sale && (
-                      <del className="text-sm font-light text-gray-100">{(win?.windows_sale * 1000).toLocaleString('vi-VN')} ₫</del>
-                    )}
+                    <span>{formatCurrency(win?.windows_price)}</span>
+                    {win?.windows_sale && <del className="text-sm font-light text-gray-100">{formatCurrency(win?.windows_sale)} </del>}
                   </p>
                   {win?.windows_color && (
                     <p className="space-x-1 text-gray-500">

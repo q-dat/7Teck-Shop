@@ -10,6 +10,7 @@ import { IoIosArrowForward } from 'react-icons/io';
 import { IWindows } from '@/types/type/windows/windows';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import Image from 'next/image';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface ClientWindowsFCProps {
   windows: IWindows[];
@@ -88,10 +89,8 @@ export default function ClientWindowsFC({ windows }: ClientWindowsFCProps) {
                     </Link>
                     <div className="w-full">
                       <p className="text-red-700">
-                        {(win?.windows_price * 1000).toLocaleString('vi-VN')}₫ &nbsp;
-                        {win?.windows_sale && (
-                          <del className="text-xs font-light text-gray-500">{(win?.windows_sale * 1000).toLocaleString('vi-VN')} ₫</del>
-                        )}
+                        {formatCurrency(win?.windows_price)}&nbsp;
+                        {win?.windows_sale && <del className="text-xs font-light text-gray-500">{formatCurrency(win?.windows_sale)}</del>}
                       </p>
                       <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">
                         <Button

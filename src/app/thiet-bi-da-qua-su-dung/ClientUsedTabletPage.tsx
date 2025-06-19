@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface ClientUsedTabletPageProps {
   tabletCatalogs: ITabletCatalog[];
@@ -98,7 +99,7 @@ export default function ClientUsedTabletPage({ tabletCatalogs }: ClientUsedTable
                   <div className="w-full p-1">
                     <p className="text-gray-700">
                       Từ:&nbsp;
-                      <span className="font-semibold text-red-700">{(tabletCatalog.t_cat_price * 1000).toLocaleString('vi-VN')}₫</span>
+                      <span className="font-semibold text-red-700">{formatCurrency(tabletCatalog.t_cat_price)}</span>
                     </p>
                   </div>
                 </div>

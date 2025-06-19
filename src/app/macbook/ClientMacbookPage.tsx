@@ -11,6 +11,7 @@ import { slugify } from '@/utils/slugify';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import { useRouter } from 'next/navigation';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 export default function ClientMacbookPage({ macbook }: { macbook: IMacbook[] }) {
   const [loading, setLoading] = useState(true);
@@ -113,7 +114,7 @@ export default function ClientMacbookPage({ macbook }: { macbook: IMacbook[] }) 
                         <div className="w-full p-1">
                           <p className="text-gray-700">
                             &nbsp;
-                            <span className="font-semibold text-red-700">{(macbook?.macbook_price * 1000).toLocaleString('vi-VN')}₫</span>
+                            <span className="font-semibold text-red-700">{formatCurrency(macbook?.macbook_price)}</span>
                           </p>
                           <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">
                             <Button

@@ -10,6 +10,7 @@ import imageRepresent from '../../public/image-represent';
 import { IMacbook } from '@/types/type/macbook/macbook';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import Image from 'next/image';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface ClientMacbookFCProps {
   macbook: IMacbook[];
@@ -90,10 +91,8 @@ export default function ClientMacbookFC({ macbook }: ClientMacbookFCProps) {
                     </Link>
                     <div className="w-full">
                       <p className="text-red-700">
-                        {(mac?.macbook_price * 1000).toLocaleString('vi-VN')}₫ &nbsp;
-                        {mac?.macbook_sale && (
-                          <del className="text-xs font-light text-gray-500">{(mac?.macbook_sale * 1000).toLocaleString('vi-VN')} ₫</del>
-                        )}
+                        {formatCurrency(mac?.macbook_price)}&nbsp;
+                        {mac?.macbook_sale && <del className="text-xs font-light text-gray-500">{formatCurrency(mac?.macbook_sale)}</del>}
                       </p>
                       <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">
                         <Button

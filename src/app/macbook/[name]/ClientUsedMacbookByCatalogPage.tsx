@@ -11,6 +11,7 @@ import { FaRegEye } from 'react-icons/fa';
 import imageRepresent from '../../../../public/image-represent';
 import { IMacbook } from '@/types/type/macbook/macbook';
 import Image from 'next/image';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 export default function ClientUsedMacbookByCatalogPage({ macbook }: { macbook: IMacbook[] }) {
   const [loading, setLoading] = useState(true);
@@ -97,10 +98,8 @@ export default function ClientUsedMacbookByCatalogPage({ macbook }: { macbook: I
                           </div>
                           <p className="xl:group-hover:text-secondary">Laptop {mac?.macbook_name}</p>
                           <p className="font-[500] text-red-700">
-                            {(mac?.macbook_price * 1000).toLocaleString('vi-VN')}₫ &nbsp;
-                            <del className="text-xs font-light text-gray-400">
-                              {mac?.macbook_sale && `${(mac?.macbook_sale * 1000).toLocaleString('vi-VN')}₫`}
-                            </del>
+                            {formatCurrency(mac?.macbook_price)} &nbsp;
+                            <del className="text-xs font-light text-gray-400">{mac?.macbook_sale && `${formatCurrency(mac?.macbook_sale)}`}</del>
                           </p>
                         </Link>
                         <Link role="navigation" aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">

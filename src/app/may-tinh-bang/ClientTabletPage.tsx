@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { Button } from 'react-daisyui';
 import imageRepresent from '../../../public/image-represent';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 export default function ClientTabletPage({ tablets }: { tablets: ITablet[] }) {
   const [loading, setLoading] = useState(true);
@@ -113,7 +114,7 @@ export default function ClientTabletPage({ tablets }: { tablets: ITablet[] }) {
                         <div className="w-full p-1">
                           <p className="text-gray-700">
                             &nbsp;
-                            <span className="font-semibold text-red-700">{(tablet?.tablet_price * 1000).toLocaleString('vi-VN')}₫</span>
+                            <span className="font-semibold text-red-700">{formatCurrency(tablet?.tablet_price)}</span>
                           </p>
                           <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">
                             <Button
