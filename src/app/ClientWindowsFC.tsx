@@ -105,7 +105,7 @@ export default function ClientWindowsFC({ windows }: ClientWindowsFCProps) {
                   {/*  */}
                   {win?.windows_status && (
                     <div className="absolute -left-[3px] top-0 z-20">
-                      <Image height={100} width={100} alt="" loading="lazy" className="h-full w-[60px]" src={imageRepresent.Status} />
+                      <Image height={100} width={60} alt="" loading="lazy" className="h-full w-[60px]" src={imageRepresent.Status} />
                       <p className="absolute top-[1px] w-full pl-2 text-xs text-white">{win?.windows_status}</p>
                     </div>
                   )}

@@ -114,7 +114,7 @@ export default function ClientUsedTabletByCatalogPage({ tablets }: { tablets: IT
                       {/*  */}
                       {tablet?.tablet_status && (
                         <div className="absolute -left-[3px] top-0 z-20">
-                          <Image alt="" loading="lazy" width={100} height={100} className="h-full w-[60px]" src={imageRepresent.Status} />
+                          <Image alt="" loading="lazy" width={60} height={100} className="h-full w-[60px]" src={imageRepresent.Status} />
                           <p className="absolute top-[1px] w-full pl-1 text-xs text-white">{tablet?.tablet_status}</p>
                         </div>
                       )}

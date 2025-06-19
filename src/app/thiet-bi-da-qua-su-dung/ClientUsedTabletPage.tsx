@@ -71,16 +71,16 @@ export default function ClientUsedTabletPage({ tabletCatalogs }: ClientUsedTable
               >
                 <div className="relative h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none">
                   <Image
-                    height={100}
-                    width={100}
+                    height={200}
+                    width={200}
                     alt="Hình ảnh"
                     loading="lazy"
                     className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl filter"
                     src={tabletCatalog?.t_cat_img}
                   />
                   <Image
-                    height={100}
-                    width={100}
+                    height={200}
+                    width={200}
                     alt="Hình ảnh"
                     loading="lazy"
                     className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"

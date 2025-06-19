@@ -67,8 +67,8 @@ export default function ClientPhoneDetailPage({ phone }: { phone: IPhone }) {
               <div className="relative w-full">
                 <div className="h-[500px] w-full overflow-hidden object-cover">
                   <Image
-                    width={200}
-                    height={200}
+                    width={500}
+                    height={500}
                     loading="lazy"
                     src={selectedImage || phone?.img}
                     alt={phone?.name || 'Hình ảnh'}
@@ -76,8 +76,8 @@ export default function ClientPhoneDetailPage({ phone }: { phone: IPhone }) {
                   />
                   <Zoom>
                     <Image
-                      width={200}
-                      height={200}
+                      width={500}
+                      height={500}
                       loading="lazy"
                       src={selectedImage || phone?.img}
                       alt={phone?.name || 'Hình ảnh'}
