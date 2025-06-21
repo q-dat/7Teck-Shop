@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import { getPhoneById } from '@/services/products/phoneService';
 import { PageProps } from '@/types/type/pages/page-props';
 import { IPhone } from '@/types/type/phone/phone';

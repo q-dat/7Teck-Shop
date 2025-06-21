@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import { PageProps } from '@/types/type/pages/page-props';
 import Head from 'next/head';
 import React from 'react';

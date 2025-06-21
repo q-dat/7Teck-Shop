@@ -34,10 +34,15 @@ export async function getTabletById(id: string): Promise<ITablet | null> {
       next: { revalidate: 60 },
     });
 
-    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Lỗi API: ${res.status} ${res.statusText} - ${errorText}`);
+    }
 
     const data = await res.json();
-    // console.log('Tablet by ID API response:', data); // Debug response
+    if (res.headers.get('x-vercel-cache') === 'HIT') {
+      console.log(`Cache hit for tablet:${id}`);
+    }
 
     if (!data || typeof data !== 'object' || !data.tablet) {
       console.warn('Dữ liệu API Tablet theo ID không hợp lệ:', data);

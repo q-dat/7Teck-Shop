@@ -59,10 +59,15 @@ export async function getPhoneById(id: string): Promise<IPhone | null> {
       next: { revalidate: 60 },
     });
 
-    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Lỗi API: ${res.status} ${res.statusText} - ${errorText}`);
+    }
 
     const data = await res.json();
-    // console.log('Phone by ID API response:', data); // Debug response
+    if (res.headers.get('x-vercel-cache') === 'HIT') {
+      console.log(`Cache hit for phone:${id}`);
+    }
 
     if (!data || typeof data !== 'object' || !data.phone) {
       console.warn('Dữ liệu API Phone theo ID không hợp lệ:', data);

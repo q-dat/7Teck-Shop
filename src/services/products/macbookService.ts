@@ -34,10 +34,15 @@ export async function getMacbookById(id: string): Promise<IMacbook | null> {
       next: { revalidate: 60 },
     });
 
-    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Lỗi API: ${res.status} ${res.statusText} - ${errorText}`);
+    }
 
     const data = await res.json();
-    // console.log('Macbook by ID API response:', data); // Debug response
+    if (res.headers.get('x-vercel-cache') === 'HIT') {
+      console.log(`Cache hit for macbook:${id}`);
+    }
 
     if (!data || typeof data !== 'object' || !data.macbook) {
       console.warn('Dữ liệu API Macbook theo ID không hợp lệ:', data);
