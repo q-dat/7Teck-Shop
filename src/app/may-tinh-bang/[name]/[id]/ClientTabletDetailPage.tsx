@@ -75,6 +75,7 @@ export default function ClientTabletDetailPage({ tablet }: { tablet: ITablet }) 
                   />
                   <Zoom>
                     <Image
+                      priority
                       width={500}
                       height={500}
                       loading="lazy"

@@ -76,6 +76,7 @@ export default function ClientPhoneDetailPage({ phone }: { phone: IPhone }) {
                   />
                   <Zoom>
                     <Image
+                      priority
                       width={500}
                       height={500}
                       loading="lazy"

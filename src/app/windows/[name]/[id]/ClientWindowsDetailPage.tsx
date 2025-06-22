@@ -75,6 +75,7 @@ export default function ClientWindowsDetailPage({ win }: { win: IWindows }) {
                   />
                   <Zoom>
                     <Image
+                      priority
                       width={500}
                       height={500}
                       loading="lazy"

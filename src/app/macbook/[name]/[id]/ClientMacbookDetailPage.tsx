@@ -76,6 +76,7 @@ export default function ClientMacbookDetailPage({ mac }: { mac: IMacbook }) {
                   />
                   <Zoom>
                     <Image
+                      priority
                       width={500}
                       height={500}
                       loading="lazy"
