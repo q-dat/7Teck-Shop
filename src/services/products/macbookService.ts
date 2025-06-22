@@ -1,3 +1,4 @@
+import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { IMacbook } from '../../types/type/macbook/macbook';
 
@@ -39,10 +40,9 @@ export async function getMacbookById(id: string): Promise<IMacbook | null> {
       throw new Error(`Lỗi API: ${res.status} ${res.statusText} - ${errorText}`);
     }
 
+    // Kiểm tra trạng thái cache
+    logCacheStatus(res, `macbook:${id}`);
     const data = await res.json();
-    if (res.headers.get('x-vercel-cache') === 'HIT') {
-      console.log(`Cache hit for macbook:${id}`);
-    }
 
     if (!data || typeof data !== 'object' || !data.macbook) {
       console.warn('Dữ liệu API Macbook theo ID không hợp lệ:', data);

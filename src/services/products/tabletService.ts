@@ -1,3 +1,4 @@
+import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { ITablet } from '../../types/type/tablet/tablet';
 
@@ -39,10 +40,9 @@ export async function getTabletById(id: string): Promise<ITablet | null> {
       throw new Error(`Lỗi API: ${res.status} ${res.statusText} - ${errorText}`);
     }
 
+    // Kiểm tra trạng thái cache
+    logCacheStatus(res, `tablets:${id}`);
     const data = await res.json();
-    if (res.headers.get('x-vercel-cache') === 'HIT') {
-      console.log(`Cache hit for tablet:${id}`);
-    }
 
     if (!data || typeof data !== 'object' || !data.tablet) {
       console.warn('Dữ liệu API Tablet theo ID không hợp lệ:', data);

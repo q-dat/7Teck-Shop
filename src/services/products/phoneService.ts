@@ -1,3 +1,4 @@
+import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { IPhone } from '../../types/type/phone/phone';
 
@@ -64,10 +65,9 @@ export async function getPhoneById(id: string): Promise<IPhone | null> {
       throw new Error(`Lỗi API: ${res.status} ${res.statusText} - ${errorText}`);
     }
 
+    // Kiểm tra trạng thái cache
+    logCacheStatus(res, `phones:${id}`);
     const data = await res.json();
-    if (res.headers.get('x-vercel-cache') === 'HIT') {
-      console.log(`Cache hit for phone:${id}`);
-    }
 
     if (!data || typeof data !== 'object' || !data.phone) {
       console.warn('Dữ liệu API Phone theo ID không hợp lệ:', data);

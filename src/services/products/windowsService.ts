@@ -1,5 +1,6 @@
 import { IWindows } from '@/types/type/windows/windows';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
+import { logCacheStatus } from '@/utils/logCacheStatus';
 
 export async function getAllWindows(): Promise<IWindows[]> {
   try {
@@ -38,11 +39,9 @@ export async function getWindowsById(id: string): Promise<IWindows | null> {
       const errorText = await res.text();
       throw new Error(`Lỗi API: ${res.status} ${res.statusText} - ${errorText}`);
     }
-
+    // Kiểm tra trạng thái cache
+    logCacheStatus(res, `windows:${id}`);
     const data = await res.json();
-    if (res.headers.get('x-vercel-cache') === 'HIT') {
-      console.log(`Cache hit for windows:${id}`);
-    }
 
     if (!data || typeof data !== 'object' || !data.windows) {
       console.warn('Dữ liệu API Windows theo ID không hợp lệ:', data);
