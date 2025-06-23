@@ -96,7 +96,7 @@ export default function ClientUsedTabletByCatalogPage({ tablets }: { tablets: IT
                             <FaRegEye />
                             <p>{tablet.tablet_view}</p>
                           </div>
-                          <p className="xl:group-hover:text-secondary">Điện Thoại {tablet?.tablet_name}</p>
+                          <p className="xl:group-hover:text-secondary">Máy tính bảng {tablet?.tablet_name}</p>
                           <p className="font-[500] text-red-700">
                             {formatCurrency(tablet?.tablet_price)} &nbsp;
                             <del className="text-xs font-light text-gray-400">{tablet?.tablet_sale && `${tablet?.tablet_sale}`}</del>
