@@ -149,7 +149,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
 
       {/* See more */}
       {!loading && mostViewedPhones.length > 0 && (
-        <Link href="/dien-thoai" aria-label="Xem thêm sản phẩm điện thoại iPhone">
+        <Link href="/dien-thoai" aria-label="Xem thêm sản phẩm điện thoại">
           <button className="flex w-full cursor-pointer items-center justify-center bg-gradient-to-r from-white via-secondary to-white py-1 text-sm text-white xl:rounded-b-lg">
             Xem Thêm Điện Thoại
             <IoIosArrowForward className="text-xl" />

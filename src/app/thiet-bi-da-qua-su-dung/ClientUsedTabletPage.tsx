@@ -54,7 +54,7 @@ export default function ClientUsedTabletPage({ tabletCatalogs }: ClientUsedTable
 
   return (
     <div className="my-5 rounded-md bg-white p-2">
-      <div className="py-2 text-2xl font-semibold text-black">iPad</div>
+      <div className="py-2 text-2xl font-semibold text-black">Máy Tính Bảng</div>
       <div className="grid grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
         {loading ? (
           <ProductPlaceholders count={12} />
@@ -94,7 +94,7 @@ export default function ClientUsedTabletPage({ tabletCatalogs }: ClientUsedTable
                       {tabletCatalog?.t_cat_tabletCount > 99 ? '99+' : tabletCatalog?.t_cat_tabletCount} {' Sản phẩm'}
                     </p>
 
-                    <p className="xl:group-hover:text-secondary">Máy tính bảng {tabletCatalog.t_cat_name}</p>
+                    <p className="xl:group-hover:text-secondary">Máy Tính Bảng {tabletCatalog.t_cat_name}</p>
                   </div>
                   <div className="w-full p-1">
                     <p className="text-gray-700">

@@ -56,7 +56,7 @@ export default function ClientPhonePage({ phones }: { phones: IPhone[] }) {
 
   return (
     <div>
-      <HeaderResponsive Title_NavbarMobile="iPhone" />
+      <HeaderResponsive Title_NavbarMobile="Điện Thoại" />
       <div className="py-[60px] xl:pt-0">
         <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
@@ -66,8 +66,8 @@ export default function ClientPhonePage({ phones }: { phones: IPhone[] }) {
               </Link>
             </li>
             <li>
-              <Link aria-label="Điện thoại" href="">
-                iPhone
+              <Link aria-label="Điện Thoại" href="">
+                Điện Thoại
               </Link>
             </li>
           </ul>

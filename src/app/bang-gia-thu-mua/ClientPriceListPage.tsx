@@ -103,9 +103,9 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                     <div role="region" aria-label={`Danh mục ${categoryType}`}>
                       <h2 className="my-5 font-bold text-primary">
                         {categoryType === 'phoneProducts'
-                          ? 'Bảng giá iPhone'
+                          ? 'Bảng giá Điện Thoại'
                           : categoryType === 'tabletProducts'
-                            ? 'Bảng giá iPad'
+                            ? 'Bảng giá Máy tính bảng'
                             : categoryType === 'macbookProducts'
                               ? 'Bảng giá Laptop Macbook'
                               : 'Bảng giá Laptop Windows'}

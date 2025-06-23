@@ -21,10 +21,10 @@ export default function FooterFC() {
         <div className="w-full">
           <Footer.Title className="border-b-[1px]">Thông Tin</Footer.Title>
           <Link className="font-light hover:font-semibold" href="/dien-thoai">
-            Điện Thoại IPhone
+            Điện Thoại
           </Link>
           <Link className="font-light hover:font-semibold" href="/may-tinh-bang">
-            iPad/ Máy Tính Bảng
+            Máy Tính Bảng
           </Link>
           <Link className="font-light hover:font-semibold" href="/windows">
             Laptop Windows

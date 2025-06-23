@@ -22,10 +22,10 @@ export interface Product {
 interface ClientProductFCProps {
   products: Product[];
   category: {
-    name: string; // Ví dụ: "Macbook", "iPad", "Windows"
-    url: string; // Ví dụ: "/macbook", "/may-tinh-bang", "/windows"
-    title: string; // Ví dụ: "Macbook - Giảm giá mạnh"
-    ariaLabel: string; // Ví dụ: "Xem thêm sản phẩm laptop Macbook"
+    name: string; // Ví dụ: "Máy Tính Bảng", "Macbook", "Windows"
+    url: string; // Ví dụ: "/may-tinh-bang", "/macbook", "/windows"
+    title: string; // Ví dụ: "Máy Tính Bảng - Giảm giá mạnh"
+    ariaLabel: string; // Ví dụ: "Xem thêm sản phẩm Máy Tính Bảng"
   };
   loading?: boolean; // Thêm prop loading tùy chọn
 }

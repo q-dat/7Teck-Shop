@@ -120,10 +120,10 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
     {
       products: transformTablets,
       category: {
-        name: 'iPad',
+        name: 'Máy Tính Bảng',
         url: '/may-tinh-bang',
-        title: 'iPad - Giảm giá mạnh',
-        ariaLabel: 'Xem thêm sản phẩm iPad',
+        title: 'Máy Tính Bảng - Giảm giá mạnh',
+        ariaLabel: 'Xem thêm sản phẩm máy tính bảng',
       },
     },
     {

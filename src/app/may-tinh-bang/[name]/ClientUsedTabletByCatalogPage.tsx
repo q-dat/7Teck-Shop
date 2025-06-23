@@ -33,7 +33,7 @@ export default function ClientUsedTabletByCatalogPage({ tablets }: { tablets: IT
 
   return (
     <div>
-      <HeaderResponsive Title_NavbarMobile="Máy tính bảng" />
+      <HeaderResponsive Title_NavbarMobile="Máy Tính Bảng" />
       <div className="py-[60px] xl:pt-0">
         <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
@@ -43,8 +43,8 @@ export default function ClientUsedTabletByCatalogPage({ tablets }: { tablets: IT
               </Link>
             </li>
             <li>
-              <Link role="navigation" aria-label=" Máy tính bảng" href="">
-                Máy tính bảng
+              <Link role="navigation" aria-label=" Máy Tính Bảng" href="">
+                Máy Tính Bảng
               </Link>
             </li>
           </ul>
@@ -96,7 +96,7 @@ export default function ClientUsedTabletByCatalogPage({ tablets }: { tablets: IT
                             <FaRegEye />
                             <p>{tablet.tablet_view}</p>
                           </div>
-                          <p className="xl:group-hover:text-secondary">Máy tính bảng {tablet?.tablet_name}</p>
+                          <p className="xl:group-hover:text-secondary">Máy Tính Bảng {tablet?.tablet_name}</p>
                           <p className="font-[500] text-red-700">
                             {formatCurrency(tablet?.tablet_price)} &nbsp;
                             <del className="text-xs font-light text-gray-400">{tablet?.tablet_sale && `${tablet?.tablet_sale}`}</del>

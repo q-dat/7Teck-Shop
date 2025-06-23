@@ -54,7 +54,7 @@ export default function ClientTabletPage({ tablets }: { tablets: ITablet[] }) {
 
   return (
     <div>
-      <HeaderResponsive Title_NavbarMobile="iPad" />
+      <HeaderResponsive Title_NavbarMobile="Máy Tính Bảng" />
       <div className="py-[60px] xl:pt-0">
         <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
@@ -64,8 +64,8 @@ export default function ClientTabletPage({ tablets }: { tablets: ITablet[] }) {
               </Link>
             </li>
             <li>
-              <Link aria-label="iPad" href="">
-                iPad
+              <Link aria-label="Máy Tính Bảng" href="">
+                Máy Tính Bảng
               </Link>
             </li>
           </ul>
@@ -109,7 +109,7 @@ export default function ClientTabletPage({ tablets }: { tablets: ITablet[] }) {
                       {/*  */}
                       <div className="flex w-full flex-col items-start justify-between">
                         <div className="w-full cursor-pointer p-1" onClick={() => router.push(`/may-tinh-bang/${tabletUrl}/${subUrl}`)}>
-                          <p className="xl:group-hover:text-secondary">Máy tính bảng {tablet?.tablet_name}</p>
+                          <p className="xl:group-hover:text-secondary">Máy Tính Bảng {tablet?.tablet_name}</p>
                         </div>
                         <div className="w-full p-1">
                           <p className="text-gray-700">

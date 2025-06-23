@@ -135,7 +135,7 @@ export default function ClientTabletDetailPage({ tablet }: { tablet: ITablet }) 
               {/* Info */}
               <div className="flex h-full flex-col items-start justify-between gap-5 rounded-md border border-gray-50 bg-white p-2 leading-10 xl:h-[490px]">
                 <div className="w-full">
-                  <h1 className="text-xl font-semibold text-black">Máy tính bảng {tablet?.tablet_name}</h1>
+                  <h1 className="text-xl font-semibold text-black">Máy Tính Bảng {tablet?.tablet_name}</h1>
                   <p className="text-3xl font-semibold text-red-500">
                     <span>{formatCurrency(tablet?.tablet_price)}</span>
                     {tablet?.tablet_sale && <del className="text-sm font-light text-gray-100">{formatCurrency(tablet?.tablet_sale)}</del>}

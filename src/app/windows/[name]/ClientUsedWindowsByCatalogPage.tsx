@@ -33,7 +33,7 @@ export default function ClientUsedWindowsByCatalogPage({ windows }: { windows: I
 
   return (
     <div>
-      <HeaderResponsive Title_NavbarMobile="Laptop" />
+      <HeaderResponsive Title_NavbarMobile="Laptop Windows" />
       <div className="py-[60px] xl:pt-0">
         <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
@@ -43,8 +43,8 @@ export default function ClientUsedWindowsByCatalogPage({ windows }: { windows: I
               </Link>
             </li>
             <li>
-              <Link role="navigation" aria-label="Laptop" href="">
-                Laptop
+              <Link role="navigation" aria-label="Laptop Windows" href="">
+                Laptop Windows
               </Link>
             </li>
           </ul>

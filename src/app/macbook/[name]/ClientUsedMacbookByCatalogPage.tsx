@@ -33,7 +33,7 @@ export default function ClientUsedMacbookByCatalogPage({ macbook }: { macbook: I
 
   return (
     <div>
-      <HeaderResponsive Title_NavbarMobile="Laptop" />
+      <HeaderResponsive Title_NavbarMobile="Laptop Macbook" />
       <div className="py-[60px] xl:pt-0">
         <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
@@ -43,8 +43,8 @@ export default function ClientUsedMacbookByCatalogPage({ macbook }: { macbook: I
               </Link>
             </li>
             <li>
-              <Link role="navigation" aria-label="Laptop" href="">
-                Laptop
+              <Link role="navigation" aria-label="Laptop Macbook" href="">
+                Laptop Macbook
               </Link>
             </li>
           </ul>
