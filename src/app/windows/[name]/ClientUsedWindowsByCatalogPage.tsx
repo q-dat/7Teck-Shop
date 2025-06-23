@@ -16,7 +16,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 export default function ClientUsedWindowsByCatalogPage({ windows }: { windows: IWindows[] }) {
   const [loading, setLoading] = useState(true);
   const { name } = useParams();
-  const filteredPhones = windows.filter((win) => slugify(win?.windows_name) === name);
+  const filteredWindows = windows.filter((win) => slugify(win?.windows_name) === name);
 
   useEffect(() => {
     scrollToTopSmoothly();
@@ -55,8 +55,8 @@ export default function ClientUsedWindowsByCatalogPage({ windows }: { windows: I
             <div className="grid grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7">
               {loading ? (
                 <ProductPlaceholders count={12} />
-              ) : filteredPhones.length > 0 ? (
-                filteredPhones.map((win) => {
+              ) : filteredWindows.length > 0 ? (
+                filteredWindows.map((win) => {
                   const winUrl = slugify(win.windows_name);
                   return (
                     <section

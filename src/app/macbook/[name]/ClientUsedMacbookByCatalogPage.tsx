@@ -16,7 +16,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 export default function ClientUsedMacbookByCatalogPage({ macbook }: { macbook: IMacbook[] }) {
   const [loading, setLoading] = useState(true);
   const { name } = useParams();
-  const filteredPhones = macbook.filter((mac) => slugify(mac?.macbook_name) === name);
+  const filteredMacbook = macbook.filter((mac) => slugify(mac?.macbook_name) === name);
 
   useEffect(() => {
     scrollToTopSmoothly();
@@ -55,8 +55,8 @@ export default function ClientUsedMacbookByCatalogPage({ macbook }: { macbook: I
             <div className="grid grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7">
               {loading ? (
                 <ProductPlaceholders count={12} />
-              ) : filteredPhones.length > 0 ? (
-                filteredPhones.map((mac) => {
+              ) : filteredMacbook.length > 0 ? (
+                filteredMacbook.map((mac) => {
                   const macUrl = slugify(mac.macbook_name);
                   return (
                     <section
