@@ -56,7 +56,7 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
 
   for (const endpoint of endpoints) {
     try {
-      console.log(`Fetching API: ${baseUrl}${endpoint.url}`); // Debug
+      console.log(`Fetching API: ${baseUrl}${endpoint.url} ✓`); // Debug
       const res: AxiosResponse<ApiResponse> = await axios.get<ApiResponse>(`${baseUrl}${endpoint.url}`);
       // console.log(`API Response for ${endpoint.path}:`, res.data); // Debug
 
