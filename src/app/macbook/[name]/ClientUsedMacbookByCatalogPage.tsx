@@ -2,7 +2,7 @@
 import ClientUsedProductPage from '@/components/userPage/page/ClientUsedProductByCatalogPage';
 import { IMacbook } from '@/types/type/macbook/macbook';
 
-export default function UsedMacbookPage({ macbook }: { macbook: IMacbook[] }) {
+export default function ClientUsedMacbookByCatalogPage({ macbook }: { macbook: IMacbook[] }) {
   const mapped = macbook.map((item) => ({
     _id: item._id,
     name: item.macbook_name,

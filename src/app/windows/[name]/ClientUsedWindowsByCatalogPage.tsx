@@ -2,7 +2,7 @@
 import ClientUsedProductPage from '@/components/userPage/page/ClientUsedProductByCatalogPage';
 import { IWindows } from '@/types/type/windows/windows';
 
-export default function UsedWindowsPage({ windows }: { windows: IWindows[] }) {
+export default function ClientUsedWindowsByCatalogPage({ windows }: { windows: IWindows[] }) {
   const mapped = windows.map((item) => ({
     _id: item._id,
     name: item.windows_name,
