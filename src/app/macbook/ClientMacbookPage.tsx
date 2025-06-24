@@ -12,5 +12,5 @@ export default function ClientMacbookPage({ macbook }: { macbook: IMacbook[] }) 
     status: item.macbook_status,
   }));
 
-  return <ClientProductPage products={mappedMacbooks} title="Macbook" basePath="macbook" />;
+  return <ClientProductPage products={mappedMacbooks} title="Laptop Macbook" basePath="macbook" />;
 }
