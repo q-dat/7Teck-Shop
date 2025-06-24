@@ -13,13 +13,14 @@ import Image from 'next/image';
 interface ClientPostSectionProps {
   posts: IPost[];
 }
+
+const urlNews = '/tin-tuc-moi-nhat';
+const urlTipsAndTricksPage = '/thu-thuat-va-meo-hay';
+
 export default function ClientPostSection({ posts }: ClientPostSectionProps) {
   const news = posts?.filter((post) => post?.catalog.toLowerCase().includes('tin'));
-
   const tricks = posts?.filter((post) => post?.catalog.toLowerCase().includes('mẹo'));
-
   const router = useRouter();
-
   const handlePostClick = (post: (typeof news)[0]) => {
     const titleSlug = encodeURIComponent(slugify(post?.title));
     router.push(`/tin-tuc/${titleSlug}/${post._id}`);
@@ -30,66 +31,46 @@ export default function ClientPostSection({ posts }: ClientPostSectionProps) {
       style={{
         backgroundImage: `url(${images.bgBlog})`,
       }}
-      className="relative mt-10 bg-cover bg-fixed bg-center bg-no-repeat pb-10 pt-5"
+      className="relative mt-12 bg-cover bg-fixed bg-center bg-no-repeat py-12"
     >
-      <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-
-      <div className="relative z-10">
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/40"></div>
+      <div className="relative z-10 px-2 xl:px-desktop-padding">
         {news.length > 0 && (
-          <section role="region" aria-label="Bản tin mới nhất">
-            <div
-              className="my-2 flex flex-row items-center justify-between px-2 text-white xl:px-desktop-padding"
-              aria-label="Thanh tiêu đề Tin công nghệ và liên kết xem tất cả"
-            >
-              <div>
-                <h1 className="text-xl font-semibold uppercase">Tin công nghệ</h1>
-              </div>
-              <Link href="/tin-tuc-moi-nhat">
-                <Button
-                  role="button"
-                  size="sm"
-                  className="flex items-center justify-center gap-0 border-none px-0 py-1 font-semibold underline shadow-none"
-                >
+          <section role="region" aria-label="Bản tin mới nhất" className="mb-12">
+            <div className="mb-6 flex flex-row items-center justify-between">
+              <h1 className="text-2xl font-bold tracking-tight text-white">Tin Công Nghệ</h1>
+              <Link href={urlNews}>
+                <Button role="button" size="sm" className="flex items-center gap-1 bg-transparent text-white hover:bg-white/10">
                   Xem Thêm
-                  <span>
-                    <IoIosArrowForward />
-                  </span>
+                  <IoIosArrowForward className="h-4 w-4" />
                 </Button>
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-2 px-2 md:grid-cols-3 lg:grid-cols-4 xl:px-desktop-padding">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
               {news.slice(0, 4).map((post) => (
-                <div
+                <article
                   key={post?._id}
-                  className="relative flex cursor-pointer flex-row items-start justify-start gap-2 rounded border border-white bg-white bg-opacity-70 p-1 text-black shadow-inner hover:shadow-lg"
+                  className="group relative cursor-pointer overflow-hidden rounded-lg bg-white/90 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                   onClick={() => handlePostClick(post)}
                 >
-                  <div className="relative h-full w-full overflow-hidden">
+                  <div className="relative aspect-[4/3] w-full">
                     <Image
-                      height={100}
-                      width={100}
+                      fill
                       loading="lazy"
                       src={post?.imageUrl}
-                      alt="Ảnh đại diện"
-                      className="absolute left-0 top-0 z-0 h-full w-full rounded-sm object-cover blur-2xl filter"
+                      alt={post?.title}
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <Image
-                      height={100}
-                      width={100}
-                      loading="lazy"
-                      src={post?.imageUrl}
-                      alt="Ảnh đại diện"
-                      className="absolute left-0 top-0 z-10 h-full w-full rounded-sm object-contain"
-                    />
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5"></div>
                   </div>
-                  <div className="w-full">
-                    <p className="line-clamp-4 w-full py-1 text-sm font-semibold">{post?.title}</p>
-                    <p className="pt-2 text-[12px]">
+                  <div className="p-4">
+                    <h2 className="line-clamp-3 text-sm font-semibold text-gray-900 hover:text-blue-600">{post?.title}</h2>
+                    <p className="mt-2 text-xs text-gray-500">
                       {new Date(post?.updatedAt).toLocaleDateString('vi-VN')} (
                       <TimeAgo date={post?.updatedAt} />)
                     </p>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           </section>
@@ -97,59 +78,40 @@ export default function ClientPostSection({ posts }: ClientPostSectionProps) {
 
         {tricks.length > 0 && (
           <section role="region" aria-label="Thủ thuật và mẹo hay">
-            <div
-              className="my-2 flex flex-row items-center justify-between px-2 text-white xl:px-desktop-padding"
-              aria-label="Thanh tiêu đề Thủ thuật và liên kết xem tất cả"
-            >
-              <div>
-                <h1 className="text-xl font-semibold uppercase">Thủ thuật - Mẹo hay</h1>
-              </div>
-              <Link href="/thu-thuat-va-meo-hay">
-                <Button
-                  role="button"
-                  size="sm"
-                  className="flex items-center justify-center gap-0 border-none px-0 py-1 font-semibold underline shadow-none"
-                >
+            <div className="mb-6 flex flex-row items-center justify-between">
+              <h1 className="text-2xl font-bold tracking-tight text-white">Thủ Thuật - Mẹo Hay</h1>
+              <Link href={urlTipsAndTricksPage}>
+                <Button role="button" size="sm" className="flex items-center gap-1 bg-transparent text-white hover:bg-white/10">
                   Xem Thêm
-                  <span>
-                    <IoIosArrowForward />
-                  </span>
+                  <IoIosArrowForward className="h-4 w-4" />
                 </Button>
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-2 px-2 md:grid-cols-3 lg:grid-cols-4 xl:px-desktop-padding">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
               {tricks.slice(0, 4).map((post) => (
-                <div
+                <article
                   key={post?._id}
-                  className="relative flex cursor-pointer flex-row items-start justify-start gap-2 rounded border border-white bg-white bg-opacity-70 p-1 text-black shadow-inner hover:shadow-lg"
+                  className="group relative cursor-pointer overflow-hidden rounded-lg bg-white/90 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                   onClick={() => handlePostClick(post)}
                 >
-                  <div className="relative h-full w-full overflow-hidden">
+                  <div className="relative aspect-[4/3] w-full">
                     <Image
-                      height={100}
-                      width={100}
+                      fill
                       loading="lazy"
                       src={post?.imageUrl}
-                      alt="Ảnh đại diện"
-                      className="absolute left-0 top-0 z-0 h-full w-full rounded-sm object-cover blur-2xl filter"
+                      alt={post?.title}
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <Image
-                      height={100}
-                      width={100}
-                      loading="lazy"
-                      src={post?.imageUrl}
-                      alt="Ảnh đại diện"
-                      className="absolute left-0 top-0 z-10 h-full w-full rounded-sm object-contain"
-                    />
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5"></div>
                   </div>
-                  <div className="w-full">
-                    <p className="line-clamp-4 w-full py-1 text-sm font-semibold">{post?.title}</p>
-                    <p className="pt-2 text-[12px]">
+                  <div className="p-4">
+                    <h2 className="line-clamp-3 text-sm font-semibold text-gray-900 hover:text-blue-600">{post?.title}</h2>
+                    <p className="mt-2 text-xs text-gray-500">
                       {new Date(post?.updatedAt).toLocaleDateString('vi-VN')} (
                       <TimeAgo date={post?.updatedAt} />)
                     </p>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           </section>
