@@ -42,10 +42,16 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
   console.log('API Base URL:', baseUrl); // Debug
 
   const endpoints = [
-    { path: 'dien-thoai', url: '/api/phones', nameField: 'name', dataField: 'phones' },
-    { path: 'may-tinh-bang', url: '/api/tablets', nameField: 'tablet_name', dataField: 'tablets' },
-    { path: 'macbook', url: '/api/laptop-macbook', nameField: 'macbook_name', dataField: 'macbook' },
-    { path: 'windows', url: '/api/laptop-windows', nameField: 'windows_name', dataField: 'windows' },
+    { path: 'dien-thoai', url: '/api/phones', nameField: 'name', dataField: 'phones', includeIdInUrl: true },
+    { path: 'may-tinh-bang', url: '/api/tablets', nameField: 'tablet_name', dataField: 'tablets', includeIdInUrl: true },
+    { path: 'macbook', url: '/api/laptop-macbook', nameField: 'macbook_name', dataField: 'macbook', includeIdInUrl: true },
+    { path: 'windows', url: '/api/laptop-windows', nameField: 'windows_name', dataField: 'windows', includeIdInUrl: true },
+    { path: 'tin-tuc', url: '/api/posts', nameField: 'title', dataField: 'posts', includeIdInUrl: true },
+    //
+    { path: 'dien-thoai', url: '/api/phone-catalogs', nameField: 'name', dataField: 'phoneCatalogs', includeIdInUrl: false },
+    { path: 'may-tinh-bang', url: '/api/tablet-catalogs', nameField: 't_cat_name', dataField: 'tabletCatalogs', includeIdInUrl: false },
+    { path: 'macbook', url: '/api/macbook-catalogs', nameField: 'm_cat_name', dataField: 'macbookCatalogs', includeIdInUrl: false },
+    { path: 'windows', url: '/api/windows-catalogs', nameField: 'w_cat_name', dataField: 'windowsCatalogs', includeIdInUrl: false },
   ];
 
   for (const endpoint of endpoints) {
@@ -63,14 +69,21 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
 
       if (data.length > 0) {
         const segmentPaths = data.map((item: Item) => {
-          console.log(`Processing item: ${item[endpoint.nameField]} (${item._id})`); // Debug
+          const slug = slugify(item[endpoint.nameField] || '');
+          const lastModified = item.updatedAt ? new Date(item.updatedAt) : new Date();
+
+          const url = endpoint.includeIdInUrl
+            ? `https://www.7teck.vn/${endpoint.path}/${slug}/${item._id}`
+            : `https://www.7teck.vn/${endpoint.path}/${slug}`;
+
           return {
-            url: `https://www.7teck.vn/${endpoint.path}/${slugify(item[endpoint.nameField] || '')}/${item._id}`,
-            lastModified: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+            url,
+            lastModified,
             changeFrequency: 'daily' as const,
             priority: 0.7,
           };
         });
+
         paths.push(...segmentPaths);
       } else {
         console.log(`No valid data for ${endpoint.path}`); // Debug
