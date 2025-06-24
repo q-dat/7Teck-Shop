@@ -12,44 +12,35 @@ import imageRepresent from '../../../../public/image-represent';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/formatCurrency';
 
-type ProductPageProps<T> = {
-  data: T[];
-  getName: (item: T) => string;
-  getImage: (item: T) => string;
-  getPrice: (item: T) => number;
-  getSale: (item: T) => number | null;
-  getView: (item: T) => number;
-  getStatus: (item: T) => string | null;
-  getId: (item: T) => string;
-  buildLink: (slug: string, id: string) => string;
+export interface IProductBase {
+  _id: string;
+  name: string;
+  image: string;
+  price: number;
+  sale: number | null;
+  status: string | null;
+  view: number;
+}
+
+type ProductPageProps = {
   title: string;
+  products: IProductBase[];
+  basePath: string;
 };
 
-export default function ClientUsedProductByCatalogPage<T>({
-  data,
-  getName,
-  getImage,
-  getPrice,
-  getSale,
-  getView,
-  getStatus,
-  getId,
-  buildLink,
-  title,
-}: ProductPageProps<T>) {
+export default function ClientUsedProductPage({ products, title, basePath }: ProductPageProps) {
   const [loading, setLoading] = useState(true);
   const { name } = useParams();
-  const filtered = data.filter((item) => slugify(getName(item)) === name);
+  const filtered = products.filter((item) => slugify(item.name) === name);
 
   useEffect(() => {
     scrollToTopSmoothly();
-    if (data.length === 0) {
-      const fetchData = async () => setLoading(true);
-      fetchData();
+    if (products.length === 0) {
+      setLoading(true);
     } else {
       setLoading(false);
     }
-  }, [data]);
+  }, [products]);
 
   return (
     <div>
@@ -65,7 +56,7 @@ export default function ClientUsedProductByCatalogPage<T>({
             </li>
           </ul>
         </div>
-        {/*  */}
+
         <div className="space-y-10 px-2 xl:px-desktop-padding">
           <div className="mt-5 w-full">
             <div className="grid grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7">
@@ -73,35 +64,27 @@ export default function ClientUsedProductByCatalogPage<T>({
                 <ProductPlaceholders count={12} />
               ) : filtered.length > 0 ? (
                 filtered.map((item) => {
-                  const name = getName(item);
-                  const slug = slugify(name);
-                  const image = getImage(item);
-                  const price = getPrice(item);
-                  const sale = getSale(item);
-                  const view = getView(item);
-                  const status = getStatus(item);
-                  const id = getId(item);
-                  const url = buildLink(slug, id);
-
+                  const slug = slugify(item.name);
+                  const url = `/${basePath}/${slug}/${item._id}`;
                   return (
-                    <section key={id} className="group relative flex h-full flex-col justify-between rounded-md border border-white text-black">
+                    <section key={item._id} className="group relative flex h-full flex-col justify-between rounded-md border border-white text-black">
                       <Link href={url} className="flex h-full w-full items-center justify-center rounded-md rounded-b-none bg-white">
                         <div className="relative h-[200px] w-full overflow-hidden">
                           <Image
                             width={200}
                             height={200}
-                            alt="Hình ảnh"
+                            alt={item.name}
                             loading="lazy"
                             className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-sm filter"
-                            src={image}
+                            src={item.image}
                           />
                           <Image
                             width={200}
                             height={200}
-                            alt="Hình ảnh"
+                            alt={item.name}
                             loading="lazy"
                             className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
-                            src={image}
+                            src={item.image}
                           />
                         </div>
                       </Link>
@@ -110,16 +93,17 @@ export default function ClientUsedProductByCatalogPage<T>({
                         <Link href={url}>
                           <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] text-black">
                             <FaRegEye />
-                            <p>{view}</p>
+                            <p>{item.view}</p>
                           </div>
                           <p className="xl:group-hover:text-secondary">
-                            {title} {name}
+                            {title} {item.name}
                           </p>
                           <p className="font-[500] text-red-700">
-                            {formatCurrency(price)}&nbsp;
-                            <del className="text-xs font-light text-gray-400">{sale && formatCurrency(sale)}</del>
+                            {formatCurrency(item.price)}&nbsp;
+                            {item.sale && <del className="text-xs font-light text-gray-400">{formatCurrency(item.sale)}</del>}
                           </p>
                         </Link>
+
                         <Link href="/thanh-toan" className="z-50 w-full">
                           <Button
                             size="xs"
@@ -130,10 +114,10 @@ export default function ClientUsedProductByCatalogPage<T>({
                         </Link>
                       </div>
                       {/*  */}
-                      {status && (
+                      {item.status && (
                         <div className="absolute -left-[3px] top-0 z-20">
-                          <Image alt="" loading="lazy" width={60} height={100} className="h-full w-[60px]" src={imageRepresent.Status} />
-                          <p className="absolute top-[1px] w-full pl-1 text-xs text-white">{status}</p>
+                          <Image alt="status" loading="lazy" width={60} height={100} className="h-full w-[60px]" src={imageRepresent.Status} />
+                          <p className="absolute top-[1px] w-full pl-1 text-xs text-white">{item.status}</p>
                         </div>
                       )}
                     </section>
