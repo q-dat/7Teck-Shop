@@ -24,7 +24,7 @@ interface ProductBase {
 interface ClientProductPageProps {
   products: ProductBase[];
   title: string;
-  basePath: string; // dùng để tạo link động, ví dụ 'dien-thoai' hay 'macbook'
+  basePath: string; // dùng để tạo link động, ví dụ '${basePath}' hay 'macbook'
 }
 
 export default function ClientProductPage({ products, title, basePath }: ClientProductPageProps) {
@@ -82,7 +82,7 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                       className="group relative flex h-full w-full flex-col justify-between rounded-md border border-white text-black"
                     >
                       <div
-                        onClick={() => router.push(`/dien-thoai/${productUrl}/${subUrl}`)}
+                        onClick={() => router.push(`/${basePath}/${productUrl}/${subUrl}`)}
                         className="relative h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none"
                       >
                         <Image
@@ -104,8 +104,10 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                       </div>
                       {/*  */}
                       <div className="flex w-full flex-col items-start justify-between p-1">
-                        <div className="w-full cursor-pointer" onClick={() => router.push(`/dien-thoai/${productUrl}`)}>
-                          <p className="xl:group-hover:text-secondary">Điện Thoại {product.name}</p>
+                        <div className="w-full cursor-pointer" onClick={() => router.push(`/${basePath}/${productUrl}`)}>
+                          <p className="xl:group-hover:text-secondary">
+                            {title} {product.name}
+                          </p>
                         </div>
                         <div className="w-full">
                           <p className="text-gray-700">
