@@ -60,7 +60,6 @@ const menuItems: MenuItem[] = [
       },
     ],
   },
-
   {
     icon: FaRegNewspaper,
     name: 'Tin tức',
@@ -83,10 +82,28 @@ const menuItems: MenuItem[] = [
     name: 'Hành trình',
     link: '/hanh-trinh-khach-hang',
   },
+
   {
-    icon: GoChecklist,
-    name: 'Chính sách bảo hành',
-    link: '/chinh-sach-bao-hanh',
+    icon: FaRegNewspaper,
+    name: 'Chính sách & Điều khoản',
+    link: currentPath,
+    submenu: [
+      {
+        icon: GoChecklist,
+        name: 'Chính sách bảo hành',
+        link: '/chinh-sach-bao-hanh',
+      },
+      {
+        name: 'Chính sách quyền riêng tư',
+        icon: GoChecklist,
+        link: '/chinh-sach-quyen-rieng-tu',
+      },
+      {
+        name: 'Điều khoản dịch vụ',
+        icon: GoChecklist,
+        link: '/dieu-khoan-dich-vu',
+      },
+    ],
   },
 ];
 export default menuItems;
