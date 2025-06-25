@@ -1,4 +1,5 @@
-// app/privacy/page.tsx
+'use client';
+import React from 'react';
 import Image from 'next/image';
 import { images } from '../../../public/images';
 import { address, contact, hotlineUrl, mail, mailUrl } from '@/utils/socialLinks';

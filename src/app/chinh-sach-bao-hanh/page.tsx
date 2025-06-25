@@ -1,6 +1,6 @@
 'use client';
-import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import React from 'react';
+import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import { images } from '../../../public/images';
 import Image from 'next/image';
 
