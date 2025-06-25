@@ -9,6 +9,7 @@ import NavBottom from '@/components/userPage/NavBottom';
 import NotificationPopup from '@/components/userPage/NotificationPopup';
 import FooterFC from '@/components/userPage/ui/Footer';
 import Header from '@/components/userPage/ui/Header';
+import Script from 'next/script';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -77,7 +78,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="mytheme">
+    <html lang="vi" data-theme="mytheme">
+      <head>
+        {/* Script Google SWG - async external */}
+        <Script async src="https://news.google.com/swg/js/v1/swg-basic.js" strategy="afterInteractive" />
+        {/* Inline init script */}
+        <Script id="swg-init" strategy="afterInteractive">
+          {`
+          (self.SWG_BASIC = self.SWG_BASIC || []).push(basicSubscriptions => {
+            basicSubscriptions.init({
+              type: "NewsArticle",
+              isPartOfType: ["Product"],
+              isPartOfProductId: "CAowlNO8DA:openaccess",
+              clientOptions: { theme: "light", lang: "vi" },
+            });
+          });
+        `}
+        </Script>
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ErrorBoundary>
           <div className="flex min-h-screen flex-col bg-primary-white xl:pt-[130px]">
