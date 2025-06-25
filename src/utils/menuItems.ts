@@ -3,7 +3,7 @@ import { GiLaptop } from 'react-icons/gi';
 import { GoChecklist } from 'react-icons/go';
 import { GrGallery } from 'react-icons/gr';
 import { ImTable } from 'react-icons/im';
-import { IoTabletLandscape } from 'react-icons/io5';
+import { IoCheckmarkCircle, IoTabletLandscape } from 'react-icons/io5';
 import { IconType } from 'react-icons/lib';
 import { PiDevicesDuotone, PiDevicesBold } from 'react-icons/pi';
 import { RiMacbookFill, RiPagesLine } from 'react-icons/ri';
@@ -84,23 +84,23 @@ const menuItems: MenuItem[] = [
   },
 
   {
-    icon: FaRegNewspaper,
+    icon: GoChecklist,
     name: 'Chính sách & Điều khoản',
     link: currentPath,
     submenu: [
       {
-        icon: GoChecklist,
+        icon: IoCheckmarkCircle,
         name: 'Chính sách bảo hành',
         link: '/chinh-sach-bao-hanh',
       },
       {
         name: 'Chính sách quyền riêng tư',
-        icon: GoChecklist,
+        icon: IoCheckmarkCircle,
         link: '/chinh-sach-quyen-rieng-tu',
       },
       {
         name: 'Điều khoản dịch vụ',
-        icon: GoChecklist,
+        icon: IoCheckmarkCircle,
         link: '/dieu-khoan-dich-vu',
       },
     ],
