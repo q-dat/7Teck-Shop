@@ -6,6 +6,7 @@ import ClientPostDetailPage from './ClientPostDetailPage';
 import { getAllPosts, getPostById } from '@/services/postService';
 import { IPost } from '@/types/type/post/post';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
+import Head from 'next/head';
 
 export default async function PostDetail({ params }: PageProps) {
   const resolvedParams = await params;
@@ -45,20 +46,9 @@ export default async function PostDetail({ params }: PageProps) {
 
   return (
     <>
-      <head>
-        <title>{post.title} | 7Teck</title>
-        <meta name="description" content={post.content.slice(0, 160)} />
-        <meta property="og:title" content={post.title} />
-        <meta property="og:description" content={post.content.slice(0, 160)} />
-        <meta property="og:image" content={post.imageUrl} />
-        <meta property="og:type" content="article" />
-        <meta property="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL}/tin-tuc/${encodeURIComponent(post.title)}/${post._id}`} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={post.title} />
-        <meta name="twitter:description" content={post.content.slice(0, 160)} />
-        <meta name="twitter:image" content={post.imageUrl} />
+      <Head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      </head>
+      </Head>
       <ClientPostDetailPage posts={posts} post={post} />
     </>
   );
