@@ -6,7 +6,14 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/cms/*'],
+        disallow: [
+          '/cms/*', // chặn admin/cms nội bộ
+          '/assets/', // chặn thư mục chứa JS tĩnh (nếu có)
+          '/*.js$', // chặn file .js
+          '/*.css$', // chặn file .css
+          '/*.map$', // chặn source map (nếu public)
+          '/_next/static/', // chặn static assets nội bộ của Next (không ảnh hưởng SEO)
+        ],
       },
     ],
     sitemap: 'https://www.7teck.vn/sitemap.xml',
