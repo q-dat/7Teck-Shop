@@ -1,6 +1,5 @@
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import type { Metadata } from 'next';
 import { ToastContainer } from 'react-toastify';
 import ErrorBoundary from '@/components/orther/error/ErrorBoundary';
 import ScrollToTopButton from '@/components/orther/scrollToTop/ScrollToTopButton';
