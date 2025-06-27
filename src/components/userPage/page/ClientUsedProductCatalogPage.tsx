@@ -2,11 +2,11 @@
 import Pagination from '@/components/userPage/Pagination';
 import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
 import { slugify } from '@/utils/slugify';
-import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import { formatCurrency } from '@/utils/formatCurrency';
+import Link from 'next/link';
 
 export interface UsedProductCatalog {
   _id: string;
@@ -37,8 +37,6 @@ export default function ClientUsedProductCatalogPage({ data, title, namePrefix, 
     }
   }, [data]);
 
-  const router = useRouter();
-
   const itemsPerPage = 12;
   const filteredData = data.filter((item) => item?.status === 1 && item?.productCount >= 1);
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -61,26 +59,27 @@ export default function ClientUsedProductCatalogPage({ data, title, namePrefix, 
             return (
               <div
                 key={product?._id}
-                onClick={() => router.push(`/${basePath}/${slug}`)}
                 className="group flex h-full w-full flex-col justify-between rounded-md border border-white bg-white text-black"
               >
                 <div className="relative h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none">
-                  <Image
-                    height={200}
-                    width={200}
-                    alt="Hình ảnh"
-                    loading="lazy"
-                    className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl filter"
-                    src={product?.img}
-                  />
-                  <Image
-                    height={200}
-                    width={200}
-                    alt="Hình ảnh"
-                    loading="lazy"
-                    className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
-                    src={product?.img}
-                  />
+                  <Link href={`/${basePath}/${slug}`}>
+                    <Image
+                      height={200}
+                      width={200}
+                      alt="Hình ảnh"
+                      loading="lazy"
+                      className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl filter"
+                      src={product?.img}
+                    />
+                    <Image
+                      height={200}
+                      width={200}
+                      alt="Hình ảnh"
+                      loading="lazy"
+                      className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
+                      src={product?.img}
+                    />
+                  </Link>
                 </div>
                 {/*  */}
                 <div className="flex w-full flex-col items-start justify-between">
@@ -88,10 +87,11 @@ export default function ClientUsedProductCatalogPage({ data, title, namePrefix, 
                     <p className="w-[75px] rounded-sm bg-gray-100 text-center text-[10px] text-white">
                       {product?.productCount > 99 ? '99+' : product?.productCount} {' Sản phẩm'}
                     </p>
-
-                    <p className="xl:group-hover:text-secondary">
-                      {namePrefix} {product.name}
-                    </p>
+                    <Link href={`/${basePath}/${slug}`}>
+                      <p className="xl:group-hover:text-secondary">
+                        {namePrefix} {product.name}
+                      </p>
+                    </Link>
                   </div>
                   <div className="w-full p-1">
                     <p className="text-gray-700">

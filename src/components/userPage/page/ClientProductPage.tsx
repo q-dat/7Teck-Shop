@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { slugify } from '@/utils/slugify';
 import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -30,7 +29,6 @@ interface ClientProductPageProps {
 export default function ClientProductPage({ products, title, basePath }: ClientProductPageProps) {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const router = useRouter();
 
   useEffect(() => {
     scrollToTopSmoothly();
@@ -81,34 +79,33 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                       key={product?._id}
                       className="group relative flex h-full w-full flex-col justify-between rounded-md border border-white text-black"
                     >
-                      <div
-                        onClick={() => router.push(`/${basePath}/${productUrl}/${subUrl}`)}
-                        className="relative h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none"
-                      >
-                        <Image
-                          height={200}
-                          width={200}
-                          alt="Hình ảnh"
-                          loading="lazy"
-                          className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl filter"
-                          src={product?.image}
-                        />
-                        <Image
-                          height={200}
-                          width={200}
-                          alt="Hình ảnh"
-                          loading="lazy"
-                          className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
-                          src={product?.image}
-                        />
+                      <div className="relative h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none">
+                        <Link href={`${basePath}/${productUrl}/${subUrl}`}>
+                          <Image
+                            height={200}
+                            width={200}
+                            alt="Hình ảnh"
+                            loading="lazy"
+                            className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl filter"
+                            src={product?.image}
+                          />
+                          <Image
+                            height={200}
+                            width={200}
+                            alt="Hình ảnh"
+                            loading="lazy"
+                            className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
+                            src={product?.image}
+                          />
+                        </Link>
                       </div>
                       {/*  */}
                       <div className="flex w-full flex-col items-start justify-between p-1">
-                        <div className="w-full cursor-pointer" onClick={() => router.push(`/${basePath}/${productUrl}`)}>
+                        <Link href={`${basePath}/${productUrl}/${subUrl}`} className="w-full cursor-pointer">
                           <p className="xl:group-hover:text-secondary">
                             {title} {product.name}
                           </p>
-                        </div>
+                        </Link>
                         <div className="w-full">
                           <p className="text-gray-700">
                             &nbsp;
