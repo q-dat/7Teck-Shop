@@ -9,12 +9,13 @@ export default function ClientPhoneDetailPage({ phone }: { phone: IPhone }) {
     name: phone.name,
     img: phone.img,
     price: phone.price,
-    sale: phone.sale ?? null,
-    color: phone.color ?? null,
-    status: phone.status ?? null,
-    des: phone.des ?? null,
+    sale: phone.sale,
+    color: phone.color,
+    ram: phone.phone_catalog_id.configuration_and_memory?.ram,
+    status: phone.status,
+    des: phone.des,
     thumbnail: phone.thumbnail,
-    catalog: phone.phone_catalog_id  as unknown as Record<string, ProductCatalogGroup>,
+    catalog: phone.phone_catalog_id as unknown as Record<string, ProductCatalogGroup>,
     catalogContent: phone.phone_catalog_id?.content ?? '',
   };
 

@@ -23,10 +23,11 @@ interface Product {
   name: string;
   img: string;
   price: number;
-  sale?: number | null;
-  color?: string | null;
-  status?: string | null;
-  des?: string | null;
+  sale?: number;
+  color?: string;
+  ram?: string;
+  status?: string;
+  des?: string;
   thumbnail?: string[];
   catalog: Record<string, ProductCatalogGroup>;
   catalogContent: string;
@@ -177,6 +178,12 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix 
                     <p className="space-x-1 text-gray-500">
                       <span>Màu sắc:</span>
                       <strong className="text-black">{product?.color}</strong>
+                    </p>
+                  )}
+                  {product?.ram && (
+                    <p className="space-x-1 text-gray-500">
+                      <span>RAM:</span>
+                      <strong className="text-black">{product?.ram}</strong>
                     </p>
                   )}
                   {product?.status && (
