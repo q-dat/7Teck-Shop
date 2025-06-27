@@ -8,6 +8,9 @@ export default function ClientPhonePage({ phones }: { phones: IPhone[] }) {
     name: phone.name,
     image: phone.img,
     price: phone.price,
+    color: phone.color,
+    ram: phone.phone_catalog_id.configuration_and_memory.ram,
+    cpu: phone.phone_catalog_id.configuration_and_memory.cpu_chip,
     sale: phone.sale,
     status: phone.status,
   }));

@@ -55,7 +55,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                   className="group relative flex h-full w-[195px] flex-col justify-between rounded-md border border-[#f2f4f7] text-black"
                 >
                   <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/dien-thoai/${phoneUrl}/${phone._id}`}>
-                    <div className="relative h-[200px] w-full cursor-pointer overflow-hidden">
+                    <div className="relative h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none">
                       <Image
                         src={src}
                         alt="Hình ảnh sản phẩm"
@@ -89,6 +89,19 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                         <p>{phone.view}</p>
                       </div>
                       <p className="xl:group-hover:text-secondary">Điện Thoại {phone.name}</p>
+                      <div className="space-y-1 text-sm">
+                        {[
+                          { label: 'Màu sắc', value: phone.color },
+                          { label: 'Ram', value: phone.phone_catalog_id?.configuration_and_memory?.ram },
+                        ]
+                          .filter((item) => item.value?.toString().trim())
+                          .map((item, index) => (
+                            <p key={index}>
+                              <span className="font-semibold">{item.label}: </span>
+                              {item.value}
+                            </p>
+                          ))}
+                      </div>
                     </Link>
 
                     <div className="w-full">

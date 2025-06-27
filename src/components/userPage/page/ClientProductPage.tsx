@@ -16,6 +16,11 @@ interface ProductBase {
   name: string;
   image: string;
   price: number;
+  color: string;
+  ram?: string;
+  cpu?: string;
+  lcd?: string;
+  gpu?: string;
   sale?: number;
   status?: string;
 }
@@ -29,6 +34,7 @@ interface ClientProductPageProps {
 export default function ClientProductPage({ products, title, basePath }: ClientProductPageProps) {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const specsToShow = ['color', 'ram', 'cpu', 'lcd', 'gpu'];
 
   useEffect(() => {
     scrollToTopSmoothly();
@@ -79,8 +85,8 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                       key={product?._id}
                       className="group relative flex h-full w-full flex-col justify-between rounded-md border border-white text-black"
                     >
-                      <div className="relative h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none">
-                        <Link href={`${basePath}/${productUrl}/${subUrl}`}>
+                      <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`${basePath}/${productUrl}/${subUrl}`}>
+                        <div className="relative h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none">
                           <Image
                             height={200}
                             width={200}
@@ -97,15 +103,37 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                             className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
                             src={product?.image}
                           />
-                        </Link>
-                      </div>
+                        </div>
+                      </Link>
                       {/*  */}
-                      <div className="flex w-full flex-col items-start justify-between p-1">
+                      <div className="flex h-full w-full flex-col items-start justify-between p-1">
                         <Link href={`${basePath}/${productUrl}/${subUrl}`} className="w-full cursor-pointer">
                           <p className="xl:group-hover:text-secondary">
                             {title} {product.name}
                           </p>
+                          <div className="space-y-1 text-sm">
+                            {specsToShow.map((field) => {
+                              const value = product[field as keyof ProductBase];
+                              if (!value) return null;
+
+                              const fieldLabelMap: Record<string, string> = {
+                                color: 'Màu sắc',
+                                ram: 'RAM',
+                                cpu: 'CPU',
+                                lcd: 'Màn hình',
+                                vga: 'VGA',
+                              };
+
+                              return (
+                                <p key={field}>
+                                  <span className="font-semibold">{fieldLabelMap[field]}: </span>
+                                  {value}
+                                </p>
+                              );
+                            })}
+                          </div>
                         </Link>
+
                         <div className="w-full">
                           <p className="text-gray-700">
                             &nbsp;
