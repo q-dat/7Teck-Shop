@@ -7,7 +7,6 @@ import NavBottom from '@/components/userPage/NavBottom';
 import NotificationPopup from '@/components/userPage/NotificationPopup';
 import FooterFC from '@/components/userPage/ui/Footer';
 import Header from '@/components/userPage/ui/Header';
-import Script from 'next/script';
 import { homeMetadata } from '@/metadata/homeMetadata';
 
 import { Inter, Roboto_Mono } from 'next/font/google';
@@ -15,11 +14,13 @@ import { Inter, Roboto_Mono } from 'next/font/google';
 const geistSans = Inter({
   variable: '--font-geist-sans',
   subsets: ['latin'],
+  display: 'swap', // Giảm CLS
 });
 
 const geistMono = Roboto_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
+  display: 'swap', // Giảm CLS
 });
 
 export const metadata = homeMetadata;
@@ -32,21 +33,31 @@ export default function RootLayout({
   return (
     <html lang="vi" data-theme="mytheme">
       <head>
-        {/* Script Google SWG - async external */}
-        <Script async src="https://news.google.com/swg/js/v1/swg-basic.js" strategy="lazyOnload" />
-        {/* Inline init script */}
-        <Script id="swg-init" strategy="afterInteractive">
+        {/* Script Google SWG */}
+        <script async type="application/javascript" src="https://news.google.com/swg/js/v1/swg-basic.js"></script>
+        <script>
           {`
-          (self.SWG_BASIC = self.SWG_BASIC || []).push(basicSubscriptions => {
-            basicSubscriptions.init({
-              type: "NewsArticle",
-              isPartOfType: ["Product"],
-              isPartOfProductId: "CAowlNO8DA:openaccess",
-              clientOptions: { theme: "light", lang: "vi" },
-            });
-          });
-        `}
-        </Script>
+            (function() {
+              try {
+                (self.SWG_BASIC = self.SWG_BASIC || []).push(basicSubscriptions => {
+                  basicSubscriptions.init({
+                    type: "NewsArticle",
+                    isPartOfType: ["Product"],
+                    isPartOfProductId: "CAowlNO8DA:openaccess",
+                    clientOptions: { theme: "light", lang: "vi" }
+                  });
+                  // Thêm title cho iframe để cải thiện khả năng tiếp cận
+                  const iframe = document.querySelector('iframe[src*="news.google.com"]');
+                  if (iframe) {
+                    iframe.setAttribute('title', 'Dịch vụ đăng ký Google');
+                  }
+                });
+              } catch (error) {
+                console.error('SWG initialization failed:', error);
+              }
+            })();
+          `}
+        </script>
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ErrorBoundary>
