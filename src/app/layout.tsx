@@ -1,4 +1,3 @@
-import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { ToastContainer } from 'react-toastify';
 import ErrorBoundary from '@/components/orther/error/ErrorBoundary';
@@ -11,12 +10,14 @@ import Header from '@/components/userPage/ui/Header';
 import Script from 'next/script';
 import { homeMetadata } from '@/metadata/homeMetadata';
 
-const geistSans = Geist({
+import { Inter, Roboto_Mono } from 'next/font/google';
+
+const geistSans = Inter({
   variable: '--font-geist-sans',
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
+const geistMono = Roboto_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
 });
@@ -32,7 +33,7 @@ export default function RootLayout({
     <html lang="vi" data-theme="mytheme">
       <head>
         {/* Script Google SWG - async external */}
-        <Script async src="https://news.google.com/swg/js/v1/swg-basic.js" strategy="afterInteractive" />
+        <Script async src="https://news.google.com/swg/js/v1/swg-basic.js" strategy="lazyOnload" />
         {/* Inline init script */}
         <Script id="swg-init" strategy="afterInteractive">
           {`

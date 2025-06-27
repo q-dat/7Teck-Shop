@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --font-geist-sans: 'Inter', sans-serif;
+  --font-geist-mono: 'Roboto Mono', monospace;
+}
+
+body {
+  font-family: var(--font-geist-sans);
+}
 /* ------------------------------------------------------------------------------------- */
 * {
   padding: 0;

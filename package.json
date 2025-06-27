@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@vercel/og": "^0.6.8",
     "axios": "^1.10.0",
     "daisyui": "4.12.13",
     "next": "15.3.1",
