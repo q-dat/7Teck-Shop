@@ -121,7 +121,7 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                                 ram: 'RAM',
                                 cpu: 'CPU',
                                 lcd: 'Màn hình',
-                                vga: 'VGA',
+                                gpu: 'GPU',
                               };
 
                               return (
