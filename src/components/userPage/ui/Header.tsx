@@ -15,6 +15,9 @@ import Link from 'next/link';
 import { images } from '../../../../public/images';
 import Image from 'next/image';
 import { hotlineUrl } from '@/utils/socialLinks';
+import { useRouter } from 'next/navigation';
+import debounce from 'lodash.debounce';
+import { searchProducts } from '@/services/searchService';
 
 const items = [
   {
@@ -43,6 +46,17 @@ const items = [
   },
 ];
 const Header: React.FC = () => {
+  interface SearchResult {
+    name: string;
+    link: string;
+    image: string;
+  }
+
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
   const pathname = usePathname();
   // Translation
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
@@ -63,6 +77,25 @@ const Header: React.FC = () => {
       setActiveItem(foundItem.name);
     }
   }, [pathname]);
+
+  // Handle Search
+  const handleSearch = debounce(async (text: string) => {
+    if (!text.trim()) {
+      setResults([]);
+      return;
+    }
+
+    setIsLoading(true);
+    const data = await searchProducts(text);
+    setResults(data);
+    setIsLoading(false);
+  }, 300);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+    handleSearch(value);
+  };
 
   return (
     <div className="fixed left-0 top-0 z-[99999] hidden w-full flex-col xl:block">
@@ -95,14 +128,46 @@ const Header: React.FC = () => {
           </div>
         </div>
         {/* Input Search */}
-        <div className="relative flex w-full flex-row items-center justify-center gap-1 rounded-full bg-white pl-2">
-          <IoSearch className="text-xl text-primary" />
-          <Input
-            size="sm"
-            className="w-full border-none bg-transparent pl-1 text-sm text-black placeholder-primary shadow-none focus:placeholder-black focus:outline-none"
-            placeholder="Bạn muốn tìm gì..."
-          />
+        <div className="relative flex w-full flex-col items-center justify-center gap-1">
+          <div id="search-box" className="relative z-10 flex w-full flex-row items-center justify-center gap-1 rounded-full bg-white pl-2">
+            <IoSearch className="text-xl text-primary" />
+            <Input
+              size="sm"
+              value={query}
+              onChange={handleChange}
+              className="w-full border-none bg-transparent pl-1 text-sm text-black placeholder-primary shadow-none focus:placeholder-black focus:outline-none"
+              placeholder="Bạn muốn tìm gì..."
+            />
+          </div>
+
+          {/* Result */}
+          {query && results.length > 0 && (
+            <ul className="fixed left-[50%] top-[100px] z-[99999] max-h-[500px] w-full max-w-[600px] -translate-x-1/2 overflow-auto rounded-md border bg-white p-2 text-primary shadow-md">
+              {results.map((item, idx) => (
+                <li
+                  key={idx}
+                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm hover:bg-primary hover:text-white"
+                  onClick={() => {
+                    router.push(item.link);
+                    setQuery('');
+                    setResults([]);
+                  }}
+                >
+                  <Image src={item.image} alt={item.name} width={30} height={30} className="h-10 w-10 rounded object-cover" />
+                  <span>{item.name}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* 404 */}
+          {query && !isLoading && results.length === 0 && (
+            <p className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-md bg-white p-2 text-sm text-gray-500 shadow-md">
+              Không tìm thấy kết quả
+            </p>
+          )}
         </div>
+
         <div className="flex w-full flex-row items-center justify-end gap-5">
           {/*  */}
           <div className="flex items-center">
@@ -128,7 +193,7 @@ const Header: React.FC = () => {
       >
         <nav className="h-full">
           <Link aria-label="Home" href="/" onClick={() => setActiveItem('Trang Chủ')}>
-            <Image width={60} height={60} className="filter h-full w-full rounded-full object-contain" loading="lazy" src={images.Logo} alt="LOGO" />
+            <Image width={60} height={60} className="h-full w-full rounded-full object-contain filter" loading="lazy" src={images.Logo} alt="LOGO" />
           </Link>
         </nav>
         <Menu className="flex flex-row items-center justify-center gap-2">
