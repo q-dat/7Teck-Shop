@@ -1,5 +1,5 @@
 'use client';
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState, useMemo } from 'react';
 import { Button, Drawer, Input, Menu } from 'react-daisyui';
 import { RxHamburgerMenu } from 'react-icons/rx';
 import { FaHome, FaChevronDown } from 'react-icons/fa';
@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { images } from '../../../public/images';
 import Image from 'next/image';
 import menuItems from '@/utils/menuItems';
-import debounce from 'lodash.debounce';
+import { debounce } from 'lodash';
 import { searchProducts } from '@/services/searchService';
 
 interface SearchResult {
@@ -18,33 +18,34 @@ interface SearchResult {
   link: string;
   image: string;
 }
+
 interface HeaderResponsiveProps {
   Title_NavbarMobile: ReactNode;
 }
+
 export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiveProps) {
   // Search
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  //
+
+  // Other states
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [rightVisible, setRightVisible] = useState(false);
-  // SearchToggle Input
   const [openSearch, setOpenSearch] = useState(false);
-  // Naviga Active
   const [activeItem, setActiveItem] = useState('Trang Chủ');
-  //
   const [showMenu, setShowMenu] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  //
   const pathname = usePathname();
-  //
+
+  // Handle scroll and active menu item
   useEffect(() => {
     const foundItem = menuItems.find((item) => item.link === pathname || item.submenu?.some((sub) => sub.link === pathname));
     if (foundItem) {
       setActiveItem(foundItem.name);
     }
+
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       if (currentScrollY > lastScrollY && currentScrollY > 50) {
@@ -59,45 +60,60 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY, pathname]);
 
-  const handleMenuClick = (name: string) => {
-    setOpenSubmenu((prev) => (prev === name ? null : name));
-  };
+  // Debounced search function
+  const handleSearch = useMemo(
+    () =>
+      debounce(async (text: string) => {
+        if (!text.trim()) {
+          setResults([]);
+          setIsLoading(false);
+          return;
+        }
 
-  const toggleRightVisible = () => setRightVisible((prev) => !prev);
-  // Search Input
-  const handleSearchToggle = () => {
-    setOpenSearch(!openSearch);
-  };
+        try {
+          setIsLoading(true);
+          const data = await searchProducts(text);
+          setResults(data);
+        } catch (error) {
+          console.error('Lỗi khi tìm kiếm:', error);
+          setResults([]);
+        } finally {
+          setIsLoading(false);
+        }
+      }, 300),
+    []
+  );
 
-  // Handle Search
-  const handleSearch = debounce(async (text: string) => {
-    if (!text.trim()) {
-      setResults([]);
-      return;
-    }
-
-    setIsLoading(true);
-    const data = await searchProducts(text);
-    setResults(data);
-    setIsLoading(false);
-  }, 300);
-
+  // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
     handleSearch(value);
   };
+
+  const handleMenuClick = (name: string) => {
+    setOpenSubmenu((prev) => (prev === name ? null : name));
+  };
+
+  const toggleRightVisible = () => setRightVisible((prev) => !prev);
+
+  const handleSearchToggle = () => {
+    setOpenSearch(!openSearch);
+  };
+
   return (
     <div className="fixed z-[99999] block w-full bg-gradient-to-b from-white to-primary xl:hidden">
       <header
-        className={`fixed h-[60px] w-full bg-gradient-to-r from-primary via-primary to-primary px-2 transition-all delay-200 duration-300 ease-in-out ${showMenu ? 'top-0' : 'top-0'}`}
+        className={`fixed h-[60px] w-full bg-gradient-to-r from-primary via-primary to-primary px-2 transition-all delay-200 duration-300 ease-in-out ${
+          showMenu ? 'top-0' : 'top-0'
+        }`}
       >
         <div className="flex flex-row items-center justify-between">
           <Link aria-label="Trang chủ" href="/">
             <FaHome className="text-2xl text-white" />
           </Link>
           <p className="font-semibold text-white">{Title_NavbarMobile}</p>
-          {/* Search Toggle*/}
+          {/* Search Toggle */}
           <div className="absolute right-[50px]">
             <div className="relative" onClick={handleSearchToggle}>
               <IoSearch className="animate-bounce text-xl text-white" />
@@ -127,7 +143,10 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                       router.push(item.link);
                       setQuery('');
                       setResults([]);
+                      setOpenSearch(false);
                     }}
+                    role="option"
+                    aria-label={`Chọn ${item.name}`}
                   >
                     <Image src={item.image} alt={item.name} width={30} height={30} className="h-10 w-10 rounded object-cover" />
                     <span>{item.name}</span>
@@ -135,7 +154,6 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                 ))}
               </ul>
             )}
-
             {/* 404 */}
             {query && !isLoading && results.length === 0 && (
               <p className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-md bg-white p-2 text-sm text-gray-500 shadow-md">

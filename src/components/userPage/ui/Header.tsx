@@ -1,5 +1,5 @@
 'use client';
-import React, { memo, useEffect, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import { Button, Input, Menu } from 'react-daisyui';
 import { FaChevronDown } from 'react-icons/fa';
 import { RiArrowLeftRightFill } from 'react-icons/ri';
@@ -16,7 +16,7 @@ import { images } from '../../../../public/images';
 import Image from 'next/image';
 import { hotlineUrl } from '@/utils/socialLinks';
 import { useRouter } from 'next/navigation';
-import debounce from 'lodash.debounce';
+import { debounce } from 'lodash';
 import { searchProducts } from '@/services/searchService';
 
 interface SearchResult {
@@ -56,10 +56,13 @@ const Header: React.FC = () => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  //
+
+  // Other states
   const pathname = usePathname();
   // Translation
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  // Naviga Active
+  const [activeItem, setActiveItem] = useState('Trang Chủ');
   // SubMenu
   const handleMouseEnter = (name: string) => {
     setOpenSubmenu(name);
@@ -68,9 +71,7 @@ const Header: React.FC = () => {
   const handleMouseLeave = () => {
     setOpenSubmenu(null);
   };
-  // Naviga Active
-  const [activeItem, setActiveItem] = useState('Trang Chủ');
-  //
+  // Handle scroll and active menu item
   useEffect(() => {
     const foundItem = menuItems.find((item) => item.link === pathname || item.submenu?.some((sub) => sub.link === pathname));
     if (foundItem) {
@@ -78,19 +79,31 @@ const Header: React.FC = () => {
     }
   }, [pathname]);
 
-  // Handle Search
-  const handleSearch = debounce(async (text: string) => {
-    if (!text.trim()) {
-      setResults([]);
-      return;
-    }
+  // Debounced search function
+  const handleSearch = useMemo(
+    () =>
+      debounce(async (text: string) => {
+        if (!text.trim()) {
+          setResults([]);
+          setIsLoading(false);
+          return;
+        }
 
-    setIsLoading(true);
-    const data = await searchProducts(text);
-    setResults(data);
-    setIsLoading(false);
-  }, 300);
+        try {
+          setIsLoading(true);
+          const data = await searchProducts(text);
+          setResults(data);
+        } catch (error) {
+          console.error('Lỗi khi tìm kiếm:', error);
+          setResults([]);
+        } finally {
+          setIsLoading(false);
+        }
+      }, 300),
+    []
+  );
 
+  // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
