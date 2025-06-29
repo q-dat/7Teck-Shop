@@ -1,4 +1,4 @@
-import { IPhoneCatalog } from '../phone-catalog/phone-catalog';
+import { IPhoneCatalog } from "../../catalogs/phone-catalog/phone-catalog";
 
 export interface IPhone {
   _id: string;

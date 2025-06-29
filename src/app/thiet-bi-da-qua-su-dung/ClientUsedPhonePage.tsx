@@ -1,6 +1,6 @@
 'use client';
 import ClientUsedProductCatalogPage, { UsedProductCatalog } from '../../components/userPage/page/ClientUsedProductCatalogPage';
-import { IPhoneCatalog } from '@/types/type/phone-catalog/phone-catalog';
+import { IPhoneCatalog } from '@/types/type/catalogs/phone-catalog/phone-catalog';
 
 export default function ClientUsedPhonePage({ phoneCatalogs }: { phoneCatalogs: IPhoneCatalog[] }) {
   const data: UsedProductCatalog[] = phoneCatalogs.map((p) => ({

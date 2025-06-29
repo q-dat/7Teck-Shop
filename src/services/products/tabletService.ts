@@ -1,6 +1,6 @@
 import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
-import { ITablet } from '../../types/type/tablet/tablet';
+import { ITablet } from '@/types/type/products/tablet/tablet';
 
 export async function getAllTablets(): Promise<ITablet[]> {
   try {

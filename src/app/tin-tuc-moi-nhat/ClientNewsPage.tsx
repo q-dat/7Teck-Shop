@@ -4,7 +4,7 @@ import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import TimeAgo from '@/components/orther/timeAgo/TimeAgo';
 import { slugify } from '@/utils/slugify';
 import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
-import { IPost } from '@/types/type/post/post';
+import { IPost } from '@/types/type/products/post/post';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';

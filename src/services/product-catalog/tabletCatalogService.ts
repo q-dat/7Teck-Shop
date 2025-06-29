@@ -1,4 +1,4 @@
-import { ITabletCatalog } from '@/types/type/tablet-catalog/tablet-catalog';
+import { ITabletCatalog } from '@/types/type/catalogs/tablet-catalog/tablet-catalog';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 
 export async function getAllTabletCatalogs(): Promise<ITabletCatalog[]> {

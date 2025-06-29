@@ -1,7 +1,7 @@
 'use client';
 import TimeAgo from '@/components/orther/timeAgo/TimeAgo';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
-import { IPost } from '@/types/type/post/post';
+import { IPost } from '@/types/type/products/post/post';
 import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
 import { slugify } from '@/utils/slugify';
 import Image from 'next/image';

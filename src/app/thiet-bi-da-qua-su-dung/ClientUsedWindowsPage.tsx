@@ -1,6 +1,6 @@
 'use client';
 import ClientUsedProductCatalogPage, { UsedProductCatalog } from '../../components/userPage/page/ClientUsedProductCatalogPage';
-import { IWindowsCatalog } from '@/types/type/windows-catalog/windows-catalog';
+import { IWindowsCatalog } from '@/types/type/catalogs/windows-catalog/windows-catalog';
 
 export default function ClientUsedWindowsPage({ windowsCatalogs }: { windowsCatalogs: IWindowsCatalog[] }) {
   const data: UsedProductCatalog[] = windowsCatalogs.map((p) => ({

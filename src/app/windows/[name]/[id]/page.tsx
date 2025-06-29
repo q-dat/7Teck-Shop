@@ -5,7 +5,7 @@ import Head from 'next/head';
 import React from 'react';
 import { slugify } from '@/utils/slugify';
 import ClientWindowsDetailPage from './ClientWindowsDetailPage';
-import { IWindows } from '@/types/type/windows/windows';
+import { IWindows } from '@/types/type/products/windows/windows';
 import { getWindowsById } from '@/services/products/windowsService';
 
 export default async function WindowsDetailPage({ params }: PageProps) {

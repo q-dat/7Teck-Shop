@@ -1,6 +1,6 @@
 'use client';
 import ClientProductPage from '@/components/userPage/page/ClientProductPage';
-import { IMacbook } from '@/types/type/macbook/macbook';
+import { IMacbook } from '@/types/type/products/macbook/macbook';
 
 export default function ClientMacbookPage({ macbook }: { macbook: IMacbook[] }) {
   const mappedMacbooks = macbook.map((macbook) => ({

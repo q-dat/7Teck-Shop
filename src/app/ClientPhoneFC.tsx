@@ -1,6 +1,5 @@
 'use client';
 import { useScroll } from '@/hooks/useScroll';
-import { IPhone } from '@/types/type/phone/phone';
 import { slugify } from '@/utils/slugify';
 import Link from 'next/link';
 import React, { useState } from 'react';
@@ -12,6 +11,7 @@ import imageRepresent from '../../public/image-represent';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { IPhone } from '@/types/type/products/phone/phone';
 
 interface ClientPhoneProps {
   mostViewedPhones: IPhone[];

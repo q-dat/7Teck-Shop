@@ -1,4 +1,4 @@
-import { IPhoneCatalog } from '@/types/type/phone-catalog/phone-catalog';
+import { IPhoneCatalog } from '@/types/type/catalogs/phone-catalog/phone-catalog';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 
 export async function getAllPhoneCatalogs(): Promise<IPhoneCatalog[]> {

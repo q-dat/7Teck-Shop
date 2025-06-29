@@ -7,10 +7,10 @@ import ClientUsedMacbookPage from './ClientUsedMacbookPage';
 import ClientUsedWindowsPage from './ClientUsedWindowsPage';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import Link from 'next/link';
-import { IPhoneCatalog } from '@/types/type/phone-catalog/phone-catalog';
-import { ITabletCatalog } from '@/types/type/tablet-catalog/tablet-catalog';
-import { IMacbookCatalog } from '@/types/type/macbook-catalog/macbook-catalog';
-import { IWindowsCatalog } from '@/types/type/windows-catalog/windows-catalog';
+import { IPhoneCatalog } from '@/types/type/catalogs/phone-catalog/phone-catalog';
+import { ITabletCatalog } from '@/types/type/catalogs/tablet-catalog/tablet-catalog';
+import { IMacbookCatalog } from '@/types/type/catalogs/macbook-catalog/macbook-catalog';
+import { IWindowsCatalog } from '@/types/type/catalogs/windows-catalog/windows-catalog';
 
 // Danh sách danh mục sản phẩm
 const categories = [

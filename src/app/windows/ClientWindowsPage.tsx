@@ -1,6 +1,6 @@
 'use client';
 import ClientProductPage from '@/components/userPage/page/ClientProductPage';
-import { IWindows } from '@/types/type/windows/windows';
+import { IWindows } from '@/types/type/products/windows/windows';
 
 export default function ClientWindowsPage({ windows }: { windows: IWindows[] }) {
   const mapped = windows.map((windows) => ({

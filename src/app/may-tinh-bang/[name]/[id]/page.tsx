@@ -4,7 +4,7 @@ import { PageProps } from '@/types/type/pages/page-props';
 import Head from 'next/head';
 import React from 'react';
 import { slugify } from '@/utils/slugify';
-import { ITablet } from '@/types/type/tablet/tablet';
+import { ITablet } from '@/types/type/products/tablet/tablet';
 import { getTabletById } from '@/services/products/tabletService';
 import ClientTabletDetailPage from './ClientTabletDetailPage';
 

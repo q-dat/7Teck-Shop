@@ -1,4 +1,4 @@
-import { IWindowsCatalog } from '../windows-catalog/windows-catalog';
+import { IWindowsCatalog } from '../../catalogs/windows-catalog/windows-catalog';
 
 export interface IWindows {
   _id: string;

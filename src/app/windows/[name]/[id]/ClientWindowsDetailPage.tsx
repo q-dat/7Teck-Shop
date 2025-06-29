@@ -1,6 +1,6 @@
 'use client';
 import { windowsFieldMap } from '@/types/type/optionsData/windowsFieldMap';
-import { IWindows } from '@/types/type/windows/windows';
+import { IWindows } from '@/types/type/products/windows/windows';
 import ClientProductDetailPage, { ProductCatalogGroup } from '@/components/userPage/page/ClientProductDetailPage';
 
 export default function ClientWindowsDetailPage({ win }: { win: IWindows }) {

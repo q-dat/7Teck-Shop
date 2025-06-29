@@ -1,4 +1,4 @@
-import { IWindowsCatalog } from '@/types/type/windows-catalog/windows-catalog';
+import { IWindowsCatalog } from '@/types/type/catalogs/windows-catalog/windows-catalog';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 
 export async function getAllWindowsCatalogs(): Promise<IWindowsCatalog[]> {

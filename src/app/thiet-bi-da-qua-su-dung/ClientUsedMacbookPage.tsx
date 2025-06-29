@@ -1,6 +1,6 @@
 'use client';
 import ClientUsedProductCatalogPage, { UsedProductCatalog } from '@/components/userPage/page/ClientUsedProductCatalogPage';
-import { IMacbookCatalog } from '@/types/type/macbook-catalog/macbook-catalog';
+import { IMacbookCatalog } from '@/types/type/catalogs/macbook-catalog/macbook-catalog';
 
 export default function ClientUsedMacbookPage({ macbookCatalogs }: { macbookCatalogs: IMacbookCatalog[] }) {
   const data: UsedProductCatalog[] = macbookCatalogs.map((p) => ({

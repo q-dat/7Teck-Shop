@@ -1,6 +1,6 @@
 import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
-import { IPhone } from '../../types/type/phone/phone';
+import { IPhone } from '@/types/type/products/phone/phone';
 
 export async function getAllmostViewedPhones(): Promise<IPhone[]> {
   try {

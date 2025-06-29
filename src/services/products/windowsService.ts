@@ -1,6 +1,6 @@
-import { IWindows } from '@/types/type/windows/windows';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { logCacheStatus } from '@/utils/logCacheStatus';
+import { IWindows } from '@/types/type/products/windows/windows';
 
 export async function getAllWindows(): Promise<IWindows[]> {
   try {

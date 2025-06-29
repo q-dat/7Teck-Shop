@@ -1,7 +1,7 @@
 'use client';
 import { tabletFieldMap } from '@/types/type/optionsData/tabletFieldMap';
-import { ITablet } from '@/types/type/tablet/tablet';
 import ClientProductDetailPage, { ProductCatalogGroup } from '@/components/userPage/page/ClientProductDetailPage';
+import { ITablet } from '@/types/type/products/tablet/tablet';
 
 export default function ClientTabletDetailPage({ tablet }: { tablet: ITablet }) {
   const mappedProduct = {

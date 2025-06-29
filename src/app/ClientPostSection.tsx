@@ -7,7 +7,7 @@ import { Button } from 'react-daisyui';
 import { IoIosArrowForward } from 'react-icons/io';
 import TimeAgo from '@/components/orther/timeAgo/TimeAgo';
 import { useRouter } from 'next/navigation';
-import { IPost } from '@/types/type/post/post';
+import { IPost } from '@/types/type/products/post/post';
 import Image from 'next/image';
 
 interface ClientPostSectionProps {

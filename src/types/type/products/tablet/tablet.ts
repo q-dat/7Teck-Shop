@@ -1,4 +1,4 @@
-import { ITabletCatalog } from '../tablet-catalog/tablet-catalog';
+import { ITabletCatalog } from "../../catalogs/tablet-catalog/tablet-catalog";
 
 export interface ITablet {
   _id: string;

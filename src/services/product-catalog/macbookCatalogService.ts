@@ -1,4 +1,4 @@
-import { IMacbookCatalog } from '@/types/type/macbook-catalog/macbook-catalog';
+import { IMacbookCatalog } from '@/types/type/catalogs/macbook-catalog/macbook-catalog';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 
 export async function getAllMacbookCatalogs(): Promise<IMacbookCatalog[]> {

@@ -4,13 +4,13 @@ import { memo, useEffect, useState } from 'react';
 import ClientPhoneFC from './ClientPhoneFC';
 import ClientProductFC, { Product } from './ClientProductFC';
 import ClientPostSection from './ClientPostSection';
-import { IPhone } from '@/types/type/phone/phone';
-import { IMacbook } from '@/types/type/macbook/macbook';
-import { ITablet } from '@/types/type/tablet/tablet';
-import { IWindows } from '@/types/type/windows/windows';
-import { IPost } from '@/types/type/post/post';
+import { IMacbook } from '@/types/type/products/macbook/macbook';
+import { IPost } from '@/types/type/products/post/post';
 import Image from 'next/image';
 import { images } from '../../public/images';
+import { IPhone } from '@/types/type/products/phone/phone';
+import { ITablet } from '@/types/type/products/tablet/tablet';
+import { IWindows } from '@/types/type/products/windows/windows';
 
 // Thành phần Banner
 const BannerComponent = memo(() => (

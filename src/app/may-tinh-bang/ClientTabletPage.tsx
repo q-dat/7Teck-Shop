@@ -1,6 +1,6 @@
 'use client';
 import ClientProductPage from '@/components/userPage/page/ClientProductPage';
-import { ITablet } from '@/types/type/tablet/tablet';
+import { ITablet } from '@/types/type/products/tablet/tablet';
 
 export default function ClientTabletPage({ tablets }: { tablets: ITablet[] }) {
   const mapped = tablets.map((tablet) => ({

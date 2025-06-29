@@ -1,4 +1,4 @@
-import { IPost } from '@/types/type/post/post';
+import { IPost } from '@/types/type/products/post/post';
 import { getServerApiUrl } from '../../hooks/useApiUrl';
 
 export async function getAllPosts(): Promise<IPost[]> {

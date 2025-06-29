@@ -1,6 +1,6 @@
 import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
-import { IMacbook } from '../../types/type/macbook/macbook';
+import { IMacbook } from '../../types/type/products/macbook/macbook';
 
 export async function getAllMacbook(): Promise<IMacbook[]> {
   try {

@@ -1,4 +1,4 @@
-import { IMacbookCatalog } from '../macbook-catalog/macbook-catalog';
+import { IMacbookCatalog } from '../../catalogs/macbook-catalog/macbook-catalog';
 
 export interface IMacbook {
   _id: string;

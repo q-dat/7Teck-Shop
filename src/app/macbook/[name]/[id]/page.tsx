@@ -5,7 +5,7 @@ import Head from 'next/head';
 import React from 'react';
 import ClientMacbookDetailPage from './ClientMacbookDetailPage';
 import { slugify } from '@/utils/slugify';
-import { IMacbook } from '@/types/type/macbook/macbook';
+import { IMacbook } from '@/types/type/products/macbook/macbook';
 import { getMacbookById } from '@/services/products/macbookService';
 
 export default async function MacbookDetailPage({ params }: PageProps) {

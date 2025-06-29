@@ -1,6 +1,6 @@
 'use client';
 import ClientUsedProductPage from '@/components/userPage/page/ClientUsedProductByCatalogPage';
-import { IPhone } from '@/types/type/phone/phone';
+import { IPhone } from '@/types/type/products/phone/phone';
 
 export default function ClientUsedPhoneByCatalogPage({ phones }: { phones: IPhone[] }) {
   const mapped = phones.map((item) => ({

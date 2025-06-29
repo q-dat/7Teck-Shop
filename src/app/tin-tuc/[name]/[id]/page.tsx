@@ -4,7 +4,7 @@ import { PageProps } from '@/types/type/pages/page-props';
 import React from 'react';
 import ClientPostDetailPage from './ClientPostDetailPage';
 import { getAllPosts, getPostById } from '@/services/postService';
-import { IPost } from '@/types/type/post/post';
+import { IPost } from '@/types/type/products/post/post';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 import Head from 'next/head';
 
