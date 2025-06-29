@@ -5,17 +5,29 @@ import { RxHamburgerMenu } from 'react-icons/rx';
 import { FaHome, FaChevronDown } from 'react-icons/fa';
 import { SlClose } from 'react-icons/sl';
 import { IoSearch } from 'react-icons/io5';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { images } from '../../../public/images';
 import Image from 'next/image';
 import menuItems from '@/utils/menuItems';
+import debounce from 'lodash.debounce';
+import { searchProducts } from '@/services/searchService';
 
+interface SearchResult {
+  name: string;
+  link: string;
+  image: string;
+}
 interface HeaderResponsiveProps {
   Title_NavbarMobile: ReactNode;
 }
 export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiveProps) {
-
+  // Search
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  //
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [rightVisible, setRightVisible] = useState(false);
   // SearchToggle Input
@@ -45,7 +57,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY,pathname]);
+  }, [lastScrollY, pathname]);
 
   const handleMenuClick = (name: string) => {
     setOpenSubmenu((prev) => (prev === name ? null : name));
@@ -57,6 +69,24 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
     setOpenSearch(!openSearch);
   };
 
+  // Handle Search
+  const handleSearch = debounce(async (text: string) => {
+    if (!text.trim()) {
+      setResults([]);
+      return;
+    }
+
+    setIsLoading(true);
+    const data = await searchProducts(text);
+    setResults(data);
+    setIsLoading(false);
+  }, 300);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+    handleSearch(value);
+  };
   return (
     <div className="fixed z-[99999] block w-full bg-gradient-to-b from-white to-primary xl:hidden">
       <header
@@ -76,6 +106,8 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                   <div className="absolute -right-[50px] top-10 h-screen w-screen bg-black bg-opacity-50">
                     <Input
                       type="text"
+                      value={query}
+                      onChange={handleChange}
                       className="w-screen animate-exfadeIn rounded-none border-none text-black placeholder-primary focus:outline-none"
                       autoFocus
                       placeholder="Bạn muốn tìm gì..."
@@ -84,6 +116,32 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                 )}
               </div>
             </div>
+            {/* Result */}
+            {query && results.length > 0 && (
+              <ul className="fixed left-[50%] top-[100px] z-[99999] max-h-[500px] w-full max-w-[500px] -translate-x-1/2 overflow-auto bg-white p-2 text-primary shadow-md">
+                {results.map((item, index) => (
+                  <li
+                    key={index}
+                    className={`flex cursor-pointer items-center gap-2 p-2 text-sm ${index !== results.length - 1 ? 'border-b border-gray-50' : ''}`}
+                    onClick={() => {
+                      router.push(item.link);
+                      setQuery('');
+                      setResults([]);
+                    }}
+                  >
+                    <Image src={item.image} alt={item.name} width={30} height={30} className="h-10 w-10 rounded object-cover" />
+                    <span>{item.name}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* 404 */}
+            {query && !isLoading && results.length === 0 && (
+              <p className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-md bg-white p-2 text-sm text-gray-500 shadow-md">
+                Không tìm thấy kết quả
+              </p>
+            )}
           </div>
           {/* RightVisible */}
           <div className="z-50">

@@ -19,6 +19,11 @@ import { useRouter } from 'next/navigation';
 import debounce from 'lodash.debounce';
 import { searchProducts } from '@/services/searchService';
 
+interface SearchResult {
+  name: string;
+  link: string;
+  image: string;
+}
 const items = [
   {
     icon: <RiArrowLeftRightFill />,
@@ -46,17 +51,12 @@ const items = [
   },
 ];
 const Header: React.FC = () => {
-  interface SearchResult {
-    name: string;
-    link: string;
-    image: string;
-  }
-
+  // Search
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-
+  //
   const pathname = usePathname();
   // Translation
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
@@ -129,7 +129,7 @@ const Header: React.FC = () => {
         </div>
         {/* Input Search */}
         <div className="relative flex w-full flex-col items-center justify-center gap-1">
-          <div id="search-box" className="relative z-10 flex w-full flex-row items-center justify-center gap-1 rounded-full bg-white pl-2">
+          <div className="relative z-10 flex w-full flex-row items-center justify-center gap-1 rounded-full bg-white pl-2">
             <IoSearch className="text-xl text-primary" />
             <Input
               size="sm"
@@ -143,10 +143,10 @@ const Header: React.FC = () => {
           {/* Result */}
           {query && results.length > 0 && (
             <ul className="fixed left-[50%] top-[100px] z-[99999] max-h-[500px] w-full max-w-[600px] -translate-x-1/2 overflow-auto rounded-md border bg-white p-2 text-primary shadow-md">
-              {results.map((item, idx) => (
+              {results.map((item, index) => (
                 <li
-                  key={idx}
-                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm hover:bg-primary hover:text-white"
+                  key={index}
+                  className={`flex cursor-pointer items-center gap-2 p-2 text-sm hover:bg-primary hover:text-white ${index !== results.length - 1 ? 'border-b border-gray-50' : ''}`}
                   onClick={() => {
                     router.push(item.link);
                     setQuery('');
