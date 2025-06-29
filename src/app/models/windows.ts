@@ -1,5 +1,5 @@
 import { IWindows } from '@/types/type/products/windows/windows';
-import mongoose, { Schema, model, models } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 const windowsSchema = new Schema<IWindows>(
   {

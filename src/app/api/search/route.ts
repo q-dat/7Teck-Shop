@@ -9,7 +9,7 @@ import { slugify } from '@/utils/slugify';
 
 interface SearchableItem {
   _id: string;
-  [key: string]: any;
+  [key: string]: string | number | boolean | undefined;
 }
 
 interface CollectionMeta {
@@ -46,7 +46,7 @@ export async function GET(req: Request) {
       if (isObjectId) {
         const foundById = await model.findById(q).select(`${slugField} _id`).lean<SearchableItem>();
         if (foundById && foundById[slugField]) {
-          const slug = slugify(foundById[slugField]);
+          const slug = slugify(String(foundById[slugField]));
           matchedLinks.push(`${url}/${slug}/${foundById._id}`);
         }
       }
@@ -54,7 +54,8 @@ export async function GET(req: Request) {
       // 2. So sánh chính xác slug
       const items = await model.find().select(`${slugField} _id`).lean<SearchableItem[]>();
       for (const item of items) {
-        const itemSlug = slugify(item[slugField]);
+        const itemSlug = slugify(String(item[slugField]));
+
         if (itemSlug === searchSlug) {
           matchedLinks.push(`${url}/${itemSlug}/${item._id}`);
         }
@@ -66,7 +67,7 @@ export async function GET(req: Request) {
         .select(`${slugField} _id`)
         .lean<SearchableItem[]>();
       for (const item of fuzzyMatches) {
-        const itemSlug = slugify(item[slugField]);
+        const itemSlug = slugify(String(item[slugField]));
         const link = `${url}/${itemSlug}/${item._id}`;
         if (!matchedLinks.includes(link)) {
           matchedLinks.push(link);

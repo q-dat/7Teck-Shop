@@ -1,5 +1,5 @@
 import { IMacbook } from '@/types/type/products/macbook/macbook';
-import mongoose, { Schema, model, models } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 const macbookSchema = new Schema<IMacbook>(
   {
