@@ -19,10 +19,12 @@ const keywordMap: Record<string, string> = {
   prm: 'pro max',
   pls: 'plus',
 };
+
 interface SearchableItem {
   _id: string;
   [key: string]: string | number | boolean | undefined;
 }
+
 interface MatchedResult {
   name: string;
   link: string;
@@ -36,12 +38,11 @@ interface CollectionMeta {
   url: string;
   imageField: string;
 }
+
 function getNestedValue(obj: unknown, path: string): string {
   if (typeof obj !== 'object' || obj === null) return '';
-
   const keys = path.split('.');
   let value: unknown = obj;
-
   for (const key of keys) {
     if (typeof value === 'object' && value !== null && key in value) {
       value = (value as Record<string, unknown>)[key];
@@ -49,7 +50,6 @@ function getNestedValue(obj: unknown, path: string): string {
       return '';
     }
   }
-
   return typeof value === 'string' ? value : '';
 }
 
@@ -59,16 +59,15 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const q = searchParams.get('q') || '';
 
+    if (!q) {
+      return NextResponse.json({ message: 'Thiếu từ khóa tìm kiếm', success: false }, { status: 400 });
+    }
+
     const normalizedQ = q
       .toLowerCase()
       .split(' ')
       .map((word) => keywordMap[word] || word)
       .join(' ');
-
-    if (!q) {
-      return NextResponse.json({ message: 'Thiếu từ khóa tìm kiếm', success: false }, { status: 400 });
-    }
-
     const searchSlug = slugify(normalizedQ);
     const isObjectId = ObjectId.isValid(q);
 
@@ -130,9 +129,19 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: 'Không tìm thấy sản phẩm phù hợp', success: false }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, results: matchedResults });
+    return NextResponse.json(
+      { success: true, results: matchedResults },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
+        },
+      }
+    );
   } catch (err) {
     console.error('❌ Lỗi search API:', err);
     return NextResponse.json({ message: 'Lỗi server', success: false }, { status: 500 });
   }
 }
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Cache 1 giờ
