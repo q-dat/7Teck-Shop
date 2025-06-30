@@ -3,14 +3,16 @@ import ClientUsedProductPage from '@/components/userPage/page/ClientUsedProductB
 import { IPhone } from '@/types/type/products/phone/phone';
 
 export default function ClientUsedPhoneByCatalogPage({ phones }: { phones: IPhone[] }) {
-  const mapped = phones.map((item) => ({
-    _id: item._id,
-    name: item.name,
-    image: item.img,
-    price: item.price,
-    sale: item.sale ?? null,
-    status: item.status ?? null,
-    view: item.view ?? 0,
+  const mapped = phones.map((phone) => ({
+    _id: phone._id,
+    name: phone.name,
+    image: phone.img,
+    price: phone.price,
+    sale: phone.sale ?? null,
+    status: phone.status ?? null,
+    view: phone.view ?? 0,
+    color: phone.color,
+    ram: phone.phone_catalog_id.configuration_and_memory?.ram,
   }));
 
   return <ClientUsedProductPage products={mapped} title="Điện Thoại" basePath="dien-thoai" />;

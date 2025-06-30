@@ -151,6 +151,7 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                           </Link>
                         </div>
                       </div>
+                      {/*  */}
                       {product?.status && (
                         <div className="absolute -left-[3px] top-0 z-20">
                           <Image height={100} width={60} alt="" loading="lazy" className="h-full w-[60px]" src={imageRepresent.Status} />

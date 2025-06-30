@@ -3,14 +3,16 @@ import ClientUsedProductPage from '@/components/userPage/page/ClientUsedProductB
 import { ITablet } from '@/types/type/products/tablet/tablet';
 
 export default function ClientUsedTabletByCatalogPage({ tablets }: { tablets: ITablet[] }) {
-  const mapped = tablets.map((item) => ({
-    _id: item._id,
-    name: item.tablet_name,
-    image: item.tablet_img,
-    price: item.tablet_price,
-    sale: item.tablet_sale ?? null,
-    status: item.tablet_status ?? null,
-    view: item.tablet_view ?? 0,
+  const mapped = tablets.map((tablet) => ({
+    _id: tablet._id,
+    name: tablet.tablet_name,
+    image: tablet.tablet_img,
+    price: tablet.tablet_price,
+    sale: tablet.tablet_sale ?? null,
+    status: tablet.tablet_status ?? null,
+    view: tablet.tablet_view ?? 0,
+    color: tablet.tablet_color,
+    ram: tablet.tablet_catalog_id.t_cat_memory_and_storage?.t_cat_ram,
   }));
 
   return <ClientUsedProductPage products={mapped} title="Máy Tính Bảng" basePath="may-tinh-bang" />;

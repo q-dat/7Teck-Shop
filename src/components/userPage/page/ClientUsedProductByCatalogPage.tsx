@@ -12,7 +12,7 @@ import imageRepresent from '../../../../public/image-represent';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/formatCurrency';
 
-export interface IProductBase {
+export interface ProductBase {
   _id: string;
   name: string;
   image: string;
@@ -20,18 +20,24 @@ export interface IProductBase {
   sale: number | null;
   status: string | null;
   view: number;
+  color: string;
+  ram?: string;
+  cpu?: string;
+  lcd?: string;
+  gpu?: string;
 }
 
 type ProductPageProps = {
   title: string;
-  products: IProductBase[];
+  products: ProductBase[];
   basePath: string;
 };
 
-export default function ClientUsedProductPage({ products, title, basePath }: ProductPageProps) {
+export default function ClientUsedProductByCatalogPage({ products, title, basePath }: ProductPageProps) {
   const [loading, setLoading] = useState(true);
   const { name } = useParams();
-  const filtered = products.filter((item) => slugify(item.name) === name);
+  const specsToShow = ['color', 'ram', 'cpu', 'lcd', 'gpu'];
+  const filtered = products.filter((product) => slugify(product.name) === name);
 
   useEffect(() => {
     scrollToTopSmoothly();
@@ -63,61 +69,90 @@ export default function ClientUsedProductPage({ products, title, basePath }: Pro
               {loading ? (
                 <ProductPlaceholders count={12} />
               ) : filtered.length > 0 ? (
-                filtered.map((item) => {
-                  const slug = slugify(item.name);
-                  const url = `/${basePath}/${slug}/${item._id}`;
+                filtered.map((product) => {
+                  const slug = slugify(product.name);
+                  const url = `/${basePath}/${slug}/${product._id}`;
                   return (
-                    <section key={item._id} className="group relative flex h-full flex-col justify-between rounded-md border border-white text-black">
+                    <section
+                      key={product._id}
+                      className="group relative flex h-full flex-col justify-between rounded-md border border-white text-black"
+                    >
                       <Link href={url} className="flex h-full w-full items-center justify-center rounded-md rounded-b-none bg-white">
                         <div className="relative h-[200px] w-full overflow-hidden">
                           <Image
                             width={200}
                             height={200}
-                            alt={item.name}
+                            alt={product.name}
                             loading="lazy"
                             className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-sm filter"
-                            src={item.image}
+                            src={product.image}
                           />
                           <Image
                             width={200}
                             height={200}
-                            alt={item.name}
+                            alt={product.name}
                             loading="lazy"
                             className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
-                            src={item.image}
+                            src={product.image}
                           />
                         </div>
                       </Link>
 
-                      <div className="flex flex-col items-start justify-center gap-1 p-1">
-                        <Link href={url}>
+                      {/*  */}
+                      <div className="flex h-full w-full flex-col items-start justify-between p-1">
+                        <Link href={url} className="w-full cursor-pointer">
                           <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] text-black">
                             <FaRegEye />
-                            <p>{item.view}</p>
+                            <p>{product.view}</p>
                           </div>
                           <p className="xl:group-hover:text-secondary">
-                            {title} {item.name}
+                            {title} {product.name}
                           </p>
-                          <p className="font-[500] text-red-700">
-                            {formatCurrency(item.price)}&nbsp;
-                            {item.sale && <del className="text-xs font-light text-gray-400">{formatCurrency(item.sale)}</del>}
-                          </p>
+                          <div className="space-y-1 text-sm">
+                            {specsToShow.map((field) => {
+                              const value = product[field as keyof ProductBase];
+                              if (!value) return null;
+
+                              const fieldLabelMap: Record<string, string> = {
+                                color: 'Màu sắc',
+                                ram: 'RAM',
+                                cpu: 'CPU',
+                                lcd: 'Màn hình',
+                                gpu: 'GPU',
+                              };
+
+                              return (
+                                <p key={field}>
+                                  <span className="font-semibold">{fieldLabelMap[field]}: </span>
+                                  {value}
+                                </p>
+                              );
+                            })}
+                          </div>
                         </Link>
 
-                        <Link href="/thanh-toan" className="z-50 w-full">
-                          <Button
-                            size="xs"
-                            className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
-                          >
-                            Mua Ngay
-                          </Button>
-                        </Link>
+                        <div className="w-full">
+                          <p className="text-gray-700">
+                            &nbsp;
+                            <span className="font-semibold text-red-700">{formatCurrency(product?.price)}</span>
+                            &nbsp;
+                            {product?.sale && <del className="text-xs font-light text-gray-100">{formatCurrency(product?.sale)}</del>}
+                          </p>
+                          <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">
+                            <Button
+                              size="xs"
+                              className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
+                            >
+                              Mua Ngay
+                            </Button>
+                          </Link>
+                        </div>
                       </div>
                       {/*  */}
-                      {item.status && (
+                      {product.status && (
                         <div className="absolute -left-[3px] top-0 z-20">
                           <Image alt="status" loading="lazy" width={60} height={100} className="h-full w-[60px]" src={imageRepresent.Status} />
-                          <p className="absolute top-[1px] w-full pl-1 text-xs text-white">{item.status}</p>
+                          <p className="absolute top-[1px] w-full pl-1 text-xs text-white">{product.status}</p>
                         </div>
                       )}
                     </section>

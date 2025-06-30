@@ -145,7 +145,6 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                       setResults([]);
                       setOpenSearch(false);
                     }}
-                    role="option"
                     aria-label={`Chọn ${item.name}`}
                   >
                     <Image src={item.image} alt={item.name} width={30} height={30} className="h-10 w-10 rounded object-cover" />
