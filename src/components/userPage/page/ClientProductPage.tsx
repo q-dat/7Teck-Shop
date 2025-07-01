@@ -10,11 +10,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from 'react-daisyui';
 import imageRepresent from '../../../../public/image-represent';
+import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 
 interface ProductBase {
   _id: string;
   name: string;
-  image: string;
+  img: string;
   price: number;
   color: string;
   ram?: string;
@@ -33,6 +34,10 @@ interface ClientProductPageProps {
 
 export default function ClientProductPage({ products, title, basePath }: ClientProductPageProps) {
   const [loading, setLoading] = useState(true);
+  //  handleImageError
+  const fallbackSrc = imageRepresent.Fallback;
+  const { handleImageError, isImageErrored } = useImageErrorHandler();
+  // Panigation
   const [currentPage, setCurrentPage] = useState(1);
   const specsToShow = ['color', 'ram', 'cpu', 'lcd', 'gpu'];
 
@@ -41,7 +46,7 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
     setLoading(products.length === 0);
   }, [products]);
 
-  const itemsPerPage = 12;
+  const itemsPerPage = 24;
   const totalPages = Math.ceil(products.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -80,28 +85,24 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                   // Navigate
                   const productUrl = slugify(product.name);
                   const subUrl = product._id;
+                  // handleImageError
+                  const isErrored = isImageErrored(product._id);
+                  const src = isErrored || !product.img ? fallbackSrc : product.img;
                   return (
                     <section
                       key={product?._id}
                       className="group relative flex h-full w-full flex-col justify-between rounded-md border border-white text-black"
                     >
                       <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`${basePath}/${productUrl}/${subUrl}`}>
-                        <div className="relative h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none">
+                        <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                           <Image
+                            src={src}
+                            alt="Hình ảnh"
                             height={200}
                             width={200}
-                            alt="Hình ảnh"
                             loading="lazy"
-                            className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl filter"
-                            src={product?.image}
-                          />
-                          <Image
-                            height={200}
-                            width={200}
-                            alt="Hình ảnh"
-                            loading="lazy"
-                            className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
-                            src={product?.image}
+                            className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
+                            onError={() => handleImageError(product._id)}
                           />
                         </div>
                       </Link>

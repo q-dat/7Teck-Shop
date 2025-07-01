@@ -6,7 +6,7 @@ export default function ClientUsedWindowsByCatalogPage({ windows }: { windows: I
   const mapped = windows.map((win) => ({
     _id: win._id,
     name: win.windows_name,
-    image: win.windows_img,
+    img: win.windows_img,
     price: win.windows_price,
     sale: win.windows_sale ?? null,
     status: win.windows_status ?? null,

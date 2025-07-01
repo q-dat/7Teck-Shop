@@ -15,7 +15,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 export interface ProductBase {
   _id: string;
   name: string;
-  image: string;
+  img: string;
   price: number;
   sale: number | null;
   status: string | null;
@@ -78,22 +78,14 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                       className="group relative flex h-full flex-col justify-between rounded-md border border-white text-black"
                     >
                       <Link href={url} className="flex h-full w-full items-center justify-center rounded-md rounded-b-none bg-white">
-                        <div className="relative h-[200px] w-full overflow-hidden">
+                        <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                           <Image
-                            width={200}
                             height={200}
-                            alt={product.name}
-                            loading="lazy"
-                            className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-sm filter"
-                            src={product.image}
-                          />
-                          <Image
                             width={200}
-                            height={200}
-                            alt={product.name}
+                            alt="Hình ảnh"
                             loading="lazy"
-                            className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
-                            src={product.image}
+                            className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
+                            src={product?.img}
                           />
                         </div>
                       </Link>

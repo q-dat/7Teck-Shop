@@ -6,7 +6,7 @@ export default function ClientUsedMacbookByCatalogPage({ macbook }: { macbook: I
   const mapped = macbook.map((mac) => ({
     _id: mac._id,
     name: mac.macbook_name,
-    image: mac.macbook_img,
+    img: mac.macbook_img,
     price: mac.macbook_price,
     sale: mac.macbook_sale ?? null,
     status: mac.macbook_status ?? null,

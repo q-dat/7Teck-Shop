@@ -6,7 +6,7 @@ export default function ClientUsedTabletByCatalogPage({ tablets }: { tablets: IT
   const mapped = tablets.map((tablet) => ({
     _id: tablet._id,
     name: tablet.tablet_name,
-    image: tablet.tablet_img,
+    img: tablet.tablet_img,
     price: tablet.tablet_price,
     sale: tablet.tablet_sale ?? null,
     status: tablet.tablet_status ?? null,

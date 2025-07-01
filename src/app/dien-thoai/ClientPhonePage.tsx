@@ -6,7 +6,7 @@ export default function ClientPhonePage({ phones }: { phones: IPhone[] }) {
   const mappedPhones = phones.map((phone) => ({
     _id: phone._id,
     name: phone.name,
-    image: phone.img,
+    img: phone.img,
     price: phone.price,
     color: phone.color,
     ram: phone.phone_catalog_id.configuration_and_memory.ram,

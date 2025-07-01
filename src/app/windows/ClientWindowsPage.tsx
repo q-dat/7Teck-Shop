@@ -6,7 +6,7 @@ export default function ClientWindowsPage({ windows }: { windows: IWindows[] }) 
   const mapped = windows.map((windows) => ({
     _id: windows._id,
     name: windows.windows_name,
-    image: windows.windows_img,
+    img: windows.windows_img,
     price: windows.windows_price,
     color: windows.windows_color,
     ram: windows.windows_catalog_id.w_cat_memory_and_storage.w_cat_ram,

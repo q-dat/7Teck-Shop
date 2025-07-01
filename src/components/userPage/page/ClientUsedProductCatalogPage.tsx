@@ -61,25 +61,15 @@ export default function ClientUsedProductCatalogPage({ data, title, namePrefix, 
                 key={product?._id}
                 className="group flex h-full w-full flex-col justify-between rounded-md border border-white bg-white text-black"
               >
-                <div className="relative h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none">
-                  <Link href={`/${basePath}/${slug}`}>
-                    <Image
-                      height={200}
-                      width={200}
-                      alt="Hình ảnh"
-                      loading="lazy"
-                      className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl filter"
-                      src={product?.img}
-                    />
-                    <Image
-                      height={200}
-                      width={200}
-                      alt="Hình ảnh"
-                      loading="lazy"
-                      className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
-                      src={product?.img}
-                    />
-                  </Link>
+                <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
+                  <Image
+                    height={200}
+                    width={200}
+                    alt="Hình ảnh"
+                    loading="lazy"
+                    className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
+                    src={product?.img}
+                  />
                 </div>
                 {/*  */}
                 <div className="flex w-full flex-col items-start justify-between">

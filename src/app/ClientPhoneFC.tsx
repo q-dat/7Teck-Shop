@@ -2,7 +2,7 @@
 import { useScroll } from '@/hooks/useScroll';
 import { slugify } from '@/utils/slugify';
 import Link from 'next/link';
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from 'react-daisyui';
 import { FaRegEye } from 'react-icons/fa';
 import { IoIosArrowForward } from 'react-icons/io';
@@ -12,6 +12,7 @@ import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { IPhone } from '@/types/type/products/phone/phone';
+import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 
 interface ClientPhoneProps {
   mostViewedPhones: IPhone[];
@@ -20,14 +21,9 @@ interface ClientPhoneProps {
 
 export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhoneProps) {
   const { scrollRef, isLeftVisible, isRightVisible, hasOverflow, scrollBy } = useScroll();
+  //  handleImageError
   const fallbackSrc = imageRepresent.Fallback;
-
-  const [erroredImages, setErroredImages] = useState<Record<string, boolean>>({});
-
-  const handleImageError = (phoneId: string) => {
-    setErroredImages((prev) => ({ ...prev, [phoneId]: true }));
-  };
-
+  const { handleImageError, isImageErrored } = useImageErrorHandler();
   return (
     <div className="mt-10 p-0 xl:px-desktop-padding">
       {/* Title */}
@@ -46,7 +42,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
           ) : (
             mostViewedPhones.map((phone) => {
               const phoneUrl = slugify(phone.name);
-              const isErrored = erroredImages[phone._id];
+              const isErrored = isImageErrored(phone._id);
               const src = isErrored || !phone.img ? fallbackSrc : phone.img;
 
               return (
@@ -55,24 +51,15 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                   className="group relative flex h-full w-[195px] flex-col justify-between rounded-md border border-[#f2f4f7] text-black"
                 >
                   <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/dien-thoai/${phoneUrl}/${phone._id}`}>
-                    <div className="relative h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none">
+                    <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                       <Image
-                        src={src}
-                        alt="Hình ảnh sản phẩm"
                         height={200}
                         width={200}
+                        alt="Hình ảnh"
                         loading="lazy"
-                        onError={() => handleImageError(phone._id)}
-                        className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl filter"
-                      />
-                      <Image
+                        className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
                         src={src}
-                        alt="Hình ảnh sản phẩm"
-                        height={200}
-                        width={200}
-                        loading="lazy"
                         onError={() => handleImageError(phone._id)}
-                        className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
                       />
                     </div>
                   </Link>

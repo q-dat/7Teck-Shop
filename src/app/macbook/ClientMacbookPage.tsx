@@ -6,7 +6,7 @@ export default function ClientMacbookPage({ macbook }: { macbook: IMacbook[] }) 
   const mappedMacbooks = macbook.map((macbook) => ({
     _id: macbook._id,
     name: macbook.macbook_name,
-    image: macbook.macbook_img,
+    img: macbook.macbook_img,
     price: macbook.macbook_price,
     color: macbook.macbook_color,
     ram: macbook.macbook_catalog_id.m_cat_memory_and_storage.m_cat_ram,
