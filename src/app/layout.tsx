@@ -34,7 +34,7 @@ export default function RootLayout({
     <html lang="vi" data-theme="mytheme">
       <head>
         {/* Script Google SWG */}
-        <script async type="application/javascript" src="https://news.google.com/swg/js/v1/swg-basic.js"></script>
+        {/* <script async type="application/javascript" src="https://news.google.com/swg/js/v1/swg-basic.js"></script>
         <script>
           {`
             (function() {
@@ -57,7 +57,7 @@ export default function RootLayout({
               }
             })();
           `}
-        </script>
+        </script> */}
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ErrorBoundary>
