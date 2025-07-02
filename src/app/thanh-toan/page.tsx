@@ -256,18 +256,14 @@ export default function PurchasePage() {
                         readOnly
                         type="hidden"
                         name="Chi tiết sản phẩm:"
-                        value={`
-                        <div>
-                          <p><strong>Tên:</strong> ${selectedProduct.name} / ${selectedProduct.ram}</p>
-                          <p><strong>Giá:</strong> ${formatCurrency(selectedProduct.price)}</p>
-                          <p><strong>Hình ảnh:</strong><br/><img src="${selectedProduct.img}" width="200" /></p>
-                        </div>`}
-                        />
-                      <input readOnly type="hidden" name="Link sản phẩm:" value={`${selectedProduct.link}`} />
+                        value={`Tên: ${selectedProduct.name} / ${selectedProduct.ram}\nGiá: ${formatCurrency(selectedProduct.price)}\nHình ảnh: ${selectedProduct.img}`}
+                      />
+                      <input readOnly type="hidden" name="Link sản phẩm:" value={`${window.location.origin}/${selectedProduct.link}`} />
                     </div>
                   )}
 
                   <div className="w-full">
+                    <span>{result}</span>
                     <Button
                       aria-label="Nút: Gửi"
                       className="w-full bg-primary text-sm text-white hover:border-primary hover:bg-secondary hover:text-white dark:hover:bg-opacity-50"
@@ -275,7 +271,6 @@ export default function PurchasePage() {
                     >
                       Gửi
                     </Button>
-                    <span>{result}</span>
                   </div>
                 </div>
               </form>

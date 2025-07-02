@@ -61,6 +61,7 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ErrorBoundary>
+          <ToastContainer style={{ marginTop: '50px' }} />
           <div className="flex min-h-screen flex-col bg-primary-white xl:pt-[130px]">
             <Header />
             <div className="flex-1 bg-primary-white selection:bg-primary selection:text-white xl:pt-0">{children}</div>
@@ -70,7 +71,6 @@ export default function RootLayout({
             <ContactForm />
             <FooterFC />
           </div>
-          <ToastContainer style={{ marginTop: '50px' }} />
         </ErrorBoundary>
       </body>
     </html>
