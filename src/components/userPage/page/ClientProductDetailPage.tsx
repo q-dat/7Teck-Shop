@@ -54,6 +54,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix 
   const [isRightButtonVisible, setIsRightButtonVisible] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null!);
   const [loading, setLoading] = useState(true);
+  const thumbnails = [product.img, ...(product.thumbnail || [])];
 
   useLayoutEffect(() => {
     if (product && product.catalog) {
@@ -125,7 +126,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix 
                   className="flex w-full flex-row items-start justify-start gap-2 overflow-x-auto scroll-smooth scrollbar-hide xl:w-[550px] 2xl:w-full"
                 >
                   {product?.thumbnail && Array.isArray(product?.thumbnail) ? (
-                    product?.thumbnail.map((thumb: string, index: number) => (
+                    thumbnails.map((thumb: string, index: number) => (
                       <Image
                         width={200}
                         height={200}
@@ -133,7 +134,9 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix 
                         key={index}
                         src={thumb}
                         alt="Ảnh thu nhỏ"
-                        className="h-[70px] w-[70px] cursor-pointer rounded-md border object-cover"
+                        className={`h-[70px] w-[70px] cursor-pointer rounded-md border object-cover ${
+                          selectedImage === thumb ? 'border-2 border-primary' : ''
+                        }`}
                         onClick={() => handleThumbnailClick(scrollRef, thumb, index, setSelectedImage)}
                       />
                     ))
