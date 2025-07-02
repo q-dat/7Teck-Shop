@@ -75,3 +75,14 @@ body {
 .my-masonry-grid_column > div {
   margin-bottom: 10px;
 }
+/* Ẩn nút spinner trên trình duyệt Webkit (Chrome, Safari) */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Ẩn spinner trên Firefox */
+input[type='number'] {
+  -moz-appearance: textfield;
+}

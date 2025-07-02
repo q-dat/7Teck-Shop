@@ -142,14 +142,25 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                             &nbsp;
                             {product?.sale && <del className="text-xs font-light text-gray-100">{formatCurrency(product?.sale)}</del>}
                           </p>
-                          <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">
-                            <Button
-                              size="xs"
-                              className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
-                            >
-                              Mua Ngay
-                            </Button>
-                          </Link>
+                          {/* <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full"> */}
+                          <Button
+                            size="xs"
+                            className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
+                            onClick={() => {
+                              const productToBuy = {
+                                _id: product._id,
+                                name: product.name,
+                                img: product.img,
+                                price: product.price,
+                                ram: product.ram,
+                              };
+                              localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
+                              window.location.href = '/thanh-toan';
+                            }}
+                          >
+                            Mua Ngay
+                          </Button>
+                          {/* </Link> */}
                         </div>
                       </div>
                       {/*  */}
