@@ -18,6 +18,8 @@ interface ProductData {
   img: string;
   price: number;
   ram: string;
+  color: string;
+  link: string;
 }
 export default function PurchasePage() {
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
@@ -119,12 +121,19 @@ export default function PurchasePage() {
                   <div className="flex items-center gap-4">
                     <Image src={selectedProduct.img} alt="Ảnh sản phẩm" width={80} height={80} />
                     <div>
-                      <p className="font-bold">{selectedProduct.name}</p>
-                      <p className="">
-                        <span className="font-bold">RAM: </span>
+                      <p className="text-xl font-bold">{selectedProduct.name}</p>
+                      <p className="text-sm">
+                        <span className="font-semibold">Màu: </span>
+                        {selectedProduct.color}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-semibold">RAM: </span>
                         {selectedProduct.ram}
                       </p>
-                      <p className="text-sm font-bold text-red-700">{formatCurrency(selectedProduct.price)}</p>
+                      <p className="text-md font-bold text-red-700">{formatCurrency(selectedProduct.price)}</p>
+                      <Link href={selectedProduct.link} className="text-sm text-blue-700 underline">
+                        Xem trang chi tiết sản phẩm
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -241,14 +250,20 @@ export default function PurchasePage() {
                         className="h-full w-full bg-primary p-2 text-white focus:outline-none"
                         id="input_name"
                         name="Tên sản phẩm:"
-                        value={`${selectedProduct.name} - (RAM: ${selectedProduct.ram})`}
+                        value={`${selectedProduct.name} - (Màu: ${selectedProduct.color} - RAM: ${selectedProduct.ram})`}
                       />
                       <input
                         readOnly
                         type="hidden"
                         name="Chi tiết sản phẩm:"
-                        value={`Tên: ${selectedProduct.name}/${selectedProduct.ram}, Giá: ${formatCurrency(selectedProduct.price)}, Hình: ${selectedProduct.img}`}
-                      />
+                        value={`
+                        <div>
+                          <p><strong>Tên:</strong> ${selectedProduct.name} / ${selectedProduct.ram}</p>
+                          <p><strong>Giá:</strong> ${formatCurrency(selectedProduct.price)}</p>
+                          <p><strong>Hình ảnh:</strong><br/><img src="${selectedProduct.img}" width="200" /></p>
+                        </div>`}
+                        />
+                      <input readOnly type="hidden" name="Link sản phẩm:" value={`${selectedProduct.link}`} />
                     </div>
                   )}
 
