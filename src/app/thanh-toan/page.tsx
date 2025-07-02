@@ -250,13 +250,13 @@ export default function PurchasePage() {
                         className="h-full w-full bg-primary p-2 text-white focus:outline-none"
                         id="input_name"
                         name="Tên sản phẩm:"
-                        value={`${selectedProduct.name} - (Màu: ${selectedProduct.color} - RAM: ${selectedProduct.ram})`}
+                        value={`${selectedProduct.name}`}
                       />
                       <input
                         readOnly
                         type="hidden"
                         name="Chi tiết sản phẩm:"
-                        value={`Tên: ${selectedProduct.name} / ${selectedProduct.ram}\nGiá: ${formatCurrency(selectedProduct.price)}\nHình ảnh: ${selectedProduct.img}`}
+                        value={`Tên: ${selectedProduct.name}\nMàu: ${selectedProduct.color}\nRAM: ${selectedProduct.ram}\nGiá: ${formatCurrency(selectedProduct.price)}\nHình ảnh: ${selectedProduct.img}`}
                       />
                       <input readOnly type="hidden" name="Link sản phẩm:" value={`${window.location.origin}/${selectedProduct.link}`} />
                     </div>
