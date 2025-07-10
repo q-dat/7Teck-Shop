@@ -19,5 +19,5 @@ export default function ClientWindowsDetailPage({ win }: { win: IWindows }) {
     catalogContent: win.windows_catalog_id?.w_cat_content ?? '',
   };
 
-  return <ClientProductDetailPage product={mappedProduct} fieldMap={windowsFieldMap} namePrefix="Laptop" />;
+  return <ClientProductDetailPage product={mappedProduct} fieldMap={windowsFieldMap} namePrefix="Laptop" basePath="windows" />;
 }

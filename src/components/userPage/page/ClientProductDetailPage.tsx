@@ -5,6 +5,7 @@ import Zoom from '@/lib/Zoom';
 import { scrollBy, updateScrollButtons, handleScrollButtons, handleThumbnailClick } from '@/utils/DetailPage/scrollUtils';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { slugify } from '@/utils/slugify';
 import { contact, hotlineUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -45,9 +46,10 @@ interface ClientProductDetailPageProps {
   product: Product;
   fieldMap: FieldMap[];
   namePrefix: string;
+  basePath: string;
 }
 
-export default function ClientProductDetailPage({ product, fieldMap, namePrefix }: ClientProductDetailPageProps) {
+export default function ClientProductDetailPage({ product, fieldMap, namePrefix, basePath }: ClientProductDetailPageProps) {
   const [selectedImage, setSelectedImage] = useState<string | null | undefined>(null);
   const [activeTab, setActiveTab] = useState<string>('specs');
   const [isLeftButtonVisible, setIsLeftButtonVisible] = useState(true);
@@ -202,14 +204,25 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix 
                   )}
                 </div>
                 <div className="flex w-full flex-col items-center justify-center gap-1">
-                  <Link href="/thanh-toan">
-                    <Button
-                      size="sm"
-                      className="w-[300px] rounded-md border-none bg-primary text-white hover:bg-primary hover:bg-opacity-60 xl:w-[400px]"
-                    >
-                      Mua ngay
-                    </Button>
-                  </Link>
+                  <Button
+                    size="xs"
+                    className="w-[300px] rounded-md border-none bg-primary text-white hover:bg-primary hover:bg-opacity-60 xl:w-[400px]"
+                    onClick={() => {
+                      const productToBuy = {
+                        _id: product._id,
+                        name: product.name,
+                        img: product.img,
+                        price: product.price,
+                        ram: product.ram,
+                        color: product.color,
+                        link: `${basePath}/${slugify(product.name)}/${product._id}`,
+                      };
+                      localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
+                      window.location.href = '/thanh-toan';
+                    }}
+                  >
+                    Mua Ngay
+                  </Button>
                   <i className="w-full text-start text-sm font-light text-secondary">{'*Nhấn "Mua ngay" để xác nhận sản phẩm bạn muốn mua!'}</i>
                 </div>
               </div>

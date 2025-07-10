@@ -19,5 +19,5 @@ export default function ClientPhoneDetailPage({ phone }: { phone: IPhone }) {
     catalogContent: phone.phone_catalog_id?.content ?? '',
   };
 
-  return <ClientProductDetailPage product={mappedProduct} fieldMap={phoneFieldMap} namePrefix="Điện thoại" />;
+  return <ClientProductDetailPage product={mappedProduct} fieldMap={phoneFieldMap} namePrefix="Điện thoại" basePath="dien-thoai" />;
 }
