@@ -135,12 +135,12 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                             className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
                             onClick={() => {
                               const productToBuy = {
-                                _id: product._id,
-                                name: product.name,
-                                img: product.img,
-                                price: product.price,
-                                ram: product.ram,
-                                color: product.color,
+                                _id: product?._id,
+                                name: product?.name,
+                                img: product?.img,
+                                price: product?.price,
+                                ram: product?.ram,
+                                color: product?.color,
                                 link: `${basePath}/${slugify(product.name)}/${product._id}`,
                               };
                               localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));

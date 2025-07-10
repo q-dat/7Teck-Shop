@@ -20,6 +20,7 @@ interface ClientPhoneProps {
 }
 
 export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhoneProps) {
+  const basePath = 'dien-thoai';
   const { scrollRef, isLeftVisible, isRightVisible, hasOverflow, scrollBy } = useScroll();
   //  handleImageError
   const fallbackSrc = imageRepresent.Fallback;
@@ -41,16 +42,16 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
             <ProductPlaceholders count={12} />
           ) : (
             mostViewedPhones.map((phone) => {
-              const phoneUrl = slugify(phone.name);
-              const isErrored = isImageErrored(phone._id);
-              const src = isErrored || !phone.img ? fallbackSrc : phone.img;
+              const phoneUrl = slugify(phone?.name);
+              const isErrored = isImageErrored(phone?._id);
+              const src = isErrored || !phone?.img ? fallbackSrc : phone?.img;
 
               return (
                 <div
-                  key={phone._id}
+                  key={phone?._id}
                   className="group relative flex h-full w-[195px] flex-col justify-between rounded-md border border-[#f2f4f7] text-black"
                 >
-                  <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/dien-thoai/${phoneUrl}/${phone._id}`}>
+                  <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/dien-thoai/${phoneUrl}/${phone?._id}`}>
                     <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                       <Image
                         height={200}
@@ -59,7 +60,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                         loading="lazy"
                         className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
                         src={src}
-                        onError={() => handleImageError(phone._id)}
+                        onError={() => handleImageError(phone?._id)}
                       />
                     </div>
                   </Link>
@@ -69,17 +70,17 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                     <Link
                       aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
                       className="w-full cursor-pointer"
-                      href={`/dien-thoai/${phoneUrl}/${phone._id}`}
+                      href={`/dien-thoai/${phoneUrl}/${phone?._id}`}
                     >
                       <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] text-black">
                         <FaRegEye />
-                        <p>{phone.view}</p>
+                        <p>{phone?.view}</p>
                       </div>
-                      <p className="xl:group-hover:text-secondary">Điện Thoại {phone.name}</p>
+                      <p className="xl:group-hover:text-secondary">Điện Thoại {phone?.name}</p>
                       <div className="space-y-1 text-sm">
                         {[
-                          { label: 'Màu sắc', value: phone.color },
-                          { label: 'Ram', value: phone.phone_catalog_id?.configuration_and_memory?.ram },
+                          { label: 'Màu sắc', value: phone?.color },
+                          { label: 'Ram', value: phone?.phone_catalog_id?.configuration_and_memory?.ram },
                         ]
                           .filter((item) => item.value?.toString().trim())
                           .map((item, index) => (
@@ -96,14 +97,25 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                         {formatCurrency(phone?.price)} &nbsp;
                         {phone?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(phone?.sale)}</del>}
                       </p>
-                      <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">
-                        <Button
-                          size="xs"
-                          className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
-                        >
-                          Mua Ngay
-                        </Button>
-                      </Link>
+                      <Button
+                        size="xs"
+                        className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
+                        onClick={() => {
+                          const productToBuy = {
+                            _id: phone?._id,
+                            name: phone?.name,
+                            img: phone?.img,
+                            price: phone?.price,
+                            ram: phone?.phone_catalog_id?.configuration_and_memory?.ram,
+                            color: phone?.color,
+                            link: `${basePath}/${slugify(phone?.name)}/${phone?._id}`,
+                          };
+                          localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
+                          window.location.href = '/thanh-toan';
+                        }}
+                      >
+                        Mua Ngay
+                      </Button>
                     </div>
                   </div>
 

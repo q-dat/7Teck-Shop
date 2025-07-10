@@ -84,10 +84,10 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                 currentProducts.map((product) => {
                   // Navigate
                   const productUrl = slugify(product.name);
-                  const subUrl = product._id;
+                  const subUrl = product?._id;
                   // handleImageError
                   const isErrored = isImageErrored(product._id);
-                  const src = isErrored || !product.img ? fallbackSrc : product.img;
+                  const src = isErrored || !product.img ? fallbackSrc : product?.img;
                   return (
                     <section
                       key={product?._id}
@@ -147,12 +147,12 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                             className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
                             onClick={() => {
                               const productToBuy = {
-                                _id: product._id,
-                                name: product.name,
-                                img: product.img,
-                                price: product.price,
-                                ram: product.ram,
-                                color: product.color,
+                                _id: product?._id,
+                                name: product?.name,
+                                img: product?.img,
+                                price: product?.price,
+                                ram: product?.ram,
+                                color: product?.color,
                                 link: `${basePath}/${productUrl}/${subUrl}`,
                               };
                               localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));

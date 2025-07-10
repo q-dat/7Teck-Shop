@@ -56,24 +56,24 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
   const [isRightButtonVisible, setIsRightButtonVisible] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null!);
   const [loading, setLoading] = useState(true);
-  const thumbnails = [product.img, ...(product.thumbnail || [])];
+  const thumbnails = [product?.img, ...(product?.thumbnail || [])];
 
   useLayoutEffect(() => {
-    if (product && product.catalog) {
+    if (product && product?.catalog) {
       setLoading(false);
     }
     updateScrollButtons(scrollRef, setIsLeftButtonVisible, setIsRightButtonVisible);
-  }, [product, product.thumbnail]);
+  }, [product, product?.thumbnail]);
 
   useEffect(() => {
     scrollToTopSmoothly();
-    const cleanup = handleScrollButtons(scrollRef, Object.keys(product.catalog || {}).length, () =>
+    const cleanup = handleScrollButtons(scrollRef, Object.keys(product?.catalog || {}).length, () =>
       updateScrollButtons(scrollRef, setIsLeftButtonVisible, setIsRightButtonVisible)
     );
     return cleanup;
   }, [product]);
 
-  if (loading || !product || !product.catalog) {
+  if (loading || !product || !product?.catalog) {
     return <LoadingLocal />;
   }
 
@@ -209,13 +209,13 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                     className="w-[300px] rounded-md border-none bg-primary text-white hover:bg-primary hover:bg-opacity-60 xl:w-[400px]"
                     onClick={() => {
                       const productToBuy = {
-                        _id: product._id,
-                        name: product.name,
-                        img: product.img,
-                        price: product.price,
-                        ram: product.ram,
-                        color: product.color,
-                        link: `${basePath}/${slugify(product.name)}/${product._id}`,
+                        _id: product?._id,
+                        name: product?.name,
+                        img: product?.img,
+                        price: product?.price,
+                        ram: product?.ram,
+                        color: product?.color,
+                        link: `${basePath}/${slugify(product?.name)}/${product?._id}`,
                       };
                       localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                       window.location.href = '/thanh-toan';
