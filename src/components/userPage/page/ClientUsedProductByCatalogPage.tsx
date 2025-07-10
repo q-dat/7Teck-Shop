@@ -132,7 +132,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                           </p>
                           <Button
                             size="xs"
-                            className="w-[300px] rounded-md border-none bg-primary text-white hover:bg-primary hover:bg-opacity-60 xl:w-[400px]"
+                            className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
                             onClick={() => {
                               const productToBuy = {
                                 _id: product._id,
