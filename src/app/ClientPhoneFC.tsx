@@ -36,7 +36,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
       <div className="relative">
         <section
           ref={scrollRef}
-          className="grid w-full grid-flow-col grid-rows-2 items-center justify-start gap-[10px] overflow-x-auto scroll-smooth rounded-none border-[10px] border-transparent bg-white pt-0 scrollbar-hide xl:rounded-t-lg xl:pt-0"
+          className="grid w-full grid-flow-col grid-rows-1 items-center justify-start gap-[10px] overflow-x-auto scroll-smooth rounded-none border-[10px] border-transparent bg-white pt-0 scrollbar-hide xl:rounded-t-lg xl:pt-0"
         >
           {loading ? (
             <ProductPlaceholders count={12} />
@@ -49,7 +49,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
               return (
                 <div
                   key={phone?._id}
-                  className="group relative flex h-full w-[195px] flex-col justify-between rounded-md border border-[#f2f4f7] text-black"
+                  className="group relative flex h-full w-[185px] flex-col justify-between rounded-md border border-[#f2f4f7] text-black xl:w-[195px]"
                 >
                   <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/dien-thoai/${phoneUrl}/${phone?._id}`}>
                     <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
@@ -58,7 +58,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                         width={200}
                         alt="Hình ảnh"
                         loading="lazy"
-                        className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
+                        className="h-full w-full rounded-[5px] rounded-b-none object-cover transition-transform duration-1000 ease-in-out hover:scale-110"
                         src={src}
                         onError={() => handleImageError(phone?._id)}
                       />
@@ -138,21 +138,21 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
             <div className="relative w-full">
               <button
                 aria-label="Cuộn sang trái"
-                onClick={() => scrollBy(-380)}
-                className={`absolute -top-5 left-0 z-[100] rounded-full border-none bg-black bg-opacity-20 text-white ${
+                onClick={() => scrollBy(-390)}
+                className={`absolute left-0 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
                   isLeftVisible ? '' : 'hidden'
                 }`}
               >
-                <MdArrowBackIosNew className="text-4xl" />
+                <MdArrowBackIosNew className="text-2xl" />
               </button>
               <button
                 aria-label="Cuộn sang phải"
-                onClick={() => scrollBy(380)}
-                className={`absolute -top-5 right-0 z-[100] rounded-full border-none bg-black bg-opacity-20 text-white ${
+                onClick={() => scrollBy(390)}
+                className={`absolute right-0 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
                   isRightVisible ? '' : 'hidden'
                 }`}
               >
-                <MdArrowForwardIos className="text-4xl" />
+                <MdArrowForwardIos className="text-2xl" />
               </button>
             </div>
           </div>

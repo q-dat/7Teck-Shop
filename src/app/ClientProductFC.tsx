@@ -79,24 +79,16 @@ export default function ClientProductFC({ products, category, loading: externalL
               return (
                 <div
                   key={product._id}
-                  className="group relative flex h-full w-[195px] flex-col justify-between rounded-md border border-[#f2f4f7] text-black"
+                  className="group relative flex h-full w-[185px] flex-col justify-between rounded-md border border-[#f2f4f7] text-black xl:w-[195px]"
                 >
                   <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`${category.url}/${productUrl}/${product._id}`}>
-                    <div className="relative h-[200px] w-full cursor-pointer overflow-hidden">
+                    <div className="h-[200px] w-full cursor-pointer overflow-hidden">
                       <Image
                         height={200}
                         width={200}
                         alt="Hình ảnh"
                         loading="lazy"
-                        className="absolute left-0 top-0 z-0 h-full w-full rounded-[5px] rounded-b-none object-cover blur-xl filter"
-                        src={product.image}
-                      />
-                      <Image
-                        height={200}
-                        width={200}
-                        alt="Hình ảnh"
-                        loading="lazy"
-                        className="absolute left-0 top-0 z-10 h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
+                        className="h-full w-full rounded-[5px] rounded-b-none object-cover transition-transform duration-1000 ease-in-out hover:scale-110"
                         src={product.image}
                       />
                     </div>
@@ -145,17 +137,21 @@ export default function ClientProductFC({ products, category, loading: externalL
           <div className="relative w-full">
             <button
               aria-label="Cuộn sang trái"
-              onClick={() => scrollBy(-380)}
-              className={`absolute -top-2 left-0 z-[100] rounded-full border-none bg-black bg-opacity-20 text-white ${isLeftVisible ? '' : 'hidden'}`}
+              onClick={() => scrollBy(-390)}
+              className={`absolute left-0 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
+                isLeftVisible ? '' : 'hidden'
+              }`}
             >
-              <MdArrowBackIosNew className="text-4xl" />
+              <MdArrowBackIosNew className="text-2xl" />
             </button>
             <button
               aria-label="Cuộn sang phải"
-              onClick={() => scrollBy(380)}
-              className={`absolute -top-2 right-0 z-[100] rounded-full border-none bg-black bg-opacity-20 text-white ${isRightVisible ? '' : 'hidden'}`}
+              onClick={() => scrollBy(390)}
+              className={`absolute right-0 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
+                isRightVisible ? '' : 'hidden'
+              }`}
             >
-              <MdArrowForwardIos className="text-4xl" />
+              <MdArrowForwardIos className="text-2xl" />
             </button>
           </div>
         </div>
