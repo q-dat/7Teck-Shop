@@ -58,7 +58,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                         width={200}
                         alt="Hình ảnh"
                         loading="lazy"
-                        className="h-full w-full rounded-[5px] rounded-b-none object-cover transition-transform duration-1000 ease-in-out hover:scale-110"
+                        className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
                         src={src}
                         onError={() => handleImageError(phone?._id)}
                       />
