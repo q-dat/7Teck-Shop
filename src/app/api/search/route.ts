@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { slugify } from '@/utils/slugify';
-import { loadCache, getCache, CachedItem } from '@/lib/searchCache';
+import redis, { connectRedis } from '@/lib/redis'; // đảm bảo đúng path
+import { loadCache, CachedItem, getCache } from '@/lib/searchCache';
+
+const REDIS_CACHE_KEY = 'search_cache_v1';
 
 const keywordMap: Record<string, string> = {
   ip: 'iphone',
@@ -16,10 +19,30 @@ const keywordMap: Record<string, string> = {
   pls: 'plus',
 };
 
+async function getCacheFromRedis(): Promise<CachedItem[]> {
+  await connectRedis();
+
+  const raw = await redis.get(REDIS_CACHE_KEY);
+  if (raw) {
+    const parsed = JSON.parse(raw) as CachedItem[];
+    console.log(`📦 Redis cache hit: ${parsed.length} items`);
+    return parsed;
+  }
+
+  console.log('🚫 Redis cache miss — loading from source...');
+  await loadCache();
+  const data = getCache(); // ← Trả về CachedItem[]
+
+  console.log(`✅ Cache saved to Redis: ${data.length} items`);
+
+  return data;
+}
+
 export async function GET(req: Request) {
+  const t0 = performance.now();
+
   try {
-    await loadCache();
-    const CACHE = getCache();
+    const cachedData = await getCacheFromRedis();
 
     const { searchParams } = new URL(req.url);
     const q = searchParams.get('q')?.trim();
@@ -39,25 +62,27 @@ export async function GET(req: Request) {
 
     const results: CachedItem[] = [];
 
-    // 1. Tìm theo ObjectId
+    // 1. Tìm theo _id
     if (isObjectId) {
-      const found = CACHE.find((item) => item._id === q);
+      const found = cachedData.find((item) => item._id === q);
       if (found) results.push(found);
     }
 
-    // 2. So sánh slug chính xác
-    CACHE.forEach((item) => {
-      if (item.slug === slugifiedQ && !results.some((r) => r._id === item._id)) {
-        results.push(item);
-      }
-    });
+    // 2. Tìm slug chính xác
+    const exactMatch = cachedData.find((item) => item.slug === slugifiedQ);
+    if (exactMatch && !results.some((r) => r._id === exactMatch._id)) {
+      results.push(exactMatch);
+    }
 
     // 3. Tìm gần đúng theo name
-    CACHE.forEach((item) => {
+    for (const item of cachedData) {
       if (item.name.toLowerCase().includes(normalizedQ) && !results.some((r) => r._id === item._id)) {
         results.push(item);
       }
-    });
+    }
+
+    const t1 = performance.now();
+    console.log('⏱️ Total search time(ms):', t1 - t0);
 
     if (results.length === 0) {
       return NextResponse.json({ message: 'Không tìm thấy sản phẩm phù hợp', success: false }, { status: 404 });
