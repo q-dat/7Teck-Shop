@@ -109,10 +109,13 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                       {/*  */}
                       <div className="flex h-full w-full flex-col items-start justify-between p-1">
                         <Link href={`${basePath}/${productUrl}/${subUrl}`} className="w-full cursor-pointer">
-                          <p className="xl:group-hover:text-secondary">
+                          <p className="font-medium xl:group-hover:text-secondary">
                             {title} {product.name}
                           </p>
-                          <div className="space-y-1 text-sm">
+                        </Link>
+
+                        <div className="w-full">
+                          <div className="mt-2 text-sm">
                             {specsToShow.map((field) => {
                               const value = product[field as keyof ProductBase];
                               if (!value) return null;
@@ -133,9 +136,6 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                               );
                             })}
                           </div>
-                        </Link>
-
-                        <div className="w-full">
                           <p className="text-gray-700">
                             &nbsp;
                             <span className="font-semibold text-price">{formatCurrency(product?.price)}</span>

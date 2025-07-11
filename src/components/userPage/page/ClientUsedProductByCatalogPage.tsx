@@ -97,10 +97,13 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                             <FaRegEye />
                             <p>{product.view}</p>
                           </div>
-                          <p className="xl:group-hover:text-secondary">
+                          <p className="font-medium xl:group-hover:text-secondary">
                             {title} {product.name}
                           </p>
-                          <div className="space-y-1 text-sm">
+                        </Link>
+
+                        <div className="w-full">
+                          <div className="mt-2 text-sm">
                             {specsToShow.map((field) => {
                               const value = product[field as keyof ProductBase];
                               if (!value) return null;
@@ -121,9 +124,6 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                               );
                             })}
                           </div>
-                        </Link>
-
-                        <div className="w-full">
                           <p className="text-gray-700">
                             &nbsp;
                             <span className="font-semibold text-price">{formatCurrency(product?.price)}</span>

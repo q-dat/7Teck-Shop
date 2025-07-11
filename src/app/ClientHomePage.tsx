@@ -82,29 +82,35 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
 
   const transformTablets: Product[] = tablets.map((item) => ({
     _id: item._id,
-    name: item.tablet_name || item.tablet_name || 'Unknown',
-    price: item.tablet_price || item.tablet_price || 0,
-    sale: item.tablet_sale || item.tablet_sale || null,
-    image: item.tablet_img || item.tablet_img || '',
-    status: item.tablet_status || item.tablet_status,
+    name: item.tablet_name || '',
+    price: item.tablet_price || 0,
+    sale: item.tablet_sale || 0,
+    image: item.tablet_img || '',
+    status: item.tablet_status || '',
+    color: item.tablet_color || '',
+    ram: item.tablet_catalog_id.t_cat_memory_and_storage.t_cat_ram || '',
   }));
 
   const transformMacbook: Product[] = macbook.map((item) => ({
     _id: item._id,
-    name: item.macbook_name || item.macbook_name || 'Unknown', // Fallback nếu không có macbook_name
-    price: item.macbook_price || item.macbook_price || 0,
-    sale: item.macbook_sale || item.macbook_sale || null,
-    image: item.macbook_img || item.macbook_img || '',
-    status: item.macbook_status || item.macbook_status,
+    name: item.macbook_name || '',
+    price: item.macbook_price || 0,
+    sale: item.macbook_sale || 0,
+    image: item.macbook_img || '',
+    status: item.macbook_status || '',
+    color: item.macbook_color || '',
+    ram: item.macbook_catalog_id.m_cat_memory_and_storage.m_cat_ram || '',
   }));
 
   const transformWindows: Product[] = windows.map((item) => ({
     _id: item._id,
-    name: item.windows_name || item.windows_name || 'Unknown',
-    price: item.windows_price || item.windows_price || 0,
-    sale: item.windows_sale || item.windows_sale || null,
-    image: item.windows_img || item.windows_img || '',
-    status: item.windows_status || item.windows_status,
+    name: item.windows_name || '',
+    price: item.windows_price || 0,
+    sale: item.windows_sale || 0,
+    image: item.windows_img || '',
+    status: item.windows_status || '',
+    color: item.windows_color || '',
+    ram: item.windows_catalog_id.w_cat_memory_and_storage.w_cat_ram || '',
   }));
 
   // Cấu hình danh mục sản phẩm

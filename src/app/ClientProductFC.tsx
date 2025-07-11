@@ -13,11 +13,13 @@ import { formatCurrency } from '@/utils/formatCurrency';
 
 export interface Product {
   _id: string;
-  name: string; // Tên sản phẩm (thay cho macbook_name, tablet_name, windows_name)
-  price: number; // Giá sản phẩm (thay cho macbook_price, tablet_price, windows_price)
-  sale: number | null; // Giá khuyến mãi (thay cho macbook_sale, tablet_sale, windows_sale)
-  image: string; // URL hình ảnh (thay cho macbook_img, tablet_img, windows_img)
-  status?: string; // Trạng thái (thay cho macbook_status, tablet_status, windows_status)
+  name: string;
+  price: number;
+  sale: number | null;
+  image: string;
+  status?: string;
+  color: string;
+  ram: string;
 }
 interface ClientProductFCProps {
   products: Product[];
@@ -100,11 +102,24 @@ export default function ClientProductFC({ products, category, loading: externalL
                       className="w-full cursor-pointer"
                       href={`${category.url}/${productUrl}/${product._id}`}
                     >
-                      <p className="xl:group-hover:text-secondary">
+                      <p className="font-medium xl:group-hover:text-secondary">
                         {category.name} {product.name}
                       </p>
                     </Link>
                     <div className="w-full">
+                      <div className="mt-2 text-sm">
+                        {[
+                          { label: 'Màu sắc', value: product?.color },
+                          { label: 'Ram', value: product?.ram },
+                        ]
+                          .filter((item) => item.value?.toString().trim())
+                          .map((item, index) => (
+                            <p key={index}>
+                              <span className="font-semibold">{item.label}: </span>
+                              {item.value}
+                            </p>
+                          ))}
+                      </div>
                       <p className="font-semibold text-price">
                         {formatCurrency(product.price)} &nbsp;
                         {product.sale && <del className="text-xs font-medium text-gray-500">{formatCurrency(product.sale)}</del>}
