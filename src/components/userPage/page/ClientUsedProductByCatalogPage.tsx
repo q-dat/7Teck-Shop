@@ -125,7 +125,6 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                             })}
                           </div>
                           <p className="text-gray-700">
-                            &nbsp;
                             <span className="font-semibold text-price">{formatCurrency(product?.price)}</span>
                             &nbsp;
                             {product?.sale && <del className="text-xs font-light text-gray-100">{formatCurrency(product?.sale)}</del>}
