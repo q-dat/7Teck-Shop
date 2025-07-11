@@ -170,7 +170,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                     {formatCurrency(product?.price)}
                     {product?.sale && <del className="ml-2 text-base text-gray-400">{formatCurrency(product?.sale)}</del>}
                   </p>
-                  <p className="mt-2 text-lg italic text-gray-600">"Sở hữu công nghệ, nâng tầm trải nghiệm"</p>
+                  <p className="mt-2 text-lg italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
                   <div className="mt-4 space-y-2">
                     {product?.color && (
                       <p className="text-gray-600">
@@ -209,7 +209,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   >
                     Mua Ngay
                   </Button>
-                  <p className="mt-2 w-full text-start text-sm text-gray-500">*Nhấn "Mua ngay" để xác nhận sản phẩm!</p>
+                  <p className="mt-2 w-full text-start text-sm text-gray-500">{`*Nhấn "Mua ngay" để xác nhận sản phẩm!`}</p>
                 </div>
               </div>
               <Link href={hotlineUrl}>
