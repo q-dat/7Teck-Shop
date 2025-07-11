@@ -158,7 +158,7 @@ export default function PurchasePage() {
                       alt="Img"
                       width={300}
                       height={300}
-                      className="h-full w-full xl:w-[300px]"
+                      className="h-full w-1/3 xl:w-[300px]"
                       onError={() => setImgZaloQRSrc(fallbackSrc)}
                     />
                   </Zoom>
@@ -181,7 +181,7 @@ export default function PurchasePage() {
                       alt="Img"
                       width={300}
                       height={300}
-                      className="h-full w-full xl:w-[300px]"
+                      className="h-full w-1/3 xl:w-[300px]"
                       onError={() => setImgMessageQRSrc(fallbackSrc)}
                     />
                   </Zoom>
