@@ -197,8 +197,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                 </div>
                 <div className="flex w-full flex-col items-center justify-center gap-1">
                   <Button
-                    size="xs"
-                    className="w-[300px] rounded-md border-none bg-primary text-white hover:bg-primary hover:bg-opacity-60 xl:w-[400px]"
+                    className="w-[300px] rounded-md border-none bg-primary text-white hover:bg-primary hover:bg-opacity-60"
                     onClick={() => {
                       const productToBuy = {
                         _id: product?._id,
