@@ -105,9 +105,9 @@ export default function ClientProductFC({ products, category, loading: externalL
                       </p>
                     </Link>
                     <div className="w-full">
-                      <p className="text-red-700">
-                        {formatCurrency(product.price)}{' '}
-                        {product.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(product.sale)}</del>}
+                      <p className="font-semibold text-price">
+                        {formatCurrency(product.price)} &nbsp;
+                        {product.sale && <del className="text-xs font-medium text-gray-500">{formatCurrency(product.sale)}</del>}
                       </p>
                       <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">
                         <Button

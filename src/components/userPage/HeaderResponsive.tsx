@@ -13,11 +13,14 @@ import menuItems from '@/utils/menuItems';
 import { debounce } from 'lodash';
 import { searchProducts } from '@/services/searchService';
 import { suggestions } from '@/utils/suggestions';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface SearchResult {
   name: string;
   link: string;
   image: string;
+  color?: string;
+  price?: number;
 }
 
 interface HeaderResponsiveProps {
@@ -161,11 +164,13 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
 
             {/* Result */}
             {openSearch && query && results.length > 0 && (
-              <ul className="fixed left-[50%] top-[100px] z-[99999] max-h-[500px] w-full max-w-[500px] -translate-x-1/2 overflow-auto bg-white p-2 text-primary shadow-md">
+              <ul className="fixed left-[50%] top-[100px] z-[99999] max-h-[500px] w-full max-w-[600px] -translate-x-1/2 overflow-auto rounded-md border bg-white p-2 text-primary shadow-md">
                 {results.map((item, index) => (
                   <li
                     key={index}
-                    className={`flex cursor-pointer items-center gap-2 p-2 text-sm ${index !== results.length - 1 ? 'border-b border-gray-50' : ''}`}
+                    className={`group flex cursor-pointer items-start gap-3 p-2 text-sm hover:bg-primary ${
+                      index !== results.length - 1 ? 'border-b border-gray-50' : ''
+                    }`}
                     onClick={() => {
                       router.push(item.link);
                       setQuery('');
@@ -174,8 +179,15 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                     }}
                     aria-label={`Chọn ${item.name}`}
                   >
-                    <Image src={item.image} alt={item.name} width={30} height={30} className="h-10 w-10 rounded object-cover" />
-                    <span>{item.name}</span>
+                    <Image src={item.image} alt={item.name} width={40} height={40} className="h-12 w-12 shrink-0 rounded object-cover" />
+
+                    <div className="flex w-full flex-col">
+                      <span className="font-semibold text-primary group-hover:text-white">{item.name}</span>
+                      {item.color && <span className="font-semibold text-black group-hover:text-white">Màu: {item.color}</span>}
+                      {item.price !== undefined && (
+                        <span className="text-sm font-semibold text-red-700 group-hover:text-white">{formatCurrency(item.price)}</span>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { slugify } from '@/utils/slugify';
-import redis, { connectRedis } from '@/lib/redis'; // đảm bảo đúng path
+import redis, { connectRedis } from '@/lib/redis';
 import { loadCache, CachedItem, getCache } from '@/lib/searchCache';
 
 const REDIS_CACHE_KEY = 'search_cache_v1';
@@ -97,7 +97,7 @@ export async function GET(req: Request) {
       }
     );
   } catch (err) {
-    console.error('❌ Lỗi search API:', err);
+    console.error('Lỗi:', err);
     return NextResponse.json({ message: 'Lỗi server', success: false }, { status: 500 });
   }
 }

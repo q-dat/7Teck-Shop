@@ -11,6 +11,8 @@ export type CachedItem = {
   slug: string;
   link: string;
   image: string;
+  color?: string;
+  price?: number;
 };
 
 // Định nghĩa chung cho dữ liệu từ DB (sau khi lean)
@@ -23,10 +25,38 @@ let CACHE: CachedItem[] = [];
 let IS_CACHE_LOADED = false;
 
 const COLLECTIONS = [
-  { model: Phone, nameField: 'name', url: '/dien-thoai', imageField: 'img' },
-  { model: Tablet, nameField: 'tablet_name', url: '/may-tinh-bang', imageField: 'tablet_img' },
-  { model: Macbook, nameField: 'macbook_name', url: '/macbook', imageField: 'macbook_img' },
-  { model: Windows, nameField: 'windows_name', url: '/windows', imageField: 'windows_img' },
+  {
+    model: Phone,
+    nameField: 'name',
+    url: '/dien-thoai',
+    imageField: 'img',
+    colorField: 'color',
+    priceField: 'price',
+  },
+  {
+    model: Tablet,
+    nameField: 'tablet_name',
+    url: '/may-tinh-bang',
+    imageField: 'tablet_img',
+    colorField: 'tablet_color',
+    priceField: 'tablet_price',
+  },
+  {
+    model: Macbook,
+    nameField: 'macbook_name',
+    url: '/macbook',
+    imageField: 'macbook_img',
+    colorField: 'macbook_color',
+    priceField: 'macbook_price',
+  },
+  {
+    model: Windows,
+    nameField: 'windows_name',
+    url: '/windows',
+    imageField: 'windows_img',
+    colorField: 'windows_color',
+    priceField: 'windows_price',
+  },
 ];
 
 // ✅ Sửa lỗi reduce: gán đúng kiểu initial value
@@ -52,21 +82,24 @@ export async function loadCache() {
 
   const allItems: CachedItem[] = [];
 
-  for (const { model, nameField, url, imageField } of COLLECTIONS) {
-    // ❗ Lean trả về object kiểu unknown => ép kiểu thủ công
-    const items = (await model.find().select(`${nameField} ${imageField} _id`).lean()) as RawItem[];
+  for (const { model, nameField, url, imageField, colorField, priceField } of COLLECTIONS) {
+    const items = (await model.find().select(`${nameField} ${imageField} ${colorField} ${priceField} _id`).lean()) as RawItem[];
 
     items.forEach((item) => {
       const rawName = item[nameField];
       if (typeof rawName === 'string') {
         const slug = slugify(rawName);
         const image = getNestedValue(item, imageField);
+        const color = getNestedValue(item, colorField);
+        const price = item[priceField];
 
         allItems.push({
           _id: String(item._id),
           name: rawName,
           slug,
           image,
+          color: typeof color === 'string' ? color : undefined,
+          price: typeof price === 'number' ? price : undefined,
           link: `${url}/${slug}/${item._id}`,
         });
       }

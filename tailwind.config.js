@@ -41,7 +41,7 @@ export default {
         'primary-white': '#FAFAFA',
         'btn-section-borderless': '#D6D6D6', //Với button section không viền, nền trắng dùng hex code: #D6D6D6
         'btn-section-border': '#F0F0F0', //Với button section có nền đen thì dùng hex code: #F0F0F0
-        price: '#E8E8E8',
+        price: '#b91c1c ',
         del: '#D84315',
         'primary-hover': 'color-mix(oklab, oklch(var(--btn-color, var(--b2)) / var(--tw-bg-opacity, 1)) 90%, black)',
         'gray-50': '#ababab',

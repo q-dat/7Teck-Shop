@@ -101,14 +101,6 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
             <div className="flex w-full flex-col gap-5">
               <div className="relative w-full">
                 <div className="h-[500px] w-full overflow-hidden object-cover">
-                  <Image
-                    width={500}
-                    height={500}
-                    loading="lazy"
-                    src={selectedImage || product?.img}
-                    alt={product?.name || 'Hình ảnh'}
-                    className="absolute left-0 top-0 z-0 h-full w-full rounded-md object-cover blur-xl filter"
-                  />
                   <Zoom>
                     <Image
                       priority

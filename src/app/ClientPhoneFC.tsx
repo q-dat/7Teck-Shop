@@ -93,7 +93,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                     </Link>
 
                     <div className="w-full">
-                      <p className="font-semibold text-red-700">
+                      <p className="font-semibold text-price">
                         {formatCurrency(phone?.price)} &nbsp;
                         {phone?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(phone?.sale)}</del>}
                       </p>

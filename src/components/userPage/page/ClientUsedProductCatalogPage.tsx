@@ -88,7 +88,7 @@ export default function ClientUsedProductCatalogPage({ data, title, namePrefix, 
                   <div className="w-full p-1">
                     <p className="text-gray-700">
                       Từ:&nbsp;
-                      <span className="font-semibold text-red-700">{formatCurrency(product.price)}</span>
+                      <span className="font-semibold text-price">{formatCurrency(product.price)}</span>
                     </p>
                   </div>
                 </div>

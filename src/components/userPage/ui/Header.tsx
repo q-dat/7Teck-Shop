@@ -20,12 +20,16 @@ import { debounce } from 'lodash';
 import { searchProducts } from '@/services/searchService';
 import { suggestions } from '@/utils/suggestions';
 import { createPortal } from 'react-dom';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface SearchResult {
   name: string;
   link: string;
   image: string;
+  color?: string;
+  price?: number;
 }
+
 const items = [
   {
     icon: <RiArrowLeftRightFill />,
@@ -190,15 +194,24 @@ const Header: React.FC = () => {
               {results.map((item, index) => (
                 <li
                   key={index}
-                  className={`flex cursor-pointer items-center gap-2 p-2 text-sm hover:bg-primary hover:text-white ${index !== results.length - 1 ? 'border-b border-gray-50' : ''}`}
+                  className={`group flex cursor-pointer items-start gap-3 p-2 text-sm hover:bg-primary ${
+                    index !== results.length - 1 ? 'border-b border-gray-50' : ''
+                  }`}
                   onClick={() => {
                     router.push(item.link);
                     setQuery('');
                     setResults([]);
                   }}
                 >
-                  <Image src={item.image} alt={item.name} width={30} height={30} className="h-10 w-10 rounded object-cover" />
-                  <span>{item.name}</span>
+                  <Image src={item.image} alt={item.name} width={40} height={40} className="h-12 w-12 shrink-0 rounded object-cover" />
+
+                  <div className="flex w-full flex-col">
+                    <span className="font-semibold text-primary group-hover:text-white">{item.name}</span>
+                    {item.color && <span className="font-semibold text-black group-hover:text-white">Màu: {item.color}</span>}
+                    {item.price !== undefined && (
+                      <span className="text-sm font-semibold text-red-700 group-hover:text-white">{formatCurrency(item.price)}</span>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
