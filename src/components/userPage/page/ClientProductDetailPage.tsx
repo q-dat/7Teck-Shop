@@ -144,14 +144,14 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                     <button
                       aria-label="Cuộn sang trái"
                       onClick={() => scrollBy(scrollRef, -70)}
-                      className={`absolute -left-1 z-[100] rounded-xl bg-black bg-opacity-20 py-2 text-white xl:-left-2 ${isLeftButtonVisible ? '' : 'hidden'}`}
+                      className={`absolute -left-1 z-[100] rounded-full bg-primary p-2 text-white xl:-left-2 ${isLeftButtonVisible ? '' : 'hidden'}`}
                     >
                       <MdArrowBackIosNew className="text-2xl" />
                     </button>
                     <button
                       aria-label="Cuộn sang phải"
                       onClick={() => scrollBy(scrollRef, 70)}
-                      className={`absolute -right-1 z-[100] rounded-xl bg-black bg-opacity-20 py-2 text-white xl:-right-2 ${isRightButtonVisible ? '' : 'hidden'}`}
+                      className={`absolute -right-1 z-[100] rounded-full bg-primary p-2 text-white xl:-right-2 ${isRightButtonVisible ? '' : 'hidden'}`}
                     >
                       <MdArrowForwardIos className="text-2xl" />
                     </button>
@@ -161,43 +161,38 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
             </div>
             {/* Description */}
             <div className="flex w-full flex-col gap-5">
-              {/* Info */}
-              <div className="flex h-full flex-col items-start justify-between gap-5 rounded-md border border-gray-50 bg-white p-2 leading-10 xl:h-[490px]">
-                <div className="w-full">
-                  <h1 className="text-xl font-semibold text-black">
+              <div className="flex flex-col items-start justify-between rounded-lg bg-white p-3 shadow-md xl:h-[490px]">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">
                     {namePrefix} {product?.name}
                   </h1>
-                  <p className="text-3xl font-semibold text-red-500">
-                    <span>{formatCurrency(product?.price)}</span>
-                    {product?.sale && <del className="pl-2 text-sm font-light text-gray-100">{formatCurrency(product?.sale)}</del>}
+                  <p className="mt-2 text-3xl font-semibold text-primary">
+                    {formatCurrency(product?.price)}
+                    {product?.sale && <del className="ml-2 text-base text-gray-400">{formatCurrency(product?.sale)}</del>}
                   </p>
-                  {product?.color && (
-                    <p className="space-x-1 text-gray-500">
-                      <span>Màu sắc:</span>
-                      <strong className="text-black">{product?.color}</strong>
-                    </p>
-                  )}
-                  {product?.ram && (
-                    <p className="space-x-1 text-gray-500">
-                      <span>RAM:</span>
-                      <strong className="text-black">{product?.ram}</strong>
-                    </p>
-                  )}
-                  {product?.status && (
-                    <p className="space-x-1 text-gray-500">
-                      <span>Tình trạng:</span>
-                      <strong className="text-black">{product?.status}</strong>
-                    </p>
-                  )}
-                  {product?.des && (
-                    <p className="text-lg text-blue-500">
-                      <span>{product?.des}</span>
-                    </p>
-                  )}
+                  <p className="mt-2 text-lg italic text-gray-600">"Sở hữu công nghệ, nâng tầm trải nghiệm"</p>
+                  <div className="mt-4 space-y-2">
+                    {product?.color && (
+                      <p className="text-gray-600">
+                        <span className="font-semibold">Màu sắc:</span> {product?.color}
+                      </p>
+                    )}
+                    {product?.ram && (
+                      <p className="text-gray-600">
+                        <span className="font-semibold">RAM:</span> {product?.ram}
+                      </p>
+                    )}
+                    {product?.status && (
+                      <p className="text-gray-600">
+                        <span className="font-semibold">Tình trạng:</span> {product?.status}
+                      </p>
+                    )}
+                    {product?.des && <p className="font-medium text-primary">{product?.des}</p>}
+                  </div>
                 </div>
                 <div className="flex w-full flex-col items-center justify-center gap-1">
                   <Button
-                    className="w-[300px] rounded-md border-none bg-primary text-white hover:bg-primary hover:bg-opacity-60"
+                    className="mt-6 w-full rounded-lg bg-primary text-white transition-colors hover:bg-primary/90 md:w-64"
                     onClick={() => {
                       const productToBuy = {
                         _id: product?._id,
@@ -214,17 +209,13 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   >
                     Mua Ngay
                   </Button>
-                  <i className="w-full text-start text-sm font-light text-secondary">{'*Nhấn "Mua ngay" để xác nhận sản phẩm bạn muốn mua!'}</i>
+                  <p className="mt-2 w-full text-start text-sm text-gray-500">*Nhấn "Mua ngay" để xác nhận sản phẩm!</p>
                 </div>
               </div>
-              {/* Note */}
-              <Link role="navigation" aria-label="Hotline" href={hotlineUrl}>
-                <div className="h-[80px] w-full rounded-md border border-gray-50 bg-blue-900 p-2">
-                  <p className="text-center text-white">
-                    <span className="text-2xl font-bold uppercase xl:text-3xl">Quan tâm</span>
-                    <span className="font-bol text-xs">&nbsp; (Ấn để gọi ngay)</span>
-                  </p>
-                  <i className="text-lg text-white">*Call ngay {contact} để có giá tốt nhất!</i>
+              <Link href={hotlineUrl}>
+                <div className="w-full rounded-lg bg-primary p-4 text-center text-white shadow-md transition-colors hover:bg-primary/90">
+                  <p className="text-xl font-bold">Gọi ngay {contact}</p>
+                  <p className="text-sm">Để nhận ưu đãi tốt nhất!</p>
                 </div>
               </Link>
             </div>
@@ -243,7 +234,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                 className={`w-full cursor-pointer rounded-r-md py-2 text-center font-light transition-all duration-500 ease-in-out ${activeTab === 'details' ? 'bg-primary font-semibold text-white' : 'bg-white text-primary'}`}
                 onClick={() => setActiveTab('details')}
               >
-                <p>Thông tin sản phẩm</p>
+                <p>Bài viết sản phẩm</p>
               </div>
             </div>
             {/*  */}
