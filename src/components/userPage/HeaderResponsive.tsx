@@ -4,7 +4,7 @@ import { Button, Drawer, Input, Menu } from 'react-daisyui';
 import { RxHamburgerMenu } from 'react-icons/rx';
 import { FaHome, FaChevronDown } from 'react-icons/fa';
 import { SlClose } from 'react-icons/sl';
-import { IoSearch } from 'react-icons/io5';
+import { IoCloseSharp, IoSearch } from 'react-icons/io5';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { images } from '../../../public/images';
@@ -12,6 +12,7 @@ import Image from 'next/image';
 import menuItems from '@/utils/menuItems';
 import { debounce } from 'lodash';
 import { searchProducts } from '@/services/searchService';
+import { suggestions } from '@/utils/suggestions';
 
 interface SearchResult {
   name: string;
@@ -25,6 +26,7 @@ interface HeaderResponsiveProps {
 
 export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiveProps) {
   // Search
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -115,25 +117,50 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
           <p className="font-semibold text-white">{Title_NavbarMobile}</p>
           {/* Search Toggle */}
           <div className="absolute right-[50px]">
-            <div className="relative" onClick={handleSearchToggle}>
-              <IoSearch className="animate-bounce text-xl text-white" />
-              <div>
-                {openSearch && (
-                  <div className="absolute -right-[50px] top-10 h-screen w-screen bg-black bg-opacity-50">
-                    <Input
-                      type="text"
-                      value={query}
-                      onChange={handleChange}
-                      className="w-screen animate-exfadeIn rounded-none border-none text-black placeholder-primary focus:outline-none"
-                      autoFocus
-                      placeholder="Bạn muốn tìm gì..."
-                    />
+            <div className="relative">
+              <IoSearch className="animate-bounce text-xl text-white" onClick={() => setOpenSearch(true)} />
+              {openSearch && (
+                <div>
+                  <div className="absolute -right-[50px] top-10 h-screen w-screen bg-black bg-opacity-50" onClick={handleSearchToggle}>
+                    {/* Overlay */}
                   </div>
-                )}
-              </div>
+                  <Input
+                    type="text"
+                    value={query}
+                    onChange={handleChange}
+                    onFocus={() => setIsInputFocused(true)}
+                    onBlur={() => setTimeout(() => setIsInputFocused(false), 200)}
+                    className="z- absolute -right-[50px] top-10 w-screen animate-exfadeIn rounded-none border-none text-black placeholder-primary focus:outline-none"
+                    autoFocus
+                    placeholder="Bạn muốn tìm gì..."
+                  />
+
+                  {/* Suggestion keywords */}
+                  {isInputFocused && !query && (
+                    <div className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-md bg-white p-2 shadow-md">
+                      <p className="mb-2 text-sm font-semibold text-primary">Từ khóa phổ biến</p>
+                      <div className="flex flex-wrap gap-2">
+                        {suggestions.map((text, index) => (
+                          <button
+                            key={index}
+                            onMouseDown={() => {
+                              setQuery(text);
+                              handleSearch(text);
+                            }}
+                            className="rounded-full border border-gray-200 bg-[#f3f3f3] px-3 py-1 text-xs text-gray-600 hover:border-primary hover:bg-primary hover:text-white"
+                          >
+                            {text}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
             {/* Result */}
-            {query && results.length > 0 && (
+            {openSearch && query && results.length > 0 && (
               <ul className="fixed left-[50%] top-[100px] z-[99999] max-h-[500px] w-full max-w-[500px] -translate-x-1/2 overflow-auto bg-white p-2 text-primary shadow-md">
                 {results.map((item, index) => (
                   <li
@@ -159,7 +186,16 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                 Không tìm thấy kết quả
               </p>
             )}
+            {/* Close Search */}
+            {openSearch && (
+              <div className="fixed bottom-24 left-1/2 z-[99999] -translate-x-1/2">
+                <button className="rounded-full border border-white bg-black/60 shadow-xl" onClick={handleSearchToggle}>
+                  <IoCloseSharp className="text-4xl text-white" />
+                </button>
+              </div>
+            )}
           </div>
+
           {/* RightVisible */}
           <div className="z-50">
             <Drawer

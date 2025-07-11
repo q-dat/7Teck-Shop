@@ -3,7 +3,7 @@ import React, { memo, useEffect, useMemo, useState } from 'react';
 import { Button, Input, Menu } from 'react-daisyui';
 import { FaChevronDown } from 'react-icons/fa';
 import { RiArrowLeftRightFill } from 'react-icons/ri';
-import { IoLogoFacebook, IoSearch } from 'react-icons/io5';
+import { IoCloseSharp, IoLogoFacebook, IoSearch } from 'react-icons/io5';
 import { RiExternalLinkFill } from 'react-icons/ri';
 import { HiLocationMarker } from 'react-icons/hi';
 import { HiPhoneArrowUpRight } from 'react-icons/hi2';
@@ -18,6 +18,8 @@ import { hotlineUrl } from '@/utils/socialLinks';
 import { useRouter } from 'next/navigation';
 import { debounce } from 'lodash';
 import { searchProducts } from '@/services/searchService';
+import { suggestions } from '@/utils/suggestions';
+import { createPortal } from 'react-dom';
 
 interface SearchResult {
   name: string;
@@ -52,10 +54,16 @@ const items = [
 ];
 const Header: React.FC = () => {
   // Search
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const handleSearchClose = () => {
+    setQuery('');
+    setResults([]);
+    setIsInputFocused(false);
+  };
 
   // Other states
   const pathname = usePathname();
@@ -148,10 +156,33 @@ const Header: React.FC = () => {
               size="sm"
               value={query}
               onChange={handleChange}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setTimeout(() => setIsInputFocused(false), 200)}
               className="w-full border-none bg-transparent pl-1 text-sm text-black placeholder-primary shadow-none focus:placeholder-black focus:outline-none"
               placeholder="Bạn muốn tìm gì..."
             />
           </div>
+
+          {/* Suggestion keywords */}
+          {isInputFocused && !query && (
+            <div className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-md bg-white p-2 shadow-md">
+              <p className="mb-2 text-sm font-semibold text-primary">Từ khóa phổ biến</p>
+              <div className="flex flex-wrap gap-2">
+                {suggestions.map((text, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setQuery(text);
+                      handleSearch(text);
+                    }}
+                    className="rounded-full border border-gray-200 bg-[#f3f3f3] px-3 py-1 text-xs text-gray-600 hover:border-primary hover:bg-primary hover:text-white"
+                  >
+                    {text}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Result */}
           {query && results.length > 0 && (
@@ -179,6 +210,26 @@ const Header: React.FC = () => {
               Không tìm thấy kết quả
             </p>
           )}
+          {typeof window !== 'undefined' &&
+            (isInputFocused || (query && (results.length > 0 || (!isLoading && results.length === 0)))) &&
+            createPortal(
+              <>
+                <div
+                  className="fixed inset-0 z-[99998] cursor-pointer bg-black/60"
+                  onClick={() => {
+                    setIsInputFocused(false);
+                    setQuery('');
+                    setResults([]);
+                  }}
+                />
+                <div className="fixed bottom-24 left-1/2 z-[99999] -translate-x-1/2">
+                  <button className="rounded-full border border-white bg-black/60 p-1 shadow-xl" onClick={handleSearchClose}>
+                    <IoCloseSharp className="text-4xl text-white" />
+                  </button>
+                </div>
+              </>,
+              document.body
+            )}
         </div>
 
         <div className="flex w-full flex-row items-center justify-end gap-5">
