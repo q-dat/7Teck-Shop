@@ -19,7 +19,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
       <div className="text-primary">
         {currentPage > 1 ? (
           <Button
-            className="rounded-md shadow-headerMenu shadow-gray-50"
+            className="rounded-md p-1 shadow-headerMenu shadow-gray-50"
             color="primary"
             size="sm"
             // disabled={currentPage === 1}
@@ -28,7 +28,9 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
               scrollToTopSmoothly();
             }}
           >
-            <IoIosArrowDropleft className="text-xl" /> Trang Trước
+            <span className="flex items-center justify-center gap-1">
+              <IoIosArrowDropleft className="text-xl" /> Trang Trước
+            </span>
           </Button>
         ) : (
           <div className="h-[36px] w-[120px]"></div>
@@ -42,7 +44,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
       <div className="text-primary">
         {currentPage < totalPages ? (
           <Button
-            className="rounded-md shadow-headerMenu shadow-gray-50"
+            className="rounded-md p-1 shadow-headerMenu shadow-gray-50"
             color="primary"
             size="sm"
             // disabled={currentPage === totalPages}
@@ -51,7 +53,9 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
               scrollToTopSmoothly();
             }}
           >
-            Trang Tiếp <IoIosArrowDropright className="text-xl" />
+            <span className="flex items-center justify-center gap-1">
+              Trang Tiếp <IoIosArrowDropright className="text-xl" />
+            </span>
           </Button>
         ) : (
           <div className="h-[36px] w-[120px]"></div>
