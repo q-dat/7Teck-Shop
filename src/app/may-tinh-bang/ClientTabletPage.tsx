@@ -15,5 +15,5 @@ export default function ClientTabletPage({ tablets }: { tablets: ITablet[] }) {
     status: tablet.tablet_status,
   }));
 
-  return <ClientProductPage products={mapped} title="Máy Tính Bảng" basePath="may-tinh-bang" />;
+  return <ClientProductPage products={mapped} title="7teck.vn" basePath="may-tinh-bang" />;
 }

@@ -12,5 +12,5 @@ export default function ClientUsedTabletPage({ tabletCatalogs }: { tabletCatalog
     status: p.t_cat_status,
   }));
 
-  return <ClientUsedProductCatalogPage data={data} title="Máy Tính Bảng" basePath="may-tinh-bang" namePrefix={'Máy Tính Bảng'} />;
+  return <ClientUsedProductCatalogPage data={data} title="7teck.vn" basePath="may-tinh-bang" namePrefix={'Máy Tính Bảng'} />;
 }

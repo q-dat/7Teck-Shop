@@ -12,5 +12,5 @@ export default function ClientUsedPhonePage({ phoneCatalogs }: { phoneCatalogs: 
     status: p.status,
   }));
 
-  return <ClientUsedProductCatalogPage data={data} title="Điện Thoại" basePath="dien-thoai" namePrefix={'Điện Thoại'} />;
+  return <ClientUsedProductCatalogPage data={data} title="7teck.vn" basePath="dien-thoai" namePrefix={'Điện Thoại'} />;
 }

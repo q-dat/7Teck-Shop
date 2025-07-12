@@ -15,5 +15,5 @@ export default function ClientPhonePage({ phones }: { phones: IPhone[] }) {
     status: phone.status,
   }));
 
-  return <ClientProductPage products={mappedPhones} title="Điện Thoại" basePath="dien-thoai" />;
+  return <ClientProductPage products={mappedPhones} title="7teck.vn" basePath="dien-thoai" />;
 }
