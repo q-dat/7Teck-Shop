@@ -237,17 +237,19 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                           >
                             <>
                               {item.name === activeItem && <div className="absolute bottom-0 left-0 h-[2px] w-full bg-primary" />}
-                              {Icon && (
-                                <div className={item.name === activeItem ? 'text-xl text-primary' : ''}>
-                                  <Icon />
-                                </div>
-                              )}
-                              <span className={Icon ? '' : ''}>{item.name}</span>
-                              {item.submenu && (
-                                <div className={` ${openSubmenu === item.name ? 'rotate-180' : ''}`}>
-                                  <FaChevronDown />
-                                </div>
-                              )}
+                              <p className="flex flex-row items-center justify-center gap-1">
+                                {Icon && (
+                                  <span className={item.name === activeItem ? 'text-xl text-primary' : ''}>
+                                    <Icon />
+                                  </span>
+                                )}
+                                <span className={Icon ? '' : ''}>{item.name}</span>
+                                {item.submenu && (
+                                  <span className={` ${openSubmenu === item.name ? 'rotate-180' : ''}`}>
+                                    <FaChevronDown />
+                                  </span>
+                                )}
+                              </p>
                             </>
                           </Link>
                         </Menu.Item>
