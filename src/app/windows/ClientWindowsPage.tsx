@@ -17,5 +17,5 @@ export default function ClientWindowsPage({ windows }: { windows: IWindows[] }) 
     status: windows.windows_status,
   }));
 
-  return <ClientProductPage products={mapped} title="7teck.vn" basePath="windows" />;
+  return <ClientProductPage products={mapped} title="Laptop" basePath="windows" />;
 }

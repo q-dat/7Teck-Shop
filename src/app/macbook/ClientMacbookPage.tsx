@@ -17,5 +17,5 @@ export default function ClientMacbookPage({ macbook }: { macbook: IMacbook[] }) 
     status: macbook.macbook_status,
   }));
 
-  return <ClientProductPage products={mappedMacbooks} title="7teck.vn" basePath="macbook" />;
+  return <ClientProductPage products={mappedMacbooks} title="Laptop" basePath="macbook" />;
 }
