@@ -89,7 +89,7 @@ export default function PurchasePage() {
   };
   return (
     <div>
-      <HeaderResponsive Title_NavbarMobile="Mua Hàng" />
+      <HeaderResponsive Title_NavbarMobile="7teck.vn" />
       <div className="py-[60px] xl:pt-0">
         <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow dark:text-white xl:px-desktop-padding">
           <ul className="font-light">

@@ -36,7 +36,7 @@ export default function ClientNewsPage({ posts }: { posts: IPost[] }) {
 
   return (
     <div>
-      <HeaderResponsive Title_NavbarMobile="Tin Công Nghệ" />
+      <HeaderResponsive Title_NavbarMobile="7teck.vn" />
       <div className="py-[60px] xl:pt-0">
         <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">

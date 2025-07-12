@@ -144,7 +144,7 @@ export default function ClientUsedProductsPage({ phoneCatalogs, tabletCatalogs, 
 
   return (
     <div>
-      <HeaderResponsive Title_NavbarMobile="Thiết Bị Đã Qua Sử Dụng" />
+      <HeaderResponsive Title_NavbarMobile="7teck.vn" />
       <div>
         <div className="breadcrumbs px-[10px] text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">

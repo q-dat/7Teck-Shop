@@ -2,7 +2,7 @@
 import React, { ReactNode, useEffect, useState, useMemo } from 'react';
 import { Button, Drawer, Input, Menu } from 'react-daisyui';
 import { RxHamburgerMenu } from 'react-icons/rx';
-import { FaHome, FaChevronDown } from 'react-icons/fa';
+import { FaChevronDown } from 'react-icons/fa';
 import { SlClose } from 'react-icons/sl';
 import { IoCloseSharp, IoSearch } from 'react-icons/io5';
 import { usePathname, useRouter } from 'next/navigation';
@@ -115,7 +115,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
       >
         <div className="flex flex-row items-center justify-between">
           <Link aria-label="Trang chủ" href="/">
-            <FaHome className="text-2xl text-white" />
+            <Image src={images.Logo} alt={images.Logo} width={30} height={30} className="h-[30px] w-[30px] rounded-full" />
           </Link>
           <p className="font-semibold text-white">{Title_NavbarMobile}</p>
           {/* Search Toggle */}

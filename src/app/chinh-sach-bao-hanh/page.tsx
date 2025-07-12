@@ -7,7 +7,7 @@ import Image from 'next/image';
 export default function WarrantyPage() {
   return (
     <div>
-      <HeaderResponsive Title_NavbarMobile="Chính Sách Bảo Hành" />
+      <HeaderResponsive Title_NavbarMobile="7teck.vn" />
       <div className="py-[60px] xl:pt-0">
         {/* Main Content */}
         <main className="mt-4 w-full px-2 py-2 sm:px-6 lg:px-16">

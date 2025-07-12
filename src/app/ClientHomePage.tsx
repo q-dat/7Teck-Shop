@@ -155,7 +155,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
   return (
     <div>
       {/* Thanh điều hướng responsive */}
-      <HeaderResponsive Title_NavbarMobile="Trang Chủ" />
+      <HeaderResponsive Title_NavbarMobile="7teck.vn" />
       <div className="pt-[60px] xl:pt-0">
         {/* Banner quảng cáo */}
         <Banner />
