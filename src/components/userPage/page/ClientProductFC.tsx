@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from 'react-daisyui';
 import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
 import { IoIosArrowForward } from 'react-icons/io';
-import imageRepresent from '../../public/image-represent';
+import imageRepresent from '../../../../public/image-represent';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/formatCurrency';

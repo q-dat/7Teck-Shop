@@ -2,7 +2,7 @@
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import { memo, useEffect, useState } from 'react';
 import ClientPhoneFC from './ClientPhoneFC';
-import ClientProductFC, { Product } from './ClientProductFC';
+import ClientProductFC, { Product } from '../components/userPage/page/ClientProductFC';
 import ClientPostSection from './ClientPostSection';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
 import { IPost } from '@/types/type/products/post/post';
