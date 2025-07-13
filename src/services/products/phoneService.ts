@@ -27,9 +27,9 @@ export async function getAllmostViewedPhones(): Promise<IPhone[]> {
   }
 }
 
-export async function getAllPhones(): Promise<IPhone[]> {
+export async function getAllNewPhones(): Promise<IPhone[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/phones')}`;
+    const apiUrl = `${getServerApiUrl('/api/phones?status=0')}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },

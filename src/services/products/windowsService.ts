@@ -2,9 +2,9 @@ import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { logCacheStatus } from '@/utils/logCacheStatus';
 import { IWindows } from '@/types/type/products/windows/windows';
 
-export async function getAllWindows(): Promise<IWindows[]> {
+export async function getAllNewWindows(): Promise<IWindows[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/laptop-windows')}`;
+    const apiUrl = `${getServerApiUrl('/api/laptop-windows?status=0')}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },

@@ -2,9 +2,9 @@ import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 
-export async function getAllTablets(): Promise<ITablet[]> {
+export async function getAllNewTablets(): Promise<ITablet[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/tablets')}`;
+    const apiUrl = `${getServerApiUrl('/api/tablets?status=0')}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },

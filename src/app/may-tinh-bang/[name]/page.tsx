@@ -1,10 +1,10 @@
 import React from 'react';
 import ClientUsedTabletByCatalogPage from './ClientUsedTabletByCatalogPage';
-import { getAllTablets } from '@/services/products/tabletService';
+import { getAllNewTablets } from '@/services/products/tabletService';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
 export default async function UsedTabletByCatalogPage() {
-  const tablets = await getAllTablets();
+  const tablets = await getAllNewTablets();
   if (!tablets) {
     return <ErrorLoading />;
   }

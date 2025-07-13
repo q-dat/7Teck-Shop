@@ -1,10 +1,10 @@
 import React from 'react';
 import ClientPhonePage from './ClientPhonePage';
-import { getAllPhones } from '@/services/products/phoneService';
+import { getAllNewPhones } from '@/services/products/phoneService';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
 export default async function PhonePage() {
-  const phones = await getAllPhones();
+  const phones = await getAllNewPhones();
   if (!phones) {
     return <ErrorLoading />;
   }

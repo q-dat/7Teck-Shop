@@ -2,9 +2,9 @@ import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { IMacbook } from '../../types/type/products/macbook/macbook';
 
-export async function getAllMacbook(): Promise<IMacbook[]> {
+export async function getAllNewMacbook(): Promise<IMacbook[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/laptop-macbook')}`;
+    const apiUrl = `${getServerApiUrl('/api/laptop-macbook?status=0')}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
