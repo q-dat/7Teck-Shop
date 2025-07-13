@@ -1,14 +1,14 @@
-import { getAllPhoneCatalogs } from '@/services/product-catalog/phoneCatalogService';
-import { getAllTabletCatalogs } from '@/services/product-catalog/tabletCatalogService';
-import { getAllMacbookCatalogs } from '@/services/product-catalog/macbookCatalogService';
-import { getAllWindowsCatalogs } from '@/services/product-catalog/windowsCatalogService';
+import { getAllUsedPhoneCatalogs } from '@/services/product-catalog/phoneCatalogService';
+import { getAllUsedTabletCatalogs } from '@/services/product-catalog/tabletCatalogService';
+import { getAllUsedMacbookCatalogs } from '@/services/product-catalog/macbookCatalogService';
+import { getAllUsedWindowsCatalogs } from '@/services/product-catalog/windowsCatalogService';
 import ClientUsedProductsPage from './ClientUsedProductsPage';
 
 export default async function UsedPage() {
-  const phoneCatalogs = await getAllPhoneCatalogs();
-  const tabletCatalogs = await getAllTabletCatalogs();
-  const macbookCatalogs = await getAllMacbookCatalogs();
-  const windowsCatalogs = await getAllWindowsCatalogs();
+  const phoneCatalogs = await getAllUsedPhoneCatalogs();
+  const tabletCatalogs = await getAllUsedTabletCatalogs();
+  const macbookCatalogs = await getAllUsedMacbookCatalogs();
+  const windowsCatalogs = await getAllUsedWindowsCatalogs();
 
   return (
     <ClientUsedProductsPage

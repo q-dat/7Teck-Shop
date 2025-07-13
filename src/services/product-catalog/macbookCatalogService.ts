@@ -1,9 +1,9 @@
 import { IMacbookCatalog } from '@/types/type/catalogs/macbook-catalog/macbook-catalog';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 
-export async function getAllMacbookCatalogs(): Promise<IMacbookCatalog[]> {
+export async function getAllUsedMacbookCatalogs(): Promise<IMacbookCatalog[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/macbook-catalogs')}`;
+    const apiUrl = `${getServerApiUrl('/api/macbook-catalogs?status=1')}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },

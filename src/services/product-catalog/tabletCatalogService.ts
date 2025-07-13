@@ -1,9 +1,9 @@
 import { ITabletCatalog } from '@/types/type/catalogs/tablet-catalog/tablet-catalog';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 
-export async function getAllTabletCatalogs(): Promise<ITabletCatalog[]> {
+export async function getAllUsedTabletCatalogs(): Promise<ITabletCatalog[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/tablet-catalogs')}`;
+    const apiUrl = `${getServerApiUrl('/api/tablet-catalogs?status=1')}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },

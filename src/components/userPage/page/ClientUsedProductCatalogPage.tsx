@@ -38,9 +38,8 @@ export default function ClientUsedProductCatalogPage({ data, title, namePrefix, 
   }, [data]);
 
   const itemsPerPage = 12;
-  const filteredData = data.filter((item) => item?.status === 1 && item?.productCount >= 1);
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const currentItems = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const currentItems = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleNextPage = () => currentPage < totalPages && setCurrentPage((p) => p + 1);
   const handlePrevPage = () => currentPage > 1 && setCurrentPage((p) => p - 1);

@@ -1,9 +1,9 @@
 import { IPhoneCatalog } from '@/types/type/catalogs/phone-catalog/phone-catalog';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 
-export async function getAllPhoneCatalogs(): Promise<IPhoneCatalog[]> {
+export async function getAllUsedPhoneCatalogs(): Promise<IPhoneCatalog[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/phone-catalogs')}`;
+    const apiUrl = `${getServerApiUrl('/api/phone-catalogs?status=1')}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },

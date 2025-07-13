@@ -1,9 +1,9 @@
 import { IWindowsCatalog } from '@/types/type/catalogs/windows-catalog/windows-catalog';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 
-export async function getAllWindowsCatalogs(): Promise<IWindowsCatalog[]> {
+export async function getAllUsedWindowsCatalogs(): Promise<IWindowsCatalog[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/windows-catalogs')}`;
+    const apiUrl = `${getServerApiUrl('/api/windows-catalogs?status=1')}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
