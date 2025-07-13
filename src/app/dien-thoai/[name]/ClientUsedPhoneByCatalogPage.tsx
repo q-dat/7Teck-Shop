@@ -15,5 +15,5 @@ export default function ClientUsedPhoneByCatalogPage({ phones }: { phones: IPhon
     ram: phone.phone_catalog_id.configuration_and_memory?.ram,
   }));
 
-  return <ClientUsedProductPage products={mapped} title="7teck.vn" basePath="dien-thoai" />;
+  return <ClientUsedProductPage products={mapped} title="Điện Thoại" basePath="dien-thoai" />;
 }

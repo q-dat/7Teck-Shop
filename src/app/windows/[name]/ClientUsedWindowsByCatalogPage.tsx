@@ -15,5 +15,5 @@ export default function ClientUsedWindowsByCatalogPage({ windows }: { windows: I
     ram: win.windows_catalog_id.w_cat_memory_and_storage?.w_cat_ram,
   }));
 
-  return <ClientUsedProductPage products={mapped} title="7teck.vn" basePath="windows" />;
+  return <ClientUsedProductPage products={mapped} title="Laptop Windows" basePath="windows" />;
 }

@@ -15,5 +15,5 @@ export default function ClientUsedMacbookByCatalogPage({ macbook }: { macbook: I
     ram: mac.macbook_catalog_id.m_cat_memory_and_storage?.m_cat_ram,
   }));
 
-  return <ClientUsedProductPage products={mapped} title="7teck.vn" basePath="macbook" />;
+  return <ClientUsedProductPage products={mapped} title="Laptop Macbook" basePath="macbook" />;
 }

@@ -15,5 +15,5 @@ export default function ClientUsedTabletByCatalogPage({ tablets }: { tablets: IT
     ram: tablet.tablet_catalog_id.t_cat_memory_and_storage?.t_cat_ram,
   }));
 
-  return <ClientUsedProductPage products={mapped} title="7teck.vn" basePath="may-tinh-bang" />;
+  return <ClientUsedProductPage products={mapped} title="Máy Tính Bảng" basePath="may-tinh-bang" />;
 }

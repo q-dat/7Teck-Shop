@@ -12,5 +12,5 @@ export default function ClientUsedMacbookPage({ macbookCatalogs }: { macbookCata
     status: p.m_cat_status,
   }));
 
-  return <ClientUsedProductCatalogPage data={data} title="7teck.vn" basePath="macbook" namePrefix={'Laptop'} />;
+  return <ClientUsedProductCatalogPage data={data} title="Laptop Macbook" basePath="macbook" namePrefix={'Laptop'} />;
 }
