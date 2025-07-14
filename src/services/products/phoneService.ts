@@ -27,9 +27,10 @@ export async function getAllmostViewedPhones(): Promise<IPhone[]> {
   }
 }
 
-export async function getAllNewPhones(): Promise<IPhone[]> {
+export async function getPhonesByStatus(status?: number): Promise<IPhone[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/phones?status=0')}`;
+    const query = typeof status === 'number' ? `?status=${status}` : '';
+    const apiUrl = getServerApiUrl(`/api/phones${query}`);
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
@@ -50,6 +51,16 @@ export async function getAllNewPhones(): Promise<IPhone[]> {
     console.error('Lỗi khi lấy danh sách phones:', error);
     return [];
   }
+}
+export async function getAllPhones(): Promise<IPhone[]> {
+  return getPhonesByStatus();
+}
+export async function getAllNewPhones(): Promise<IPhone[]> {
+  return getPhonesByStatus(0);
+}
+
+export async function getAllUsedPhones(): Promise<IPhone[]> {
+  return getPhonesByStatus(1);
 }
 
 export async function getPhoneById(id: string): Promise<IPhone | null> {

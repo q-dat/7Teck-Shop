@@ -2,9 +2,10 @@ import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { logCacheStatus } from '@/utils/logCacheStatus';
 import { IWindows } from '@/types/type/products/windows/windows';
 
-export async function getAllNewWindows(): Promise<IWindows[]> {
+export async function getWindowsByStatus(status?: number): Promise<IWindows[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/laptop-windows?status=0')}`;
+    const query = typeof status === 'number' ? `?status=${status}` : '';
+    const apiUrl = `${getServerApiUrl(`/api/laptop-windows${query}`)}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
@@ -25,6 +26,18 @@ export async function getAllNewWindows(): Promise<IWindows[]> {
     console.error('Lỗi khi lấy danh sách windows:', error);
     return [];
   }
+}
+
+export async function getAllWindows(): Promise<IWindows[]> {
+  return getWindowsByStatus();
+}
+
+export async function getAllNewWindows(): Promise<IWindows[]> {
+  return getWindowsByStatus(0);
+}
+
+export async function getAllUsedWindows(): Promise<IWindows[]> {
+  return getWindowsByStatus(1);
 }
 
 export async function getWindowsById(id: string): Promise<IWindows | null> {

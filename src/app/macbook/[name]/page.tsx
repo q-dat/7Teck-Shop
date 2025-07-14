@@ -1,10 +1,10 @@
 import React from 'react';
 import ClientUsedMacbookByCatalogPage from './ClientUsedMacbookByCatalogPage';
-import { getAllNewMacbook } from '@/services/products/macbookService';
+import { getAllMacbook } from '@/services/products/macbookService';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
 export default async function UsedMacbookByCatalogPage() {
-  const macbook = await getAllNewMacbook();
+  const macbook = await getAllMacbook();
   if (!macbook) {
     return <ErrorLoading />;
   }

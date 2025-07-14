@@ -2,9 +2,10 @@ import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 
-export async function getAllNewTablets(): Promise<ITablet[]> {
+export async function getTabletsByStatus(status?: number): Promise<ITablet[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/tablets?status=0')}`;
+    const query = typeof status === 'number' ? `?status=${status}` : '';
+    const apiUrl = `${getServerApiUrl(`/api/tablets${query}`)}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
@@ -25,6 +26,18 @@ export async function getAllNewTablets(): Promise<ITablet[]> {
     console.error('Lỗi khi lấy danh sách tablet:', error);
     return [];
   }
+}
+
+export async function getAllTablets(): Promise<ITablet[]> {
+  return getTabletsByStatus();
+}
+
+export async function getAllNewTablets(): Promise<ITablet[]> {
+  return getTabletsByStatus(0);
+}
+
+export async function getAllUsedTablets(): Promise<ITablet[]> {
+  return getTabletsByStatus(1);
 }
 
 export async function getTabletById(id: string): Promise<ITablet | null> {

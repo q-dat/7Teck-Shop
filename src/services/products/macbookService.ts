@@ -2,9 +2,10 @@ import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { IMacbook } from '../../types/type/products/macbook/macbook';
 
-export async function getAllNewMacbook(): Promise<IMacbook[]> {
+export async function getMacbookByStatus(status?: number): Promise<IMacbook[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/laptop-macbook?status=0')}`;
+    const query = typeof status === 'number' ? `?status=${status}` : '';
+    const apiUrl = `${getServerApiUrl(`/api/laptop-macbook${query}`)}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
@@ -25,6 +26,17 @@ export async function getAllNewMacbook(): Promise<IMacbook[]> {
     console.error('Lỗi khi lấy danh sách macbook:', error);
     return [];
   }
+}
+export async function getAllMacbook(): Promise<IMacbook[]> {
+  return getMacbookByStatus();
+}
+
+export async function getAllNewMacbook(): Promise<IMacbook[]> {
+  return getMacbookByStatus(0);
+}
+
+export async function getAllUsedMacbook(): Promise<IMacbook[]> {
+  return getMacbookByStatus(1);
 }
 
 export async function getMacbookById(id: string): Promise<IMacbook | null> {
