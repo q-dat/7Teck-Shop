@@ -46,7 +46,7 @@ export default function ClientPostSection({ posts }: ClientPostSectionProps) {
                 </Button>
               </Link>
             </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
               {news.slice(0, 4).map((post) => (
                 <article
                   key={post?._id}
@@ -64,7 +64,7 @@ export default function ClientPostSection({ posts }: ClientPostSectionProps) {
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5"></div>
                   </div>
                   <div className="p-4">
-                    <h2 className="line-clamp-3 text-sm font-semibold text-gray-900 hover:text-blue-600">{post?.title}</h2>
+                    <h2 className="line-clamp-4 text-sm font-semibold text-gray-900 hover:text-blue-600">{post?.title}</h2>
                     <p className="mt-2 text-xs text-gray-500">
                       {new Date(post?.updatedAt).toLocaleDateString('vi-VN')} (
                       <TimeAgo date={post?.updatedAt} />)
