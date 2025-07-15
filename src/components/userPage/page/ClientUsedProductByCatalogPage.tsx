@@ -41,11 +41,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
 
   useEffect(() => {
     scrollToTopSmoothly();
-    if (products.length === 0) {
-      setLoading(true);
-    } else {
-      setLoading(false);
-    }
+    setLoading(false);
   }, [products]);
 
   return (

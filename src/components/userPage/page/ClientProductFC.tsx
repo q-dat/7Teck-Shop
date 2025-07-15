@@ -74,7 +74,7 @@ export default function ClientProductFC({ products, category, loading: externalL
           {loading ? (
             <ProductPlaceholders count={12} />
           ) : sortedProducts.length === 0 ? (
-            <></>
+            <p>Hiện chưa có sản phẩm giảm giá trong danh mục này.</p>
           ) : (
             sortedProducts.map((product) => {
               const productUrl = slugify(product.name);

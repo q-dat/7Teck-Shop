@@ -43,7 +43,9 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
 
   useEffect(() => {
     scrollToTopSmoothly();
-    setLoading(products.length === 0);
+    if (products.length >= 0) {
+      setLoading(false);
+    }
   }, [products]);
 
   const itemsPerPage = 24;
@@ -77,9 +79,27 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
         {/*  */}
         <div className="space-y-10 px-2 xl:px-desktop-padding">
           <div className="mt-5 w-full">
-            <div className="grid grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6">
+            <div className="grid w-full grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6">
               {loading ? (
                 <ProductPlaceholders count={12} />
+              ) : currentProducts.length === 0 ? (
+                <div className="col-span-full flex w-full items-center justify-center py-10">
+                  <div className="max-w-3xl rounded-xl border border-gray-100 bg-white px-6 py-8 text-center shadow-lg">
+                    <h2 className="mb-3 text-xl font-semibold text-primary md:text-2xl">
+                      Không tìm thấy sản phẩm <span className="text-red-500">NEW SEAL</span>
+                    </h2>
+                    <p className="mb-5 text-sm text-gray-600 md:text-base xl:text-lg">
+                      Hiện tại danh mục <strong>New Seal</strong> chưa có sản phẩm nào được cập nhật.
+                      <br />
+                      Quý khách vui lòng tham khảo thêm các thiết bị đã qua sử dụng với chất lượng <strong>Like New</strong> tại mục bên dưới:
+                    </p>
+                    <Link href="/thiet-bi-da-qua-su-dung">
+                      <span className="inline-block rounded-lg bg-primary px-5 py-3 text-sm font-bold uppercase text-white transition-all hover:bg-primary/80 md:text-base">
+                        Xem thiết bị đã qua sử dụng
+                      </span>
+                    </Link>
+                  </div>
+                </div>
               ) : (
                 currentProducts.map((product) => {
                   // Navigate

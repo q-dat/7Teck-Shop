@@ -30,11 +30,7 @@ export default function ClientUsedProductCatalogPage({ data, title, namePrefix, 
 
   useEffect(() => {
     scrollToTopSmoothly();
-    if (data.length === 0) {
-      setLoading(true);
-    } else {
-      setLoading(false);
-    }
+    setLoading(false);
   }, [data]);
 
   const itemsPerPage = 12;
@@ -46,12 +42,16 @@ export default function ClientUsedProductCatalogPage({ data, title, namePrefix, 
 
   return (
     <div className="my-5 rounded-md bg-white p-2">
-      <div className="py-2 text-2xl font-semibold text-black">{title}</div>
+      <h1 className="bg-white/50 py-2 text-start text-xl font-bold uppercase text-primary shadow-sm backdrop-blur-md md:text-2xl xl:text-3xl">
+        {title}
+      </h1>
       <div className="grid grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
         {loading ? (
           <ProductPlaceholders count={12} />
         ) : currentItems.length === 0 ? (
-          <>Không có dữ liệu!</>
+          <p className="col-span-full text-red-500">
+            <i>Hiện chưa có sản phẩm nào trong mục này!</i>
+          </p>
         ) : (
           currentItems.map((product) => {
             const slug = slugify(product.name);
