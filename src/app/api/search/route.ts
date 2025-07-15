@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { slugify } from '@/utils/slugify';
 import redis, { connectRedis } from '@/lib/redis';
 import { loadCache, CachedItem, getCache } from '@/lib/searchCache';
+import { warmUpRedisCacheIfNeeded } from '@/lib/warmupCache';
 
 const REDIS_CACHE_KEY = 'search_cache_v1';
 
@@ -15,14 +16,14 @@ const keywordMap: Record<string, string> = {
   gb: 'gb',
   pr: 'pro',
   prx: 'promax',
-  prm: 'pro max',
+  prm: 'promax',
   pls: 'plus',
 };
 
 async function getCacheFromRedis(): Promise<CachedItem[]> {
   await connectRedis();
-
   const raw = await redis.get(REDIS_CACHE_KEY);
+
   if (raw) {
     const parsed = JSON.parse(raw) as CachedItem[];
     console.log(`📦 Redis cache hit: ${parsed.length} items`);
@@ -31,17 +32,15 @@ async function getCacheFromRedis(): Promise<CachedItem[]> {
 
   console.log('🚫 Redis cache miss — loading from source...');
   await loadCache();
-  const data = getCache(); // ← Trả về CachedItem[]
-
-  console.log(`✅ Cache saved to Redis: ${data.length} items`);
-
+  const data = getCache();
+  console.log(`✅ Cache loaded from DB: ${data.length} items`);
   return data;
 }
-
 export async function GET(req: Request) {
   const t0 = performance.now();
 
   try {
+    await warmUpRedisCacheIfNeeded();
     const cachedData = await getCacheFromRedis();
 
     const { searchParams } = new URL(req.url);
@@ -51,32 +50,39 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: 'Thiếu từ khóa tìm kiếm', success: false }, { status: 400 });
     }
 
+    // Chuẩn hóa từ khóa tìm kiếm
     const normalizedQ = q
       .toLowerCase()
-      .split(' ')
-      .map((word) => keywordMap[word] || word)
-      .join(' ');
+      .replace(/\s+/g, '') // bỏ khoảng trắng
+      .split(/(\d+)/) // tách chữ và số riêng biệt để match tốt hơn
+      .filter(Boolean)
+      .map((part) => keywordMap[part] || part)
+      .join('');
 
-    const slugifiedQ = slugify(normalizedQ);
+    const slugifiedQ = slugify(normalizedQ); // ip15promax
     const isObjectId = ObjectId.isValid(q);
 
     const results: CachedItem[] = [];
 
-    // 1. Tìm theo _id
+    // 1. Tìm theo ObjectId
     if (isObjectId) {
       const found = cachedData.find((item) => item._id === q);
       if (found) results.push(found);
     }
 
-    // 2. Tìm slug chính xác
-    const exactMatch = cachedData.find((item) => item.slug === slugifiedQ);
+    // 2. So khớp slug tuyệt đối
+    const exactMatch = cachedData.find((item) => {
+      return slugify(item.slug.replace(/\s+/g, '')) === slugifiedQ;
+    });
+
     if (exactMatch && !results.some((r) => r._id === exactMatch._id)) {
       results.push(exactMatch);
     }
 
-    // 3. Tìm gần đúng theo name
+    // 3. So khớp gần đúng theo tên
     for (const item of cachedData) {
-      if (item.name.toLowerCase().includes(normalizedQ) && !results.some((r) => r._id === item._id)) {
+      const normalizedItemName = slugify(item.name.toLowerCase().replace(/\s+/g, ''));
+      if (normalizedItemName.includes(slugifiedQ) && !results.some((r) => r._id === item._id)) {
         results.push(item);
       }
     }
@@ -103,4 +109,3 @@ export async function GET(req: Request) {
 }
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 3600;

@@ -8,10 +8,8 @@ const cache = new Map<string, SearchResult[]>();
 
 export const searchProducts = async (query: string): Promise<SearchResult[]> => {
   const trimmedQuery = query.trim();
-
   if (!trimmedQuery) return [];
 
-  // Check cache trước
   if (cache.has(trimmedQuery)) {
     return cache.get(trimmedQuery)!;
   }
