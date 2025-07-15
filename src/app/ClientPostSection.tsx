@@ -46,7 +46,7 @@ export default function ClientPostSection({ posts }: ClientPostSectionProps) {
                 </Button>
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
               {news.slice(0, 4).map((post) => (
                 <article
                   key={post?._id}
