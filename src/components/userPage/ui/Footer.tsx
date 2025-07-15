@@ -9,6 +9,10 @@ import Link from 'next/link';
 import { address, contact, copyright, fanpageUrl, hotlineUrl, mail, mailUrl, messengerUrl, zaloUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
 
+const Badge = (label: string) => (
+  <sup className="ml-1 rounded-full bg-red-500 px-1 py-0.5 text-[10px] font-semibold uppercase text-white shadow-md">{label}</sup>
+);
+
 export default function FooterFC() {
   return (
     <div className="mb-[50px] xl:mb-0">
@@ -20,27 +24,38 @@ export default function FooterFC() {
         {/* 1 */}
         <div className="w-full">
           <Footer.Title className="border-b-[1px]">Thông Tin</Footer.Title>
-          <Link className="font-light hover:font-semibold" href="/dien-thoai">
-            Điện Thoại
+          <Link className="font-medium hover:font-semibold" href="/dien-thoai">
+            Điện Thoại {Badge('NEW SEAL')}
           </Link>
-          <Link className="font-light hover:font-semibold" href="/may-tinh-bang">
-            Máy Tính Bảng
+          <Link className="font-medium hover:font-semibold" href="/may-tinh-bang">
+            Máy Tính Bảng {Badge('NEW SEAL')}
           </Link>
-          <Link className="font-light hover:font-semibold" href="/windows">
-            Laptop Windows
+          <Link className="font-medium hover:font-semibold" href="/windows">
+            Laptop Windows {Badge('NEW SEAL')}
           </Link>
-          <Link className="font-light hover:font-semibold" href="/macbook">
-            Laptop Macbook
+          <Link className="font-medium hover:font-semibold" href="/macbook">
+            Laptop Macbook {Badge('NEW SEAL')}
           </Link>
-          <Link className="font-light hover:font-semibold" href="/bang-gia-thu-mua">
+          <Link className="font-medium hover:font-semibold" href="/macbook">
+            Thiết Bị Đã Qua Sử Dụng
+            <sup className="ml-1 rounded-full bg-orange-500 px-1 py-0.5 text-[10px] font-semibold uppercase text-black shadow-md">USED</sup>
+          </Link>
+
+          <Link className="font-medium hover:font-semibold" href="/bang-gia-thu-mua">
             Bảng Giá Thu Mua
           </Link>
         </div>
         {/* 2 */}
         <div className="w-full">
           <Footer.Title className="border-b-[1px]">Chính Sách Bán Hàng</Footer.Title>
-          <Link className="font-light hover:font-semibold" href="/chinh-sach-bao-hanh">
+          <Link className="font-medium hover:font-semibold" href="/chinh-sach-bao-hanh">
             Chính Sách Bảo Hành
+          </Link>
+          <Link className="font-medium hover:font-semibold" href="/chinh-sach-quyen-rieng-tu">
+            Chính Sách Quyền Riêng Tư
+          </Link>
+          <Link className="font-medium hover:font-semibold" href="/dieu-khoan-dich-vu">
+            Điều Khoản Dịch Vụ
           </Link>
         </div>
         {/* 3 */}
@@ -62,17 +77,17 @@ export default function FooterFC() {
               Zalo
             </Link>
           </div>
-          <Link title="Liên hệ qua Hotline" className="flex items-center gap-2 font-light hover:font-semibold" href={hotlineUrl}>
+          <Link title="Liên hệ qua Hotline" className="flex items-center gap-2 font-medium hover:font-semibold" href={hotlineUrl}>
             <FaPhone /> {contact}
           </Link>
-          <Link target="_blank" className="flex items-center gap-2 font-light hover:font-semibold" href={mailUrl}>
+          <Link target="_blank" className="flex items-center gap-2 font-medium hover:font-semibold" href={mailUrl}>
             <IoMail /> {mail}
           </Link>
         </div>
         {/* 4 */}
         <div className="w-full">
           <Footer.Title className="border-b-[1px]">Địa chỉ</Footer.Title>
-          <div className="flex w-full flex-col gap-2 font-light">
+          <div className="flex w-full flex-col gap-2 font-medium">
             <p className="flex items-start gap-2">
               <FaMapLocationDot className="text-xl" />
               {address}
