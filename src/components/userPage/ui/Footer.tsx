@@ -60,13 +60,13 @@ export default function FooterFC() {
           <Link className="font-medium hover:font-semibold" href="/may-tinh-bang">
             Máy Tính Bảng {Badge('NEW SEAL')}
           </Link>
-          <Link className="font-medium hover:font-semibold" href="/windows">
-            Laptop Windows {Badge('NEW SEAL')}
-          </Link>
           <Link className="font-medium hover:font-semibold" href="/macbook">
             Laptop Macbook {Badge('NEW SEAL')}
           </Link>
-          <Link className="font-medium hover:font-semibold" href="/macbook">
+          <Link className="font-medium hover:font-semibold" href="/windows">
+            Laptop Windows {Badge('NEW SEAL')}
+          </Link>
+          <Link className="font-medium hover:font-semibold" href="/thiet-bi-da-qua-su-dung">
             Thiết Bị Đã Qua Sử Dụng
             <sup className="ml-1 rounded-full bg-orange-500 px-1 py-0.5 text-[10px] font-semibold uppercase text-black shadow-md">USED</sup>
           </Link>
