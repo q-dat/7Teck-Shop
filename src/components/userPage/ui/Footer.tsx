@@ -9,6 +9,18 @@ import Link from 'next/link';
 import { address, contact, copyright, fanpageUrl, hotlineUrl, mail, mailUrl, messengerUrl, zaloUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
 
+const suggestedProducts = [
+  { name: 'iPhone 16 Pro Max 1TB', url: 'https://www.7teck.vn/dien-thoai/iphone-16-pro-max-1tb' },
+  { name: 'iPhone 16 Pro Max 256GB', url: 'https://www.7teck.vn/dien-thoai/iphone-16-pro-max-256gb' },
+  { name: 'iPhone 15 Pro Max 256GB', url: 'https://www.7teck.vn/dien-thoai/iphone-15-promax-256gb' },
+  { name: 'iPhone 14 Plus 256GB', url: 'https://www.7teck.vn/dien-thoai/iphone-14-plus-256gb' },
+  { name: 'iPad Gen 10 64GB WiFi', url: 'https://www.7teck.vn/may-tinh-bang/ipad-gen-10-64gb-wifi' },
+  { name: 'iPad Air 4 256GB', url: 'https://www.7teck.vn/may-tinh-bang/ipad-air-4-256gb' },
+  { name: 'iPad Air 4 64GB', url: 'https://www.7teck.vn/may-tinh-bang/ipad-air-4-64gb' },
+  { name: 'Dell Latitude 7420 Core i7', url: 'https://www.7teck.vn/windows/dell-latitude-7420-core-i7-gen-11-16gb-256gb' },
+  { name: 'Dell Latitude 7310 2-in-1', url: 'https://www.7teck.vn/windows/dell-latitude-7310-2-in-1-ban-13-3-inch-intel-i7-32gb-512gb' },
+  { name: 'Dell XPS 9315 i5', url: 'https://www.7teck.vn/windows/dell-xps-9315-intel-i5-8gb-256gb-ban-14inch' },
+];
 const Badge = (label: string) => (
   <sup className="ml-1 rounded-full bg-red-500 px-1 py-0.5 text-[10px] font-semibold uppercase text-white shadow-md">{label}</sup>
 );
@@ -16,6 +28,24 @@ const Badge = (label: string) => (
 export default function FooterFC() {
   return (
     <div className="mb-[50px] xl:mb-0">
+      {/* Suggest */}
+      <div className="w-full px-2 py-4 xl:px-desktop-padding" role="region" aria-label="Sản phẩm gợi ý">
+        <span className="font-semibold">Sản phẩm gợi ý:</span>
+        <br />
+        <div className="grid grid-flow-row grid-cols-2 gap-2 rounded-md bg-white p-2 text-center text-sm text-black shadow xl:grid-cols-6">
+          {suggestedProducts.map((product, index) => (
+            <Link
+              key={index}
+              href={product.url}
+              className="rounded-md bg-[#f3f3f3] p-1 text-xs focus:outline-none hover:underline"
+              aria-label={`Xem sản phẩm: ${product.name}`}
+            >
+              <span aria-hidden="true">{product.name}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
       <Footer className="item-center flex flex-col justify-between bg-black px-2 pb-0 pt-10 text-white xl:flex-row xl:px-desktop-padding xl:pb-10">
         {/* Logo */}
         <div className="w-full">
