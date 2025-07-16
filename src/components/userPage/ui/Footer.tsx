@@ -32,15 +32,15 @@ export default function FooterFC() {
       <div className="w-full px-2 py-4 xl:px-desktop-padding" role="region" aria-label="Sản phẩm gợi ý">
         <span className="font-semibold">Sản phẩm gợi ý:</span>
         <br />
-        <div className="grid grid-flow-row grid-cols-2 gap-2 rounded-md bg-white p-2 text-center text-sm text-black shadow xl:grid-cols-6">
+        <div className="flex w-full flex-wrap gap-2 rounded-md bg-white p-2 text-sm text-black shadow">
           {suggestedProducts.map((product, index) => (
             <Link
               key={index}
               href={product.url}
-              className="rounded-md bg-[#f3f3f3] p-1 text-xs focus:outline-none hover:underline"
+              className="max-w-[200px] rounded-md bg-[#f3f3f3] px-3 py-2 text-xs focus:outline-none hover:underline"
               aria-label={`Xem sản phẩm: ${product.name}`}
             >
-              <span aria-hidden="true">{product.name}</span>
+              <span className="block overflow-hidden text-ellipsis whitespace-nowrap">{product.name}</span>
             </Link>
           ))}
         </div>
