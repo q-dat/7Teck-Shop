@@ -79,13 +79,13 @@ export default function ClientUsedProductCatalogPage({ data, title, namePrefix, 
                       {product?.productCount > 99 ? '99+' : product?.productCount} {' Sản phẩm'}
                     </p>
                     <Link href={`/${basePath}/${slug}`}>
-                      <p className="font-medium xl:group-hover:text-secondary">
+                      <p className="text-prod-name-mobile xl:text-prod-name-desktop font-medium xl:group-hover:text-secondary">
                         {namePrefix} {product.name}
                       </p>
                     </Link>
                   </div>
                   <div className="w-full p-1">
-                    <p className="text-gray-700">
+                    <p className="text-prod-price-mobile xl:text-prod-price-desktop text-gray-700">
                       Từ:&nbsp;
                       <span className="font-semibold text-price">{formatCurrency(product.price)}</span>
                     </p>

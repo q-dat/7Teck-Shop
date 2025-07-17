@@ -104,12 +104,13 @@ export default function ClientProductFC({ products, category, loading: externalL
                       className="w-full cursor-pointer"
                       href={`${category.url}/${productUrl}/${product._id}`}
                     >
-                      <p className="font-medium xl:group-hover:text-secondary">
+                      <p className="text-prod-name-mobile xl:text-prod-name-desktop font-medium xl:group-hover:text-secondary">
                         {category.name} {product.name}
                       </p>
                     </Link>
-                    <div className="w-full">
-                      <div className="mt-2 text-sm">
+                    
+                    <div className="mt-1 w-full">
+                      <div className="text-prod-name-mobile xl:text-prod-name-desktop">
                         {[
                           { label: 'Màu sắc', value: product?.color },
                           { label: 'Ram', value: product?.ram },
@@ -122,9 +123,9 @@ export default function ClientProductFC({ products, category, loading: externalL
                             </p>
                           ))}
                       </div>
-                      <p className="w-full font-semibold">
-                        <span className="text-price">{formatCurrency(product.price)}</span> &nbsp;
-                        {product.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(product.sale)}</del>}
+                      <p className="text-prod-price-mobile xl:text-prod-price-desktop w-full">
+                        <span className="font-semibold text-price">{formatCurrency(product?.price)}</span> &nbsp;
+                        {product?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
                       </p>
                       <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">
                         <Button

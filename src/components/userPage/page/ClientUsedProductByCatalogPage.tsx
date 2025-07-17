@@ -93,13 +93,13 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                             <FaRegEye />
                             <p>{product.view}</p>
                           </div>
-                          <p className="font-medium xl:group-hover:text-secondary">
+                          <p className="text-prod-name-mobile xl:text-prod-name-desktop font-medium xl:group-hover:text-secondary">
                             {title} {product.name}
                           </p>
                         </Link>
 
-                        <div className="w-full">
-                          <div className="mt-2 text-sm">
+                        <div className="mt-1 w-full">
+                          <div className="text-prod-name-mobile xl:text-prod-name-desktop">
                             {specsToShow.map((field) => {
                               const value = product[field as keyof ProductBase];
                               if (!value) return null;
@@ -120,10 +120,9 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                               );
                             })}
                           </div>
-                          <p className="text-gray-700">
-                            <span className="font-semibold text-price">{formatCurrency(product?.price)}</span>
-                            &nbsp;
-                            {product?.sale && <del className="text-xs font-light text-gray-100">{formatCurrency(product?.sale)}</del>}
+                          <p className="text-prod-price-mobile xl:text-prod-price-desktop w-full">
+                            <span className="font-semibold text-price">{formatCurrency(product?.price)}</span> &nbsp;
+                            {product?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
                           </p>
                           <Button
                             size="xs"

@@ -24,6 +24,15 @@ export default {
       spacing: {
         'desktop-padding': '80px',
       },
+      fontSize: {
+        // mobile-font-size
+        'prod-name-mobile': ['12px', { lineHeight: '21px' }],
+        'prod-price-mobile': ['14px', { lineHeight: '18px' }],
+        // desktop-font-size
+        'prod-name-desktop': ['14px', { lineHeight: '19px' }],
+        'prod-price-desktop': ['18px', { lineHeight: '18px' }],
+      },
+
       fontFamily: {
         sans: ['Inter', ...defaultTheme.fontFamily.sans], //primary
         sub: ['Roboto', 'sans-serif'], //secondary
@@ -35,7 +44,7 @@ export default {
         success: '#009485',
         warning: '#ff9900',
         error: '#e53e3e',
-        //Lưu ý về màu sắc: do logo nhiều màu nên tone màu của web sẽ sẽ là bg-white và text-black
+        //Lưu ý về màu sắc: do logo nhiều màu nên tone màu của web sẽ sẽ là bg-white và black
         white: ' #FFFFFF',
         black: '#333333',
         'primary-white': '#FAFAFA',
@@ -86,8 +95,8 @@ export default {
         },
       },
     ],
-    base: true,
-    styled: true,
+    base: false,
+    styled: false,
     utils: true,
     prefix: '',
     logs: true,

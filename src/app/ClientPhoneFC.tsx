@@ -76,11 +76,13 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                         <FaRegEye />
                         <p>{phone?.view}</p>
                       </div>
-                      <p className="font-medium xl:group-hover:text-secondary">Điện Thoại {phone?.name}</p>
+                      <p className="text-prod-name-mobile xl:text-prod-name-desktop font-medium xl:group-hover:text-secondary">
+                        Điện Thoại {phone?.name}
+                      </p>
                     </Link>
 
-                    <div className="w-full">
-                      <div className="mt-2 text-sm">
+                    <div className="mt-1 w-full">
+                      <div className="text-prod-name-mobile xl:text-prod-name-desktop">
                         {[
                           { label: 'Màu sắc', value: phone?.color },
                           { label: 'Ram', value: phone?.phone_catalog_id?.configuration_and_memory?.ram },
@@ -93,8 +95,8 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                             </p>
                           ))}
                       </div>
-                      <p className="font-semibold text-price">
-                        {formatCurrency(phone?.price)} &nbsp;
+                      <p className="text-prod-price-mobile xl:text-prod-price-desktop w-full">
+                        <span className="font-semibold text-price">{formatCurrency(phone?.price)}</span> &nbsp;
                         {phone?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(phone?.sale)}</del>}
                       </p>
                       <Button
