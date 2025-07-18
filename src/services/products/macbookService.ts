@@ -27,6 +27,7 @@ export async function getMacbookByStatus(status?: number): Promise<IMacbook[]> {
     return [];
   }
 }
+
 export async function getAllMacbook(): Promise<IMacbook[]> {
   return getMacbookByStatus();
 }

@@ -52,6 +52,7 @@ export async function getPhonesByStatus(status?: number): Promise<IPhone[]> {
     return [];
   }
 }
+
 export async function getAllPhones(): Promise<IPhone[]> {
   return getPhonesByStatus();
 }

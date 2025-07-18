@@ -3,7 +3,7 @@ import { getServerApiUrl } from '../../../hooks/useApiUrl';
 
 export async function getAllUsedWindowsCatalogs(): Promise<IWindowsCatalog[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/windows-catalogs?status=1')}`;
+    const apiUrl = `${getServerApiUrl('/api/windows-catalogs?status=1&hasProduct=true')}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
