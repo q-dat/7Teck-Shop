@@ -37,7 +37,7 @@ export default function FooterFC() {
             <Link
               key={index}
               href={product.url}
-              className="max-w-[200px] rounded-md bg-[#f3f3f3] px-3 py-2 text-xs focus:outline-none hover:underline"
+              className="max-w-[200px] rounded-md bg-[#f3f3f3] p-2 text-xs focus:outline-none hover:underline"
               aria-label={`Xem sản phẩm: ${product.name}`}
             >
               <span className="block overflow-hidden text-ellipsis whitespace-nowrap">{product.name}</span>

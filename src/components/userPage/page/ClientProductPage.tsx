@@ -84,7 +84,7 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                 <ProductPlaceholders count={12} />
               ) : currentProducts.length === 0 ? (
                 <div className="col-span-full flex w-full items-center justify-center py-10">
-                  <div className="max-w-3xl rounded-xl border border-gray-100 bg-white px-6 py-8 text-center shadow-lg">
+                  <div className="max-w-3xl rounded-xl border border-dashed border-secondary bg-white px-6 py-8 text-center shadow-lg">
                     <h2 className="mb-3 text-xl font-semibold text-primary md:text-2xl">
                       Không tìm thấy sản phẩm <span className="text-red-500">NEW SEAL</span>
                     </h2>
@@ -129,7 +129,7 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                       {/*  */}
                       <div className="flex h-full w-full flex-col items-start justify-between p-1">
                         <Link href={`${basePath}/${productUrl}/${subUrl}`} className="w-full cursor-pointer">
-                          <p className="text-prod-name-mobile xl:text-prod-name-desktop font-medium xl:group-hover:text-secondary">
+                          <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
                             {title} {product.name}
                           </p>
                         </Link>
@@ -156,7 +156,7 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                               );
                             })}
                           </div>
-                          <p className="text-prod-price-mobile xl:text-prod-price-desktop w-full">
+                          <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
                             <span className="font-semibold text-price">{formatCurrency(product?.price)}</span> &nbsp;
                             {product?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
                           </p>
