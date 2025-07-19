@@ -62,7 +62,12 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
     if (product && product?.catalog) {
       setLoading(false);
     }
-    updateScrollButtons(scrollRef, setIsLeftButtonVisible, setIsRightButtonVisible);
+
+    const timeout = setTimeout(() => {
+      updateScrollButtons(scrollRef, setIsLeftButtonVisible, setIsRightButtonVisible);
+    }, 100);
+
+    return () => clearTimeout(timeout);
   }, [product, product?.thumbnail]);
 
   useEffect(() => {
@@ -132,6 +137,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                           selectedImage === thumb ? 'border-2 border-primary' : ''
                         }`}
                         onClick={() => handleThumbnailClick(scrollRef, thumb, index, setSelectedImage)}
+                        onLoad={() => updateScrollButtons(scrollRef, setIsLeftButtonVisible, setIsRightButtonVisible)}
                       />
                     ))
                   ) : (
