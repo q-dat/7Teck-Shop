@@ -32,13 +32,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
 
   useEffect(() => {
     scrollToTopSmoothly();
-    if (priceLists.length === 0) {
-      const fetchData = async () => {
-        setLoading(true);
-      };
-
-      fetchData();
-    } else {
+    if (priceLists.length >= 0) {
       setLoading(false);
     }
 
@@ -94,6 +88,11 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
         {/* Danh mục sản phẩm */}
         {loading ? (
           <LoadingLocal />
+        ) : priceLists.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-secondary bg-white p-6 text-center shadow-sm">
+            <span className="text-xl font-semibold text-primary">Bảng giá thu mua đang được cập nhật</span>
+            <p className="text-sm text-gray-500">Vui lòng quay lại sau để xem thông tin mới nhất.</p>
+          </div>
         ) : (
           <div className="px-2 xl:px-desktop-padding">
             {['phoneProducts', 'macbookProducts', 'tabletProducts', 'windowsProducts'].map(
