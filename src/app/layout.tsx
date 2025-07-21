@@ -8,8 +8,8 @@ import FooterFC from '@/components/userPage/ui/Footer';
 import Header from '@/components/userPage/ui/Header';
 import { homeMetadata } from '@/metadata/homeMetadata';
 // import NotificationPopup from '@/components/userPage/NotificationPopup';
-
 import { Inter, Roboto_Mono } from 'next/font/google';
+import { PreloadSearch } from '@/components/userPage/PreloadSearch';
 
 const geistSans = Inter({
   variable: '--font-geist-sans',
@@ -66,6 +66,7 @@ export default function RootLayout({
             <Header />
             <div className="flex-1 bg-primary-white selection:bg-primary selection:text-white xl:pt-0">{children}</div>
             {/* <NotificationPopup /> */}
+            <PreloadSearch query=" " />
             <ScrollToTopButton />
             <NavBottom />
             <ContactForm />
