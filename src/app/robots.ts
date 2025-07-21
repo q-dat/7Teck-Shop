@@ -13,6 +13,7 @@ export default function robots(): MetadataRoute.Robots {
           '/*.css$', // chặn file .css
           '/*.map$', // chặn source map (nếu public)
           '/_next/static/', // chặn static assets nội bộ của Next (không ảnh hưởng SEO)
+          '/*?_rsc=', // ❗ chặn mọi URL chứa query `_rsc=...`
         ],
       },
     ],
