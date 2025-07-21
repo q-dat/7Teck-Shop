@@ -4,9 +4,13 @@ import { useEffect } from 'react';
 
 export const PreloadSearch = ({ query }: { query: string }) => {
   useEffect(() => {
-    searchProducts(query).then((results) => {
-      console.log('Preloaded in client:', results);
-    });
+    (async () => {
+      try {
+        await searchProducts(query);
+      } catch (error) {
+        console.error('Error preloading search:', error);
+      }
+    })();
   }, [query]);
 
   return null;
