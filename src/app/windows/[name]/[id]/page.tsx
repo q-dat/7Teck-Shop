@@ -30,7 +30,7 @@ export default async function WindowsDetailPage({ params }: PageProps) {
     },
     offers: {
       '@type': 'Offer',
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/nam/${slugify(win.windows_name)}/${win._id}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/windows/${slugify(win.windows_name)}/${win._id}`,
       priceCurrency: 'VND',
       price: win.windows_price.toString(),
       availability: 'https://schema.org/InStock',

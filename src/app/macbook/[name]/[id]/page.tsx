@@ -30,7 +30,7 @@ export default async function MacbookDetailPage({ params }: PageProps) {
     },
     offers: {
       '@type': 'Offer',
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/nam/${slugify(mac.macbook_name)}/${mac._id}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/macbook/${slugify(mac.macbook_name)}/${mac._id}`,
       priceCurrency: 'VND',
       price: mac.macbook_price.toString(),
       availability: 'https://schema.org/InStock',

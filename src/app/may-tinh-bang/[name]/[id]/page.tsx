@@ -30,7 +30,7 @@ export default async function TabletDetailPage({ params }: PageProps) {
     },
     offers: {
       '@type': 'Offer',
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/nam/${slugify(tablet.tablet_name)}/${tablet._id}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/may-tinh-bang/${slugify(tablet.tablet_name)}/${tablet._id}`,
       priceCurrency: 'VND',
       price: tablet.tablet_price.toString(),
       availability: 'https://schema.org/InStock',
