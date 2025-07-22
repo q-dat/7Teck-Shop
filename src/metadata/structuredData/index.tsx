@@ -1,8 +1,14 @@
 'use client';
 import React from 'react';
 
+type StructuredDataType = {
+  '@context': string;
+  '@type': string;
+  [key: string]: unknown;
+};
+
 type StructuredDataProps = {
-  data: Record<string, any>;
+  data: StructuredDataType;
 };
 
 export const StructuredData: React.FC<StructuredDataProps> = ({ data }) => {
