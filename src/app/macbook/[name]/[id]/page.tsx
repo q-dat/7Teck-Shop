@@ -1,13 +1,13 @@
 export const revalidate = 60;
 
 import { PageProps } from '@/types/type/pages/page-props';
-import Head from 'next/head';
 import React from 'react';
 import ClientMacbookDetailPage from './ClientMacbookDetailPage';
 import { slugify } from '@/utils/slugify';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
 import { getMacbookById } from '@/services/products/macbookService';
 import { generateMacbookMetadata } from '@/metadata/id/macbookMetadata';
+import { StructuredData } from '@/metadata/structuredData';
 
 // SEO metadata generation for macbook detail page
 export async function generateMetadata({ params }: PageProps) {
@@ -57,9 +57,7 @@ export default async function MacbookDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <Head>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      </Head>
+      <StructuredData data={jsonLd} />
       <ClientMacbookDetailPage mac={mac} />
     </>
   );

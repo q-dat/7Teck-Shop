@@ -1,13 +1,13 @@
 export const revalidate = 60;
 
 import { PageProps } from '@/types/type/pages/page-props';
-import Head from 'next/head';
 import React from 'react';
 import { slugify } from '@/utils/slugify';
 import ClientWindowsDetailPage from './ClientWindowsDetailPage';
 import { IWindows } from '@/types/type/products/windows/windows';
 import { getWindowsById } from '@/services/products/windowsService';
 import { generateWindowsMetadata } from '@/metadata/id/windowsMetadata';
+import { StructuredData } from '@/metadata/structuredData';
 
 // SEO metadata generation for windows detail page
 export async function generateMetadata({ params }: PageProps) {
@@ -57,9 +57,7 @@ export default async function WindowsDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <Head>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      </Head>
+      <StructuredData data={jsonLd} />
       <ClientWindowsDetailPage win={win} />
     </>
   );

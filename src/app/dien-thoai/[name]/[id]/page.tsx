@@ -3,10 +3,10 @@ export const revalidate = 60;
 import { getPhoneById } from '@/services/products/phoneService';
 import { PageProps } from '@/types/type/pages/page-props';
 import { IPhone } from '@/types/type/products/phone/phone';
-import Head from 'next/head';
 import ClientPhoneDetailPage from './ClientPhoneDetailPage';
 import { slugify } from '@/utils/slugify';
 import { generatePhoneMetadata } from '@/metadata/id/phoneMetadata';
+import { StructuredData } from '@/metadata/structuredData';
 
 // SEO metadata generation for phone detail page
 export async function generateMetadata({ params }: PageProps) {
@@ -56,9 +56,10 @@ export default async function PhoneDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <Head>
+      {/* <Head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      </Head>
+      </Head> */}
+      <StructuredData data={jsonLd} />
       <ClientPhoneDetailPage phone={phone} />
     </>
   );

@@ -1,13 +1,13 @@
 export const revalidate = 60;
 
 import { PageProps } from '@/types/type/pages/page-props';
-import Head from 'next/head';
 import React from 'react';
 import { slugify } from '@/utils/slugify';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 import { getTabletById } from '@/services/products/tabletService';
 import ClientTabletDetailPage from './ClientTabletDetailPage';
 import { generateTabletMetadata } from '@/metadata/id/tabletMetadata';
+import { StructuredData } from '@/metadata/structuredData';
 
 // SEO metadata generation for tablet detail page
 export async function generateMetadata({ params }: PageProps) {
@@ -57,9 +57,7 @@ export default async function TabletDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <Head>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      </Head>
+      <StructuredData data={jsonLd} />
       <ClientTabletDetailPage tablet={tablet} />
     </>
   );
