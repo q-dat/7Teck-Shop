@@ -2,14 +2,16 @@ import { Metadata } from 'next';
 import { IPhone } from '@/types/type/products/phone/phone';
 import { slugify } from '@/utils/slugify';
 
-export async function generatePhoneMetadata(phone: IPhone): Promise<Metadata> {
+export function generatePhoneMetadata(phone: IPhone): Metadata {
   const slug = slugify(phone.name);
-  const domain = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.7teck.vn';
-  const url = `${domain}/dien-thoai/${slug}/${phone._id}`;
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/dien-thoai/${slug}/${phone._id}`;
+
+  const title = `${phone.name} - Giá Tốt, Chính Hãng - Mua Ngay tại 7Teck.vn`;
+  const description = `Khám phá điện thoại ${phone.name} chính hãng, giá tốt tại 7Teck.vn. Ưu đãi hấp dẫn, bảo hành uy tín, giao hàng nhanh toàn quốc.`;
 
   return {
-    title: `${phone.name} - Giá Tốt, Chính Hãng - Mua Ngay tại 7Teck.vn`,
-    description: `Khám phá điện thoại ${phone.name} chính hãng, giá tốt tại 7Teck.vn. Ưu đãi hấp dẫn, bảo hành uy tín, giao hàng nhanh toàn quốc.`,
+    title,
+    description,
     keywords: [
       phone.name,
       `${phone.name} giá rẻ`,
@@ -25,7 +27,7 @@ export async function generatePhoneMetadata(phone: IPhone): Promise<Metadata> {
     },
     openGraph: {
       title: `${phone.name} - Chính Hãng tại 7Teck.vn`,
-      description: `Mua ngay ${phone.name} chính hãng tại 7Teck.vn. Ưu đãi sốc, bảo hành 1 đổi 1, giao hàng nhanh.`,
+      description,
       url,
       siteName: '7Teck.vn',
       images: [
@@ -40,8 +42,8 @@ export async function generatePhoneMetadata(phone: IPhone): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${phone.name} - Chính Hãng tại 7Teck.vn`,
-      description: `Mua ngay ${phone.name} chính hãng tại 7Teck.vn. Ưu đãi sốc, giao hàng nhanh.`,
+      title,
+      description,
       images: [phone.img],
     },
   };

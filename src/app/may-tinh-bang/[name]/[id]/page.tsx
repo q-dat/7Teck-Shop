@@ -7,6 +7,24 @@ import { slugify } from '@/utils/slugify';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 import { getTabletById } from '@/services/products/tabletService';
 import ClientTabletDetailPage from './ClientTabletDetailPage';
+import { generateTabletMetadata } from '@/metadata/id/tabletMetadata';
+
+// SEO metadata generation for tablet detail page
+export async function generateMetadata({ params }: PageProps) {
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+  const tablet: ITablet | null = await getTabletById(id);
+
+  if (!tablet) {
+    return {
+      title: 'Không tìm thấy sản phẩm - 7Teck.vn',
+      description: 'Sản phẩm không tồn tại hoặc đã bị xóa. Khám phá thêm sản phẩm khác tại 7Teck.vn.',
+      robots: 'noindex, nofollow',
+    };
+  }
+
+  return generateTabletMetadata(tablet);
+}
 
 export default async function TabletDetailPage({ params }: PageProps) {
   const resolvedParams = await params;

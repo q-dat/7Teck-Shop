@@ -7,6 +7,24 @@ import { slugify } from '@/utils/slugify';
 import ClientWindowsDetailPage from './ClientWindowsDetailPage';
 import { IWindows } from '@/types/type/products/windows/windows';
 import { getWindowsById } from '@/services/products/windowsService';
+import { generateWindowsMetadata } from '@/metadata/id/windowsMetadata';
+
+// SEO metadata generation for windows detail page
+export async function generateMetadata({ params }: PageProps) {
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+  const win: IWindows | null = await getWindowsById(id);
+
+  if (!win) {
+    return {
+      title: 'Không tìm thấy sản phẩm - 7Teck.vn',
+      description: 'Sản phẩm không tồn tại hoặc đã bị xóa. Khám phá thêm sản phẩm khác tại 7Teck.vn.',
+      robots: 'noindex, nofollow',
+    };
+  }
+
+  return generateWindowsMetadata(win);
+}
 
 export default async function WindowsDetailPage({ params }: PageProps) {
   const resolvedParams = await params;

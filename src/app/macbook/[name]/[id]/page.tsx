@@ -7,6 +7,24 @@ import ClientMacbookDetailPage from './ClientMacbookDetailPage';
 import { slugify } from '@/utils/slugify';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
 import { getMacbookById } from '@/services/products/macbookService';
+import { generateMacbookMetadata } from '@/metadata/id/macbookMetadata';
+
+// SEO metadata generation for macbook detail page
+export async function generateMetadata({ params }: PageProps) {
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+  const mac: IMacbook | null = await getMacbookById(id);
+
+  if (!mac) {
+    return {
+      title: 'Không tìm thấy sản phẩm - 7Teck.vn',
+      description: 'Sản phẩm không tồn tại hoặc đã bị xóa. Khám phá thêm sản phẩm khác tại 7Teck.vn.',
+      robots: 'noindex, nofollow',
+    };
+  }
+
+  return generateMacbookMetadata(mac);
+}
 
 export default async function MacbookDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
