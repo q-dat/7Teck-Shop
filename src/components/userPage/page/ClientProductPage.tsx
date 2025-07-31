@@ -24,6 +24,7 @@ interface ProductBase {
   gpu?: string;
   sale?: number;
   status?: string;
+  variants?: ProductBase[];
 }
 
 interface ClientProductPageProps {
@@ -39,7 +40,9 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
   const { handleImageError, isImageErrored } = useImageErrorHandler();
   // Panigation
   const [currentPage, setCurrentPage] = useState(1);
-  const specsToShow = ['color', 'ram', 'cpu', 'lcd', 'gpu'];
+  // State to manage selected variants
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, ProductBase>>({});
+  const specsToShow = ['ram', 'cpu', 'lcd', 'gpu'];
 
   useEffect(() => {
     scrollToTopSmoothly();
@@ -53,6 +56,13 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
+  // Handle variant selection
+  const handleVariantClick = (productId: string, variant: ProductBase) => {
+    setSelectedVariants((prev) => ({
+      ...prev,
+      [productId]: variant,
+    }));
+  };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
@@ -102,15 +112,16 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                 </div>
               ) : (
                 currentProducts.map((product) => {
+                  const variant = selectedVariants[product._id] ? selectedVariants[product._id] : product;
                   // Navigate
-                  const productUrl = slugify(product.name);
-                  const subUrl = product?._id;
+                  const productUrl = slugify(variant.name);
+                  const subUrl = variant?._id;
                   // handleImageError
-                  const isErrored = isImageErrored(product._id);
-                  const src = isErrored || !product.img ? fallbackSrc : product?.img;
+                  const isErrored = isImageErrored(variant._id);
+                  const src = isErrored || !variant.img ? fallbackSrc : variant?.img;
                   return (
                     <section
-                      key={product?._id}
+                      key={variant?._id}
                       className="group relative flex h-full w-full flex-col justify-between rounded-md border border-white text-black"
                     >
                       <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`${basePath}/${productUrl}/${subUrl}`}>
@@ -122,7 +133,7 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                             width={200}
                             loading="lazy"
                             className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
-                            onError={() => handleImageError(product._id)}
+                            onError={() => handleImageError(variant._id)}
                           />
                         </div>
                       </Link>
@@ -130,18 +141,17 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                       <div className="flex h-full w-full flex-col items-start justify-between p-1">
                         <Link href={`${basePath}/${productUrl}/${subUrl}`} className="w-full cursor-pointer">
                           <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
-                            {title} {product.name}
+                            {title} {variant.name}
                           </p>
                         </Link>
 
                         <div className="mt-1 w-full">
                           <div className="text-prod-name-mobile xl:text-prod-name-desktop">
                             {specsToShow.map((field) => {
-                              const value = product[field as keyof ProductBase];
+                              const value = variant[field as keyof ProductBase];
                               if (!value) return null;
 
                               const fieldLabelMap: Record<string, string> = {
-                                color: 'Màu sắc',
                                 ram: 'RAM',
                                 cpu: 'CPU',
                                 lcd: 'Màn hình',
@@ -150,27 +160,50 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
 
                               return (
                                 <p key={field}>
-                                  <span className="font-semibold">{fieldLabelMap[field]}: </span>
-                                  {value}
+                                  <span className="mr-1 font-semibold">{fieldLabelMap[field]}:</span>
+                                  <span className="text-xs font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
                                 </p>
                               );
                             })}
                           </div>
+
+                          {/* Select Product */}
+                          {Array.isArray(product.variants) && product.variants.length > 1 && (
+                            <div className="flex flex-wrap items-center gap-1 py-2">
+                              {product.variants.map((v) => (
+                                <Button
+                                  key={v._id}
+                                  size="xs"
+                                  className={`rounded-sm p-1 text-xs font-light ${
+                                    selectedVariants[product._id]?._id === v._id
+                                      ? 'border-primary bg-primary text-white hover:bg-primary'
+                                      : 'border-gray-300 text-black hover:border-primary'
+                                  }`}
+                                  onClick={() => handleVariantClick(product._id, v)}
+                                  title={v.color}
+                                >
+                                  {v.color}
+                                </Button>
+                              ))}
+                            </div>
+                          )}
+                          {/* Price and Buy Now Button */}
                           <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
-                            <span className="font-semibold text-price">{formatCurrency(product?.price)}</span> &nbsp;
-                            {product?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
+                            <span className="font-semibold text-price">{formatCurrency(variant?.price)}</span> &nbsp;
+                            {variant?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(variant?.sale)}</del>}
                           </p>
+
                           <Button
                             size="xs"
                             className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
                             onClick={() => {
                               const productToBuy = {
-                                _id: product?._id,
-                                name: product?.name,
-                                img: product?.img,
-                                price: product?.price,
-                                ram: product?.ram,
-                                color: product?.color,
+                                _id: variant?._id,
+                                name: variant?.name,
+                                img: variant?.img,
+                                price: variant?.price,
+                                ram: variant?.ram,
+                                color: variant?.color,
                                 link: `${basePath}/${productUrl}/${subUrl}`,
                               };
                               localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
@@ -182,10 +215,10 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                         </div>
                       </div>
                       {/*  */}
-                      {product?.status && (
+                      {variant?.status && (
                         <div className="absolute -left-[3px] top-0 z-20">
                           <Image height={100} width={60} alt="" loading="lazy" className="h-full w-[60px]" src={imageRepresent.Status} />
-                          <p className="absolute top-[1px] w-full pl-1 text-xs text-white">{product?.status}</p>
+                          <p className="absolute top-[1px] w-full pl-1 text-xs text-white">{variant?.status}</p>
                         </div>
                       )}
                     </section>

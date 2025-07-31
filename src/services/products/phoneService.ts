@@ -1,6 +1,6 @@
 import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
-import { IPhone } from '@/types/type/products/phone/phone';
+import { GroupedPhone, IPhone } from '@/types/type/products/phone/phone';
 
 export async function getAllmostViewedPhones(): Promise<IPhone[]> {
   try {
@@ -23,6 +23,29 @@ export async function getAllmostViewedPhones(): Promise<IPhone[]> {
     return data.phones;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách phones:', error);
+    return [];
+  }
+}
+
+export async function getNewGroupedPhones(): Promise<GroupedPhone[]> {
+  try {
+    const apiUrl = `${getServerApiUrl('/api/grouped-phones?status=0')}`;
+    const res = await fetch(apiUrl, {
+      cache: 'force-cache',
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+    if (!data || typeof data !== 'object' || !Array.isArray(data.groupedPhones)) {
+      console.warn('Dữ liệu groupedPhones không hợp lệ:', data);
+      return [];
+    }
+
+    return data.groupedPhones;
+  } catch (error) {
+    console.error('Lỗi khi gọi API groupedPhones:', error);
     return [];
   }
 }

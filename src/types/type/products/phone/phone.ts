@@ -16,3 +16,7 @@ export interface IPhone {
   createdAt: string;
   updatedAt: string;
 }
+export interface GroupedPhone {
+  catalog: IPhoneCatalog;
+  variants: IPhone[];
+}
