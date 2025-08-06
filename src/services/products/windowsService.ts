@@ -2,6 +2,31 @@ import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { logCacheStatus } from '@/utils/logCacheStatus';
 import { IWindows } from '@/types/type/products/windows/windows';
 
+export async function getWindowsByCatalogId(catalogID: string): Promise<IWindows[]> {
+  try {
+    const query = `?catalogID=${catalogID}`;
+    const apiUrl = getServerApiUrl(`/api/laptop-windows${query}`);
+    const res = await fetch(apiUrl, {
+      cache: 'force-cache',
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+
+    if (!data || typeof data !== 'object' || !Array.isArray(data.windows)) {
+      console.warn('Dữ liệu API Windows không hợp lệ:', data);
+      return [];
+    }
+
+    return data.Windows;
+  } catch (error) {
+    console.error('Lỗi khi lấy sản phẩm theo danh mục:', error);
+    return [];
+  }
+}
+
 export async function getWindowsByStatus(status?: number): Promise<IWindows[]> {
   try {
     const query = typeof status === 'number' ? `?status=${status}` : '';

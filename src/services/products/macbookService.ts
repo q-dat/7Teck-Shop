@@ -2,6 +2,31 @@ import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { IMacbook } from '../../types/type/products/macbook/macbook';
 
+export async function getMacbookByCatalogId(catalogID: string): Promise<IMacbook[]> {
+  try {
+    const query = `?catalogID=${catalogID}`;
+    const apiUrl = getServerApiUrl(`/api/laptop-macbook${query}`);
+    const res = await fetch(apiUrl, {
+      cache: 'force-cache',
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+
+    if (!data || typeof data !== 'object' || !Array.isArray(data.macbook)) {
+      console.warn('Dữ liệu API Macbook không hợp lệ:', data);
+      return [];
+    }
+
+    return data.macbook;
+  } catch (error) {
+    console.error('Lỗi khi lấy sản phẩm theo danh mục:', error);
+    return [];
+  }
+}
+
 export async function getMacbookByStatus(status?: number): Promise<IMacbook[]> {
   try {
     const query = typeof status === 'number' ? `?status=${status}` : '';

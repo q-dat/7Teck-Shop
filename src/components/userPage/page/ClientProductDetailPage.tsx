@@ -47,9 +47,10 @@ interface ClientProductDetailPageProps {
   fieldMap: FieldMap[];
   namePrefix: string;
   basePath: string;
+  relatedProducts?: Product[];
 }
 
-export default function ClientProductDetailPage({ product, fieldMap, namePrefix, basePath }: ClientProductDetailPageProps) {
+export default function ClientProductDetailPage({ product, fieldMap, namePrefix, basePath, relatedProducts }: ClientProductDetailPageProps) {
   const [selectedImage, setSelectedImage] = useState<string | null | undefined>(null);
   const [activeTab, setActiveTab] = useState<string>('specs');
   const [isLeftButtonVisible, setIsLeftButtonVisible] = useState(true);
@@ -105,7 +106,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
             {/* IMG */}
             <div className="flex w-full flex-col gap-5">
               <div className="relative w-full">
-                <div className="h-[500px] w-full overflow-hidden object-cover">
+                <div className="h-[400px] w-full overflow-hidden rounded-md bg-white object-cover xl:h-[480px]">
                   <Zoom>
                     <Image
                       priority
@@ -113,7 +114,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       height={500}
                       src={selectedImage || product?.img}
                       alt={product?.name || 'Hình ảnh'}
-                      className="absolute left-0 top-0 z-10 h-full w-full rounded-md object-contain"
+                      className="absolute left-0 top-0 z-10 h-[400px] w-full rounded-md object-contain xl:h-[480px] xl:w-full"
                     />
                   </Zoom>
                 </div>
@@ -127,14 +128,14 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   {product?.thumbnail && Array.isArray(product?.thumbnail) ? (
                     thumbnails.map((thumb: string, index: number) => (
                       <Image
-                        width={200}
-                        height={200}
+                        width={70}
+                        height={70}
                         loading="lazy"
                         key={index}
                         src={thumb}
                         alt="Ảnh thu nhỏ"
                         className={`h-[70px] w-[70px] cursor-pointer rounded-md border object-cover ${
-                          selectedImage === thumb ? 'border-2 border-primary' : ''
+                          selectedImage === thumb ? 'border-2 border-dashed border-primary' : ''
                         }`}
                         onClick={() => handleThumbnailClick(scrollRef, thumb, index, setSelectedImage)}
                         onLoad={() => updateScrollButtons(scrollRef, setIsLeftButtonVisible, setIsRightButtonVisible)}
@@ -166,36 +167,70 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
               </div>
             </div>
             {/* Description */}
-            <div className="flex w-full flex-col gap-5">
-              <div className="flex flex-col items-start justify-between rounded-lg bg-white p-3 shadow-md xl:h-[490px]">
-                <div>
+            <div className="w-full">
+              <div className="flex flex-col items-start justify-between rounded-lg bg-white p-3 shadow-md xl:h-[480px]">
+                <div className="flex flex-col gap-2">
                   <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">
-                    {namePrefix} {product?.name}
+                    <span>
+                      {namePrefix} {product?.name}
+                    </span>
+                    {product?.status && (
+                      <sup className="bg-primary-lighter mx-2 rounded-md border border-primary p-1 text-sm font-semibold text-primary">
+                        {product?.status}
+                      </sup>
+                    )}
                   </h1>
-                  <p className="mt-2 text-3xl font-semibold text-primary">
+                  {/* Price */}
+                  <p className="text-3xl font-semibold text-primary">
                     {formatCurrency(product?.price)}
                     {product?.sale && <del className="ml-2 text-base text-gray-400">{formatCurrency(product?.sale)}</del>}
                   </p>
-                  <p className="mt-2 text-lg italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
-                  <div className="mt-4 space-y-2">
-                    {product?.color && (
-                      <p className="text-gray-600">
-                        <span className="font-semibold">Màu sắc:</span> {product?.color}
-                      </p>
-                    )}
+                  {/* Product details */}
+                  <div className="flex flex-wrap gap-2">
+                    {/* Ram */}
                     {product?.ram && (
-                      <p className="text-gray-600">
-                        <span className="font-semibold">RAM:</span> {product?.ram}
+                      <p className="bg-primary-lighter text-default rounded-md border border-primary p-1 font-semibold">
+                        <span className="text-sm text-primary">RAM:</span> {product?.ram}
                       </p>
                     )}
-                    {product?.status && (
-                      <p className="text-gray-600">
-                        <span className="font-semibold">Tình trạng:</span> {product?.status}
+                    {/* Color */}
+                    {product?.color && (
+                      <p className="bg-primary-lighter text-default rounded-md border border-primary p-1 font-semibold">
+                        <span className="text-sm text-primary">Màu sắc:</span> {product?.color}
                       </p>
                     )}
-                    {product?.des && <p className="font-medium text-primary">{product?.des}</p>}
                   </div>
+                  {/*  */}
+                  <p className="text-lg italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
+                  {/* Des */}
+                  {product?.des && <p className="font-medium text-primary">{product?.des}</p>}
+                  {/* Related Products */}
+                  {relatedProducts && relatedProducts.length > 0 && (
+                    <div>
+                      <p className="text-lg font-semibold text-gray-700">Sản phẩm liên quan:</p>
+                      <div className="flex flex-wrap items-center justify-start gap-2">
+                        {/* Map through related products */}
+                        {relatedProducts
+                          .filter((item) => item._id !== product._id)
+                          .map((item) => (
+                            <Link
+                              key={item._id}
+                              href={`/${basePath}/${slugify(item.name)}/${item._id}`}
+                              className="flex flex-row items-center justify-center gap-2 rounded-md border bg-white p-1 shadow transition-all hover:shadow-md"
+                            >
+                              <Image src={item.img} alt={item.name} width={40} height={40} className="h-[40px] w-[40px] object-contain" />
+                              <div className="font-semibold">
+                                <p>{item.color}</p>
+                                <p className="text-price">{formatCurrency(item.price)}</p>
+                              </div>
+                            </Link>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
+
+                {/* Btn */}
                 <div className="flex w-full flex-col items-center justify-center gap-1">
                   <Button
                     className="mt-6 w-full rounded-lg bg-primary text-white transition-colors hover:bg-primary/90 md:w-64"
@@ -218,8 +253,9 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   <p className="mt-2 w-full text-start text-sm text-gray-500">{`*Nhấn "Mua ngay" để xác nhận sản phẩm!`}</p>
                 </div>
               </div>
+              {/* Contact */}
               <Link href={hotlineUrl}>
-                <div className="w-full rounded-lg bg-primary p-4 text-center text-white shadow-md transition-colors hover:bg-primary/90">
+                <div className="bg-primary-lighter mt-5 w-full rounded-lg p-4 text-center text-primary shadow-md transition-colors">
                   <p className="text-xl font-bold">Gọi ngay {contact}</p>
                   <p className="text-sm">Để nhận ưu đãi tốt nhất!</p>
                 </div>
@@ -229,15 +265,15 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
 
           {/* Tab */}
           <div className="w-full">
-            <div className="mt-5 flex flex-row items-center justify-center rounded-md border-b-2 border-primary uppercase">
+            <div className="mt-5 flex flex-row items-center justify-center rounded-md border-b-2 border-secondary uppercase">
               <div
-                className={`w-full cursor-pointer rounded-l-md py-2 text-center font-light transition-all duration-500 ease-in-out ${activeTab === 'specs' ? 'bg-primary font-semibold text-white' : 'bg-white text-primary'}`}
+                className={`w-full cursor-pointer rounded-l-md py-2 text-center font-light transition-all duration-500 ease-in-out ${activeTab === 'specs' ? 'bg-secondary font-semibold text-white' : 'bg-white text-black'}`}
                 onClick={() => setActiveTab('specs')}
               >
                 <p>Thông số kĩ thuật</p>
               </div>
               <div
-                className={`w-full cursor-pointer rounded-r-md py-2 text-center font-light transition-all duration-500 ease-in-out ${activeTab === 'details' ? 'bg-primary font-semibold text-white' : 'bg-white text-primary'}`}
+                className={`w-full cursor-pointer rounded-r-md py-2 text-center font-light transition-all duration-500 ease-in-out ${activeTab === 'details' ? 'bg-secondary font-semibold text-white' : 'bg-white text-black'}`}
                 onClick={() => setActiveTab('details')}
               >
                 <p>Bài viết sản phẩm</p>
@@ -248,15 +284,15 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
               {/* Details */}
               {activeTab === 'specs' && (
                 <div className="mt-5 divide-y-[1px] divide-primary divide-opacity-20 rounded-md border border-primary bg-white leading-10 text-black">
-                  <h1 className="rounded-sm rounded-b-none bg-primary p-2 text-center text-lg font-light uppercase text-white">
+                  <h1 className="rounded-sm rounded-b-none bg-secondary p-2 text-center text-lg font-light uppercase text-white">
                     Các thông số chi tiết
                   </h1>
                   {fieldMap.map((group) => (
                     <div key={group?.group}>
-                      <details className="group transform divide-y-[1px] bg-primary bg-opacity-5">
+                      <details className="group transform divide-y-[1px] bg-secondary/5">
                         <summary className="flex cursor-pointer items-center justify-between p-2">
-                          <span className="font-semibold text-primary">{group?.name}</span>
-                          <span className="transform text-primary transition-transform duration-300 ease-in-out group-open:rotate-180">
+                          <span className="font-semibold text-secondary">{group?.name}</span>
+                          <span className="transform text-secondary transition-transform duration-300 ease-in-out group-open:rotate-180">
                             <IoIosArrowDropdownCircle className="text-2xl" />
                           </span>
                         </summary>

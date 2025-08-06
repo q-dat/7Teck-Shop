@@ -49,6 +49,30 @@ export async function getNewGroupedPhones(): Promise<GroupedPhone[]> {
     return [];
   }
 }
+export async function getPhonesByCatalogId(catalogID: string): Promise<IPhone[]> {
+  try {
+    const query = `?catalogID=${catalogID}`;
+    const apiUrl = getServerApiUrl(`/api/phones${query}`);
+    const res = await fetch(apiUrl, {
+      cache: 'force-cache',
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+
+    if (!data || typeof data !== 'object' || !Array.isArray(data.phones)) {
+      console.warn('Dữ liệu API Phone không hợp lệ:', data);
+      return [];
+    }
+
+    return data.phones;
+  } catch (error) {
+    console.error('Lỗi khi lấy sản phẩm theo danh mục:', error);
+    return [];
+  }
+}
 
 export async function getPhonesByStatus(status?: number): Promise<IPhone[]> {
   try {

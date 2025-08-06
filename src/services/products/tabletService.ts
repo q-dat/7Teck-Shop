@@ -2,6 +2,31 @@ import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 
+export async function getTabletsByCatalogId(catalogID: string): Promise<ITablet[]> {
+  try {
+    const query = `?catalogID=${catalogID}`;
+    const apiUrl = getServerApiUrl(`/api/tablets${query}`);
+    const res = await fetch(apiUrl, {
+      cache: 'force-cache',
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+
+    if (!data || typeof data !== 'object' || !Array.isArray(data.tablets)) {
+      console.warn('Dữ liệu API Ttablets không hợp lệ:', data);
+      return [];
+    }
+
+    return data.tablets;
+  } catch (error) {
+    console.error('Lỗi khi lấy sản phẩm theo danh mục:', error);
+    return [];
+  }
+}
+
 export async function getTabletsByStatus(status?: number): Promise<ITablet[]> {
   try {
     const query = typeof status === 'number' ? `?status=${status}` : '';
