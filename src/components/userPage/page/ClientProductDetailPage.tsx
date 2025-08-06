@@ -105,6 +105,16 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
           <div className="flex flex-col items-start justify-start gap-5 xl:flex-row">
             {/* IMG */}
             <div className="flex w-full flex-col gap-5">
+              <h1 className="block text-2xl font-bold text-gray-800 md:text-3xl xl:hidden">
+                <span>
+                  {namePrefix} {product?.name}
+                </span>
+                {product?.status && (
+                  <sup className="bg-primary-lighter mx-2 rounded-md border border-primary p-1 text-sm font-semibold text-primary">
+                    {product?.status}
+                  </sup>
+                )}
+              </h1>
               <div className="relative w-full">
                 <div className="h-[200px] w-full overflow-hidden rounded-md bg-white object-cover xl:h-[480px]">
                   <Zoom>
@@ -167,10 +177,10 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
               </div>
             </div>
             {/* Description */}
-            <div className="w-full">
+            <div className="w-full select-none">
               <div className="flex flex-col items-start justify-between rounded-lg bg-white p-3 shadow-md xl:h-[480px]">
                 <div className="flex flex-col gap-2">
-                  <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">
+                  <h1 className="hidden text-2xl font-bold text-gray-800 md:text-3xl xl:block">
                     <span>
                       {namePrefix} {product?.name}
                     </span>
