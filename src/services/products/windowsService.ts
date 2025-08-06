@@ -20,7 +20,7 @@ export async function getWindowsByCatalogId(catalogID: string): Promise<IWindows
       return [];
     }
 
-    return data.Windows;
+    return data.windows;
   } catch (error) {
     console.error('Lỗi khi lấy sản phẩm theo danh mục:', error);
     return [];
