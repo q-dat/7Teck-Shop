@@ -1,6 +1,6 @@
 'use client';
 import { LoadingLocal } from '@/components/orther/loading';
-import HeaderResponsive from '@/components/userPage/HeaderResponsive';
+import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import { IPriceList, IProductPriceList } from '@/types/type/price-list/price-list';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';

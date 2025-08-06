@@ -1,7 +1,7 @@
 'use client';
 import { Button } from 'react-daisyui';
 import { IoMdRefreshCircle } from 'react-icons/io';
-import HeaderResponsive from '../../userPage/HeaderResponsive';
+import HeaderResponsive from '../../userPage/ui/HeaderResponsive';
 import imageRepresent from '../../../../public/image-represent';
 import Image from 'next/image';
 

@@ -5,7 +5,7 @@ import ClientUsedPhonePage from './ClientUsedPhonePage';
 import ClientUsedTabletPage from './ClientUsedTabletPage';
 import ClientUsedMacbookPage from './ClientUsedMacbookPage';
 import ClientUsedWindowsPage from './ClientUsedWindowsPage';
-import HeaderResponsive from '@/components/userPage/HeaderResponsive';
+import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import Link from 'next/link';
 import { IPhoneCatalog } from '@/types/type/catalogs/phone-catalog/phone-catalog';
 import { ITabletCatalog } from '@/types/type/catalogs/tablet-catalog/tablet-catalog';

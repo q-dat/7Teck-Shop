@@ -1,5 +1,5 @@
 'use client';
-import HeaderResponsive from '@/components/userPage/HeaderResponsive';
+import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import { memo, useEffect, useState } from 'react';
 import ClientPhoneFC from './ClientPhoneFC';
 import ClientProductFC, { Product } from '../components/userPage/page/ClientProductFC';

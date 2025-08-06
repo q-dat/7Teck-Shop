@@ -1,5 +1,5 @@
 'use client';
-import HeaderResponsive from '@/components/userPage/HeaderResponsive';
+import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { slugify } from '@/utils/slugify';

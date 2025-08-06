@@ -1,6 +1,6 @@
 'use client';
 import TimeAgo from '@/components/orther/timeAgo/TimeAgo';
-import HeaderResponsive from '@/components/userPage/HeaderResponsive';
+import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import { IPost } from '@/types/type/products/post/post';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { slugify } from '@/utils/slugify';

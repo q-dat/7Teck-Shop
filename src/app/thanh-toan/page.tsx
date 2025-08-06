@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
-import HeaderResponsive from '../../components/userPage/HeaderResponsive';
+import HeaderResponsive from '../../components/userPage/ui/HeaderResponsive';
 import { Textarea, Button } from 'react-daisyui';
 import { scrollToTopInstantly } from '../../utils/scrollToTop';
 import { Toastify } from '@/helper/Toastify';

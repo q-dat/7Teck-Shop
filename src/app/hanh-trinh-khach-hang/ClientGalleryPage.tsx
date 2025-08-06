@@ -1,6 +1,6 @@
 'use client';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
-import HeaderResponsive from '@/components/userPage/HeaderResponsive';
+import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import Pagination from '@/components/userPage/Pagination';
 import Zoom from '@/lib/Zoom';
 import { IGallery } from '@/types/type/gallery/gallery';

@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import HeaderResponsive from '@/components/userPage/HeaderResponsive';
+import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import TimeAgo from '@/components/orther/timeAgo/TimeAgo';
 import { slugify } from '@/utils/slugify';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';

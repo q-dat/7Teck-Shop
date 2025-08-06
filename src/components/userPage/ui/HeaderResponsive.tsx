@@ -7,7 +7,7 @@ import { SlClose } from 'react-icons/sl';
 import { IoCloseSharp, IoSearch } from 'react-icons/io5';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { images } from '../../../public/images';
+import { images } from '../../../../public/images';
 import Image from 'next/image';
 import menuItems from '@/utils/menuItems';
 import { debounce } from 'lodash';
@@ -24,7 +24,7 @@ interface SearchResult {
 }
 
 interface HeaderResponsiveProps {
-  Title_NavbarMobile: ReactNode;
+  Title_NavbarMobile?: ReactNode;
 }
 
 export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiveProps) {
@@ -117,7 +117,23 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
           <Link aria-label="Trang chủ" href="/">
             <Image src={images.Logo} alt={images.Logo} width={30} height={30} className="h-[30px] w-[30px] rounded-full" />
           </Link>
-          <p className="font-semibold text-white">{Title_NavbarMobile}</p>
+          {openSearch && <p className="font-semibold text-white">{Title_NavbarMobile}</p>}
+          {/* Search Input */}
+          {!openSearch && (
+            <div className="relative z-10 flex w-4/5 flex-row items-center justify-center gap-1 rounded-full bg-white pl-2">
+              <IoSearch className="text-xl text-primary" />
+              <Input
+                size="sm"
+                value={query}
+                onChange={handleChange}
+                onFocus={() => setOpenSearch(true)} // mở tìm kiếm khi focus input
+                onBlur={() => setTimeout(() => setIsInputFocused(false), 200)}
+                className="w-full border-none bg-transparent pl-1 text-sm text-black placeholder-primary shadow-none focus:placeholder-black focus:outline-none"
+                placeholder="Bạn muốn tìm gì..."
+              />
+            </div>
+          )}
+
           {/* Search Toggle */}
           <div className="absolute right-[50px]">
             <div className="relative">
@@ -135,7 +151,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                     onBlur={() => setTimeout(() => setIsInputFocused(false), 200)}
                     className="z- absolute -right-[50px] top-10 w-screen animate-exfadeIn rounded-none border-none text-black placeholder-primary focus:outline-none"
                     autoFocus
-                    placeholder="Bạn muốn tìm gì..."
+                    placeholder="Nhập từ khóa tìm kiếm..."
                   />
 
                   {/* Suggestion keywords */}

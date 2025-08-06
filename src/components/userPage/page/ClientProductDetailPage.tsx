@@ -1,6 +1,6 @@
 'use client';
 import { LoadingLocal } from '@/components/orther/loading';
-import HeaderResponsive from '@/components/userPage/HeaderResponsive';
+import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import Zoom from '@/lib/Zoom';
 import { scrollBy, updateScrollButtons, handleScrollButtons, handleThumbnailClick } from '@/utils/DetailPage/scrollUtils';
 import { formatCurrency } from '@/utils/formatCurrency';

@@ -5,7 +5,7 @@ import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { formatCurrency } from '@/utils/formatCurrency';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import Pagination from '@/components/userPage/Pagination';
-import HeaderResponsive from '@/components/userPage/HeaderResponsive';
+import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from 'react-daisyui';

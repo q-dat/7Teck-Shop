@@ -3,7 +3,7 @@ import React from 'react';
 import Image from 'next/image';
 import { images } from '../../../public/images';
 import { address, contact, hotlineUrl, mail, mailUrl } from '@/utils/socialLinks';
-import HeaderResponsive from '@/components/userPage/HeaderResponsive';
+import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import Link from 'next/link';
 
 export default function PrivacyPage() {
