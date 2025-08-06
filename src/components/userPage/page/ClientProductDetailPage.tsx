@@ -4,7 +4,7 @@ import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import Zoom from '@/lib/Zoom';
 import { scrollBy, updateScrollButtons, handleScrollButtons, handleThumbnailClick } from '@/utils/DetailPage/scrollUtils';
 import { formatCurrency } from '@/utils/formatCurrency';
-import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { slugify } from '@/utils/slugify';
 import { contact, hotlineUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
@@ -72,7 +72,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
   }, [product, product?.thumbnail]);
 
   useEffect(() => {
-    scrollToTopSmoothly();
+    scrollToTopInstantly();
     const cleanup = handleScrollButtons(scrollRef, Object.keys(product?.catalog || {}).length, () =>
       updateScrollButtons(scrollRef, setIsLeftButtonVisible, setIsRightButtonVisible)
     );

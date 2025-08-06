@@ -4,7 +4,7 @@ import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import Pagination from '@/components/userPage/Pagination';
 import Zoom from '@/lib/Zoom';
 import { IGallery } from '@/types/type/gallery/gallery';
-import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import Image from 'next/image';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -14,7 +14,7 @@ export default function ClientGalleryPage({ galleries }: { galleries: IGallery[]
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    scrollToTopSmoothly();
+    scrollToTopInstantly();
   }, []);
 
   // Panigation

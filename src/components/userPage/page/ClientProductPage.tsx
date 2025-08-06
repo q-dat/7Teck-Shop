@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { slugify } from '@/utils/slugify';
-import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { formatCurrency } from '@/utils/formatCurrency';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import Pagination from '@/components/userPage/Pagination';
@@ -45,7 +45,7 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
   const specsToShow = ['ram', 'cpu', 'lcd', 'gpu'];
 
   useEffect(() => {
-    scrollToTopSmoothly();
+    scrollToTopInstantly();
     if (products.length >= 0) {
       setLoading(false);
     }

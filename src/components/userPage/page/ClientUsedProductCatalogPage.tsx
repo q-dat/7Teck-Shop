@@ -1,6 +1,6 @@
 'use client';
 import Pagination from '@/components/userPage/Pagination';
-import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { slugify } from '@/utils/slugify';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -29,7 +29,7 @@ export default function ClientUsedProductCatalogPage({ data, title, namePrefix, 
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    scrollToTopSmoothly();
+    scrollToTopInstantly();
     setLoading(false);
   }, [data]);
 

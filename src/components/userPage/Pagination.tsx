@@ -1,5 +1,5 @@
 'use client';
-import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import React from 'react';
 import { Button } from 'react-daisyui';
 import { IoIosArrowDropleft, IoIosArrowDropright } from 'react-icons/io';
@@ -25,7 +25,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
             // disabled={currentPage === 1}
             onClick={() => {
               onPrevPage();
-              scrollToTopSmoothly();
+              scrollToTopInstantly();
             }}
           >
             <span className="flex items-center justify-center gap-1">
@@ -50,7 +50,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
             // disabled={currentPage === totalPages}
             onClick={() => {
               onNextPage();
-              scrollToTopSmoothly();
+              scrollToTopInstantly();
             }}
           >
             <span className="flex items-center justify-center gap-1">

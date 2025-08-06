@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import TimeAgo from '@/components/orther/timeAgo/TimeAgo';
 import { slugify } from '@/utils/slugify';
-import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { IPost } from '@/types/type/products/post/post';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -15,7 +15,7 @@ export default function ClientNewsPage({ posts }: { posts: IPost[] }) {
   const news = posts?.filter((post) => post?.catalog.toLowerCase().includes('tin'));
 
   useEffect(() => {
-    scrollToTopSmoothly();
+    scrollToTopInstantly();
     if (posts.length === 0) {
       const fetchData = async () => {
         setLoading(true);

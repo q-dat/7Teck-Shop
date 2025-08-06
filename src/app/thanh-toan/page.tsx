@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import HeaderResponsive from '../../components/userPage/HeaderResponsive';
 import { Textarea, Button } from 'react-daisyui';
-import { scrollToTopSmoothly } from '../../utils/scrollToTopSmoothly';
+import { scrollToTopInstantly } from '../../utils/scrollToTop';
 import { Toastify } from '@/helper/Toastify';
 import Link from 'next/link';
 import InputForm from '@/components/userPage/InputForm';
@@ -34,7 +34,7 @@ export default function PurchasePage() {
   const [imgMessageQRSrc, setImgMessageQRSrc] = useState(mainMessageQRSrc);
 
   useEffect(() => {
-    scrollToTopSmoothly();
+    scrollToTopInstantly();
 
     const product = localStorage.getItem('selectedProduct');
     if (product) {

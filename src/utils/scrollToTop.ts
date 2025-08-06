@@ -4,3 +4,8 @@ export const scrollToTopSmoothly = () => {
     behavior: 'smooth',
   });
 };
+export const scrollToTopInstantly = () => {
+  window.scrollTo({
+    top: 0,
+  });
+};

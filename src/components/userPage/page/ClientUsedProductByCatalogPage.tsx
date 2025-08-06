@@ -1,7 +1,7 @@
 'use client';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
-import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { slugify } from '@/utils/slugify';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -40,7 +40,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
   const filtered = products.filter((product) => slugify(product.name) === name);
 
   useEffect(() => {
-    scrollToTopSmoothly();
+    scrollToTopInstantly();
     setLoading(false);
   }, [products]);
 

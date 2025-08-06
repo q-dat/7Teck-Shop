@@ -2,7 +2,7 @@
 import TimeAgo from '@/components/orther/timeAgo/TimeAgo';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import { IPost } from '@/types/type/products/post/post';
-import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { slugify } from '@/utils/slugify';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ export default function ClientTipsAndTricksPage({ posts }: { posts: IPost[] }) {
 
   const tricks = posts?.filter((post) => post?.catalog.toLowerCase().includes('mẹo'));
   useEffect(() => {
-    scrollToTopSmoothly();
+    scrollToTopInstantly();
     if (posts.length === 0) {
       const fetchData = async () => {
         setLoading(true);

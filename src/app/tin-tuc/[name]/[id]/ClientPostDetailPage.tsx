@@ -2,7 +2,7 @@
 import TimeAgo from '@/components/orther/timeAgo/TimeAgo';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import { IPost } from '@/types/type/products/post/post';
-import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { slugify } from '@/utils/slugify';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -22,7 +22,7 @@ export default function ClientPostDetailPage({ posts, post }: ClientPostDetailPa
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    scrollToTopSmoothly();
+    scrollToTopInstantly();
     const fetchPost = async () => {
       setLoading(true);
       if (id && post) {

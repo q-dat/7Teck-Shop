@@ -3,7 +3,7 @@ import { LoadingLocal } from '@/components/orther/loading';
 import HeaderResponsive from '@/components/userPage/HeaderResponsive';
 import { IPriceList, IProductPriceList } from '@/types/type/price-list/price-list';
 import { formatCurrency } from '@/utils/formatCurrency';
-import { scrollToTopSmoothly } from '@/utils/scrollToTopSmoothly';
+import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { Button, Table } from 'react-daisyui';
@@ -31,7 +31,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
   });
 
   useEffect(() => {
-    scrollToTopSmoothly();
+    scrollToTopInstantly();
     if (priceLists.length >= 0) {
       setLoading(false);
     }
