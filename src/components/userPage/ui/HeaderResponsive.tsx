@@ -137,7 +137,8 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
           {/* Search Toggle */}
           <div className="absolute right-[50px]">
             <div className="relative">
-              <IoSearch className="animate-bounce text-xl text-white" onClick={() => setOpenSearch(true)} />
+              {openSearch && <IoSearch className="animate-bounce text-xl text-white" onClick={() => setOpenSearch(true)} />}
+              {/* Search Input when open */}
               {openSearch && (
                 <div>
                   <div className="absolute -right-[50px] top-10 h-screen w-screen bg-black bg-opacity-50" onClick={handleSearchToggle}>
