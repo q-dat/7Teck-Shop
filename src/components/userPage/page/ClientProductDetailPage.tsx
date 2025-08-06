@@ -106,7 +106,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
             {/* IMG */}
             <div className="flex w-full flex-col gap-5">
               <div className="relative w-full">
-                <div className="h-[400px] w-full overflow-hidden rounded-md bg-white object-cover xl:h-[480px]">
+                <div className="h-[200px] w-full overflow-hidden rounded-md bg-white object-cover xl:h-[480px]">
                   <Zoom>
                     <Image
                       priority
@@ -114,7 +114,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       height={500}
                       src={selectedImage || product?.img}
                       alt={product?.name || 'Hình ảnh'}
-                      className="absolute left-0 top-0 z-10 h-[400px] w-full rounded-md object-contain xl:h-[480px] xl:w-full"
+                      className="absolute left-0 top-0 z-10 h-[200px] w-full rounded-md object-contain xl:h-[480px] xl:w-full"
                     />
                   </Zoom>
                 </div>
@@ -200,14 +200,10 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       </p>
                     )}
                   </div>
-                  {/*  */}
-                  <p className="text-lg italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
-                  {/* Des */}
-                  {product?.des && <p className="font-medium text-primary">{product?.des}</p>}
                   {/* Related Products */}
                   {relatedProducts && relatedProducts.length > 1 && (
                     <div>
-                      <p className="text-lg font-semibold text-gray-700">Sản phẩm liên quan:</p>
+                      <p className="text-sm font-semibold text-black">Sản phẩm liên quan:</p>
                       <div className="flex flex-wrap items-center justify-start gap-2">
                         {/* Map through related products */}
                         {relatedProducts
@@ -228,6 +224,10 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       </div>
                     </div>
                   )}
+                  {/*  */}
+                  <p className="text-lg italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
+                  {/* Des */}
+                  {product?.des && <p className="font-medium text-primary">{product?.des}</p>}
                 </div>
 
                 {/* Btn */}
