@@ -200,7 +200,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
             )}
             {/* Close Search */}
             {openSearch && (
-              <div className="fixed bottom-24 left-1/2 z-[99999] -translate-x-1/2">
+              <div className="fixed bottom-[60px] left-1/2 z-[99999] -translate-x-1/2">
                 <button className="rounded-full border border-white bg-black/60 shadow-xl" onClick={handleSearchToggle}>
                   <IoCloseSharp className="text-4xl text-white" />
                 </button>
