@@ -205,7 +205,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   {/* Des */}
                   {product?.des && <p className="font-medium text-primary">{product?.des}</p>}
                   {/* Related Products */}
-                  {relatedProducts && relatedProducts.length > 0 && (
+                  {relatedProducts && relatedProducts.length > 1 && (
                     <div>
                       <p className="text-lg font-semibold text-gray-700">Sản phẩm liên quan:</p>
                       <div className="flex flex-wrap items-center justify-start gap-2">
