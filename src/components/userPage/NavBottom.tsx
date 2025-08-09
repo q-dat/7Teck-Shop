@@ -7,12 +7,12 @@ import { RiMacbookFill } from 'react-icons/ri';
 const navLink = [
   {
     icon: FaMobileAlt,
-    name: 'iPhone',
+    name: 'Điện Thoại',
     link: '/dien-thoai',
   },
   {
     icon: FaTabletAlt,
-    name: 'ipad',
+    name: 'Máy tính bảng',
     link: '/may-tinh-bang',
   },
   {
@@ -27,20 +27,20 @@ const navLink = [
   },
   {
     icon: MdListAlt,
-    name: 'Giá thu cũ',
-    link: '/bang-gia-thu-mua',
+    name: 'Thiết bị cũ',
+    link: '/thiet-bi-da-qua-su-dung',
   },
 ];
 const NavBottom: React.FC = () => {
   return (
-    <div className="fixed bottom-0 left-0 z-[99999] w-full xl:hidden">
-      <div className="flex h-[50px] w-full justify-between gap-[1px] bg-white text-xs">
+    <div className="fixed bottom-0 left-0 z-[99999] w-full bg-white xl:hidden">
+      <div className="flex h-[50px] w-full justify-between divide-x-[1px] divide-white text-[10px]">
         {navLink.map((item, index) => {
           const Icon = item.icon;
           return (
             <Link key={index} href={item.link} className="flex-grow">
-              <button className="flex h-full w-full flex-col items-center justify-center bg-black p-1 text-white">
-                {Icon && <Icon className="text-lg" />}
+              <button className="flex h-full w-full flex-col items-center justify-center gap-[2px] bg-black p-1 text-white">
+                {Icon && <Icon className="text-lg text-white" />}
                 {item.name}
               </button>
             </Link>
