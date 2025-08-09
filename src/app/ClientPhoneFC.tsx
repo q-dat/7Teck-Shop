@@ -35,17 +35,25 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
 
       {/* Product List */}
       <div className="flex h-fit flex-col items-center justify-center xl:flex-row">
-        {/* Banner */}
-        <div className="hidden w-full rounded-none border-2 border-transparent xl:block xl:w-1/3 xl:border-[10px] 2xl:w-1/4">
-          <Image
-            src={images.Popup}
-            alt="Banner"
-            onError={() => handleImageError(images?.Popup)}
-            width={1000}
-            height={1000}
-            className="h-full w-full object-contain"
-          />
-        </div>
+        {loading ? (
+          <div className="w-full animate-pulse space-y-2 xl:w-2/3 2xl:w-3/4">
+            <div className="h-[200px] w-full rounded-md bg-primary/20" />
+            <div className="h-2 w-3/4 bg-primary/20" />
+            <div className="h-2 w-full bg-primary/20" />
+            <div className="h-2 w-5/6 bg-primary/20" />
+          </div>
+        ) : (
+          <div className="hidden w-full rounded-none border-2 border-transparent xl:block xl:w-1/3 xl:border-[10px] 2xl:w-1/4">
+            <Image
+              src={images.Popup}
+              alt="Banner"
+              onError={() => handleImageError(images?.Popup)}
+              width={1000}
+              height={1000}
+              className="h-full w-full object-contain"
+            />
+          </div>
+        )}
         <div className="relative w-full xl:w-2/3 2xl:w-3/4">
           <section
             ref={scrollRef}
