@@ -74,8 +74,8 @@ export default function ClientProductFC({ products, category, loading: externalL
           {loading ? (
             <ProductPlaceholders count={12} />
           ) : sortedProducts.length === 0 ? (
-            <p className="col-span-full text-red-500">
-              <i>Hiện chưa có sản phẩm giảm giá trong danh mục này.</i>
+            <p className="col-span-full text-sm text-red-500 xl:text-lg">
+              <i>Hiện sản phẩm giảm giá trong danh mục này đang được cập nhật!</i>
             </p>
           ) : (
             sortedProducts.map((product) => {
@@ -104,11 +104,11 @@ export default function ClientProductFC({ products, category, loading: externalL
                       className="w-full cursor-pointer"
                       href={`${category.url}/${productUrl}/${product._id}`}
                     >
-                      <p className="text-prod-name-mobile xl:text-prod-name-desktop font-medium xl:group-hover:text-secondary">
+                      <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
                         {category.name} {product.name}
                       </p>
                     </Link>
-                    
+
                     <div className="mt-1 w-full">
                       <div className="text-prod-name-mobile xl:text-prod-name-desktop">
                         {[
@@ -123,7 +123,7 @@ export default function ClientProductFC({ products, category, loading: externalL
                             </p>
                           ))}
                       </div>
-                      <p className="text-prod-price-mobile xl:text-prod-price-desktop w-full">
+                      <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
                         <span className="font-semibold text-price">{formatCurrency(product?.price)}</span> &nbsp;
                         {product?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
                       </p>
