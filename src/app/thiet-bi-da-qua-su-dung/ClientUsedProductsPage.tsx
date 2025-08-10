@@ -143,9 +143,9 @@ export default function ClientUsedProductsPage({ phoneCatalogs, tabletCatalogs, 
   }, []);
 
   return (
-    <div>
+    <div className="w-full">
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
-      <div>
+      <div className="py-[60px] xl:pt-0">
         <div className="breadcrumbs px-[10px] text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
             <li>
@@ -159,6 +159,15 @@ export default function ClientUsedProductsPage({ phoneCatalogs, tabletCatalogs, 
               </Link>
             </li>
           </ul>
+        </div>
+        {/*  */}
+        <div className="w-full rounded-md bg-gradient-to-r from-primary/10 via-transparent to-secondary/5 p-3">
+          <div className="mx-auto max-w-6xl text-center">
+            <p className="mx-auto max-w-2xl text-sm leading-6 text-gray-700">
+              <span className="block text-xs text-gray-500">Danh mục thiết bị đã qua sử dụng - Lựa chọn đáng tin cậy</span>
+              <span className="text-base font-semibold text-primary xl:text-lg">Chất lượng đảm bảo - Giá cả hợp lý - Hỗ trợ trả góp & bảo hành.</span>
+            </p>
+          </div>
         </div>
 
         <div className="relative">

@@ -1,3 +1,4 @@
+// TRANG THIẾT BỊ ĐÃ QUA SỬ DỤNG
 'use client';
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
