@@ -36,7 +36,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
       {/* Product List */}
       <div className="flex h-fit flex-col items-center justify-center xl:flex-row">
         {loading ? (
-          <div className="w-full animate-pulse space-y-2 xl:w-2/3 2xl:w-3/4">
+          <div className="hidden w-full animate-pulse space-y-2 xl:block xl:w-2/3 2xl:w-3/4">
             <div className="h-[200px] w-full rounded-md bg-primary/20" />
             <div className="h-2 w-3/4 bg-primary/20" />
             <div className="h-2 w-full bg-primary/20" />
@@ -70,7 +70,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                 return (
                   <div
                     key={phone?._id}
-                    className="group relative flex h-full w-[185px] flex-col justify-between rounded-md border border-[#f2f4f7] text-black xl:w-[195px]"
+                    className="group relative flex h-full w-[185px] flex-col justify-between rounded-md border border-primary-lighter text-black xl:w-[195px]"
                   >
                     <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/dien-thoai/${phoneUrl}/${phone?._id}`}>
                       <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
@@ -87,34 +87,36 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                     </Link>
 
                     {/* Product Info */}
-                    <div className="flex h-full w-full flex-col items-start justify-between p-1 md:gap-1">
-                      {/* Product Name and View Count */}
-                      <Link
-                        aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
-                        className="w-full cursor-pointer"
-                        href={`/dien-thoai/${phoneUrl}/${phone?._id}`}
-                      >
-                        <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] text-black">
-                          <FaRegEye />
-                          <p>{phone?.view}</p>
+                    <div className="flex h-full w-full flex-col items-start justify-between p-1">
+                      <div className="w-full">
+                        {/* Product Name and View Count */}
+                        <Link
+                          aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
+                          className="w-full cursor-pointer"
+                          href={`/dien-thoai/${phoneUrl}/${phone?._id}`}
+                        >
+                          <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] text-black">
+                            <FaRegEye />
+                            <p>{phone?.view}</p>
+                          </div>
+                          <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
+                            Điện Thoại {phone?.name}
+                          </p>
+                        </Link>
+                        {/* Product Specifications */}
+                        <div className="py-1 text-prod-name-mobile xl:text-prod-name-desktop">
+                          {[
+                            { label: 'Màu', value: phone?.color },
+                            { label: 'Ram', value: phone?.phone_catalog_id?.configuration_and_memory?.ram },
+                          ]
+                            .filter((item) => item.value?.toString().trim())
+                            .map((item, index) => (
+                              <p key={index}>
+                                <span className="rounded-sm bg-primary-lighter px-1 font-semibold">{item.label}:</span>
+                                &nbsp;<span className="font-light">{item.value}</span>
+                              </p>
+                            ))}
                         </div>
-                        <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
-                          Điện Thoại {phone?.name}
-                        </p>
-                      </Link>
-                      {/* Product Specifications */}
-                      <div className="text-prod-name-mobile xl:text-prod-name-desktop">
-                        {[
-                          { label: 'Màu', value: phone?.color },
-                          { label: 'Ram', value: phone?.phone_catalog_id?.configuration_and_memory?.ram },
-                        ]
-                          .filter((item) => item.value?.toString().trim())
-                          .map((item, index) => (
-                            <p key={index}>
-                              <span className="rounded-sm bg-primary-lighter px-1 font-semibold">{item.label}:</span>
-                              &nbsp;<span className="font-light">{item.value}</span>
-                            </p>
-                          ))}
                       </div>
                       {/* Price and Buy Button */}
                       <div className="w-full">
@@ -122,7 +124,8 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                           <span className="font-semibold text-price">{formatCurrency(phone?.price)}</span> &nbsp;
                           {phone?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(phone?.sale)}</del>}
                         </p>
-                        <p className="text-xs text-gray-500">Hỗ trợ trả góp*</p>
+                        <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
+                        <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
                         <Button
                           className="mt-1 w-full rounded-md border border-primary/20 bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
                           size="xs"

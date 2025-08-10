@@ -122,7 +122,7 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                   return (
                     <section
                       key={variant?._id}
-                      className="group relative flex h-full w-full flex-col justify-between rounded-md border border-white text-black"
+                      className="group relative flex h-full w-full flex-col justify-between rounded-md border border-primary-lighter text-black"
                     >
                       <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`${basePath}/${productUrl}/${subUrl}`}>
                         <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
@@ -137,16 +137,22 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                           />
                         </div>
                       </Link>
-                      {/*  */}
+                      {/* Product Info */}
                       <div className="flex h-full w-full flex-col items-start justify-between p-1">
-                        <Link href={`${basePath}/${productUrl}/${subUrl}`} className="w-full cursor-pointer">
-                          <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
-                            {title} {variant.name}
-                          </p>
-                        </Link>
-
-                        <div className="mt-1 w-full">
-                          <div className="text-prod-name-mobile xl:text-prod-name-desktop">
+                        <div className="w-full">
+                          <Link
+                            aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
+                            href={`${basePath}/${productUrl}/${subUrl}`}
+                            className="w-full cursor-pointer"
+                          >
+                            <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
+                              <span>{title}</span>
+                              &nbsp;
+                              <span>{variant.name}</span>
+                            </p>
+                          </Link>
+                          {/* Product Specifications */}
+                          <div className="py-1 text-prod-name-mobile xl:text-prod-name-desktop">
                             {specsToShow.map((field) => {
                               const value = variant[field as keyof ProductBase];
                               if (!value) return null;
@@ -160,16 +166,17 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
 
                               return (
                                 <p key={field}>
-                                  <span className="mr-1 font-semibold">{fieldLabelMap[field]}:</span>
-                                  <span className="text-xs font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
+                                  <span className="rounded-sm bg-primary-lighter px-1 font-semibold">{fieldLabelMap[field]}:</span>
+                                  &nbsp;<span className="font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
                                 </p>
                               );
                             })}
                           </div>
-
-                          {/* Select Product */}
+                        </div>
+                        {/* Select Product */}
+                        <div className="w-full">
                           {Array.isArray(product.variants) && product.variants.length > 1 && (
-                            <div className="flex flex-wrap items-center gap-1 py-2">
+                            <div className="flex flex-wrap items-center gap-1 py-1">
                               {product.variants.map((v) => (
                                 <Button
                                   key={v._id}
@@ -192,10 +199,11 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
                             <span className="font-semibold text-price">{formatCurrency(variant?.price)}</span> &nbsp;
                             {variant?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(variant?.sale)}</del>}
                           </p>
-
+                          <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
+                          <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
                           <Button
                             size="xs"
-                            className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
+                            className="mt-1 w-full rounded-md border border-primary/20 bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
                             onClick={() => {
                               const productToBuy = {
                                 _id: variant?._id,

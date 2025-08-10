@@ -83,7 +83,7 @@ export default function ClientProductFC({ products, category, loading: externalL
               return (
                 <div
                   key={product._id}
-                  className="group relative flex h-full w-[185px] flex-col justify-between rounded-md border border-[#f2f4f7] text-black xl:w-[195px]"
+                  className="group relative flex h-full w-[185px] flex-col justify-between rounded-md border border-primary-lighter text-black xl:w-[195px]"
                 >
                   <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`${category.url}/${productUrl}/${product._id}`}>
                     <div className="h-[200px] w-full cursor-pointer overflow-hidden">
@@ -97,44 +97,60 @@ export default function ClientProductFC({ products, category, loading: externalL
                       />
                     </div>
                   </Link>
-
+                  {/* Product Info */}
                   <div className="flex h-full w-full flex-col items-start justify-between p-1">
-                    <Link
-                      aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
-                      className="w-full cursor-pointer"
-                      href={`${category.url}/${productUrl}/${product._id}`}
-                    >
-                      <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
-                        {category.name} {product.name}
-                      </p>
-                    </Link>
-
-                    <div className="mt-1 w-full">
-                      <div className="text-prod-name-mobile xl:text-prod-name-desktop">
+                    <div className="w-full">
+                      <Link
+                        aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
+                        className="w-full cursor-pointer"
+                        href={`${category.url}/${productUrl}/${product._id}`}
+                      >
+                        <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
+                          <span>{category.name}</span>&nbsp;<span>{product.name}</span>
+                        </p>
+                      </Link>
+                      {/* Product Specifications */}
+                      <div className="py-1 text-prod-name-mobile xl:text-prod-name-desktop">
                         {[
-                          { label: 'Màu sắc', value: product?.color },
-                          { label: 'Ram', value: product?.ram },
+                          { label: 'Màu', value: product?.color },
+                          { label: 'RAM', value: product?.ram },
                         ]
                           .filter((item) => item.value?.toString().trim())
                           .map((item, index) => (
                             <p key={index}>
-                              <span className="font-semibold">{item.label}: </span>
-                              {item.value}
+                              <span className="rounded-sm bg-primary-lighter px-1 font-semibold">{item.label}:</span>
+                              &nbsp;<span className="font-light">{item.value}</span>
                             </p>
                           ))}
                       </div>
+                    </div>
+                    {/* Price and Buy Now Button */}
+                    <div className="w-full">
                       <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
                         <span className="font-semibold text-price">{formatCurrency(product?.price)}</span> &nbsp;
                         {product?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
                       </p>
-                      <Link aria-label="Mua ngay" href="/thanh-toan" className="z-50 w-full">
-                        <Button
-                          size="xs"
-                          className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
-                        >
-                          Mua Ngay
-                        </Button>
-                      </Link>
+                      <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
+                      <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
+                      <Button
+                        size="xs"
+                        className="mt-1 w-full rounded-md border border-primary/20 bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
+                        onClick={() => {
+                          const productToBuy = {
+                            _id: product?._id,
+                            name: product?.name,
+                            img: product?.image,
+                            price: product?.price,
+                            ram: product?.ram,
+                            color: product?.color,
+                            link: `${category.url}/${productUrl}/${product._id}`,
+                          };
+                          localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
+                          window.location.href = '/thanh-toan';
+                        }}
+                      >
+                        Mua Ngay
+                      </Button>
                     </div>
                   </div>
 
