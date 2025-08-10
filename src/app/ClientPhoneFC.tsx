@@ -107,7 +107,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                         <div className="py-1 text-prod-name-mobile xl:text-prod-name-desktop">
                           {[
                             { label: 'Màu', value: phone?.color },
-                            { label: 'Ram', value: phone?.phone_catalog_id?.configuration_and_memory?.ram },
+                            { label: 'RAM', value: phone?.phone_catalog_id?.configuration_and_memory?.ram },
                           ]
                             .filter((item) => item.value?.toString().trim())
                             .map((item, index) => (
