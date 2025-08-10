@@ -72,7 +72,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                   return (
                     <section
                       key={product._id}
-                      className="group relative flex h-full flex-col justify-between rounded-md border border-white text-black"
+                      className="group relative flex h-full flex-col justify-between rounded-md border border-primary-lighter text-black"
                     >
                       <Link href={url} className="flex h-full w-full items-center justify-center rounded-md rounded-b-none bg-white">
                         <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
@@ -86,48 +86,50 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                           />
                         </div>
                       </Link>
-
-                      {/*  */}
+                      {/* Product Info */}
                       <div className="flex h-full w-full flex-col items-start justify-between p-1">
                         <Link href={url} className="w-full cursor-pointer">
                           <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] text-black">
                             <FaRegEye />
                             <p>{product.view}</p>
                           </div>
-                          <p className="text-prod-name-mobile xl:text-prod-name-desktop font-medium xl:group-hover:text-secondary">
+                          <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
                             {title} {product.name}
                           </p>
                         </Link>
+                        {/* Product Specifications */}
+                        <div className="py-1 text-prod-name-mobile xl:text-prod-name-desktop">
+                          {specsToShow.map((field) => {
+                            const value = product[field as keyof ProductBase];
+                            if (!value) return null;
 
-                        <div className="mt-1 w-full">
-                          <div className="text-prod-name-mobile xl:text-prod-name-desktop">
-                            {specsToShow.map((field) => {
-                              const value = product[field as keyof ProductBase];
-                              if (!value) return null;
+                            const fieldLabelMap: Record<string, string> = {
+                              color: 'Màu',
+                              ram: 'RAM',
+                              cpu: 'CPU',
+                              lcd: 'Màn hình',
+                              gpu: 'GPU',
+                            };
 
-                              const fieldLabelMap: Record<string, string> = {
-                                color: 'Màu sắc',
-                                ram: 'RAM',
-                                cpu: 'CPU',
-                                lcd: 'Màn hình',
-                                gpu: 'GPU',
-                              };
-
-                              return (
-                                <p key={field}>
-                                  <span className="font-semibold">{fieldLabelMap[field]}: </span>
-                                  {value}
-                                </p>
-                              );
-                            })}
-                          </div>
-                          <p className="text-prod-price-mobile xl:text-prod-price-desktop w-full">
+                            return (
+                              <p key={field}>
+                                <span className="rounded-sm bg-primary-lighter px-1 font-semibold">{fieldLabelMap[field]}:</span>
+                                &nbsp;<span className="font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
+                              </p>
+                            );
+                          })}
+                        </div>
+                        {/* Price and Buy Now Button */}
+                        <div className="w-full">
+                          <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
                             <span className="font-semibold text-price">{formatCurrency(product?.price)}</span> &nbsp;
                             {product?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
                           </p>
+                          <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
+                          <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
                           <Button
                             size="xs"
-                            className="w-full rounded-md border-none bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
+                            className="mt-1 w-full rounded-md border border-primary/20 bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
                             onClick={() => {
                               const productToBuy = {
                                 _id: product?._id,
