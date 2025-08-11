@@ -12,6 +12,7 @@ import { Button } from 'react-daisyui';
 import imageRepresent from '../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 
+// Interface
 interface ProductBase {
   _id: string;
   name: string;
@@ -30,19 +31,27 @@ interface ProductBase {
 interface ClientProductPageProps {
   products: ProductBase[];
   title: string;
-  basePath: string; // dùng để tạo link động, ví dụ '${basePath}' hay 'macbook'
+  basePath: string;
+  brands?: string[];
+  onBrandSelect?: (brand: string | null) => void;
 }
 
-export default function ClientProductPage({ products, title, basePath }: ClientProductPageProps) {
+export default function ClientProductPage({ products, title, basePath, brands = [], onBrandSelect }: ClientProductPageProps) {
   const [loading, setLoading] = useState(true);
-  //  handleImageError
+
+  // Image error
   const fallbackSrc = imageRepresent.Fallback;
   const { handleImageError, isImageErrored } = useImageErrorHandler();
-  // Panigation
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  // State to manage selected variants
+
+  // Variants
   const [selectedVariants, setSelectedVariants] = useState<Record<string, ProductBase>>({});
   const specsToShow = ['ram', 'cpu', 'lcd', 'gpu'];
+
+  // State lưu brand đang chọn
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
 
   useEffect(() => {
     scrollToTopInstantly();
@@ -56,7 +65,8 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
-  // Handle variant selection
+
+  // Variants click
   const handleVariantClick = (productId: string, variant: ProductBase) => {
     setSelectedVariants((prev) => ({
       ...prev,
@@ -72,10 +82,20 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
+  // Handle chọn brand
+  const handleBrandClick = (brand: string | null) => {
+    setSelectedBrand(brand);
+    if (onBrandSelect) {
+      onBrandSelect(brand);
+    }
+    setCurrentPage(1); // reset về page 1 khi filter
+  };
+
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile={'7teck.vn'} />
       <div className="py-[60px] xl:pt-0">
+        {/* Breadcrumb */}
         <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
             <li>
@@ -86,9 +106,33 @@ export default function ClientProductPage({ products, title, basePath }: ClientP
             </li>
           </ul>
         </div>
-        {/*  */}
+        {/* Brand filter buttons */}
+        <div className="my-5 px-2 xl:px-desktop-padding">
+          {brands.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              <Button
+                size="sm"
+                className={`rounded-md border ${selectedBrand === null ? 'bg-primary text-white hover:bg-primary/80' : 'border-primary bg-white text-black'}`}
+                onClick={() => handleBrandClick(null)}
+              >
+                Tất cả
+              </Button>
+              {brands.map((brand) => (
+                <Button
+                  key={brand}
+                  size="sm"
+                  className={`rounded-md border ${selectedBrand === brand ? 'bg-primary text-white hover:bg-primary/80' : 'border-primary bg-white text-black'}`}
+                  onClick={() => handleBrandClick(brand)}
+                >
+                  {brand}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="space-y-10 px-2 xl:px-desktop-padding">
-          <div className="mt-5 w-full">
+          {/* Product grid */}
+          <div className="w-full">
             <div className="grid w-full grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6">
               {loading ? (
                 <ProductPlaceholders count={12} />

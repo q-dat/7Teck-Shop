@@ -1,6 +1,8 @@
 'use client';
+import { useState } from 'react';
 import ClientProductPage from '@/components/userPage/page/ClientProductPage';
 import { GroupedPhone } from '@/types/type/products/phone/phone';
+import { getNewGroupedPhones } from '@/services/products/phoneService';
 
 // export default function ClientPhonePage({ phones }: { phones: IPhone[] }) {
 //   const mappedPhones = phones.map((phone) => ({
@@ -19,27 +21,52 @@ import { GroupedPhone } from '@/types/type/products/phone/phone';
 // }
 
 export default function ClientPhonePage({ groupedPhones }: { groupedPhones: GroupedPhone[] }) {
-  const mappedPhones = groupedPhones.map((group) => {
-    const defaultVariant = group.variants[0];
-    const config = group.catalog?.configuration_and_memory;
+  const [mappedPhones, setMappedPhones] = useState(() => mapGroupedPhones(groupedPhones));
+  const [loading, setLoading] = useState(false);
 
-    return {
-      _id: defaultVariant._id,
-      name: defaultVariant.name,
-      img: defaultVariant.img,
-      price: defaultVariant.price,
-      color: defaultVariant.color,
-      ram: config?.ram ?? 'N/A',
-      cpu: config?.cpu_chip ?? 'N/A',
-      sale: defaultVariant.sale,
-      status: defaultVariant.status,
-      variants: group.variants.map((v) => ({
-        ...v,
+  // Danh sách thương hiệu tĩnh
+  const brands = ['iPhone', 'Samsung', 'Oppo', 'Xiaomi', 'Vivo'];
+
+  // Hàm mapping
+  function mapGroupedPhones(data: GroupedPhone[]) {
+    return data.map((group) => {
+      const defaultVariant = group.variants[0];
+      const config = group.catalog?.configuration_and_memory;
+
+      return {
+        _id: defaultVariant._id,
+        name: defaultVariant.name,
+        img: defaultVariant.img,
+        price: defaultVariant.price,
+        color: defaultVariant.color,
         ram: config?.ram ?? 'N/A',
         cpu: config?.cpu_chip ?? 'N/A',
-      })),
-    };
-  });
+        sale: defaultVariant.sale,
+        status: defaultVariant.status,
+        variants: group.variants.map((v) => ({
+          ...v,
+          ram: config?.ram ?? 'N/A',
+          cpu: config?.cpu_chip ?? 'N/A',
+        })),
+      };
+    });
+  }
 
-  return <ClientProductPage products={mappedPhones} title="Điện Thoại" basePath="dien-thoai" />;
+  // Handle khi chọn brand
+  const handleBrandSelect = async (brand: string | null) => {
+    setLoading(true);
+    const data = await getNewGroupedPhones(brand ?? undefined);
+    setMappedPhones(mapGroupedPhones(data));
+    setLoading(false);
+  };
+
+  return (
+    <ClientProductPage
+      products={loading ? [] : mappedPhones}
+      title="Điện Thoại"
+      basePath="dien-thoai"
+      brands={brands}
+      onBrandSelect={handleBrandSelect}
+    />
+  );
 }

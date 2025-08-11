@@ -27,9 +27,12 @@ export async function getAllmostViewedPhones(): Promise<IPhone[]> {
   }
 }
 
-export async function getNewGroupedPhones(): Promise<GroupedPhone[]> {
+export async function getNewGroupedPhones(name?: string): Promise<GroupedPhone[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/grouped-phones?status=0')}`;
+    const searchParams = new URLSearchParams();
+    searchParams.set('status', '0');
+    if (name) searchParams.set('name', name);
+    const apiUrl = `${getServerApiUrl(`/api/grouped-phones?${searchParams.toString()}`)}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
@@ -49,6 +52,7 @@ export async function getNewGroupedPhones(): Promise<GroupedPhone[]> {
     return [];
   }
 }
+
 export async function getPhonesByCatalogId(catalogID: string): Promise<IPhone[]> {
   try {
     const query = `?catalogID=${catalogID}`;
