@@ -50,7 +50,7 @@ export default function ClientTabletDetailPage({ tablet }: { tablet: ITablet }) 
       product={mappedProduct}
       fieldMap={tabletFieldMap}
       namePrefix="Máy Tính Bảng"
-      basePath="windows"
+      basePath="may-tinh-bang"
       relatedProducts={mappedRelated}
     />
   );
