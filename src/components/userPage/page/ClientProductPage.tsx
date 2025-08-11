@@ -55,9 +55,8 @@ export default function ClientProductPage({ products, title, basePath, brands = 
 
   useEffect(() => {
     scrollToTopInstantly();
-    if (products.length >= 0) {
-      setLoading(false);
-    }
+    // Khi products thay đổi => tắt loading
+    setLoading(false);
   }, [products]);
 
   const itemsPerPage = 24;
@@ -83,14 +82,15 @@ export default function ClientProductPage({ products, title, basePath, brands = 
   };
 
   // Handle chọn brand
-  const handleBrandClick = (brand: string | null) => {
+  const handleBrandClick = async (brand: string | null) => {
     setSelectedBrand(brand);
+    setCurrentPage(1);
+    setLoading(true);
     if (onBrandSelect) {
-      onBrandSelect(brand);
+      await onBrandSelect(brand); // chờ dữ liệu mới
     }
-    setCurrentPage(1); // reset về page 1 khi filter
+    // Khi products mới được set => useEffect sẽ tự setLoading(false)
   };
-
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile={'7teck.vn'} />

@@ -22,7 +22,6 @@ import { getNewGroupedPhones } from '@/services/products/phoneService';
 
 export default function ClientPhonePage({ groupedPhones }: { groupedPhones: GroupedPhone[] }) {
   const [mappedPhones, setMappedPhones] = useState(() => mapGroupedPhones(groupedPhones));
-  const [loading, setLoading] = useState(false);
 
   // Danh sách thương hiệu tĩnh
   const brands = ['iPhone', 'Samsung', 'Oppo', 'Xiaomi', 'Vivo'];
@@ -54,19 +53,9 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
 
   // Handle khi chọn brand
   const handleBrandSelect = async (brand: string | null) => {
-    setLoading(true);
     const data = await getNewGroupedPhones(brand ?? undefined);
     setMappedPhones(mapGroupedPhones(data));
-    setLoading(false);
   };
 
-  return (
-    <ClientProductPage
-      products={loading ? [] : mappedPhones}
-      title="Điện Thoại"
-      basePath="dien-thoai"
-      brands={brands}
-      onBrandSelect={handleBrandSelect}
-    />
-  );
+  return <ClientProductPage products={mappedPhones} title="Điện Thoại" basePath="dien-thoai" brands={brands} onBrandSelect={handleBrandSelect} />;
 }
