@@ -22,7 +22,7 @@ const suggestedProducts = [
   { name: 'Dell XPS 9315 i5', url: 'https://www.7teck.vn/windows/dell-xps-9315-intel-i5-8gb-256gb-ban-14inch' },
 ];
 const Badge = (label: string) => (
-  <sup className="ml-1 rounded-full bg-red-500 px-1 py-0.5 text-[10px] font-semibold uppercase text-white shadow-md">{label}</sup>
+  <sup className="ml-1 rounded-full bg-red-700 px-1 py-0.5 text-[10px] font-semibold uppercase text-white shadow-md">{label}</sup>
 );
 
 export default function FooterFC() {
@@ -68,7 +68,7 @@ export default function FooterFC() {
           </Link>
           <Link className="font-medium hover:font-semibold" href="/thiet-bi-da-qua-su-dung">
             Thiết Bị Đã Qua Sử Dụng
-            <sup className="ml-1 rounded-full bg-orange-500 px-1 py-0.5 text-[10px] font-semibold uppercase text-black shadow-md">USED</sup>
+            <sup className="ml-1 rounded-full bg-orange-700 px-1 py-0.5 text-[10px] font-semibold uppercase text-black shadow-md">USED</sup>
           </Link>
 
           <Link className="font-medium hover:font-semibold" href="/bang-gia-thu-mua">

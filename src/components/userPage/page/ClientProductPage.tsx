@@ -127,7 +127,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
             <div className="flex flex-wrap gap-1">
               <Button
                 size="sm"
-                className={`rounded-sm border border-primary-lighter text-xs font-medium hover:border-primary ${selectedBrand === null ? 'bg-primary text-white hover:bg-primary/80' : 'bg-white text-black'}`}
+                className={`rounded-sm border border-primary-lighter text-xs font-medium hover:border-primary ${selectedBrand === null ? 'bg-primary text-white xl:hover:bg-primary/80' : 'bg-white text-black'}`}
                 onClick={() => handleBrandClick(null)}
               >
                 <FaThLarge className="text-base" /> Tất cả
@@ -136,7 +136,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                 <Button
                   key={brand.name}
                   size="sm"
-                  className={`rounded-sm border border-primary-lighter text-xs font-medium hover:border-primary ${selectedBrand === brand.name ? 'bg-primary text-white hover:bg-primary/80' : 'bg-white text-black'}`}
+                  className={`rounded-sm border border-primary-lighter text-xs font-medium hover:border-primary ${selectedBrand === brand.name ? 'bg-primary text-white xl:hover:bg-primary/80' : 'bg-white text-black'}`}
                   onClick={() => handleBrandClick(brand.name)}
                 >
                   {brand.icon && <span className="text-base">{brand.icon}</span>}
