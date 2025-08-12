@@ -3,6 +3,7 @@ import { useState } from 'react';
 import ClientProductPage from '@/components/userPage/page/ClientProductPage';
 import { GroupedPhone } from '@/types/type/products/phone/phone';
 import { getNewGroupedPhones } from '@/services/products/phoneService';
+import { SiSamsung, SiApple, SiOppo, SiXiaomi, SiVivo } from 'react-icons/si';
 
 // export default function ClientPhonePage({ phones }: { phones: IPhone[] }) {
 //   const mappedPhones = phones.map((phone) => ({
@@ -24,8 +25,13 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
   const [mappedPhones, setMappedPhones] = useState(() => mapGroupedPhones(groupedPhones));
 
   // Danh sách thương hiệu tĩnh
-  const brands = ['iPhone', 'Samsung', 'Oppo', 'Xiaomi', 'Vivo'];
-
+  const brands = [
+    { name: 'iPhone', icon: <SiApple /> },
+    { name: 'Samsung', icon: <SiSamsung /> },
+    { name: 'Oppo', icon: <SiOppo /> },
+    { name: 'Xiaomi', icon: <SiXiaomi /> },
+    { name: 'Vivo', icon: <SiVivo /> },
+  ];
   // Hàm mapping
   function mapGroupedPhones(data: GroupedPhone[]) {
     return data.map((group) => {

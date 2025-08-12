@@ -11,6 +11,7 @@ import Image from 'next/image';
 import { Button } from 'react-daisyui';
 import imageRepresent from '../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
+import { FaThLarge } from 'react-icons/fa';
 
 // Interface
 interface ProductBase {
@@ -27,12 +28,16 @@ interface ProductBase {
   status?: string;
   variants?: ProductBase[];
 }
+interface BrandItem {
+  name: string;
+  icon?: React.ReactNode;
+}
 
 interface ClientProductPageProps {
   products: ProductBase[];
   title: string;
   basePath: string;
-  brands?: string[];
+  brands?: BrandItem[];
   onBrandSelect?: (brand: string | null) => void;
 }
 
@@ -106,31 +111,44 @@ export default function ClientProductPage({ products, title, basePath, brands = 
             </li>
           </ul>
         </div>
+        {/* Title & Slogan */}
+        <div className="my-2 px-2 text-center xl:px-desktop-padding">
+          <p className="text-sm tracking-wide text-black">
+            <span className="rounded-full bg-gradient-to-r from-primary/50 via-primary-lighter to-transparent px-3 py-1 font-semibold text-primary shadow-sm">
+              7teck.vn
+            </span>
+            <span className="ml-1 font-light italic">Chất lượng bạn tin - Giá trị bạn giữ.</span>
+          </p>
+        </div>
+
         {/* Brand filter buttons */}
-        <div className="my-5 px-2 xl:px-desktop-padding">
+        <div className="my-2 px-2 xl:px-desktop-padding">
           {brands.length > 0 && (
             <div className="flex flex-wrap gap-1">
               <Button
                 size="sm"
-                className={`rounded-md border ${selectedBrand === null ? 'bg-primary text-white hover:bg-primary/80' : 'border-primary bg-white text-black'}`}
+                className={`rounded-sm border border-primary-lighter text-xs font-medium hover:border-primary ${selectedBrand === null ? 'bg-primary text-white hover:bg-primary/80' : 'bg-white text-black'}`}
                 onClick={() => handleBrandClick(null)}
               >
-                Tất cả
+                <FaThLarge className="text-base" /> Tất cả
               </Button>
               {brands.map((brand) => (
                 <Button
-                  key={brand}
+                  key={brand.name}
                   size="sm"
-                  className={`rounded-md border ${selectedBrand === brand ? 'bg-primary text-white hover:bg-primary/80' : 'border-primary bg-white text-black'}`}
-                  onClick={() => handleBrandClick(brand)}
+                  className={`rounded-sm border border-primary-lighter text-xs font-medium hover:border-primary ${selectedBrand === brand.name ? 'bg-primary text-white hover:bg-primary/80' : 'bg-white text-black'}`}
+                  onClick={() => handleBrandClick(brand.name)}
                 >
-                  {brand}
+                  {brand.icon && <span className="text-base">{brand.icon}</span>}
+                  {brand.name}
                 </Button>
               ))}
+              <hr />
             </div>
           )}
+          {/*  */}
         </div>
-        <div className="space-y-10 px-2 xl:px-desktop-padding">
+        <div className="mt-4 space-y-10 px-2 xl:px-desktop-padding">
           {/* Product grid */}
           <div className="w-full">
             <div className="grid w-full grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6">
@@ -189,7 +207,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                             href={`${basePath}/${productUrl}/${subUrl}`}
                             className="w-full cursor-pointer"
                           >
-                            <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
+                            <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-primary">
                               <span>{title}</span>
                               &nbsp;
                               <span>{variant.name}</span>
@@ -225,10 +243,10 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                                 <Button
                                   key={v._id}
                                   size="xs"
-                                  className={`rounded-sm p-1 text-xs font-light ${
+                                  className={`rounded-md bg-white p-1 text-xs font-normal ${
                                     selectedVariants[product._id]?._id === v._id
-                                      ? 'border-primary bg-primary text-white hover:bg-primary'
-                                      : 'border-gray-300 text-black hover:border-primary'
+                                      ? 'border-primary bg-primary-lighter text-primary hover:bg-primary-lighter'
+                                      : 'border-spacing-px border-primary/40 text-black hover:border-primary'
                                   }`}
                                   onClick={() => handleVariantClick(product._id, v)}
                                   title={v.color}
