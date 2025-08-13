@@ -1,6 +1,6 @@
 'use client';
-import React, { useRef, useState } from 'react';
-import { Button, Footer, Input, Textarea } from 'react-daisyui';
+import React, { useRef } from 'react';
+import { Button, Footer, Textarea } from 'react-daisyui';
 import { FaMapLocationDot } from 'react-icons/fa6';
 import { FaFacebook, FaFacebookMessenger, FaPaperPlane, FaPhone } from 'react-icons/fa';
 import { IoMail } from 'react-icons/io5';
@@ -9,7 +9,6 @@ import Link from 'next/link';
 import { address, contact, copyright, fanpageUrl, ggMapUrl, hotlineUrl, mail, mailUrl, messengerUrl, zaloUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
 import InputForm from '../InputForm';
-import LabelForm from '../LabelForm';
 import { Toastify } from '@/helper/Toastify';
 
 const suggestedProducts = [
