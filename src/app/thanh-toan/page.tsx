@@ -152,7 +152,7 @@ export default function PurchasePage() {
                 <form
                   ref={formRef}
                   onSubmit={onSubmit}
-                  className="flex flex-col items-center justify-center gap-y-10 rounded-xl shadow-none dark:bg-white xl:flex-row xl:gap-x-10 xl:gap-y-0 xl:p-4 xl:shadow-mainMenu"
+                  className="flex flex-col items-center justify-center rounded-xl shadow-none dark:bg-white xl:flex-row xl:gap-x-10 xl:gap-y-0 xl:p-4 xl:shadow-mainMenu"
                 >
                   <div className="flex w-full flex-col gap-5" role="region" aria-label="Thông tin liên hệ">
                     <div className="flex w-full flex-col gap-5 xl:flex-row">

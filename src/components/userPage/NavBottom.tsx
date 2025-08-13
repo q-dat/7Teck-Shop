@@ -39,7 +39,7 @@ const NavBottom: React.FC = () => {
           const Icon = item.icon;
           return (
             <Link key={index} href={item.link} className="flex-grow">
-              <button className="flex h-full w-full flex-col items-center justify-center gap-[2px] bg-black p-1 text-white">
+              <button className="flex h-full w-full flex-col items-center justify-center gap-[2px] bg-default p-1 text-white">
                 {Icon && <Icon className="text-lg text-white" />}
                 {item.name}
               </button>

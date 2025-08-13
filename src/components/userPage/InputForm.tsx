@@ -5,6 +5,8 @@ import { Input } from 'react-daisyui';
 interface InputFormProps {
   id?: string | number;
   name?: string;
+  size?: 'lg' | 'md' | 'sm' | 'xs' | undefined;
+  color?: 'neutral' | 'primary' | 'secondary' | 'accent' | 'ghost' | 'info' | 'success' | 'warning' | 'error' | undefined;
   className?: string;
   type: string;
   placeholder: ReactNode;
@@ -16,6 +18,8 @@ interface InputFormProps {
 
 const InputForm: React.FC<InputFormProps> = ({
   name,
+  size,
+  color,
   className = '',
   type = 'text',
   placeholder = '',
@@ -29,6 +33,8 @@ const InputForm: React.FC<InputFormProps> = ({
       <Input
         id=""
         name={name}
+        size={size}
+        color={color}
         className={`peer w-full focus:outline-none ${className}`}
         type={type}
         placeholder=" "
@@ -37,7 +43,7 @@ const InputForm: React.FC<InputFormProps> = ({
         required={required}
       />
       <label
-        className={`pointer-events-none absolute -top-2 left-2 rounded-sm px-1 py-0 text-sm text-primary transition-all duration-500 ease-in-out peer-placeholder-shown:top-3 peer-placeholder-shown:rounded-sm peer-placeholder-shown:text-base peer-placeholder-shown:text-black peer-focus:-top-4 peer-focus:text-sm peer-focus:text-primary dark:peer-placeholder-shown:text-primary dark:peer-focus:text-primary ${classNameLabel}`}
+        className={`pointer-events-none absolute -top-2 left-2 rounded-sm px-1 py-0 text-sm text-primary transition-all duration-500 ease-in-out peer-placeholder-shown:top-3 peer-placeholder-shown:rounded-sm peer-placeholder-shown:text-sm peer-placeholder-shown:text-[#000000] peer-focus:-top-4 peer-focus:text-sm peer-focus:text-primary dark:peer-placeholder-shown:text-primary dark:peer-focus:text-primary ${classNameLabel}`}
       >
         {placeholder}
       </label>

@@ -1,13 +1,16 @@
 'use client';
-import React from 'react';
-import { Footer } from 'react-daisyui';
+import React, { useRef, useState } from 'react';
+import { Button, Footer, Input, Textarea } from 'react-daisyui';
 import { FaMapLocationDot } from 'react-icons/fa6';
-import { FaFacebook, FaFacebookMessenger, FaPhone } from 'react-icons/fa';
+import { FaFacebook, FaFacebookMessenger, FaPaperPlane, FaPhone } from 'react-icons/fa';
 import { IoMail } from 'react-icons/io5';
 import { images } from '../../../../public/images';
 import Link from 'next/link';
-import { address, contact, copyright, fanpageUrl, hotlineUrl, mail, mailUrl, messengerUrl, zaloUrl } from '@/utils/socialLinks';
+import { address, contact, copyright, fanpageUrl, ggMapUrl, hotlineUrl, mail, mailUrl, messengerUrl, zaloUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
+import InputForm from '../InputForm';
+import LabelForm from '../LabelForm';
+import { Toastify } from '@/helper/Toastify';
 
 const suggestedProducts = [
   { name: 'iPhone 16 Pro Max 1TB', url: 'https://www.7teck.vn/dien-thoai/iphone-16-pro-max-1tb' },
@@ -22,10 +25,59 @@ const suggestedProducts = [
   { name: 'Dell XPS 9315 i5', url: 'https://www.7teck.vn/windows/dell-xps-9315-intel-i5-8gb-256gb-ban-14inch' },
 ];
 const Badge = (label: string) => (
-  <sup className="ml-1 rounded-full bg-red-700 px-1 py-0.5 text-[10px] font-semibold uppercase text-white shadow-md">{label}</sup>
+  <sup className="ml-1 rounded-full bg-red-700 px-1 py-0.5 text-[8px] font-semibold text-white shadow-md">{label}</sup>
 );
 
 export default function FooterFC() {
+  const [result, setResult] = React.useState<string>('');
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
+    setResult('Đang gửi...');
+    const formData = new FormData(event.currentTarget);
+    const phone = formData.get('Số điện thoại:') as string;
+    if (!phone.trim()) {
+      Toastify('Vui lòng nhập số điện thoại!', 400);
+      return;
+    }
+    const name = formData.get('Tên khách hàng:') as string;
+
+    if (!name.trim()) {
+      Toastify('Vui lòng nhập tên khách hàng!', 400);
+      return;
+    }
+    //
+    const phoneRegex = /^(0\d{9,10})$/;
+    if (!phoneRegex.test(phone)) {
+      Toastify('Số điện thoại không hợp lệ! Vui lòng nhập đúng định dạng.', 400);
+      return;
+    }
+
+    formData.append('access_key', process.env.NEXT_PUBLIC_WEB3FORMS_KEY!);
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data: { success: boolean; message: string } = await response.json();
+
+      if (data.success) {
+        setResult('Đã gửi biểu mẫu thành công!');
+        Toastify('Đã gửi biểu mẫu thành công!. Vui lòng đợi để được hỗ trợ!', 200);
+        // Reset form using formRef
+        formRef.current?.reset();
+      } else {
+        console.error('Error', data);
+        setResult(data.message);
+      }
+    } catch (error) {
+      console.error('Yêu cầu thất bại', error);
+      setResult('Đã xảy ra lỗi khi gửi biểu mẫu!');
+    }
+  };
   return (
     <div className="mb-[50px] xl:mb-0">
       {/* Suggest */}
@@ -45,59 +97,72 @@ export default function FooterFC() {
           ))}
         </div>
       </div>
-
-      <Footer className="item-center flex flex-col justify-between bg-black px-2 pb-0 pt-10 text-white xl:flex-row xl:px-desktop-padding xl:pb-10">
+      {/* Footer */}
+      <Footer className="item-center grid grid-flow-row grid-cols-2 items-start justify-center bg-black px-2 pb-20 pt-10 text-white md:grid-cols-4 xl:grid-cols-6 xl:flex-row xl:px-desktop-padding">
         {/* Logo */}
-        <div className="w-full">
-          <Image loading="lazy" src={images.Logo} alt="LOGO" width={140} height={60} className="rounded-full border border-white object-contain" />
+        <div className="w-full text-xs leading-relaxed text-white xl:text-sm">
+          <p className="text-white">
+            <Image loading="lazy" src={images.Logo} alt="LOGO" width={70} height={70} className="float-left mr-2 h-[70px] w-[70px] object-contain" />
+            <i>
+              7Teck trân trọng cảm ơn Quý khách hàng đã luôn tin tưởng và đồng hành cùng chúng tôi trong suốt thời gian qua. Sự hài lòng và ủng hộ của
+              Quý khách chính là động lực lớn nhất để chúng tôi không ngừng nỗ lực, nâng cao chất lượng sản phẩm và dịch vụ, mang đến cho Quý khách
+              những trải nghiệm mua sắm tốt nhất.
+            </i>
+          </p>
         </div>
         {/* 1 */}
         <div className="w-full">
-          <Footer.Title className="border-b-[1px]">Thông Tin</Footer.Title>
-          <Link className="font-medium hover:font-semibold" href="/dien-thoai">
-            Điện Thoại {Badge('NEW SEAL')}
-          </Link>
-          <Link className="font-medium hover:font-semibold" href="/may-tinh-bang">
-            Máy Tính Bảng {Badge('NEW SEAL')}
-          </Link>
-          <Link className="font-medium hover:font-semibold" href="/macbook">
-            Laptop Macbook {Badge('NEW SEAL')}
-          </Link>
-          <Link className="font-medium hover:font-semibold" href="/windows">
-            Laptop Windows {Badge('NEW SEAL')}
-          </Link>
-          <Link className="font-medium hover:font-semibold" href="/thiet-bi-da-qua-su-dung">
-            Thiết Bị Đã Qua Sử Dụng
-            <sup className="ml-1 rounded-full bg-orange-700 px-1 py-0.5 text-[10px] font-semibold uppercase text-black shadow-md">USED</sup>
-          </Link>
-
-          <Link className="font-medium hover:font-semibold" href="/bang-gia-thu-mua">
-            Bảng Giá Thu Mua
-          </Link>
+          <Footer.Title className="border-b-[1px] text-xs xl:text-sm">Danh Mục Sản Phẩm</Footer.Title>
+          <div className="flex w-full flex-col gap-2 text-xs font-medium xl:text-sm">
+            <Link className="hover:font-semibold hover:underline" href="/dien-thoai">
+              Điện Thoại {Badge('NEW SEAL')}
+            </Link>
+            <Link className="hover:font-semibold hover:underline" href="/may-tinh-bang">
+              Máy Tính Bảng {Badge('NEW SEAL')}
+            </Link>
+            <Link className="hover:font-semibold hover:underline" href="/macbook">
+              Laptop Macbook {Badge('NEW SEAL')}
+            </Link>
+            <Link className="hover:font-semibold hover:underline" href="/windows">
+              Laptop Windows {Badge('NEW SEAL')}
+            </Link>
+            <Link className="hover:font-semibold hover:underline" href="/thiet-bi-da-qua-su-dung">
+              Thiết Bị Cũ
+              <sup className="ml-1 rounded-full bg-orange-700 px-1 py-0.5 text-[8px] font-semibold text-default shadow-md">USED</sup>
+            </Link>
+            <Link className="hover:font-semibold hover:underline" href="/bang-gia-thu-mua">
+              Bảng Giá Thu Mua
+            </Link>
+          </div>
         </div>
         {/* 2 */}
         <div className="w-full">
-          <Footer.Title className="border-b-[1px]">Chính Sách Bán Hàng</Footer.Title>
-          <Link className="font-medium hover:font-semibold" href="/chinh-sach-bao-hanh">
-            Chính Sách Bảo Hành
-          </Link>
-          <Link className="font-medium hover:font-semibold" href="/chinh-sach-quyen-rieng-tu">
-            Chính Sách Quyền Riêng Tư
-          </Link>
-          <Link className="font-medium hover:font-semibold" href="/dieu-khoan-dich-vu">
-            Điều Khoản Dịch Vụ
-          </Link>
+          <Footer.Title className="border-b-[1px] text-xs xl:text-sm">Chính Sách Bán Hàng</Footer.Title>
+          <div className="flex flex-col gap-2 text-xs font-medium xl:text-sm">
+            <Link className="hover:font-semibold hover:underline" href="/chinh-sach-bao-hanh">
+              Chính Sách Bảo Hành
+            </Link>
+            <Link className="hover:font-semibold hover:underline" href="/chinh-sach-quyen-rieng-tu">
+              Chính Sách Quyền Riêng Tư
+            </Link>
+            <Link className="hover:font-semibold hover:underline" href="/dieu-khoan-dich-vu">
+              Điều Khoản Dịch Vụ
+            </Link>
+          </div>
         </div>
         {/* 3 */}
         <div className="w-full">
-          <Footer.Title className="border-b-[1px]">Liên Hệ & Mua Hàng</Footer.Title>
+          <Footer.Title className="border-b-[1px] text-xs xl:text-sm">Liên Hệ & Mua Hàng</Footer.Title>
           <div className="mb-2 flex flex-row items-center justify-center gap-5 text-3xl">
+            {/* Facebook */}
             <Link title="Liên hệ qua Fanpage" target="_blank" href={fanpageUrl} className="rounded-full">
               <FaFacebook />
             </Link>
+            {/* Messenger */}
             <Link title="Liên hệ qua Messenger" target="_blank" href={messengerUrl} className="rounded-full">
               <FaFacebookMessenger />
             </Link>
+            {/* Zalo */}
             <Link
               title="Liên hệ qua Zalo"
               target="_blank"
@@ -107,22 +172,78 @@ export default function FooterFC() {
               Zalo
             </Link>
           </div>
-          <Link title="Liên hệ qua Hotline" className="flex items-center gap-2 font-medium hover:font-semibold" href={hotlineUrl}>
-            <FaPhone /> {contact}
-          </Link>
-          <Link target="_blank" className="flex items-center gap-2 font-medium hover:font-semibold" href={mailUrl}>
-            <IoMail /> {mail}
-          </Link>
-        </div>
-        {/* 4 */}
-        <div className="w-full">
-          <Footer.Title className="border-b-[1px]">Địa chỉ</Footer.Title>
-          <div className="flex w-full flex-col gap-2 font-medium">
-            <p className="flex items-start gap-2">
+          <div className="flex flex-col gap-2 text-xs font-medium xl:text-sm">
+            {/* Hotline */}
+            <Link
+              title="Liên hệ qua Hotline"
+              target="_blank"
+              className="flex items-center gap-2 font-medium hover:font-semibold hover:underline"
+              href={hotlineUrl}
+            >
+              <FaPhone /> {contact}
+            </Link>
+            {/* Mail */}
+            <Link
+              title="Liên hệ qua Email"
+              target="_blank"
+              className="flex items-center gap-2 font-medium hover:font-semibold hover:underline"
+              href={mailUrl}
+            >
+              <IoMail /> {mail}
+            </Link>
+            {/* Address */}
+            <Link title="Địa chỉ" target="_blank" className="flex items-center gap-2 font-medium hover:font-semibold hover:underline" href={ggMapUrl}>
               <FaMapLocationDot className="text-xl" />
               {address}
-            </p>
+            </Link>
           </div>
+        </div>
+        {/* Contack */}
+        <div className="col-span-full w-full md:col-span-2">
+          <Footer.Title className="border-b-[1px] text-xs xl:text-sm">Thông Tin Liên Hệ</Footer.Title>
+          <p className="mb-2 text-xs font-medium xl:text-sm">
+            Nếu bạn có bất kỳ câu hỏi nào về sản phẩm hoặc cần hỗ trợ, hãy để lại thông tin liên hệ. Chúng tôi sẽ liên hệ với bạn trong thời gian sớm
+            nhất.
+          </p>
+          <form ref={formRef} onSubmit={onSubmit} className="flex w-full flex-col items-center justify-center rounded-md bg-white px-2 py-5">
+            <div className="flex w-full flex-col gap-4" role="region" aria-label="Thông tin liên hệ">
+              <div className="flex w-full flex-col gap-4 xl:flex-row">
+                <div className="w-full" aria-label="Số điện thoại hoặc Zalo">
+                  <InputForm
+                    name="Số điện thoại:"
+                    type="number"
+                    placeholder="Nhập số điện thoại/Zalo"
+                    className="border border-gray-300 bg-white text-xs text-default focus:border-primary"
+                    classNameLabel="bg-white"
+                  />
+                </div>
+                <div className="w-full" aria-label="Tên của bạn">
+                  <InputForm
+                    name="Tên khách hàng:"
+                    type="text"
+                    className="border border-gray-300 bg-white text-xs text-default focus:border-primary"
+                    placeholder="Nhập tên của bạn"
+                    classNameLabel="bg-white"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-row items-center justify-center gap-2 text-primary">
+                <Textarea
+                  name="Lời nhắn:"
+                  className="min-h-[40px] w-full rounded-md border border-gray-600 bg-white p-2 text-sm text-default placeholder-gray-400 focus:border-primary focus:outline-none focus:ring-primary"
+                  placeholder="Hãy để lại lời nhắn tại đây..."
+                />
+                <Button
+                  aria-label="Nút: Gửi"
+                  className="max-w-[100px] rounded-full border border-primary bg-primary px-3 py-1 text-sm font-medium text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 hover:border-primary hover:bg-white hover:text-primary"
+                  type="submit"
+                >
+                  <FaPaperPlane className="text-2xl" />
+                </Button>
+              </div>
+              {result && <span className="py-2 text-red-500">{result}</span>}
+            </div>
+          </form>
         </div>
       </Footer>
       <div className="border-t-[1px] border-gray-600 bg-black py-2 text-center text-white">
