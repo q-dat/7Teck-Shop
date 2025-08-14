@@ -1,4 +1,4 @@
-import { ITabletCatalog } from "../../catalogs/tablet-catalog/tablet-catalog";
+import { ITabletCatalog } from '../../catalogs/tablet-catalog/tablet-catalog';
 
 export interface ITablet {
   _id: string;
@@ -15,4 +15,9 @@ export interface ITablet {
   tablet_note?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface GroupedTablet {
+  catalog: ITabletCatalog;
+  variants: ITablet[];
 }

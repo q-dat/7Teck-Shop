@@ -1,6 +1,32 @@
 import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
-import { ITablet } from '@/types/type/products/tablet/tablet';
+import { GroupedTablet, ITablet } from '@/types/type/products/tablet/tablet';
+
+export async function getNewGroupedTablets(name?: string): Promise<GroupedTablet[]> {
+  try {
+    const searchParams = new URLSearchParams();
+    searchParams.set('status', '0');
+    if (name) searchParams.set('name', name);
+    const apiUrl = `${getServerApiUrl(`/api/grouped-tablets?${searchParams.toString()}`)}`;
+    const res = await fetch(apiUrl, {
+      cache: 'force-cache',
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+    if (!data || typeof data !== 'object' || !Array.isArray(data.groupedTablets)) {
+      console.warn('Dữ liệu groupedTablets không hợp lệ:', data);
+      return [];
+    }
+
+    return data.groupedTablets;
+  } catch (error) {
+    console.error('Lỗi khi gọi API groupedTablets:', error);
+    return [];
+  }
+}
 
 export async function getTabletsByCatalogId(catalogID: string): Promise<ITablet[]> {
   try {

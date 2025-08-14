@@ -1,7 +1,32 @@
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { logCacheStatus } from '@/utils/logCacheStatus';
-import { IWindows } from '@/types/type/products/windows/windows';
+import { GroupedWindows, IWindows } from '@/types/type/products/windows/windows';
 
+export async function getNewGroupedWindows(name?: string): Promise<GroupedWindows[]> {
+  try {
+    const searchParams = new URLSearchParams();
+    searchParams.set('status', '0');
+    if (name) searchParams.set('name', name);
+    const apiUrl = `${getServerApiUrl(`/api/grouped-laptop-windows?${searchParams.toString()}`)}`;
+    const res = await fetch(apiUrl, {
+      cache: 'force-cache',
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+    if (!data || typeof data !== 'object' || !Array.isArray(data.groupedWindows)) {
+      console.warn('Dữ liệu groupedWindows không hợp lệ:', data);
+      return [];
+    }
+
+    return data.groupedWindows;
+  } catch (error) {
+    console.error('Lỗi khi gọi API groupedWindows:', error);
+    return [];
+  }
+}
 export async function getWindowsByCatalogId(catalogID: string): Promise<IWindows[]> {
   try {
     const query = `?catalogID=${catalogID}`;

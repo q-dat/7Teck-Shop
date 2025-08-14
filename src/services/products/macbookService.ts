@@ -1,7 +1,33 @@
 import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
-import { IMacbook } from '../../types/type/products/macbook/macbook';
+import { GroupedMacbook, IMacbook } from '../../types/type/products/macbook/macbook';
 
+export async function getNewGroupedMacbook(name?: string): Promise<GroupedMacbook[]> {
+  try {
+    const searchParams = new URLSearchParams();
+    searchParams.set('status', '0');
+    if (name) searchParams.set('name', name);
+    const apiUrl = `${getServerApiUrl(`/api/grouped-laptop-macbook?${searchParams.toString()}`)}`;
+    const res = await fetch(apiUrl, {
+      cache: 'force-cache',
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+
+    if (!data || typeof data !== 'object' || !Array.isArray(data.groupedMacbook)) {
+      console.warn('Dữ liệu groupedMacbook không hợp lệ:', data);
+      return [];
+    }
+
+    return data.groupedMacbook;
+  } catch (error) {
+    console.error('Lỗi khi gọi API groupedMacbook:', error);
+    return [];
+  }
+}
 export async function getMacbookByCatalogId(catalogID: string): Promise<IMacbook[]> {
   try {
     const query = `?catalogID=${catalogID}`;

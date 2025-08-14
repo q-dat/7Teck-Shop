@@ -16,3 +16,7 @@ export interface IWindows {
   createdAt: string;
   updatedAt: string;
 }
+export interface GroupedWindows {
+  catalog: IWindowsCatalog;
+  variants: IWindows[];
+}

@@ -16,3 +16,8 @@ export interface IMacbook {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface GroupedMacbook {
+  catalog: IMacbookCatalog;
+  variants: IMacbook[];
+}
