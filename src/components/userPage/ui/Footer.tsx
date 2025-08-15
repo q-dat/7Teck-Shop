@@ -65,7 +65,7 @@ export default function FooterFC() {
             </Link>
             <Link className="hover:font-semibold hover:underline" href="/thiet-bi-da-qua-su-dung">
               Thiết Bị Cũ
-              <sup className="ml-1 rounded-full bg-orange-700 px-1 py-0.5 text-[8px] font-semibold text-default shadow-md">USED</sup>
+              <sup className="ml-1 rounded-full bg-yellow-400 px-1 py-0.5 text-[8px] font-semibold text-default shadow-md">USED</sup>
             </Link>
             <Link className="hover:font-semibold hover:underline" href="/bang-gia-thu-mua">
               Bảng Giá Thu Mua
@@ -138,7 +138,14 @@ export default function FooterFC() {
         {/* Logo */}
         <div className="w-full text-xs leading-relaxed text-white xl:text-sm">
           <p className="text-white">
-            <Image loading="lazy" src={images.Logo} alt="LOGO" width={70} height={70} className="float-left mr-2 h-[70px] w-[70px] object-contain" />
+            <Image
+              loading="lazy"
+              src={images.Logo}
+              alt="LOGO"
+              width={100}
+              height={100}
+              className="float-left mr-2 h-[100px] w-[100px] object-contain"
+            />
             <i>
               7Teck là đơn vị chuyên cung cấp các sản phẩm công nghệ chính hãng, từ điện thoại, máy tính bảng đến laptop và phụ kiện. Chúng tôi cam
               kết mang đến trải nghiệm mua sắm nhanh chóng, uy tín cùng dịch vụ hậu mãi chuyên nghiệp.
