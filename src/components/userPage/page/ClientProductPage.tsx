@@ -11,7 +11,7 @@ import Image from 'next/image';
 import { Button } from 'react-daisyui';
 import imageRepresent from '../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
-import { FaThLarge } from 'react-icons/fa';
+import { FaBoxOpen, FaThLarge } from 'react-icons/fa';
 
 // Interface
 interface ProductBase {
@@ -123,7 +123,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
 
         {/* Brand filter buttons */}
         <div className="my-2 px-2 xl:px-desktop-padding">
-          {brands.length > 0 && (
+          {currentProducts.length !== 0 && (
             <div className="flex flex-wrap gap-1">
               <Button
                 size="sm"
@@ -155,18 +155,25 @@ export default function ClientProductPage({ products, title, basePath, brands = 
               {loading ? (
                 <ProductPlaceholders count={12} />
               ) : currentProducts.length === 0 ? (
-                <div className="col-span-full flex w-full items-center justify-center py-10">
-                  <div className="max-w-3xl rounded-xl border border-dashed border-secondary bg-white px-6 py-8 text-center shadow-lg">
-                    <h2 className="mb-3 text-xl font-semibold text-primary md:text-2xl">
-                      Không tìm thấy sản phẩm <span className="text-red-500">NEW SEAL</span>
+                <div className="col-span-full flex w-full items-center justify-center p-2">
+                  <div className="max-w-xl rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center shadow-md">
+                    <div className="mb-5 flex justify-center text-secondary">
+                      <FaBoxOpen className="text-6xl" />
+                    </div>
+                    {/* Tiêu đề */}
+                    <h2 className="mb-3 text-lg font-semibold text-gray-800 md:text-xl">
+                      Không tìm thấy sản phẩm <br />
+                      <span className="text-primary">NEW SEAL</span>
                     </h2>
-                    <p className="mb-5 text-sm text-gray-600 md:text-base xl:text-lg">
+                    {/* Nội dung */}
+                    <p className="mb-6 text-sm text-gray-600 md:text-base">
                       Hiện tại danh mục <strong>New Seal</strong> chưa có sản phẩm nào được cập nhật.
                       <br />
                       Quý khách vui lòng tham khảo thêm các thiết bị đã qua sử dụng với chất lượng <strong>Like New</strong> tại mục bên dưới:
                     </p>
+                    {/* Nút CTA */}
                     <Link href="/thiet-bi-da-qua-su-dung">
-                      <span className="inline-block rounded-lg bg-primary px-5 py-3 text-sm font-bold uppercase text-white transition-all hover:bg-primary/80 md:text-base">
+                      <span className="inline-block rounded-lg bg-primary p-3 text-xs font-bold uppercase text-white transition-all hover:bg-primary/80 md:text-base xl:px-5 xl:py-3 xl:text-sm">
                         Xem thiết bị đã qua sử dụng
                       </span>
                     </Link>
