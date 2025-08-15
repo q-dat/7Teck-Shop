@@ -4,9 +4,9 @@ import ClientNewsPage from './ClientNewsPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
 export default async function NewsPage() {
-  const posts = await getAllNews();
-  if (!posts) {
+  const news = await getAllNews();
+  if (!news) {
     return <ErrorLoading />;
   }
-  return <ClientNewsPage posts={posts} />;
+  return <ClientNewsPage news={news} />;
 }

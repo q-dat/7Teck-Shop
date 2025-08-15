@@ -4,9 +4,9 @@ import ClientTipsAndTricksPage from './ClientTipsAndTricksPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
 export default async function TipsAndTricksPage() {
-  const posts = await getAllTipsAndTricks();
-  if (!posts) {
+  const tricks = await getAllTipsAndTricks();
+  if (!tricks) {
     return <ErrorLoading />;
   }
-  return <ClientTipsAndTricksPage posts={posts} />;
+  return <ClientTipsAndTricksPage tricks={tricks} />;
 }
