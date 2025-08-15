@@ -12,18 +12,9 @@ import React, { useEffect, useState } from 'react';
 export default function ClientTipsAndTricksPage({ posts }: { posts: IPost[] }) {
   const [loading, setLoading] = useState(true);
 
-  const tricks = posts?.filter((post) => post?.catalog.toLowerCase().includes('mẹo'));
   useEffect(() => {
     scrollToTopInstantly();
-    if (posts.length === 0) {
-      const fetchData = async () => {
-        setLoading(true);
-      };
-
-      fetchData();
-    } else {
-      setLoading(false);
-    }
+    setLoading(false);
   }, [posts]);
   //
   const router = useRouter();
@@ -56,7 +47,7 @@ export default function ClientTipsAndTricksPage({ posts }: { posts: IPost[] }) {
         ) : (
           <div className="mt-5 px-2 xl:px-desktop-padding">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5">
-              {tricks.map((post) => (
+              {posts.map((post) => (
                 <div
                   key={post?._id}
                   className="relative cursor-pointer rounded border border-gray-50 bg-white p-2 shadow-inner hover:shadow-lg"

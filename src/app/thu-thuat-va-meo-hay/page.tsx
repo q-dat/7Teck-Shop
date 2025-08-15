@@ -1,10 +1,10 @@
 import React from 'react';
-import { getAllPosts } from '@/services/postService';
+import { getAllTipsAndTricks } from '@/services/postService';
 import ClientTipsAndTricksPage from './ClientTipsAndTricksPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
 export default async function TipsAndTricksPage() {
-  const posts = await getAllPosts();
+  const posts = await getAllTipsAndTricks();
   if (!posts) {
     return <ErrorLoading />;
   }

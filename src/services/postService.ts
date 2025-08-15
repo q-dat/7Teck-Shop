@@ -1,9 +1,10 @@
 import { IPost } from '@/types/type/products/post/post';
 import { getServerApiUrl } from '../../hooks/useApiUrl';
 
-export async function getAllPosts(): Promise<IPost[]> {
+export async function getPostsByCatalog(catalog: string): Promise<IPost[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/posts')}`;
+    const query = `?catalog=${catalog}`;
+    const apiUrl = `${getServerApiUrl(`/api/posts${query}`)}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
@@ -12,7 +13,7 @@ export async function getAllPosts(): Promise<IPost[]> {
     if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
 
     const data = await res.json();
-    // console.log('Post API response:', data); // Debug response
+    // console.log('Post API response:', data, apiUrl); // Debug response
 
     if (!data || typeof data !== 'object' || !Array.isArray(data.posts)) {
       console.warn('Dữ liệu API Post không hợp lệ:', data);
@@ -24,6 +25,12 @@ export async function getAllPosts(): Promise<IPost[]> {
     console.error('Lỗi khi lấy danh sách Posts:', error);
     return [];
   }
+}
+export async function getAllNews(): Promise<IPost[]> {
+  return getPostsByCatalog('tin');
+}
+export async function getAllTipsAndTricks(): Promise<IPost[]> {
+  return getPostsByCatalog('mẹo');
 }
 
 export async function getPostById(id: string): Promise<IPost | null> {

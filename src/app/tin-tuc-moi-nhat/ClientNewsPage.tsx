@@ -12,19 +12,9 @@ import Image from 'next/image';
 export default function ClientNewsPage({ posts }: { posts: IPost[] }) {
   const [loading, setLoading] = useState(true);
 
-  const news = posts?.filter((post) => post?.catalog.toLowerCase().includes('tin'));
-
   useEffect(() => {
     scrollToTopInstantly();
-    if (posts.length === 0) {
-      const fetchData = async () => {
-        setLoading(true);
-      };
-
-      fetchData();
-    } else {
-      setLoading(false);
-    }
+    setLoading(false);
   }, [posts]);
 
   // Handle Click Post To Post Detail
@@ -57,7 +47,7 @@ export default function ClientNewsPage({ posts }: { posts: IPost[] }) {
         ) : (
           <div className="mt-5 px-2 xl:px-desktop-padding">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5">
-              {news.map((post) => (
+              {posts.map((post) => (
                 <div
                   key={post?._id}
                   className="relative cursor-pointer rounded border border-gray-50 bg-white p-2 shadow-inner hover:shadow-lg"
