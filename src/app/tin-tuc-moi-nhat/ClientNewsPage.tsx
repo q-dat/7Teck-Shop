@@ -24,6 +24,12 @@ export default function ClientNewsPage({ posts }: { posts: IPost[] }) {
     router.push(`/tin-tuc/${titleSlug}/${post._id}`);
   };
 
+  if (!posts || posts.length === 0) return null;
+
+  const featuredPost = posts[0];
+  const secondaryPosts = posts.slice(1, 5);
+  const remainingPosts = posts.slice(5);
+
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
@@ -42,35 +48,71 @@ export default function ClientNewsPage({ posts }: { posts: IPost[] }) {
             </li>
           </ul>
         </div>
+
         {loading ? (
-          <>Đang tải...</>
+          <div className="flex justify-center py-20">Đang tải...</div>
         ) : (
-          <div className="mt-5 px-2 xl:px-desktop-padding">
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5">
-              {posts.map((post) => (
-                <div
-                  key={post?._id}
-                  className="relative cursor-pointer rounded border border-gray-50 bg-white p-2 shadow-inner hover:shadow-lg"
-                  onClick={() => handlePostClick(post)}
-                >
-                  <p className="absolute left-1 top-1 z-10 rounded-sm bg-primary px-2 text-[12px] text-white">{post?.catalog}</p>
+          <div className="mt-5 space-y-8 px-2 xl:px-desktop-padding">
+            {/* Featured Section */}
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+              {/* Featured big */}
+              <div className="group relative cursor-pointer overflow-hidden rounded lg:col-span-2" onClick={() => handlePostClick(featuredPost)}>
+                <Image
+                  src={featuredPost.imageUrl}
+                  alt={featuredPost.title}
+                  width={800}
+                  height={500}
+                  className="h-[300px] w-full object-cover transition-transform duration-500 group-hover:scale-105 lg:h-[400px]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                <div className="absolute bottom-4 left-4 text-white">
+                  <span className="rounded bg-primary px-2 py-1 text-xs">{featuredPost.catalog}</span>
+                  <h2 className="mt-2 text-2xl font-bold">{featuredPost.title}</h2>
+                  <p className="mt-1 text-sm">{new Date(featuredPost.updatedAt).toLocaleDateString('vi-VN')}</p>
+                </div>
+              </div>
+
+              {/* Side list */}
+              <div className="space-y-4">
+                {secondaryPosts.map((post) => (
+                  <div key={post._id} className="group flex cursor-pointer gap-3" onClick={() => handlePostClick(post)}>
+                    <Image
+                      src={post.imageUrl}
+                      alt={post.title}
+                      width={120}
+                      height={80}
+                      className="h-[80px] w-[120px] flex-shrink-0 rounded object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div>
+                      <h3 className="line-clamp-2 text-sm font-semibold group-hover:text-primary">{post.title}</h3>
+                      <p className="mt-1 text-xs text-primary">
+                        {new Date(post.updatedAt).toLocaleDateString('vi-VN')} (<TimeAgo date={post.updatedAt} />)
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Remaining posts grid */}
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {remainingPosts.map((post) => (
+                <div key={post._id} className="group cursor-pointer overflow-hidden rounded bg-white shadow-sm" onClick={() => handlePostClick(post)}>
                   <div className="overflow-hidden">
                     <Image
-                      height={300}
+                      src={post.imageUrl}
+                      alt={post.title}
                       width={300}
-                      loading="lazy"
-                      src={post?.imageUrl}
-                      alt="Ảnh đại diện"
-                      className="h-auto w-full rounded-sm border transition-transform duration-1000 ease-in-out hover:scale-110"
+                      height={200}
+                      className="h-[180px] w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </div>
-                  <p className="line-clamp-3 py-1 text-base text-black">{post?.title}</p>
-                  <hr />
-                  <p className="pt-2 text-[12px] text-primary">
-                    {new Date(post?.updatedAt).toLocaleDateString('vi-VN')}
-                    &nbsp;(
-                    <TimeAgo date={post?.updatedAt} />)
-                  </p>
+                  <div className="p-3">
+                    <h4 className="line-clamp-2 text-sm font-semibold group-hover:text-primary">{post.title}</h4>
+                    <p className="mt-2 text-xs text-primary">
+                      {new Date(post.updatedAt).toLocaleDateString('vi-VN')} (<TimeAgo date={post.updatedAt} />)
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
