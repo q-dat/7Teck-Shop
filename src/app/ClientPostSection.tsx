@@ -11,15 +11,14 @@ import { IPost } from '@/types/type/products/post/post';
 import Image from 'next/image';
 
 interface ClientPostSectionProps {
-  posts: IPost[];
+  news: IPost[];
+  tricks: IPost[];
 }
 
 const urlNews = '/tin-tuc-moi-nhat';
 const urlTipsAndTricksPage = '/thu-thuat-va-meo-hay';
 
-export default function ClientPostSection({ posts }: ClientPostSectionProps) {
-  const news = posts?.filter((post) => post?.catalog.toLowerCase().includes('tin'));
-  const tricks = posts?.filter((post) => post?.catalog.toLowerCase().includes('mẹo'));
+export default function ClientPostSection({ news, tricks }: ClientPostSectionProps) {
   const router = useRouter();
   const handlePostClick = (post: (typeof news)[0]) => {
     const titleSlug = encodeURIComponent(slugify(post?.title));
@@ -38,9 +37,9 @@ export default function ClientPostSection({ posts }: ClientPostSectionProps) {
         {news.length > 0 && (
           <section role="region" aria-label="Bản tin mới nhất" className="mb-12">
             <div className="mb-6 flex flex-row items-center justify-between">
-              <h1 className="text-2xl font-bold tracking-tight text-white">Tin Công Nghệ</h1>
+              <h1 className="text-lg font-bold tracking-tight text-white xl:text-2xl">Tin Công Nghệ</h1>
               <Link href={urlNews}>
-                <Button role="button" size="sm" className="flex items-center gap-1 bg-transparent text-white hover:bg-white/10">
+                <Button role="button" size="sm" className="flex items-center gap-1 bg-transparent text-xs text-white hover:bg-white/10 xl:text-sm">
                   Xem Thêm
                   <IoIosArrowForward className="h-4 w-4" />
                 </Button>
@@ -50,7 +49,7 @@ export default function ClientPostSection({ posts }: ClientPostSectionProps) {
               {news.slice(0, 4).map((post) => (
                 <article
                   key={post?._id}
-                  className="group relative cursor-pointer overflow-hidden rounded-lg bg-white/90 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  className="group relative cursor-pointer overflow-hidden rounded-md bg-white/90 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                   onClick={() => handlePostClick(post)}
                 >
                   <div className="relative aspect-[4/3] w-full">
@@ -61,10 +60,12 @@ export default function ClientPostSection({ posts }: ClientPostSectionProps) {
                       alt={post?.title}
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5"></div>
+                    <div className="absolute inset-0 bg-default/10 group-hover:bg-white/5"></div>
                   </div>
-                  <div className="p-4">
-                    <h2 className="line-clamp-4 text-sm font-semibold text-gray-900 hover:text-blue-600">{post?.title}</h2>
+                  <div className="p-2">
+                    <h2 className="line-clamp-3 text-xs font-medium text-gray-900 group-hover:text-primary xl:line-clamp-2 xl:text-sm">
+                      {post?.title}
+                    </h2>
                     <p className="mt-2 text-xs text-gray-500">
                       {new Date(post?.updatedAt).toLocaleDateString('vi-VN')} (
                       <TimeAgo date={post?.updatedAt} />)
@@ -79,9 +80,9 @@ export default function ClientPostSection({ posts }: ClientPostSectionProps) {
         {tricks.length > 0 && (
           <section role="region" aria-label="Thủ thuật và mẹo hay">
             <div className="mb-6 flex flex-row items-center justify-between">
-              <h1 className="text-2xl font-bold tracking-tight text-white">Thủ Thuật - Mẹo Hay</h1>
+              <h1 className="text-lg font-bold tracking-tight text-white xl:text-2xl">Thủ Thuật - Mẹo Hay</h1>
               <Link href={urlTipsAndTricksPage}>
-                <Button role="button" size="sm" className="flex items-center gap-1 bg-transparent text-white hover:bg-white/10">
+                <Button role="button" size="sm" className="flex items-center gap-1 bg-transparent text-xs text-white hover:bg-white/10 xl:text-sm">
                   Xem Thêm
                   <IoIosArrowForward className="h-4 w-4" />
                 </Button>
@@ -91,7 +92,7 @@ export default function ClientPostSection({ posts }: ClientPostSectionProps) {
               {tricks.slice(0, 4).map((post) => (
                 <article
                   key={post?._id}
-                  className="group relative cursor-pointer overflow-hidden rounded-lg bg-white/90 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  className="group relative cursor-pointer overflow-hidden rounded-md bg-white/90 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                   onClick={() => handlePostClick(post)}
                 >
                   <div className="relative aspect-[4/3] w-full">
@@ -102,10 +103,10 @@ export default function ClientPostSection({ posts }: ClientPostSectionProps) {
                       alt={post?.title}
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5"></div>
+                    <div className="absolute inset-0 bg-default/10 group-hover:bg-white/5"></div>
                   </div>
-                  <div className="p-4">
-                    <h2 className="line-clamp-3 text-sm font-semibold text-gray-900 hover:text-blue-600">{post?.title}</h2>
+                  <div className="p-2">
+                    <h2 className="line-clamp-3 text-sm font-semibold text-gray-900 group-hover:text-primary">{post?.title}</h2>
                     <p className="mt-2 text-xs text-gray-500">
                       {new Date(post?.updatedAt).toLocaleDateString('vi-VN')} (
                       <TimeAgo date={post?.updatedAt} />)

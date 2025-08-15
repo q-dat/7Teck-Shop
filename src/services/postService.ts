@@ -32,7 +32,9 @@ export async function getAllNews(): Promise<IPost[]> {
 export async function getAllTipsAndTricks(): Promise<IPost[]> {
   return getPostsByCatalog('mẹo');
 }
-
+export async function getAllPosts(): Promise<IPost[]> {
+  return getPostsByCatalog('');
+}
 export async function getPostById(id: string): Promise<IPost | null> {
   try {
     const apiUrl = getServerApiUrl(`/api/post/${id}`);

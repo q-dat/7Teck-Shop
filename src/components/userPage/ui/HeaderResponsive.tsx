@@ -248,8 +248,8 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                             href={item.link}
                             className={`btn relative mt-2 flex w-full flex-row items-center justify-start rounded-none border-none ${
                               item.name === activeItem
-                                ? 'bg-primary bg-opacity-30 text-sm font-bold text-primary'
-                                : 'border-none bg-primary bg-opacity-10 text-sm font-light text-black shadow-headerMenu'
+                                ? 'bg-primary bg-opacity-30 text-xs font-bold text-primary sm:text-sm'
+                                : 'border-none bg-primary bg-opacity-10 text-xs font-light text-black shadow-headerMenu sm:text-sm'
                             } `}
                           >
                             <>

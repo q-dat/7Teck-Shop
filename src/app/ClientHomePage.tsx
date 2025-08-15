@@ -60,10 +60,11 @@ interface ClientHomePageProps {
   macbook: IMacbook[];
   tablets: ITablet[];
   windows: IWindows[];
-  posts: IPost[];
+  news: IPost[];
+  tricks: IPost[];
 }
 
-export default function ClientHomePage({ mostViewedPhones, tablets, macbook, windows, posts }: ClientHomePageProps) {
+export default function ClientHomePage({ mostViewedPhones, tablets, macbook, windows, news, tricks }: ClientHomePageProps) {
   const [loading, setLoading] = useState(true);
 
   // Kiểm tra trạng thái tải dựa trên mostViewedPhones
@@ -176,7 +177,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
           ))}
         </div>
         {/* Phần bài viết */}
-        <ClientPostSection posts={posts} />
+        <ClientPostSection news={news}  tricks={tricks} />
       </div>
     </div>
   );

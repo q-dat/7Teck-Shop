@@ -153,7 +153,7 @@ export default function FooterFC() {
           </p>
         </div>
       </Footer>
-      <div className="border-t-[1px] border-gray-600 bg-black py-2 text-center text-white">
+      <div className="border-t-[1px] border-gray-600 bg-black py-2 text-center text-xs text-white">
         {copyright}
         {/* Designed & developed by Điểu Quốc Đạt. */}
       </div>

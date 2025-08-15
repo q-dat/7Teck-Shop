@@ -10,4 +10,4 @@ export const contact = '0333 133 050';
 export const ggMapUrl = 'https://maps.app.goo.gl/tGKhMfAu9be2cYZ38';
 export const igUrl = 'https://www.instagram.com/';
 //
-export const copyright = 'Copyright © 2024-2025 7Teck';
+export const copyright = 'Copyright © 2025 7Teck';
