@@ -101,7 +101,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                             <FaRegEye />
                             <p>{phone?.view}</p>
                           </div>
-                          <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
+                          <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-primary">
                             Điện Thoại {phone?.name}
                           </p>
                         </Link>

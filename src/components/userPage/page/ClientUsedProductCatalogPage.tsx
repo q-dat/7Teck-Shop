@@ -86,7 +86,7 @@ export default function ClientUsedProductCatalogPage({ data, title, namePrefix, 
                       {product?.productCount > 99 ? '99+' : product?.productCount} {' Sản phẩm'}
                     </p>
                     <Link href={`/${basePath}/${slug}`}>
-                      <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
+                      <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-primary">
                         {namePrefix} {product.name}
                       </p>
                     </Link>

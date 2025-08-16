@@ -93,7 +93,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                             <FaRegEye />
                             <p>{product.view}</p>
                           </div>
-                          <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
+                          <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-primary">
                             {title} {product.name}
                           </p>
                         </Link>
