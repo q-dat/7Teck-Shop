@@ -51,7 +51,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
               height={1000}
               className="h-full w-full object-contain"
               placeholder="blur"
-              blurDataURL={imageRepresent.Fallback}
+              blurDataURL={images.Popup}
               onError={() => handleImageError(images.Popup)}
             />
           </div>
