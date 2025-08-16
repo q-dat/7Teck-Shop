@@ -47,10 +47,12 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
             <Image
               src={images.Popup}
               alt="Banner"
-              onError={() => handleImageError(images?.Popup)}
               width={1000}
               height={1000}
               className="h-full w-full object-contain"
+              placeholder="blur"
+              blurDataURL={imageRepresent.Fallback}
+              onError={() => handleImageError(images.Popup)}
             />
           </div>
         )}
