@@ -144,7 +144,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                         key={index}
                         src={thumb}
                         alt="Ảnh thu nhỏ"
-                        className={`h-[70px] w-[70px] cursor-pointer rounded-md border object-cover ${
+                        className={`h-[70px] w-[70px] cursor-pointer rounded-md border object-contain ${
                           selectedImage === thumb ? 'border-2 border-dashed border-primary' : ''
                         }`}
                         onClick={() => handleThumbnailClick(scrollRef, thumb, index, setSelectedImage)}
