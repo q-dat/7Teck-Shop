@@ -123,7 +123,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
 
         {/* Brand filter buttons */}
         <div className="my-2 px-2 xl:px-desktop-padding">
-          {currentProducts.length !== 0 && (
+          {/* {currentProducts.length !== 0 && ( */}
             <div className="flex flex-wrap gap-1">
               <Button
                 size="sm"
@@ -145,7 +145,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
               ))}
               <hr />
             </div>
-          )}
+          {/* )} */}
           {/*  */}
         </div>
         <div className="mt-4 space-y-10 px-2 xl:px-desktop-padding">

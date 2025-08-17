@@ -32,7 +32,7 @@ export async function getNewGroupedPhones(name?: string): Promise<GroupedPhone[]
     const searchParams = new URLSearchParams();
     searchParams.set('status', '0');
     if (name) searchParams.set('name', name);
-    const apiUrl = `${getServerApiUrl(`/api/grouped-phones?${searchParams.toString()}`)}`;
+    const apiUrl = `${getServerApiUrl(`/api/grouped-phones?${searchParams}`)}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
@@ -41,6 +41,8 @@ export async function getNewGroupedPhones(name?: string): Promise<GroupedPhone[]
     if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
 
     const data = await res.json();
+    console.log('Grouped Phones API response:', data); // Debug response
+    console.log('Grouped Phones API URL:', apiUrl); // Debug URL
     if (!data || typeof data !== 'object' || !Array.isArray(data.groupedPhones)) {
       console.warn('Dữ liệu groupedPhones không hợp lệ:', data);
       return [];
