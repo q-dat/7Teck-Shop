@@ -2,31 +2,68 @@ import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { logCacheStatus } from '@/utils/logCacheStatus';
 import { GroupedWindows, IWindows } from '@/types/type/products/windows/windows';
 
+type CacheEntryWindows = {
+  data: GroupedWindows[];
+  timestamp: number;
+};
+
+// Cache server-side riêng cho Windows
+const windowsCache: Record<string, CacheEntryWindows> = {};
+
+const WINDOWS_CACHE_CLEANUP_INTERVAL = 60_000; // 1 phút
+const WINDOWS_CACHE_MAX_AGE = 5 * 60_000; // 5 phút
+
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const key in windowsCache) {
+      if (now - windowsCache[key].timestamp > WINDOWS_CACHE_MAX_AGE) {
+        delete windowsCache[key];
+      }
+    }
+  }, WINDOWS_CACHE_CLEANUP_INTERVAL);
+}
+
 export async function getNewGroupedWindows(name?: string): Promise<GroupedWindows[]> {
   try {
     const searchParams = new URLSearchParams();
     searchParams.set('status', '0');
     if (name) searchParams.set('name', name);
+
     const apiUrl = `${getServerApiUrl(`/api/grouped-laptop-windows?${searchParams.toString()}`)}`;
-    const res = await fetch(apiUrl, {
-      cache: 'force-cache',
-      next: { revalidate: 60 },
-    });
+    const cacheKey = apiUrl;
+    const now = Date.now();
+
+    // Kiểm tra cache 60s
+    const cached = windowsCache[cacheKey];
+    if (cached && now - cached.timestamp < 60_000) {
+      return cached.data;
+    }
+
+    // Fetch API mới
+    const res = await fetch(apiUrl, { next: { revalidate: 60 } });
 
     if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
 
     const data = await res.json();
     if (!data || typeof data !== 'object' || !Array.isArray(data.groupedWindows)) {
       console.warn('Dữ liệu groupedWindows không hợp lệ:', data);
-      return [];
+      return cached?.data || [];
     }
+
+    // Lưu cache mới
+    windowsCache[cacheKey] = { data: data.groupedWindows, timestamp: now };
 
     return data.groupedWindows;
   } catch (error) {
     console.error('Lỗi khi gọi API groupedWindows:', error);
-    return [];
+
+    // Fallback cache nếu API lỗi
+    const fallbackCache = windowsCache[`${getServerApiUrl(`/api/grouped-laptop-windows?status=0${name ? `&name=${name}` : ''}`)}`];
+    return fallbackCache?.data || [];
   }
 }
+
 export async function getWindowsByCatalogId(catalogID: string): Promise<IWindows[]> {
   try {
     const query = `?catalogID=${catalogID}`;

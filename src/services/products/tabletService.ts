@@ -2,29 +2,65 @@ import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { GroupedTablet, ITablet } from '@/types/type/products/tablet/tablet';
 
+type CacheEntryTablet = {
+  data: GroupedTablet[];
+  timestamp: number;
+};
+
+const tabletCache: Record<string, CacheEntryTablet> = {};
+
+const TABLET_CACHE_CLEANUP_INTERVAL = 60_000; // 1 phút
+const TABLET_CACHE_MAX_AGE = 5 * 60_000; // 5 phút
+
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const key in tabletCache) {
+      if (now - tabletCache[key].timestamp > TABLET_CACHE_MAX_AGE) {
+        delete tabletCache[key];
+      }
+    }
+  }, TABLET_CACHE_CLEANUP_INTERVAL);
+}
+
 export async function getNewGroupedTablets(name?: string): Promise<GroupedTablet[]> {
   try {
     const searchParams = new URLSearchParams();
     searchParams.set('status', '0');
     if (name) searchParams.set('name', name);
+
     const apiUrl = `${getServerApiUrl(`/api/grouped-tablets?${searchParams.toString()}`)}`;
-    const res = await fetch(apiUrl, {
-      cache: 'force-cache',
-      next: { revalidate: 60 },
-    });
+    const cacheKey = apiUrl;
+
+    const now = Date.now();
+
+    // Kiểm tra cache 60s
+    const cached = tabletCache[cacheKey];
+    if (cached && now - cached.timestamp < 60_000) {
+      return cached.data;
+    }
+
+    // Fetch API mới
+    const res = await fetch(apiUrl, { next: { revalidate: 60 } });
 
     if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
 
     const data = await res.json();
     if (!data || typeof data !== 'object' || !Array.isArray(data.groupedTablets)) {
       console.warn('Dữ liệu groupedTablets không hợp lệ:', data);
-      return [];
+      return cached?.data || [];
     }
+
+    // Lưu cache mới
+    tabletCache[cacheKey] = { data: data.groupedTablets, timestamp: now };
 
     return data.groupedTablets;
   } catch (error) {
     console.error('Lỗi khi gọi API groupedTablets:', error);
-    return [];
+
+    // Fallback cache
+    const fallbackCache = tabletCache[`${getServerApiUrl(`/api/grouped-tablets?status=0${name ? `&name=${name}` : ''}`)}`];
+    return fallbackCache?.data || [];
   }
 }
 
