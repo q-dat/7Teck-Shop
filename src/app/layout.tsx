@@ -10,6 +10,7 @@ import { homeMetadata } from '@/metadata/homeMetadata';
 // import NotificationPopup from '@/components/userPage/NotificationPopup';
 import { Inter, Roboto_Mono } from 'next/font/google';
 import { PreloadSearch } from '@/components/userPage/PreloadSearch';
+import CustomCursor from '@/components/userPage/CustomCursor';
 
 const geistSans = Inter({
   variable: '--font-geist-sans',
@@ -50,17 +51,18 @@ export default function RootLayout({
                   const iframe = document.querySelector('iframe[src*="news.google.com"]');
                   if (iframe) {
                     iframe.setAttribute('title', 'Dịch vụ đăng ký Google');
-                  }
-                });
-              } catch (error) {
-                console.error('SWG initialization failed:', error);
-              }
-            })();
-          `}
+                    }
+                    });
+                    } catch (error) {
+                      console.error('SWG initialization failed:', error);
+                      }
+                      })();
+                      `}
         </script> */}
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ErrorBoundary>
+          <CustomCursor />
           <ToastContainer style={{ marginTop: '50px' }} />
           <div className="flex min-h-screen flex-col bg-primary-white xl:pt-[130px]">
             <Header />

@@ -2,7 +2,7 @@
 import { useScroll } from '@/hooks/useScroll';
 import { slugify } from '@/utils/slugify';
 import Link from 'next/link';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from 'react-daisyui';
 import { FaRegEye } from 'react-icons/fa';
 import { IoIosArrowForward } from 'react-icons/io';
@@ -14,6 +14,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import { IPhone } from '@/types/type/products/phone/phone';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { images } from '../../public/images';
+import Tilt from 'react-parallax-tilt';
 
 interface ClientPhoneProps {
   mostViewedPhones: IPhone[];
@@ -26,6 +27,30 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
   //  handleImageError
   const fallbackSrc = imageRepresent.Fallback;
   const { handleImageError, isImageErrored } = useImageErrorHandler();
+
+  //  handle tilt effect
+  const [tiltX, setTiltX] = useState(0);
+  const [tiltY, setTiltY] = useState(0);
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      const maxAngle = 15; // góc nghiêng tối đa
+
+      const deltaX = e.clientX - centerX;
+      const deltaY = e.clientY - centerY;
+
+      const tiltY = (deltaX / centerX) * maxAngle; // trục Y -> trái/phải
+      const tiltX = -(deltaY / centerY) * maxAngle; // trục X -> lên/xuống
+
+      setTiltX(tiltX);
+      setTiltY(tiltY);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
     <div className="mt-10 p-0 xl:px-desktop-padding">
       {/* Title */}
@@ -43,17 +68,28 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
             <div className="h-2 w-5/6 bg-primary/20" />
           </div>
         ) : (
-          <div className="hidden w-full rounded-none border-2 border-transparent xl:block xl:w-1/3 xl:border-[10px] 2xl:w-1/4">
-            <Image
-              src={images.Popup}
-              alt="Banner"
-              width={1000}
-              height={1000}
-              className="h-full w-full object-contain"
-              placeholder="blur"
-              blurDataURL={images.Popup}
-              onError={() => handleImageError(images.Popup)}
-            />
+          <div className="z-50 hidden w-full rounded-none border-2 border-transparent xl:block xl:w-1/3 xl:border-[10px] 2xl:w-1/4">
+            <Tilt
+              tiltMaxAngleX={100}
+              tiltMaxAngleY={100}
+              tiltAngleXManual={tiltX}
+              tiltAngleYManual={tiltY}
+              glareEnable={true}
+              glareMaxOpacity={0.1}
+              scale={1.05}
+              transitionSpeed={600}
+            >
+              <Image
+                src={images.Popup}
+                alt="Banner"
+                width={1000}
+                height={1000}
+                className="h-full w-full cursor-pointer object-contain"
+                placeholder="blur"
+                blurDataURL={images.Popup}
+                onError={() => handleImageError(images.Popup)}
+              />
+            </Tilt>
           </div>
         )}
         <div className="relative w-full xl:w-2/3 2xl:w-3/4">

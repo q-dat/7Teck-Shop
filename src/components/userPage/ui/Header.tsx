@@ -190,7 +190,7 @@ const Header: React.FC = () => {
             />
             {/* bd */}
             <div className="absolute right-2 top-1/2 -translate-y-1/2">
-              <Kbd size="sm" className="rounded border border-primary bg-white font-bold text-primary shadow-inner">
+              <Kbd size="sm" className="rounded border border-primary bg-white text-xs font-bold text-primary shadow-inner xl:text-sm">
                 {!isInputFocused ? <>F</> : <>Esc</>}
               </Kbd>
             </div>

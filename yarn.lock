@@ -3363,6 +3363,11 @@ raw-body@^3.0.0:
     iconv-lite "0.6.3"
     unpipe "1.0.0"
 
+react-animated-cursor@^2.11.2:
+  version "2.11.2"
+  resolved "https://registry.yarnpkg.com/react-animated-cursor/-/react-animated-cursor-2.11.2.tgz#c87ee77ecea22cc6c234918375ace6bceca6b3c7"
+  integrity sha512-LV0PtST61tdeW/chCqFt1JLp6i0d5fD9v2uradBcPAkKKCi2Iw7sAcD11ADS1TjXPPj9MOoD9YubEt++/IbZ+g==
+
 react-daisyui@^5.0.5:
   version "5.0.5"
   resolved "https://registry.npmjs.org/react-daisyui/-/react-daisyui-5.0.5.tgz"
@@ -3404,6 +3409,11 @@ react-medium-image-zoom@^5.2.14:
   version "5.2.14"
   resolved "https://registry.yarnpkg.com/react-medium-image-zoom/-/react-medium-image-zoom-5.2.14.tgz#87032d079fce4a21a17770d6709f739872580906"
   integrity sha512-nfTVYcAUnBzXQpPDcZL+cG/e6UceYUIG+zDcnemL7jtAqbJjVVkA85RgneGtJeni12dTyiRPZVM6Szkmwd/o8w==
+
+react-parallax-tilt@^1.7.304:
+  version "1.7.304"
+  resolved "https://registry.yarnpkg.com/react-parallax-tilt/-/react-parallax-tilt-1.7.304.tgz#b9d054e8006fa0ada9ff70b092979c6ef7325952"
+  integrity sha512-mS71FHyx4RukCb/ffMsqZReADtUw8mG6wxn5dpRgjMS1pWnqhKTYtRaIcZFfl2wF0lGjQ9bKdDZ8AZYIYjjL9A==
 
 react-popper@^2.3.0:
   version "2.3.0"
