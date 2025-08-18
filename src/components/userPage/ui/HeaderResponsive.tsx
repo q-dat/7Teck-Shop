@@ -141,7 +141,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
               {/* Search Input when open */}
               {openSearch && (
                 <div>
-                  <div className="absolute -right-[50px] top-10 h-screen w-screen bg-black bg-opacity-50" onClick={handleSearchToggle}>
+                  <div className="absolute -right-[50px] top-10 h-screen w-screen bg-[#000000]/60" onClick={handleSearchToggle}>
                     {/* Overlay */}
                   </div>
                   <Input

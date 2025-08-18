@@ -1,6 +1,6 @@
 'use client';
-import React, { memo, useEffect, useMemo, useState } from 'react';
-import { Button, Input, Menu } from 'react-daisyui';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { Button, Input, Kbd, Menu } from 'react-daisyui';
 import { FaChevronDown } from 'react-icons/fa';
 import { RiArrowLeftRightFill } from 'react-icons/ri';
 import { IoCloseSharp, IoLogoFacebook, IoSearch } from 'react-icons/io5';
@@ -59,9 +59,15 @@ const items = [
 const Header: React.FC = () => {
   // Search
   const [isInputFocused, setIsInputFocused] = useState(false);
+  // Query state for search input
   const [query, setQuery] = useState('');
+  // Reference to the input element for focusing
+  const inputRef = useRef<HTMLInputElement>(null);
+  // Search results
   const [results, setResults] = useState<SearchResult[]>([]);
+  // Loading state
   const [isLoading, setIsLoading] = useState(false);
+  // Router for navigation
   const router = useRouter();
   const handleSearchClose = () => {
     setQuery('');
@@ -83,14 +89,30 @@ const Header: React.FC = () => {
   const handleMouseLeave = () => {
     setOpenSubmenu(null);
   };
-  // Handle scroll and active menu item
   useEffect(() => {
+    // Handle scroll and active menu item
     const foundItem = menuItems.find((item) => item.link === pathname || item.submenu?.some((sub) => sub.link === pathname));
     if (foundItem) {
       setActiveItem(foundItem.name);
     }
-  }, [pathname]);
+    // Focus the input when the F key is pressed
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'f' && document.activeElement !== inputRef.current) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
 
+      if (e.key === 'Escape') {
+        inputRef.current?.blur(); // bỏ focus
+        setIsInputFocused(false); // cập nhật trạng thái focus
+        setQuery(''); // xóa nội dung tìm kiếm
+        setResults([]); // xóa kết quả tìm kiếm
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [pathname]);
   // Debounced search function
   const handleSearch = useMemo(
     () =>
@@ -157,6 +179,7 @@ const Header: React.FC = () => {
           <div className="relative z-10 flex w-full flex-row items-center justify-center gap-1 rounded-full bg-white pl-2">
             <IoSearch className="text-xl text-primary" />
             <Input
+              ref={inputRef}
               size="sm"
               value={query}
               onChange={handleChange}
@@ -165,6 +188,12 @@ const Header: React.FC = () => {
               className="w-full border-none bg-transparent pl-1 text-sm text-black placeholder-primary shadow-none focus:placeholder-black focus:outline-none"
               placeholder="Bạn muốn tìm gì..."
             />
+            {/* bd */}
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              <Kbd size="sm" className="rounded border border-primary bg-white font-bold text-primary shadow-inner">
+                {!isInputFocused ? <>F</> : <>Esc</>}
+              </Kbd>
+            </div>
           </div>
 
           {/* Suggestion keywords */}
@@ -228,7 +257,7 @@ const Header: React.FC = () => {
             createPortal(
               <>
                 <div
-                  className="fixed inset-0 z-[99998] cursor-pointer bg-black/60"
+                  className="fixed inset-0 z-[99998] cursor-pointer bg-[#000000]/60"
                   onClick={() => {
                     setIsInputFocused(false);
                     setQuery('');
