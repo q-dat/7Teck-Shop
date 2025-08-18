@@ -4,28 +4,21 @@ interface SearchResult {
   image: string;
 }
 
-const cache = new Map<string, SearchResult[]>();
+const cache = new Map<string, { results: SearchResult[]; expires: number }>();
+const CACHE_TTL = 60 * 1000;
 
 export const searchProducts = async (query: string): Promise<SearchResult[]> => {
-  const trimmedQuery = query.trim();
-  if (!trimmedQuery) return [];
+  const now = Date.now();
+  const cached = cache.get(query);
+  if (cached && now < cached.expires) return cached.results;
 
-  if (cache.has(trimmedQuery)) {
-    return cache.get(trimmedQuery)!;
+  const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+  const data = await res.json();
+
+  if (data.success) {
+    cache.set(query, { results: data.results, expires: now + CACHE_TTL });
+    return data.results;
   }
 
-  try {
-    const res = await fetch(`/api/search?q=${encodeURIComponent(trimmedQuery)}`);
-    const data = await res.json();
-
-    if (data.success) {
-      cache.set(trimmedQuery, data.results);
-      return data.results;
-    }
-
-    return [];
-  } catch (error) {
-    console.error('Search API error:', error);
-    return [];
-  }
+  return [];
 };

@@ -15,24 +15,17 @@ export type CachedItem = {
   price?: number;
 };
 
-// Định nghĩa chung cho dữ liệu từ DB (sau khi lean)
 interface RawItem {
   _id: string | { toString(): string };
   [key: string]: unknown;
 }
 
 let CACHE: CachedItem[] = [];
-let IS_CACHE_LOADED = false;
+let lastLoaded = 0;
+const CACHE_TTL = 60 * 1000; // 1 phút
 
 const COLLECTIONS = [
-  {
-    model: Phone,
-    nameField: 'name',
-    url: '/dien-thoai',
-    imageField: 'img',
-    colorField: 'color',
-    priceField: 'price',
-  },
+  { model: Phone, nameField: 'name', url: '/dien-thoai', imageField: 'img', colorField: 'color', priceField: 'price' },
   {
     model: Tablet,
     nameField: 'tablet_name',
@@ -41,50 +34,27 @@ const COLLECTIONS = [
     colorField: 'tablet_color',
     priceField: 'tablet_price',
   },
-  {
-    model: Macbook,
-    nameField: 'macbook_name',
-    url: '/macbook',
-    imageField: 'macbook_img',
-    colorField: 'macbook_color',
-    priceField: 'macbook_price',
-  },
-  {
-    model: Windows,
-    nameField: 'windows_name',
-    url: '/windows',
-    imageField: 'windows_img',
-    colorField: 'windows_color',
-    priceField: 'windows_price',
-  },
+  { model: Macbook, nameField: 'macbook_name', url: '/macbook', imageField: 'macbook_img', colorField: 'macbook_color', priceField: 'macbook_price' },
+  { model: Windows, nameField: 'windows_name', url: '/windows', imageField: 'windows_img', colorField: 'windows_color', priceField: 'windows_price' },
 ];
 
-// ✅ Sửa lỗi reduce: gán đúng kiểu initial value
 function getNestedValue(obj: unknown, path: string): string {
   const keys = path.split('.');
   let current: unknown = obj;
-
   for (const key of keys) {
     if (typeof current === 'object' && current !== null && key in current) {
       current = (current as Record<string, unknown>)[key];
-    } else {
-      return '';
-    }
+    } else return '';
   }
-
   return typeof current === 'string' ? current : '';
 }
 
 export async function loadCache() {
-  if (IS_CACHE_LOADED) return;
-
   await connectDB();
-
   const allItems: CachedItem[] = [];
 
   for (const { model, nameField, url, imageField, colorField, priceField } of COLLECTIONS) {
     const items = (await model.find().select(`${nameField} ${imageField} ${colorField} ${priceField} _id`).lean()) as RawItem[];
-
     items.forEach((item) => {
       const rawName = item[nameField];
       if (typeof rawName === 'string') {
@@ -107,10 +77,12 @@ export async function loadCache() {
   }
 
   CACHE = allItems;
-  IS_CACHE_LOADED = true;
+  lastLoaded = Date.now();
   console.log(`✅ Cache loaded: ${CACHE.length} items`);
 }
 
-export function getCache(): CachedItem[] {
+export async function getCache(): Promise<CachedItem[]> {
+  if (Date.now() - lastLoaded < CACHE_TTL && CACHE.length > 0) return CACHE;
+  await loadCache();
   return CACHE;
 }
