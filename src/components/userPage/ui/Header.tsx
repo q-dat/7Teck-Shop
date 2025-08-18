@@ -198,7 +198,7 @@ const Header: React.FC = () => {
 
           {/* Suggestion keywords */}
           {isInputFocused && !query && (
-            <div className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-md bg-white p-2 shadow-md">
+            <div className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-none bg-white p-2 shadow-md">
               <p className="mb-2 text-sm font-semibold text-primary">Từ khóa phổ biến</p>
               <div className="flex flex-wrap gap-2">
                 {suggestions.map((text, index) => (
@@ -219,7 +219,7 @@ const Header: React.FC = () => {
 
           {/* Result */}
           {query && results.length > 0 && (
-            <ul className="fixed left-[50%] top-[100px] z-[99999] max-h-[500px] w-full max-w-[600px] -translate-x-1/2 overflow-auto rounded-md border bg-white p-2 text-primary shadow-md">
+            <ul className="fixed left-[50%] top-[100px] z-[99999] max-h-[500px] w-full max-w-[600px] -translate-x-1/2 overflow-auto rounded-none border bg-white p-2 text-primary shadow-md">
               {results.map((item, index) => (
                 <li
                   key={index}
@@ -248,7 +248,7 @@ const Header: React.FC = () => {
 
           {/* 404 */}
           {query && !isLoading && results.length === 0 && (
-            <p className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-md bg-white p-2 text-sm text-gray-500 shadow-md">
+            <p className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-none bg-white p-2 text-sm text-gray-500 shadow-md">
               Không tìm thấy kết quả
             </p>
           )}
