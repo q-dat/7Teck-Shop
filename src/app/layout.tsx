@@ -68,7 +68,7 @@ export default function RootLayout({
             <Header />
             <div className="flex-1 bg-primary-white selection:bg-primary selection:text-white xl:pt-0">{children}</div>
             {/* <NotificationPopup /> */}
-            <PreloadSearch query="" />
+            <PreloadSearch query="gb" />
             <ScrollToTopButton />
             <NavBottom />
             <ContactForm />
