@@ -12,12 +12,12 @@ const ContactForm: React.FC = () => {
   const [collapsed, setCollapsed] = useState(true);
 
   return (
-    <div>
+    <div className="w-full">
       {/* Overlay */}
       {!collapsed && <div className="fixed inset-0 z-[99998] bg-[#000000]/60" onClick={() => setCollapsed(true)} />}
 
       {/* Panel liên hệ */}
-      <div className="fixed bottom-[58px] right-1 z-[99999] space-y-2 pl-1 xl:bottom-5 xl:right-2">
+      <div className="fixed bottom-[58px] right-1 z-[99999] space-y-2 pl-1 xl:bottom-5 xl:right-2 w-full">
         {collapsed ? (
           <div className="flex flex-col items-end gap-1">
             {/* Nút mở liên hệ nhanh */}

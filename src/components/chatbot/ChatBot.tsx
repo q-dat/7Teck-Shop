@@ -118,7 +118,7 @@ export default function ChatBot() {
             </button>
           </div>
           <div className="w-full text-center">
-            <span className="text-[10px] text-gray-700">Thông tin chỉ mang tính tham khảo, được tư vấn bởi Trí Tuệ Nhân Tạo</span>
+            <span className="px-4 text-[10px] text-gray-700">Thông tin chỉ mang tính tham khảo, được tư vấn bởi Trí Tuệ Nhân Tạo</span>
           </div>
         </div>
       </div>
