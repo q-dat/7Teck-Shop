@@ -28,7 +28,7 @@ export default function ChatBot() {
     },
     {
       role: 'bot',
-      text: 'Em rất sẵn lòng hỗ trợ Anh/Chị 😊 Em rất sẵn lòng hỗ trợ Anh/Chị 😊 Em rất sẵn lòng hỗ trợ Anh/Chị 😊',
+      text: 'Em rất sẵn lòng hỗ trợ Anh/Chị.',
     },
   ]);
   const [input, setInput] = useState('');
