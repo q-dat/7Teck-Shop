@@ -68,7 +68,9 @@ const ContactForm: React.FC = () => {
               aria-label="Liên hệ qua Messenger"
               onClick={(e) => e.stopPropagation()}
             >
-              <FaFacebookMessenger className="text-[50px] text-[#1f6bf6]" style={{ filter: 'drop-shadow(0 0 6px #1f6bf6)' }} />
+              <div className="flex h-[45px] w-[45px] items-center justify-center rounded-full bg-gradient-to-tl from-[#1f6bf6] via-white to-transparent shadow-md xl:h-[50px] xl:w-[50px]">
+                <FaFacebookMessenger className="text-[35px] text-[#1f6bf6] xl:text-[40px]" />
+              </div>
             </Link>
 
             {/* Zalo: đóng khi click */}

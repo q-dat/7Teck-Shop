@@ -114,10 +114,34 @@ function filterProducts(cachedData: CachedItem[], parsed: ParsedIntent, entities
 
 // Các phản hồi hardcoded cho smalltalk để tiết kiệm quota API
 const smalltalkResponses: Record<string, string> = {
-  'xin chào': 'Xin chào 👋! Mình là ChatBot 7Teck. Bạn đang tìm sản phẩm nào hôm nay? Điện thoại, laptop hay máy tính bảng?',
-  hello: 'Chào bạn! 7Teck sẵn sàng hỗ trợ. Bạn cần tư vấn sản phẩm gì?',
-  hi: 'Hi! Mình là trợ lý bán hàng của 7Teck.vn. Hãy cho mình biết bạn quan tâm đến iPhone, Samsung hay MacBook nhé!',
-  // Có thể thêm nhiều hơn
+  // Chào hỏi
+  'xin chào': 'Xin chào Anh/Chị! Em là trợ lý AI của 7Teck. Anh/Chị đang tìm sản phẩm nào hôm nay? Điện thoại, laptop hay máy tính bảng?',
+  hello: 'Em rất sẵn lòng hỗ trợ Anh/Chị 😊. Anh/Chị cần tư vấn sản phẩm gì?',
+  hi: 'Hi! Em là trợ lý bán hàng của 7Teck.vn. Hãy cho em biết Anh/Chị quan tâm đến iPhone, Samsung hay MacBook nhé!',
+  'chào shop': 'Dạ em chào Anh/Chị ạ 👋. Em có thể hỗ trợ Anh/Chị tìm sản phẩm nhanh chóng nhất.',
+  alo: 'Dạ em nghe ạ 😄. Anh/Chị muốn tham khảo dòng sản phẩm nào của 7Teck?',
+  'good morning': 'Good morning Anh/Chị 🌞. Anh/Chị cần tham khảo sản phẩm nào cho hôm nay?',
+  'good evening': 'Chào buổi tối Anh/Chị 🌙. Anh/Chị muốn em tư vấn điện thoại, laptop hay phụ kiện ạ?',
+
+  // Cảm ơn
+  'cảm ơn': 'Dạ em cảm ơn Anh/Chị đã tin tưởng 7Teck ạ 🙏. Nếu cần thêm hỗ trợ, em luôn sẵn sàng.',
+  thanks: 'You’re welcome Anh/Chị! Em luôn sẵn lòng hỗ trợ ạ 😊.',
+  'thank you': 'Rất vui được hỗ trợ Anh/Chị 💙. Nếu còn thắc mắc, Anh/Chị cứ hỏi em nhé!',
+
+  // Hỏi thăm
+  'khỏe không': 'Dạ em luôn sẵn sàng để phục vụ Anh/Chị ạ 💪. Anh/Chị thì sao ạ?',
+  'how are you': 'I’m great, thank you! 😊 Sẵn sàng tư vấn cho Anh/Chị bất kỳ sản phẩm nào ở 7Teck.',
+
+  // Tạm biệt
+  'tạm biệt': 'Dạ em chào Anh/Chị 👋. Hẹn gặp lại Anh/Chị tại 7Teck.vn nhé!',
+  bye: 'Bye Anh/Chị, chúc Anh/Chị một ngày tốt lành 🌟.',
+  'see you': 'See you again soon, Anh/Chị! Em luôn ở đây hỗ trợ ạ.',
+
+  // Các câu phổ biến khác
+  '7teck là gì':
+    '7Teck là hệ thống bán lẻ các sản phẩm công nghệ chính hãng: điện thoại, laptop, tablet và phụ kiện. Anh/Chị cần em giới thiệu danh mục nào ạ?',
+  'có freeship không': 'Dạ, 7Teck có hỗ trợ freeship cho đơn hàng đủ điều kiện 🎁. Anh/Chị muốn em kiểm tra chi tiết giúp không ạ?',
+  'giờ mở cửa': '7Teck.vn hỗ trợ online 24/7. Nếu Anh/Chị cần đến cửa hàng, giờ mở cửa là 8:00 - 21:30 hằng ngày.',
 };
 
 export async function POST(req: Request) {
@@ -197,7 +221,7 @@ export async function POST(req: Request) {
     if (parsed.intent === 'smalltalk') {
       return NextResponse.json({
         success: true,
-        reply: 'Xin chào 👋, mình là ChatBot 7Teck. Bạn muốn tìm sản phẩm nào hôm nay? Chúng mình có iPhone, Samsung, MacBook đấy!',
+        reply: 'Xin chào Anh/Chị! Em là trợ lý AI của 7Teck. Anh/Chị! muốn tìm sản phẩm nào hôm nay? Điện thoại, laptop hay máy tính bảng?',
         intent: parsed.intent,
         entity: parsed.entity,
       });
@@ -255,7 +279,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      reply: reply || 'Xin lỗi, mình không hiểu câu hỏi. Bạn có thể mô tả chi tiết hơn?',
+      reply: reply || 'Xin lỗi, em không hiểu câu hỏi. Anh/Chị có thể mô tả chi tiết hơn?',
       intent: parsed.intent,
       entity: parsed.entity || regexEntities.join(', '),
       productsFound: foundProducts.length,
