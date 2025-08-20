@@ -11,6 +11,7 @@ import { homeMetadata } from '@/metadata/homeMetadata';
 import { Inter, Roboto_Mono } from 'next/font/google';
 import { PreloadSearch } from '@/components/userPage/PreloadSearch';
 import CustomCursor from '@/components/userPage/CustomCursor';
+import ChatBot from '@/components/chatbot/ChatBot';
 
 const geistSans = Inter({
   variable: '--font-geist-sans',
@@ -72,6 +73,7 @@ export default function RootLayout({
             <ScrollToTopButton />
             <NavBottom />
             <ContactForm />
+            <ChatBot />
             <FooterFC />
           </div>
         </ErrorBoundary>
