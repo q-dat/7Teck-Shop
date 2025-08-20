@@ -36,49 +36,50 @@ export default function ChatBot() {
   };
 
   return (
-    <div className="fixed bottom-3 right-20 z-[999999] w-full overflow-hidden rounded-lg border bg-white px-2 shadow-xl xl:w-[400px] xl:px-0">
-      {/* Header */}
-      <div className="bg-primary p-3 font-semibold text-white">7Teck.vn</div>
+    <div className="z-[88888] w-full overflow-hidden rounded-lg border border-primary bg-[#fafafa] xl:w-[400px]">
+      <div className="bg-primary-white">
+        {/* Header */}
+        <p className="bg-primary p-3 font-semibold text-white">7Teck.vn</p>
+        {/* Messages */}
+        <div className="h-96 space-y-2 overflow-y-auto p-3 text-sm">
+          {messages.map((m, i) => (
+            <div
+              key={i}
+              className={`max-w-[80%] break-words rounded-lg p-2 ${
+                m.role === 'user' ? 'ml-auto bg-primary text-white' : 'bg-primary-lighter text-primary'
+              }`}
+              dangerouslySetInnerHTML={{ __html: m.text }}
+            />
+          ))}
+          {loading && (
+            <div className="flex items-center gap-2 text-xs text-gray-700">
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              Đang xử lý...
+            </div>
+          )}
+        </div>
 
-      {/* Messages */}
-      <div className="h-96 space-y-2 overflow-y-auto p-3 text-sm">
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            className={`max-w-[80%] break-words rounded-lg p-2 ${
-              m.role === 'user' ? 'ml-auto bg-primary text-white' : 'bg-primary-lighter text-primary'
-            }`}
-            dangerouslySetInnerHTML={{ __html: m.text }}
+        {/* Input */}
+        <div className="flex border-t">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="Nhập tin nhắn..."
+            className="flex-1 p-2 text-sm outline-none"
           />
-        ))}
-        {loading && (
-          <div className="flex items-center gap-2 text-xs text-gray-700">
-            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            Đang xử lý...
-          </div>
-        )}
-      </div>
-
-      {/* Input */}
-      <div className="flex border-t">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyPress}
-          placeholder="Nhập tin nhắn..."
-          className="flex-1 p-2 text-sm outline-none"
-        />
-        <button onClick={sendMessage} className="bg-primary px-3 text-sm text-white" disabled={loading}>
-          Gửi
-        </button>
+          <button onClick={sendMessage} className="bg-primary px-3 text-sm text-white" disabled={loading}>
+            Gửi
+          </button>
+        </div>
       </div>
     </div>
   );
