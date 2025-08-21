@@ -13,9 +13,9 @@ const GENERIC_FALLBACKS = [
 ];
 
 const ERROR_FALLBACKS = [
-  '❌ Em gặp chút trục trặc kết nối. Anh/Chị vui lòng thử lại giúp em ạ.',
-  '❌ Hệ thống đang bận. Em xin phép xử lý lại ngay, Anh/Chị vui lòng thao tác lại.',
-  '❌ Có lỗi kỹ thuật tạm thời. Anh/Chị thử gửi lại nội dung giúp em nhé.',
+  'Em gặp chút trục trặc kết nối. Anh/Chị vui lòng thử lại giúp em ạ.',
+  'Hệ thống đang bận. Em xin phép xử lý lại ngay, Anh/Chị vui lòng thao tác lại.',
+  'Có lỗi kỹ thuật tạm thời. Anh/Chị thử gửi lại nội dung giúp em nhé.',
 ];
 
 const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
@@ -74,7 +74,7 @@ export default function ChatBot() {
             <span className="text-sm font-medium text-white">Trợ lý AI - 7Teck</span>
           </div>
           {/* Messages */}
-          <div className="h-96 space-y-2 overflow-y-auto p-3 text-xs">
+          <div className="h-96 space-y-2 overflow-y-auto p-1   text-xs">
             {messages.map((m, i) => (
               <div key={i} className={`flex items-end gap-1 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {m.role === 'bot' && (

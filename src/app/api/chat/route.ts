@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getCache, CachedItem } from '@/lib/searchCache';
+import { getCache, CachedItem, keywordMap } from '@/lib/searchCache';
 
+// Khởi tạo Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY! || 'AIzaSyAT4nqOpNNJrP8FoZ00dwqQWYcolh0AkzQ');
 
-// Định nghĩa interface cho dữ liệu phân tích
+// Interface cho intent được phân tích
 interface ParsedIntent {
   intent: string;
   entity: string;
@@ -16,26 +17,12 @@ interface ParsedIntent {
   };
 }
 
-// Bảng ánh xạ từ khóa để hỗ trợ viết tắt như 'ip' -> 'iphone'
-const keywordMap: Record<string, string> = {
-  ip: 'iphone',
-  ss: 'samsung',
-  mb: 'macbook',
-  mtb: 'ipad',
-  wm: 'windows',
-  gb: 'gb',
-  pr: 'pro',
-  prx: 'promax',
-  prm: 'promax',
-  pls: 'plus',
-};
-
-// Hàm chuẩn hóa chuỗi: loại bỏ dấu và khoảng trắng
+// Hàm chuẩn hóa chuỗi để khớp
 function normalizeString(str: string): string {
   return str.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-// Hàm kiểm tra query có khớp với tên sản phẩm (hỗ trợ nhiều từ, viết tắt)
+// Hàm kiểm tra query có khớp với tên sản phẩm, hỗ trợ đa từ và viết tắt
 function queryMatchesName(query: string, name: string): boolean {
   const qTokens = query
     .toLowerCase()
@@ -45,74 +32,90 @@ function queryMatchesName(query: string, name: string): boolean {
     .filter(Boolean);
 
   const normalizedName = normalizeString(name);
-
-  // Tất cả từ query phải xuất hiện trong tên sản phẩm
   return qTokens.every((token) => normalizedName.includes(token));
 }
 
-// Regex để trích xuất các entity sản phẩm, hỗ trợ nhiều biến thể
+// Hàm trích xuất entities bằng regex, hỗ trợ biến thể và viết tắt
 function extractEntities(text: string): string[] {
   const lower = text.toLowerCase();
   const regex =
-    /\b(iphone|samsung|macbook|ipad|windows)\s?(\d{1,2})\s?(pro\s?max|promax|pro|plus|air|mini|ultra|fold|flip)?\s?(\d{2,3}gb)?\s?(xanh|đen|trắng|vàng|bạc|đỏ)?\b/gi;
+    /\b(iphone|samsung|macbook|ipad|windows|a36|s25)\s?(\d{1,2})?\s?(pro\s?max|promax|pro|plus|air|mini|ultra|fold|flip)?\s?(\d{2,3}gb)?\s?(xanh|đen|trắng|vàng|bạc|đỏ)?\b/gi;
   const matches = lower.match(regex);
-  return matches ? [...new Set(matches.map((m) => m.trim()))] : []; // Loại bỏ trùng lặp
+  return matches
+    ? [...new Set(matches.map((m) => keywordMap[m.trim()] || m.trim()))] // Áp dụng ánh xạ alias
+    : [];
 }
 
-// Hàm lọc sản phẩm dựa trên intent và extra, sử dụng các field như name, color, price
-function filterProducts(cachedData: CachedItem[], parsed: ParsedIntent, entities: string[]): CachedItem[] {
+// Hàm lọc sản phẩm dựa trên entities và tham số extra
+function filterProducts(cachedData: CachedItem[], entities: string[], extra: ParsedIntent['extra'], intent: string = ''): CachedItem[] {
   let filtered = cachedData;
 
-  // Lọc theo entity hoặc entities từ regex, sử dụng queryMatchesName để hỗ trợ viết tắt
-  const searchTerms =
-    entities.length > 0
-      ? entities
-      : parsed.entity
-          .split(',')
-          .map((e) => e.trim().toLowerCase())
-          .filter(Boolean);
-  if (searchTerms.length > 0) {
-    filtered = filtered.filter((item) => searchTerms.some((term) => queryMatchesName(term, item.name)));
+  if (entities.length > 0) {
+    filtered = filtered.filter((item) => entities.some((term) => queryMatchesName(term, item.name)));
   }
 
-  // Lọc theo dung lượng lưu trữ (storage) trong field name
-  if (parsed.extra.storage) {
-    const storageLower = parsed.extra.storage.toLowerCase();
+  if (extra.storage) {
+    const storageLower = extra.storage.toLowerCase();
     filtered = filtered.filter((item) => item.name.toLowerCase().includes(storageLower));
   }
 
-  // Lọc theo màu sắc dựa trên field color
-  if (parsed.extra.color) {
-    const colorLower = parsed.extra.color.toLowerCase();
+  if (extra.color) {
+    const colorLower = extra.color.toLowerCase();
     filtered = filtered.filter((item) => item.color?.toLowerCase().includes(colorLower));
   }
 
-  // Lọc theo khoảng giá dựa trên field price (giả sử price là nghìn VNĐ, chuyển sang đầy đủ)
-  if (parsed.extra.priceRange) {
-    const range = parsed.extra.priceRange.toLowerCase();
+  if (extra.priceRange || intent === 'cheapest_product' || intent === 'filter_by_price') {
+    const range = extra.priceRange.toLowerCase();
     if (range.includes('dưới') || range.includes('under')) {
-      const maxPrice = parseInt(range.match(/\d+/)?.[0] || '0') * 1000000; // Chuyển triệu VNĐ
-      filtered = filtered.filter((item) => (item.price || Infinity) * 1000 <= maxPrice); // Nhân 1000 vì price là nghìn VNĐ
-    } else if (range.includes('rẻ nhất') || range.includes('cheapest')) {
+      const maxPrice = parseInt(range.match(/\d+/)?.[0] || '0') * 1000000;
+      filtered = filtered.filter((item) => (item.price || Infinity) * 1000 <= maxPrice);
+    } else if (range.includes('rẻ nhất') || range.includes('cheapest') || intent === 'cheapest_product') {
       filtered.sort((a, b) => (a.price || Infinity) - (b.price || Infinity));
-      filtered = filtered.slice(0, 5); // Top 5 rẻ nhất
+      filtered = filtered.slice(0, 5);
     }
-    // Có thể thêm logic cho khoảng giá khác (trên X triệu, từ X-Y triệu)
+    // Thêm logic khoảng giá khác nếu cần, ví dụ: 'từ X-Y triệu'
   }
 
-  // Lọc theo tính năng dựa trên field name (có thể mở rộng sau nếu có field riêng)
-  if (parsed.extra.feature) {
-    const featureLower = parsed.extra.feature.toLowerCase();
-    filtered = filtered.filter(
-      (item) => item.name.toLowerCase().includes(featureLower) // Giả sử tên chứa hint tính năng
-    );
+  if (extra.feature || intent === 'filter_by_feature') {
+    const featureLower = extra.feature.toLowerCase();
+    filtered = filtered.filter((item) => item.name.toLowerCase().includes(featureLower));
   }
 
-  // Loại bỏ trùng lặp và giới hạn số lượng
   return Array.from(new Map(filtered.map((p) => [p._id, p])).values()).slice(0, 10);
 }
 
-// Các phản hồi hardcoded cho smalltalk để tiết kiệm quota API
+// Hàm tạo thẻ HTML card cho sản phẩm
+function generateCardsFromResults(products: CachedItem[]): string {
+  if (!products.length) return '';
+
+  return `
+     <div class="w-full">
+        <!-- Title -->
+        <span>Chúng tôi có một số sản phẩm liên quan:</span>
+        <!-- Products grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+         ${products
+           .map(
+             (product) => `
+               <div class="bg-white border border-gray-200 rounded-md m p-1 flex flex-col items-center text-start transition">
+                 <img src="${product.image}" alt="${product.name}" class="w-20 h-20 object-contain mb-3 rounded-md bg-white">
+                 <div class="w-full">
+                   <p class="text-gray-800 font-semibold text-xs">${product.name}</p>
+                   <p class="text-gray-500 text-xs mb-1">Màu: ${product.color || 'N/A'}</p>
+                   <p class="text-primary font-bold text-sm mb-2">${((product.price || 0) * 1000).toLocaleString('vi-VN')} VNĐ</p>
+                   <a href="${product.link}" class="text-primary text-xs font-medium hover:underline">Xem chi tiết</a>
+                 </div>
+               </div>
+             `
+           )
+           .join('')}
+       </div>
+      </div>
+
+  `;
+}
+
+// Các phản hồi hardcoded cho smalltalk
 const smalltalkResponses: Record<string, string> = {
   // Chào hỏi
   'xin chào': 'Xin chào Anh/Chị! Em là trợ lý AI của 7Teck. Anh/Chị đang tìm sản phẩm nào hôm nay? Điện thoại, laptop hay máy tính bảng?',
@@ -158,20 +161,45 @@ export async function POST(req: Request) {
 
     const lowerMessage = message.toLowerCase();
 
-    // Xử lý smalltalk hardcoded để tiết kiệm quota
+    // 1. Kiểm tra smalltalk hardcoded để tiết kiệm quota
     for (const key in smalltalkResponses) {
       if (lowerMessage.includes(key)) {
+        console.log('[DEBUG] Trả lời từ smalltalk hardcoded (không từ DB hoặc AI).');
         return NextResponse.json({
           success: true,
           reply: smalltalkResponses[key],
           intent: 'smalltalk',
           entity: '',
+          productsFound: 0,
+          source: 'smalltalk', // Thêm field debug source
         });
       }
     }
 
-    // 1. Gọi Gemini để phân tích intent (cải tiến prompt cho chính xác hơn)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' }); // Sử dụng model mới nhất
+    // 2. Trích xuất entities và xử lý alias
+    let entities = extractEntities(message);
+
+    // 3. Tải cache và tìm kiếm trực tiếp từ DB
+    const cachedData = await getCache();
+    let foundProducts = filterProducts(cachedData, entities, { storage: '', color: '', priceRange: '', feature: '' });
+
+    // 4. Nếu tìm thấy sản phẩm từ DB, render card và trả về mà không gọi AI
+    if (foundProducts.length > 0) {
+      console.log(`[DEBUG] Lấy dữ liệu từ DB: Tìm thấy ${foundProducts.length} sản phẩm. Không gọi AI.`);
+      const reply = generateCardsFromResults(foundProducts);
+      return NextResponse.json({
+        success: true,
+        reply,
+        intent: 'search_product',
+        entity: entities.join(', '),
+        productsFound: foundProducts.length,
+        source: 'db', // Thêm field debug source
+      });
+    }
+
+    // 5. Fallback đến Gemini để phân tích intent (chỉ khi không match DB)
+    console.log('[DEBUG] Không tìm thấy từ DB, fallback gọi AI (Gemini) để phân tích intent.');
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
     const intentPrompt = `
     Bạn là hệ thống NLP thông minh cho chatbot bán hàng điện thoại, laptop, máy tính bảng tại 7Teck.vn.
     Phân tích tin nhắn người dùng: "${message}".
@@ -217,29 +245,34 @@ export async function POST(req: Request) {
       parsed.intent = 'smalltalk';
     }
 
-    // 2. Xử lý smalltalk nếu fallback từ API
+    // 6. Xử lý smalltalk fallback từ AI
     if (parsed.intent === 'smalltalk') {
+      console.log('[DEBUG] Intent là smalltalk từ AI.');
       return NextResponse.json({
         success: true,
-        reply: 'Xin chào Anh/Chị! Em là trợ lý AI của 7Teck. Anh/Chị! muốn tìm sản phẩm nào hôm nay? Điện thoại, laptop hay máy tính bảng?',
+        reply: 'Xin chào Anh/Chị! Em là trợ lý AI của 7Teck. Anh/Chị muốn tìm sản phẩm nào hôm nay? Điện thoại, laptop hay máy tính bảng?',
         intent: parsed.intent,
         entity: parsed.entity,
+        productsFound: 0,
+        source: 'ai', // Thêm field debug source
       });
     }
 
-    // 3. Trích xuất entities bổ sung từ regex
-    const regexEntities = extractEntities(message);
+    // 7. Kết hợp entities từ regex và parsed
+    if (parsed.entity) {
+      entities = [...new Set([...entities, ...parsed.entity.split(',').map((e) => e.trim())])];
+    }
 
-    // 4. Lấy cache và lọc sản phẩm dựa trên intent/extra
-    const cachedData = await getCache();
-    let foundProducts = filterProducts(cachedData, parsed, regexEntities);
+    // 8. Lọc sản phẩm với thông tin parsed đầy đủ
+    foundProducts = filterProducts(cachedData, entities, parsed.extra, parsed.intent);
 
-    // Nếu không tìm thấy, mở rộng tìm kiếm (fallback)
+    // 9. Nếu vẫn không tìm thấy và không phải compare, fallback tìm kiếm mở rộng
     if (foundProducts.length === 0 && parsed.intent !== 'compare_products') {
       foundProducts = cachedData.filter((item) => queryMatchesName(parsed.entity.toLowerCase(), item.name)).slice(0, 5);
     }
 
-    // 5. Sử dụng Gemini để generate reply dựa trên intent và products, cải tiến để khai thác dữ liệu bên ngoài nếu cần
+    // 10. Tạo reply bằng Gemini, sử dụng kiến thức cập nhật 2025
+    console.log(`[DEBUG] Gọi AI (Gemini) để tạo reply dựa trên intent. Tìm thấy ${foundProducts.length} sản phẩm từ DB (nếu có).`);
     const systemPrompt = `
     Bạn là ChatBot 7Teck, trợ lý bán hàng chuyên nghiệp, thân thiện tại 7Teck.vn - cửa hàng bán điện thoại, laptop, máy tính bảng tích hợp AI.
     Ưu tiên bán hàng: Mô tả sản phẩm hấp dẫn, nhấn mạnh tính năng, khuyến khích mua, cung cấp link chi tiết.
@@ -253,7 +286,7 @@ export async function POST(req: Request) {
 
     const userPrompt = `
     Intent của người dùng: ${parsed.intent}
-    Entity: ${parsed.entity || regexEntities.join(', ') || 'Không có'}
+    Entity: ${parsed.entity || entities.join(', ') || 'Không có'}
     Extra: ${JSON.stringify(parsed.extra)}
     
     Sản phẩm tìm thấy từ DB (ưu tiên hiển thị dưới dạng thẻ card HTML đẹp nếu phù hợp, với cấu trúc: Hình ảnh, Tên (truncate), Màu, Giá (định dạng số nghìn VNĐ, ví dụ: 11.000.000 VNĐ), Link; không thêm text ngoài card để tránh vỡ UI):
@@ -281,8 +314,9 @@ export async function POST(req: Request) {
       success: true,
       reply: reply || 'Xin lỗi, em không hiểu câu hỏi. Anh/Chị có thể mô tả chi tiết hơn?',
       intent: parsed.intent,
-      entity: parsed.entity || regexEntities.join(', '),
+      entity: parsed.entity || entities.join(', '),
       productsFound: foundProducts.length,
+      source: 'ai', // Thêm field debug source
     });
   } catch (err: unknown) {
     console.error('Lỗi server:', err);

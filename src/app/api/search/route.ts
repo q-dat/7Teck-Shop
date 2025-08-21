@@ -1,19 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getCache, CachedItem } from '@/lib/searchCache';
+import { getCache, CachedItem, keywordMap } from '@/lib/searchCache';
 import { ObjectId } from 'mongodb';
-
-const keywordMap: Record<string, string> = {
-  ip: 'iphone',
-  ss: 'samsung',
-  mb: 'macbook',
-  mtb: 'ipad',
-  wm: 'windows',
-  gb: 'gb',
-  pr: 'pro',
-  prx: 'promax',
-  prm: 'promax',
-  pls: 'plus',
-};
 
 function normalizeString(str: string) {
   return str.toLowerCase().replace(/[^a-z0-9]/g, '');

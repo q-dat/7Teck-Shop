@@ -5,6 +5,26 @@ import Tablet from '@/app/models/tablet';
 import Macbook from '@/app/models/macbook';
 import Windows from '@/app/models/windows';
 
+// Bảng ánh xạ từ khóa mở rộng để hỗ trợ viết tắt phổ biến
+export const keywordMap: Record<string, string> = {
+  ip: 'iphone',
+  ip14: 'iphone 14',
+  ip15: 'iphone 15',
+  ip16: 'iphone 16',
+  ip17: 'iphone 17',
+  ss: 'samsung',
+  a36: 'samsung galaxy a36',
+  s25: 'samsung galaxy s25',
+  mb: 'macbook',
+  mtb: 'ipad',
+  wm: 'windows',
+  gb: 'gb',
+  pr: 'pro',
+  prx: 'promax',
+  prm: 'promax',
+  pls: 'plus',
+};
+
 export type CachedItem = {
   _id: string;
   name: string;
