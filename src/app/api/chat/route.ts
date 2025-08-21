@@ -93,19 +93,21 @@ function generateCardsFromResults(products: CachedItem[]): string {
         <!-- Title -->
         <span>Chúng tôi có một số sản phẩm liên quan:</span>
         <!-- Products grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div class="grid grid-cols-2  gap-2">
          ${products
            .map(
              (product) => `
+             <a href="${product.link}">
                <div class="bg-white border border-gray-200 rounded-md m p-1 flex flex-col items-center text-start transition">
-                 <img src="${product.image}" alt="${product.name}" class="w-20 h-20 object-contain mb-3 rounded-md bg-white">
-                 <div class="w-full">
-                   <p class="text-gray-800 font-semibold text-xs">${product.name}</p>
+               <img src="${product.image}" alt="${product.name}" class="w-20 h-20 object-contain mb-3 rounded-md bg-white">
+               <div class="w-full">
+                   <p class="text-gray-800 font-medium text-xs">${product.name}</p>
                    <p class="text-gray-500 text-xs mb-1">Màu: ${product.color || 'N/A'}</p>
-                   <p class="text-primary font-bold text-sm mb-2">${((product.price || 0) * 1000).toLocaleString('vi-VN')} VNĐ</p>
-                   <a href="${product.link}" class="text-primary text-xs font-medium hover:underline">Xem chi tiết</a>
+                   <p class="text-price font-semibold text-sm">${((product.price || 0) * 1000).toLocaleString('vi-VN')} VNĐ</p>
+                   <span class="text-primary text-xs font-medium hover:underline">Xem chi tiết</span>
                  </div>
-               </div>
+                 </div>
+             </a>
              `
            )
            .join('')}
