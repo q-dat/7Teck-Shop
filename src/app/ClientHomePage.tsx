@@ -46,18 +46,18 @@ const BannerComponent = memo(() => (
       {/* Nút hành động */}
       <div className="flex flex-wrap gap-3 text-xs md:text-lg">
         <Link
-          href="#"
+          href="/bang-gia-thu-mua"
           className="rounded-md bg-gradient-to-r from-primary via-primary/90 to-primary p-2 font-medium text-white shadow-lg transition-all duration-300 focus:outline-none hover:scale-105 hover:border hover:border-black hover:shadow-[0_0_15px_#a92d30,0_0_30px_#d13b3e]"
-        >
-          Xem Ngay
-        </Link>
-        {/*  */}
-        <Link
-          href="#"
-          className="rounded-md border border-white p-2 font-light text-white transition-all duration-300 focus:outline-none hover:scale-105 hover:border-primary hover:text-primary-lighter hover:shadow-[0_0_10px_#a92d30,0_0_20px_#d13b3e]"
         >
           Điều Kiện Áp Dụng
         </Link>
+        {/*  */}
+        {/* <Link
+          href="/bang-gia-thu-mua"
+          className="rounded-md border border-white p-2 font-light text-white transition-all duration-300 focus:outline-none hover:scale-105 hover:border-primary hover:text-primary-lighter hover:shadow-[0_0_10px_#a92d30,0_0_20px_#d13b3e]"
+        >
+          Điều Kiện Áp Dụng
+        </Link> */}
       </div>
     </div>
     {/* Hình ảnh nền */}
