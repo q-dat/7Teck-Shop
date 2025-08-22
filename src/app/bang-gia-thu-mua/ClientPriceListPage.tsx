@@ -27,18 +27,28 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
 
     priceLists.forEach((list) => {
       if (!aggregated[list.category]) aggregated[list.category] = {};
-      if (list.conditions) conditions[list.category] = list.conditions;
 
       list.groups.forEach((group) => {
+        // Map conditions to the catalog
+        if (list.conditions) conditions[group.catalog] = list.conditions;
+
         if (!aggregated[list.category][group.catalog]) aggregated[list.category][group.catalog] = [];
-        aggregated[list.category][group.catalog].push(...group.variants);
+        aggregated[list.category][group.catalog].push(
+          ...group.variants.map((v) => ({
+            ...v,
+            price_new: v.price_new, // Now number | null
+            price_used: v.price_used, // Now number | null
+            storage: v.storage,
+            condition: v.condition,
+          }))
+        );
       });
     });
 
     setCatalogs(aggregated);
     setConditionsMap(conditions);
 
-    // set default active tabs
+    // Set default active tabs
     const defaultTabs: Record<string, string> = {};
     Object.entries(aggregated).forEach(([category, groupObj]) => {
       defaultTabs[category] = Object.keys(groupObj)[0] || '';
@@ -117,17 +127,23 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                       {groupObj[activeTabs[categoryType]]?.map((product, index) => (
                         <Table.Row key={index}>
                           <span>{product.name}</span>
-                          {product.price_new ? <span>{formatCurrency(product.price_new)}</span> : <span>Liên Hệ</span>}
-                          {product.price_used ? <span>{formatCurrency(product.price_used)}</span> : <span>Liên Hệ</span>}
+                          <span>{product.price_new !== null ? formatCurrency(product.price_new) : 'Liên Hệ'}</span>
+                          <span>{product.price_used !== null ? formatCurrency(product.price_used) : 'Liên Hệ'}</span>
                         </Table.Row>
                       ))}
                     </Table.Body>
                   </Table>
                 </div>
 
-                {/* Hiển thị conditions HTML */}
-                {conditionsMap[categoryType] && (
-                  <div className="prose my-5 max-w-full" dangerouslySetInnerHTML={{ __html: conditionsMap[categoryType] }} />
+                {/* Display conditions for the selected catalog */}
+                {conditionsMap[activeTabs[categoryType]] ? (
+                  <div
+                    className="prose my-5 max-w-full"
+                    aria-label={`Điều kiện thu mua cho ${activeTabs[categoryType]}`}
+                    dangerouslySetInnerHTML={{ __html: conditionsMap[activeTabs[categoryType]] }}
+                  />
+                ) : (
+                  <div className="my-5 text-gray-500">Không có điều kiện thu mua cho danh mục này.</div>
                 )}
               </div>
             ))}
