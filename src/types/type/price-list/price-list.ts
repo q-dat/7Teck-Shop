@@ -1,13 +1,40 @@
-export interface IProductPriceList {
-  _id: string;
+export interface IProductVariant {
+  _id?: string;
   name: string;
-  price: number;
-  storage: string;
+  price_new: number;
+  price_used: number;
+  condition: string;
+  storage?: string;
 }
-export interface IPriceList {
+
+export interface IProductGroup {
+  catalog: string;
+  variants: IProductVariant[];
+}
+
+// API Response
+export interface IPriceListApi {
   _id: string;
-  phoneProducts: Record<string, IProductPriceList[]>;
-  tabletProducts: Record<string, IProductPriceList[]>;
-  macbookProducts: Record<string, IProductPriceList[]>;
-  windowsProducts: Record<string, IProductPriceList[]>;
+  category: string;
+  price_new: number;
+  price_used: number;
+  conditions?: string;
+  groups: IProductGroup[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ICreatePriceListPayload {
+  category: string;
+  price_new: number;
+  price_used: number;
+  conditions?: string;
+  groups: IProductGroup[];
+}
+export interface FormValues {
+  name: string;
+  storage?: string;
+  price_new: number;
+  price_used: number;
+  conditions?: string;
 }

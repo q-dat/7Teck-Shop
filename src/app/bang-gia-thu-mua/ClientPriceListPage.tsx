@@ -1,70 +1,49 @@
 'use client';
-import { LoadingLocal } from '@/components/orther/loading';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Button, Table } from 'react-daisyui';
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
-import { IPriceList, IProductPriceList } from '@/types/type/price-list/price-list';
+import { LoadingLocal } from '@/components/orther/loading';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
-import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
-import { Button, Table } from 'react-daisyui';
+import { IPriceListApi, IProductVariant } from '@/types/type/price-list/price-list';
 
-export default function ClientPriceListPage({ priceLists }: { priceLists: IPriceList[] }) {
+interface CatalogsType {
+  [catalog: string]: IProductVariant[];
+}
+
+export default function ClientPriceListPage({ priceLists }: { priceLists: IPriceListApi[] }) {
   const [loading, setLoading] = useState(true);
-
-  const [catalogs, setCatalogs] = useState<{
-    phoneProducts: Record<string, IProductPriceList[]>;
-    tabletProducts: Record<string, IProductPriceList[]>;
-    macbookProducts: Record<string, IProductPriceList[]>;
-    windowsProducts: Record<string, IProductPriceList[]>;
-  }>({
-    phoneProducts: {},
-    tabletProducts: {},
-    macbookProducts: {},
-    windowsProducts: {},
-  });
-
-  const [activeTabs, setActiveTabs] = useState<{ [key: string]: string }>({
-    phoneProducts: '',
-    tabletProducts: '',
-    macbookProducts: '',
-    windowsProducts: '',
-  });
+  const [catalogs, setCatalogs] = useState<Record<string, CatalogsType>>({});
+  const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
+  const [conditionsMap, setConditionsMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     scrollToTopInstantly();
-    if (priceLists.length >= 0) {
-      setLoading(false);
-    }
+    if (priceLists.length >= 0) setLoading(false);
 
-    const aggregatedData = {
-      phoneProducts: {} as Record<string, IProductPriceList[]>,
-      tabletProducts: {} as Record<string, IProductPriceList[]>,
-      macbookProducts: {} as Record<string, IProductPriceList[]>,
-      windowsProducts: {} as Record<string, IProductPriceList[]>,
-    };
+    const aggregated: Record<string, CatalogsType> = {};
+    const conditions: Record<string, string> = {};
 
-    ['phoneProducts', 'tabletProducts', 'macbookProducts', 'windowsProducts'].forEach((categoryType) => {
-      priceLists.forEach((list) => {
-        const productsByCategory = list[categoryType as keyof typeof list] || {};
+    priceLists.forEach((list) => {
+      if (!aggregated[list.category]) aggregated[list.category] = {};
+      if (list.conditions) conditions[list.category] = list.conditions;
 
-        Object.entries(productsByCategory).forEach(([category, products]) => {
-          if (Array.isArray(products)) {
-            aggregatedData[categoryType as keyof typeof aggregatedData][category] =
-              aggregatedData[categoryType as keyof typeof aggregatedData][category] || [];
-            aggregatedData[categoryType as keyof typeof aggregatedData][category].push(...(products as IProductPriceList[]));
-          }
-        });
+      list.groups.forEach((group) => {
+        if (!aggregated[list.category][group.catalog]) aggregated[list.category][group.catalog] = [];
+        aggregated[list.category][group.catalog].push(...group.variants);
       });
     });
 
-    setCatalogs(aggregatedData);
+    setCatalogs(aggregated);
+    setConditionsMap(conditions);
 
-    setActiveTabs({
-      phoneProducts: Object.keys(aggregatedData.phoneProducts)[0] || '',
-      tabletProducts: Object.keys(aggregatedData.tabletProducts)[0] || '',
-      macbookProducts: Object.keys(aggregatedData.macbookProducts)[0] || '',
-      windowsProducts: Object.keys(aggregatedData.windowsProducts)[0] || '',
+    // set default active tabs
+    const defaultTabs: Record<string, string> = {};
+    Object.entries(aggregated).forEach(([category, groupObj]) => {
+      defaultTabs[category] = Object.keys(groupObj)[0] || '';
     });
+    setActiveTabs(defaultTabs);
   }, [priceLists]);
 
   return (
@@ -85,74 +64,73 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
             </li>
           </ul>
         </div>
-        {/* Danh mục sản phẩm */}
+
         {loading ? (
           <LoadingLocal />
-        ) : priceLists.length === 0 ? (
+        ) : Object.keys(catalogs).length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-secondary bg-white p-6 text-center shadow-sm">
             <span className="text-xl font-semibold text-primary">Bảng giá thu mua đang được cập nhật</span>
             <p className="text-sm text-gray-500">Vui lòng quay lại sau để xem thông tin mới nhất.</p>
           </div>
         ) : (
           <div className="px-2 xl:px-desktop-padding">
-            {['phoneProducts', 'macbookProducts', 'tabletProducts', 'windowsProducts'].map(
-              (categoryType) =>
-                Object.keys(catalogs[categoryType as keyof typeof catalogs]).length > 0 && (
-                  <div key={categoryType}>
-                    <div role="region" aria-label={`Danh mục ${categoryType}`}>
-                      <h2 className="my-5 font-bold text-primary">
-                        {categoryType === 'phoneProducts'
-                          ? 'Bảng giá Điện Thoại'
-                          : categoryType === 'tabletProducts'
-                            ? 'Bảng giá Máy tính bảng'
-                            : categoryType === 'macbookProducts'
-                              ? 'Bảng giá Laptop Macbook'
-                              : 'Bảng giá Laptop Windows'}
-                      </h2>
-                    </div>
+            {Object.entries(catalogs).map(([categoryType, groupObj]) => (
+              <div key={categoryType} className="mb-10">
+                <div role="region" aria-label={`Danh mục ${categoryType}`}>
+                  <h2 className="relative inline-block text-2xl font-extrabold text-primary">
+                    <span className="after:mt-2 after:block after:h-1 after:w-full after:rounded-full after:bg-gradient-to-r after:from-purple-500 after:via-pink-500 after:to-red-500 after:content-['']">
+                      {categoryType === 'phoneProducts'
+                        ? 'Bảng giá Điện Thoại'
+                        : categoryType === 'tabletProducts'
+                          ? 'Bảng giá Máy tính bảng'
+                          : categoryType === 'macbookProducts'
+                            ? 'Bảng giá Laptop Macbook'
+                            : 'Bảng giá Laptop Windows'}
+                    </span>
+                  </h2>
+                </div>
 
-                    {/* Nút chọn danh mục */}
-                    <div className="grid grid-cols-3 gap-2 xl:grid-cols-6">
-                      {Object.keys(catalogs[categoryType as keyof typeof catalogs]).map((category) => (
-                        <Button
-                          key={category}
-                          onClick={() =>
-                            setActiveTabs({
-                              ...activeTabs,
-                              [categoryType]: category,
-                            })
-                          }
-                          className={`flex w-full items-center justify-center rounded-md text-xs transition-all duration-500 ease-in-out hover:rounded-box hover:bg-secondary hover:text-white xl:text-sm ${
-                            activeTabs[categoryType] === category
-                              ? 'bg-primary text-white hover:bg-primary hover:text-white'
-                              : 'bg-white text-primary'
-                          }`}
-                        >
-                          {category}
-                        </Button>
+                <div className="my-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
+                  {Object.keys(groupObj).map((catalog) => (
+                    <Button
+                      key={catalog}
+                      onClick={() => setActiveTabs({ ...activeTabs, [categoryType]: catalog })}
+                      className={`flex transform items-center justify-center rounded-lg text-sm font-medium shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md ${
+                        activeTabs[categoryType] === catalog
+                          ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white shadow-lg'
+                          : 'border border-gray-200 bg-white text-primary hover:bg-primary-lighter'
+                      } `}
+                    >
+                      {catalog}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="mt-5 w-full overflow-x-auto border border-primary scrollbar-hide">
+                  <Table className="w-full" zebra>
+                    <Table.Head className="bg-primary-lighter text-center text-primary">
+                      <span>Tên sản phẩm</span>
+                      <span>Giá máy mới</span>
+                      <span>Giá máy 99%</span>
+                    </Table.Head>
+                    <Table.Body className="text-center text-sm">
+                      {groupObj[activeTabs[categoryType]]?.map((product, index) => (
+                        <Table.Row key={index}>
+                          <span>{product.name}</span>
+                          {product.price_new ? <span>{formatCurrency(product.price_new)}</span> : <span>Liên Hệ</span>}
+                          {product.price_used ? <span>{formatCurrency(product.price_used)}</span> : <span>Liên Hệ</span>}
+                        </Table.Row>
                       ))}
-                    </div>
+                    </Table.Body>
+                  </Table>
+                </div>
 
-                    {/* Bảng sản phẩm */}
-                    <Table className="mt-5 border border-secondary" zebra>
-                      <Table.Head className="bg-secondary text-center text-white">
-                        <span>Tên sản phẩm</span>
-                        <span>Dung lượng</span>
-                        <span>Giá thu cũ</span>
-                      </Table.Head>
-                      <Table.Body className="text-center text-sm">
-                        {catalogs[categoryType as keyof typeof catalogs][activeTabs[categoryType]]?.map((product, index) => (
-                          <Table.Row key={index} className="border border-secondary">
-                            <span>{product?.name}</span>
-                            <span>{product?.storage}</span>
-                            <span>{formatCurrency(product?.price)}</span>
-                          </Table.Row>
-                        ))}
-                      </Table.Body>
-                    </Table>
-                  </div>
-                )
-            )}
+                {/* Hiển thị conditions HTML */}
+                {conditionsMap[categoryType] && (
+                  <div className="prose my-5 max-w-full" dangerouslySetInnerHTML={{ __html: conditionsMap[categoryType] }} />
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>
