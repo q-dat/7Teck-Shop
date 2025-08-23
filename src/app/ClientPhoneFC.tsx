@@ -79,16 +79,18 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
               scale={1.05}
               transitionSpeed={600}
             >
-              <Image
-                src={images.Popup}
-                alt="Banner"
-                width={1000}
-                height={1000}
-                className="h-full w-full cursor-pointer object-contain"
-                placeholder="blur"
-                blurDataURL={images.Popup}
-                onError={() => handleImageError(images.Popup)}
-              />
+              <Link href="/bang-gia-thu-mua">
+                <Image
+                  src={images.Popup}
+                  alt="Banner"
+                  width={1000}
+                  height={1000}
+                  className="h-full w-full cursor-pointer object-contain"
+                  placeholder="blur"
+                  blurDataURL={images.Popup}
+                  onError={() => handleImageError(images.Popup)}
+                />
+              </Link>
             </Tilt>
           </div>
         )}
