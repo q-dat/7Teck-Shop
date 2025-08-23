@@ -23,8 +23,8 @@ const BgFixedSection = () => {
           ease: 'power2.out',
           scrollTrigger: {
             trigger: titleRef.current,
-            start: 'top 80%',
-            end: 'bottom 50%',
+            start: 'top 60%',
+            end: '+=60%',
             scrub: true,
           },
         }
@@ -41,8 +41,8 @@ const BgFixedSection = () => {
           ease: 'power2.out',
           scrollTrigger: {
             trigger: descRef.current,
-            start: 'top 85%',
-            end: 'bottom 50%',
+            start: 'top 65%',
+            end: '+=60%',
             scrub: true,
           },
         }
@@ -55,7 +55,7 @@ const BgFixedSection = () => {
       className="relative my-10 h-[200px] w-full bg-cover bg-fixed bg-center bg-no-repeat xl:h-[300px]"
       style={{ backgroundImage: `url(${images.bgFixed})` }}
     >
-      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 px-2 text-lg font-light text-white xl:px-desktop-padding xl:text-3xl">
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 px-2 text-xl font-light text-white xl:px-desktop-padding xl:text-3xl">
         <h2 ref={titleRef} className="font-semibold">
           iPhone 16 Pro Max
         </h2>
