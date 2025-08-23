@@ -12,6 +12,7 @@ import { IPhone } from '@/types/type/products/phone/phone';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 import { IWindows } from '@/types/type/products/windows/windows';
 import Link from 'next/link';
+import BgFixedSection from '@/components/userPage/BgFixedSection';
 
 // Thành phần Banner
 const BannerComponent = memo(() => (
@@ -70,27 +71,6 @@ const BannerComponent = memo(() => (
 ));
 BannerComponent.displayName = 'BannerComponent';
 const Banner = memo(BannerComponent);
-
-// Thành phần Background Fixed
-const BgFixedSectionComponent = memo(() => (
-  <div
-    className="relative my-10 h-[200px] w-full bg-cover bg-fixed bg-center bg-no-repeat xl:h-[300px]"
-    style={{
-      backgroundImage: `url(${images.bgFixed})`,
-    }}
-  >
-    <div className="absolute left-1/2 top-1/2 flex h-full w-full -translate-x-1/2 -translate-y-1/2 transform flex-col items-center justify-center bg-black bg-opacity-30 px-2 text-lg font-light text-white xl:px-desktop-padding xl:text-3xl">
-      <h2 className="font-semibold" uk-parallax="opacity: 0,9; y: -50,0; scale: 2,1; end: 50vh + 50%;">
-        iPhone 16 Pro Max
-      </h2>
-      <i className="text-center" uk-parallax="opacity: 0,9; y: 50,0; scale: 0.5,1; end: 50vh + 50%;">
-        Trải nghiệm công nghệ đỉnh cao với thiết kế mới mẻ, hiệu suất vượt trội và camera siêu nét.
-      </i>
-    </div>
-  </div>
-));
-BgFixedSectionComponent.displayName = 'BgFixedSectionComponent';
-const BgFixedSection = memo(BgFixedSectionComponent);
 
 interface ClientHomePageProps {
   mostViewedPhones: IPhone[];
