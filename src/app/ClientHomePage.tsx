@@ -13,6 +13,7 @@ import { ITablet } from '@/types/type/products/tablet/tablet';
 import { IWindows } from '@/types/type/products/windows/windows';
 import Link from 'next/link';
 import BgFixedSection from '@/components/userPage/BgFixedSection';
+import BenefitsSection from '@/components/userPage/BenefitsSection';
 
 // Thành phần Banner
 const BannerComponent = memo(() => (
@@ -177,8 +178,6 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
       <div className="pt-[60px] xl:pt-0">
         {/* Banner quảng cáo */}
         <Banner />
-        {/* Phần lợi ích */}
-        {/* <BenefitsSection /> */}
         {/* Phần sản phẩm điện thoại */}
         {/* <div data-aos="fade-down"> */}
         <ClientPhoneFC mostViewedPhones={mostViewedPhones} loading={loading} />
@@ -186,13 +185,13 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
         {/* Phần nền cố định */}
         {mostViewedPhones.length !== 0 && <BgFixedSection />}
         {/* Phần sản phẩm giảm giá */}
-        <div className="flex w-full flex-col items-center justify-center gap-5">
-          {productCategories.map((config, index) => (
-            <div key={index} /* data-aos="fade-up" */ className="w-full">
-              <ClientProductFC products={config.products} category={config.category} loading={loading} />
-            </div>
-          ))}
-        </div>
+        {productCategories.map((config, index) => (
+          <div key={index} /* data-aos="fade-up" */ className="w-full">
+            <ClientProductFC products={config.products} category={config.category} loading={loading} />
+          </div>
+        ))}
+        {/* Phần lợi ích */}
+        <BenefitsSection />
         {/* Phần bài viết */}
         <ClientPostSection news={news} tricks={tricks} />
       </div>

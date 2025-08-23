@@ -43,10 +43,7 @@ export default function ClientProductFC({ products, category, loading: externalL
   useEffect(() => {
     if (externalLoading === undefined) {
       if (products.length === 0) {
-        const fetchData = async () => {
-          setInternalLoading(true);
-        };
-        fetchData();
+        setInternalLoading(true);
       } else {
         setInternalLoading(false);
       }
@@ -56,29 +53,38 @@ export default function ClientProductFC({ products, category, loading: externalL
   // Lọc các sản phẩm có sale
   const sortedProducts = products.filter((product) => product.sale);
 
+  //  placeholder
+  if (loading) {
+    return (
+      <div className="p-0 xl:px-desktop-padding">
+        <h1 className="py-2 text-2xl font-semibold">Đang tải...</h1>
+        <div className="grid w-full grid-flow-col grid-rows-1 gap-[10px] overflow-x-auto scroll-smooth border-[10px] border-transparent bg-white scrollbar-hide xl:rounded-t-lg">
+          <ProductPlaceholders count={12} />
+        </div>
+      </div>
+    );
+  }
+
+  if (sortedProducts.length === 0) {
+    return null;
+  }
+
   return (
     <div className="p-0 xl:px-desktop-padding">
-      {/* Tiêu đề danh mục */}
+      {/* Tiêu đề */}
       <div
         role="region"
         aria-label={`Danh sách giảm giá mạnh ${category.name}`}
         className="flex w-full flex-col items-start justify-center px-2 xl:rounded-t-lg"
       >
-        <h1 className="py-2 text-2xl font-semibold">{loading ? <>Đang tải...</> : sortedProducts.length === 0 ? <></> : <>{category.title}</>}</h1>
+        <h1 className="py-2 text-2xl font-semibold">{category.title}</h1>
       </div>
+
+      {/* Phần sản phẩm */}
       <div className="relative">
-        <section
-          ref={scrollRef}
-          className="grid w-full grid-flow-col grid-rows-1 items-center justify-start gap-[10px] overflow-x-auto scroll-smooth rounded-none border-[10px] border-transparent bg-white pt-0 scrollbar-hide xl:rounded-t-lg xl:pt-0"
-        >
-          {loading ? (
-            <ProductPlaceholders count={12} />
-          ) : sortedProducts.length === 0 ? (
-            <p className="col-span-full text-sm text-red-500 xl:text-lg">
-              <i>Hiện sản phẩm giảm giá trong danh mục này đang được cập nhật!</i>
-            </p>
-          ) : (
-            sortedProducts.map((product) => {
+        <section ref={scrollRef} className="w-full">
+          <div className="grid w-full grid-flow-col grid-rows-1 items-center justify-start gap-[10px] overflow-x-auto scroll-smooth border-[10px] border-transparent bg-white scrollbar-hide xl:rounded-t-lg">
+            {sortedProducts.map((product) => {
               const productUrl = slugify(product.name);
               return (
                 <div
@@ -162,47 +168,41 @@ export default function ClientProductFC({ products, category, loading: externalL
                   )}
                 </div>
               );
-            })
-          )}
+            })}
+          </div>
         </section>
 
-        {/* Nút điều hướng cuộn */}
+        {/* Nút điều hướng */}
         <div className="absolute top-1/2 flex w-full items-center justify-between">
           <div className="relative w-full">
-            <button
-              aria-label="Cuộn sang trái"
-              onClick={() => scrollBy(-390)}
-              className={`absolute left-0 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
-                isLeftVisible ? '' : 'hidden'
-              }`}
-            >
-              <MdArrowBackIosNew className="text-2xl" />
-            </button>
-            <button
-              aria-label="Cuộn sang phải"
-              onClick={() => scrollBy(390)}
-              className={`absolute right-0 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
-                isRightVisible ? '' : 'hidden'
-              }`}
-            >
-              <MdArrowForwardIos className="text-2xl" />
-            </button>
+            {isLeftVisible && (
+              <button
+                aria-label="Cuộn sang trái"
+                onClick={() => scrollBy(-390)}
+                className="absolute left-0 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 shadow hover:scale-110"
+              >
+                <MdArrowBackIosNew className="text-2xl" />
+              </button>
+            )}
+            {isRightVisible && (
+              <button
+                aria-label="Cuộn sang phải"
+                onClick={() => scrollBy(390)}
+                className="absolute right-0 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 shadow hover:scale-110"
+              >
+                <MdArrowForwardIos className="text-2xl" />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Liên kết Xem thêm */}
+      {/* Link xem thêm */}
       <Link href={category.url} aria-label={category.ariaLabel}>
-        {loading ? (
-          <>Đang tải...</>
-        ) : sortedProducts.length === 0 ? (
-          <></>
-        ) : (
-          <button className="flex w-full cursor-pointer items-center justify-center bg-gradient-to-r from-white via-secondary to-white py-1 text-sm text-white xl:rounded-b-lg">
-            Xem Thêm Sản Phẩm {category.name}
-            <IoIosArrowForward className="text-xl" />
-          </button>
-        )}
+        <button className="flex w-full cursor-pointer items-center justify-center bg-gradient-to-r from-white via-secondary to-white py-1 text-sm text-white xl:rounded-b-lg">
+          Xem Thêm Sản Phẩm {category.name}
+          <IoIosArrowForward className="text-xl" />
+        </button>
       </Link>
     </div>
   );
