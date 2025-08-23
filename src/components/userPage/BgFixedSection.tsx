@@ -1,8 +1,8 @@
-"use client";
-import { memo, useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { images } from "../../../public/images";
+'use client';
+import { useEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { images } from '../../../public/images';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -20,11 +20,11 @@ const BgFixedSection = () => {
           opacity: 0.9,
           y: 0,
           scale: 1,
-          ease: "power2.out",
+          ease: 'power2.out',
           scrollTrigger: {
             trigger: titleRef.current,
-            start: "top 80%",
-            end: "bottom 50%",
+            start: 'top 80%',
+            end: 'bottom 50%',
             scrub: true,
           },
         }
@@ -38,11 +38,11 @@ const BgFixedSection = () => {
           opacity: 0.9,
           y: 0,
           scale: 1,
-          ease: "power2.out",
+          ease: 'power2.out',
           scrollTrigger: {
             trigger: descRef.current,
-            start: "top 85%",
-            end: "bottom 50%",
+            start: 'top 85%',
+            end: 'bottom 50%',
             scrub: true,
           },
         }
