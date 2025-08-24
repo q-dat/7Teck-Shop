@@ -1,16 +1,32 @@
+import { PageProps } from '@/types/type/pages/page-props';
+import { getAllPosts, getPostById } from '@/services/postService';
+import ClientPostDetailPage from './ClientPostDetailPage';
+import ErrorLoading from '@/components/orther/error/ErrorLoading';
+import { IPost } from '@/types/type/products/post/post';
+import { buildPostDetailMetadata } from '@/metadata/id/postDetailMetadata';
+
 export const revalidate = 60;
 
-import { PageProps } from '@/types/type/pages/page-props';
-import React from 'react';
-import ClientPostDetailPage from './ClientPostDetailPage';
-import { getAllPosts, getPostById } from '@/services/postService';
-import { IPost } from '@/types/type/products/post/post';
-import ErrorLoading from '@/components/orther/error/ErrorLoading';
-import Head from 'next/head';
+// Dùng generateMetadata để dynamic meta
+export async function generateMetadata({ params }: PageProps) {
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+  const post: IPost | null = await getPostById(id);
+
+  if (!post) {
+    return {
+      title: 'Bài viết không tồn tại - 7Teck',
+      description: 'Bài viết bạn tìm không còn hoặc đã bị xóa.',
+    };
+  }
+
+  return buildPostDetailMetadata(post);
+}
 
 export default async function PostDetail({ params }: PageProps) {
   const resolvedParams = await params;
   const id = resolvedParams.id;
+
   const posts: IPost[] = await getAllPosts();
   const post: IPost | null = await getPostById(id);
 
@@ -46,9 +62,8 @@ export default async function PostDetail({ params }: PageProps) {
 
   return (
     <>
-      <Head>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      </Head>
+      {/* JSON-LD Structured Data */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <ClientPostDetailPage posts={posts} post={post} />
     </>
   );
