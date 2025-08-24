@@ -66,7 +66,7 @@ const BenefitsSection = () => {
       scrollTrigger: {
         trigger: container,
         pin: true,
-        scrub: 1,
+        scrub: 0,
         start: 'center center',
         end: () => `+=${container.scrollWidth - window.innerWidth}`,
       },
