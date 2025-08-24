@@ -1,8 +1,18 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  productionBrowserSourceMaps: false, // false → build production sẽ không tạo source map → file nhẹ hơn, deploy nhanh hơn, kẻ khác cũng khó “đọc” code của bạn hơn.
+  // Cấu hình Webpack cho dev
+  webpack(config, { dev }) {
+    if (dev) {
+      config.devtool = false;
+    }
+    return config;
+  },
+  // Cấu hình cho Next.js
   devIndicators: false,
   images: {
+    // unoptimized: true, // true: dev mode, false: prod mode
     formats: ['image/webp'],
     remotePatterns: [
       {
