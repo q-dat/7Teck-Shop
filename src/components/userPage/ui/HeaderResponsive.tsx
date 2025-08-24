@@ -107,7 +107,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
   };
 
   return (
-    <div className="fixed z-[99999] block w-full bg-gradient-to-b from-white to-primary xl:hidden">
+    <div className="fixed z-[9999999] block w-full bg-gradient-to-b from-white to-primary xl:hidden">
       <header
         className={`fixed h-[60px] w-full bg-gradient-to-r from-primary via-primary to-primary px-2 transition-all delay-200 duration-300 ease-in-out ${
           showMenu ? 'top-0' : 'top-0'

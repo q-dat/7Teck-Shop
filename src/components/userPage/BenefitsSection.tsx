@@ -92,9 +92,9 @@ const BenefitsSection = () => {
               <span className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-sm font-semibold text-white shadow-md">{p.badge}</span>
 
               <div className="mb-4 flex justify-center">{p.icon}</div>
-              <h1 className="mb-1 text-2xl font-bold text-gray-900 md:text-3xl">{p.title}</h1>
-              <p className="mb-2 text-sm italic text-gray-600">{p.subtitle}</p>
-              <p className="mb-3 text-base text-gray-700 md:text-lg">{p.desc}</p>
+              <h1 className="mb-1 text-xl font-bold text-gray-900 md:text-3xl">{p.title}</h1>
+              <p className="mb-2 text-xs italic text-gray-600 xl:text-sm">{p.subtitle}</p>
+              <p className="mb-3 text-sm text-gray-700 md:text-lg xl:text-base">{p.desc}</p>
 
               {/* CTA link */}
               <Link
