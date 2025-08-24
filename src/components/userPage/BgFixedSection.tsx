@@ -65,7 +65,7 @@ const BgFixedSection = () => {
 
         <p
           ref={descRef}
-          className="/*[-webkit-text-stroke:1px_black] [text-stroke-width:1px]*/ break-words text-center text-sm font-medium text-white [text-stroke-color:black] md:text-xl xl:text-3xl"
+          className="/*[-webkit-text-stroke:1px_black] [text-stroke-width:1px]*/ break-words text-center text-sm font-light text-white [text-stroke-color:black] md:text-xl xl:text-3xl"
         >
           Trải nghiệm công nghệ đỉnh cao với thiết kế mới mẻ, hiệu suất vượt trội và camera siêu nét.
         </p>
