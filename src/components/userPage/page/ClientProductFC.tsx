@@ -70,14 +70,14 @@ export default function ClientProductFC({ products, category, loading: externalL
   }
 
   return (
-    <div className="p-0 xl:px-desktop-padding">
+    <div className="mb-10 p-0 xl:px-desktop-padding">
       {/* Tiêu đề */}
       <div
         role="region"
         aria-label={`Danh sách giảm giá mạnh ${category.name}`}
         className="flex w-full flex-col items-start justify-center px-2 xl:rounded-t-lg"
       >
-        <h1 className="py-2 text-2xl font-semibold">{category.title}</h1>
+        <h1 className="pb-2 text-2xl font-semibold">{category.title}</h1>
       </div>
 
       {/* Phần sản phẩm */}

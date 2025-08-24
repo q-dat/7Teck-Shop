@@ -30,7 +30,7 @@ export default function ClientPostSection({ news, tricks }: ClientPostSectionPro
       style={{
         backgroundImage: `url(${images.bgBlog})`,
       }}
-      className="relative mt-12 bg-cover bg-fixed bg-center bg-no-repeat py-12"
+      className="relative mt-10 bg-cover bg-fixed bg-center bg-no-repeat py-12"
     >
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/40"></div>
       <div className="relative z-10 px-2 xl:px-desktop-padding">

@@ -9,4 +9,8 @@ export const images = {
   BannerMobile:'/images/BannerMobile.webp',
   bgFixed:'/images/bgFixed.webp',
   bgBlog:'/images/bgBlog.webp',
+  Ip16PM:'/images/Ip16PM.jpg',
+  LaptopDell:'/images/LaptopDell.jpg',
+  MacProM4:'/images/MacProM4.jpg',
+  OppoReno14:'/images/OppoReno14.jpg',
 };

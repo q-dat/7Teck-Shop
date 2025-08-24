@@ -1,5 +1,6 @@
-// 'use client';
+'use client';
 import { useEffect, useRef } from 'react';
+import Link from 'next/link'; // thêm import
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { FaShippingFast, FaShieldAlt, FaTags } from 'react-icons/fa';
@@ -7,30 +8,46 @@ import { images } from '../../../public/images';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const benefits = [
+const programs = [
   {
-    icon: <FaShippingFast className="text-6xl text-primary" />,
-    title: 'Giao Hàng Nhanh',
-    desc: 'Miễn phí nội thành TP.HCM - Hỗ trợ giao các tỉnh lân cận',
-    bg: `${images.Popup}`,
+    icon: <FaShippingFast className="text-5xl text-primary" />,
+    title: 'Tư Vấn Chọn Máy Theo Nhu Cầu',
+    subtitle: 'Hỗ trợ tìm sản phẩm phù hợp',
+    desc: 'Chúng tôi giúp khách hàng lựa chọn điện thoại, laptop, PC theo từng mục đích: học tập, văn phòng, đồ họa hay gaming. Đội ngũ kỹ thuật sẽ giải thích chi tiết về cấu hình và hiệu năng để bạn chọn đúng sản phẩm cần thiết.',
+    badge: 'Expert',
+    cta: 'Nhận Tư Vấn',
+    link: '/tu-van',
+    bg: `${images.Ip16PM}`,
   },
   {
-    icon: <FaShieldAlt className="text-6xl text-primary" />,
-    title: 'Bảo Hành Uy Tín',
-    desc: 'Bảo hành chính hãng, hỗ trợ 1 đổi 1',
-    bg: `${images.Popup}`,
+    icon: <FaShieldAlt className="text-5xl text-primary" />,
+    title: 'Cam Kết Hàng Chính Hãng',
+    subtitle: 'Bảo hành minh bạch',
+    desc: 'Tất cả sản phẩm đều nhập chính ngạch từ Apple, Dell, Asus, HP… và đi kèm đầy đủ hóa đơn VAT. Chế độ bảo hành rõ ràng, có hỗ trợ 1 đổi 1 nếu lỗi do nhà sản xuất, giúp khách hàng yên tâm khi mua sắm lâu dài.',
+    badge: 'Trust',
+    cta: 'Xem Chi Tiết',
+    link: '/chinh-sach-bao-hanh',
+    bg: `${images.MacProM4}`,
   },
   {
-    icon: <FaTags className="text-6xl text-primary" />,
-    title: 'Khuyến Mãi Hấp Dẫn',
-    desc: 'Giảm giá lên tới 50% cho các sản phẩm hot',
-    bg: `${images.Popup}`,
+    icon: <FaTags className="text-5xl text-primary" />,
+    title: 'Thu Cũ Đổi Mới & Trả Góp Linh Hoạt',
+    subtitle: 'Giải pháp mua sắm dễ dàng',
+    desc: 'Khách hàng có thể đổi thiết bị cũ lấy máy mới với mức giá thu hợp lý. Ngoài ra, chúng tôi hỗ trợ thanh toán trả góp linh hoạt qua thẻ tín dụng, giúp bạn dễ dàng sở hữu điện thoại, laptop hoặc PC mà không cần chi trả toàn bộ ngay từ đầu.',
+    badge: 'Value',
+    cta: 'Tìm Hiểu Thêm',
+    link: '/bang-gia-thu-mua',
+    bg: `${images.OppoReno14}`,
   },
   {
-    icon: <FaShippingFast className="text-6xl text-primary" />,
-    title: 'Hỗ Trợ 24/7',
-    desc: 'Đội ngũ tư vấn online bất cứ khi nào bạn cần',
-    bg: `${images.Popup}`,
+    icon: <FaShippingFast className="text-5xl text-primary" />,
+    title: 'Dịch Vụ Cài Đặt & Hỗ Trợ 24/7',
+    subtitle: 'Đồng hành cùng khách hàng',
+    desc: 'Tất cả máy khi mua đều được cài đặt phần mềm cơ bản miễn phí: Windows bản quyền, Office, diệt virus, drivers và tối ưu hiệu suất. Đội ngũ kỹ thuật hỗ trợ online 24/7, sẵn sàng giải đáp mọi thắc mắc trong quá trình sử dụng.',
+    badge: 'Support',
+    cta: 'Liên Hệ',
+    link: '/lien-he',
+    bg: `${images.LaptopDell}`,
   },
 ];
 
@@ -57,21 +74,36 @@ const BenefitsSection = () => {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative my-10 w-full overflow-hidden">
-      <div className="flex h-[100vh] w-max flex-row">
-        {benefits.map((b, i) => (
+    <section ref={containerRef} className="relative w-full overflow-hidden">
+      <div className="flex h-screen w-max flex-row">
+        {programs.map((p, i) => (
           <div
             key={i}
-            className="benefit-card relative flex w-screen flex-col items-center justify-center bg-cover bg-center bg-no-repeat text-center"
+            className="benefit-card relative flex w-screen flex-col items-center justify-center bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage: `url(${b.bg})`,
+              backgroundImage: `url(${p.bg})`,
             }}
           >
-            <div className="absolute inset-0 w-full" />
-            <p> {b.icon}</p>
-            <div className="relative z-10 text-white">
-              <h3 className="text-5xl font-bold">{b.title}</h3>
-              <p className="text-6xl">{b.desc}</p>
+            {/* overlay gradient */}
+            <div className="absolute inset-0 bg-black/20" />
+
+            <div className="relative z-10 mx-2 max-w-2xl rounded-2xl bg-white/60 p-6 text-center shadow-lg backdrop-blur-md md:mx-0 md:p-8">
+              {/* badge */}
+              <span className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-sm font-semibold text-white shadow-md">{p.badge}</span>
+
+              <div className="mb-4 flex justify-center">{p.icon}</div>
+              <h3 className="mb-1 text-2xl font-bold text-gray-900 md:text-3xl">{p.title}</h3>
+              <p className="mb-2 text-sm italic text-gray-600">{p.subtitle}</p>
+              <p className="mb-3 text-base text-gray-700 md:text-lg">{p.desc}</p>
+
+              {/* CTA link */}
+              <Link
+                target="_blank"
+                href={p.link}
+                className="inline-block rounded-lg bg-primary px-5 py-2 font-medium text-white shadow transition hover:bg-primary/90"
+              >
+                {p.cta}
+              </Link>
             </div>
           </div>
         ))}

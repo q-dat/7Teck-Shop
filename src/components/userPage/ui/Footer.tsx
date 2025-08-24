@@ -29,7 +29,7 @@ export default function FooterFC() {
   return (
     <div className="mb-[50px] xl:mb-0">
       {/* Suggest */}
-      <div className="w-full px-2 py-4 xl:px-desktop-padding" role="region" aria-label="Sản phẩm gợi ý">
+      <div className="my-10 w-full px-2 xl:px-desktop-padding" role="region" aria-label="Sản phẩm gợi ý">
         <span className="font-semibold">Sản phẩm gợi ý:</span>
         <br />
         <div className="flex w-full flex-wrap gap-2 rounded-md bg-white p-2 text-sm text-black shadow">
