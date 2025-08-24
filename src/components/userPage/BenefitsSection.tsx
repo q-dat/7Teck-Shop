@@ -92,13 +92,12 @@ const BenefitsSection = () => {
               <span className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-sm font-semibold text-white shadow-md">{p.badge}</span>
 
               <div className="mb-4 flex justify-center">{p.icon}</div>
-              <h3 className="mb-1 text-2xl font-bold text-gray-900 md:text-3xl">{p.title}</h3>
+              <h1 className="mb-1 text-2xl font-bold text-gray-900 md:text-3xl">{p.title}</h1>
               <p className="mb-2 text-sm italic text-gray-600">{p.subtitle}</p>
               <p className="mb-3 text-base text-gray-700 md:text-lg">{p.desc}</p>
 
               {/* CTA link */}
               <Link
-                target="_blank"
                 href={p.link}
                 className="inline-block rounded-lg bg-primary px-5 py-2 font-medium text-white shadow transition hover:bg-primary/90"
               >

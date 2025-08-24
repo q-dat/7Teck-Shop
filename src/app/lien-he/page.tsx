@@ -1,5 +1,4 @@
 'use client';
-
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import { hotlineUrl, mailUrl, ggMapUrl, address, messengerUrl, zaloUrl, fanpageUrl } from '@/utils/socialLinks';
 import Link from 'next/link';
@@ -10,16 +9,17 @@ export default function ContactPage() {
     <div>
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
       <div className="py-[60px] xl:pt-0">
-        {/* breadcrumbs */}
-        <div className="breadcrumbs bg-primary-lighter px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
+        <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
             <li>
-              <Link role="navigation" aria-label="Trang chủ" href="/" className="text-primary hover:underline">
+              <Link role="navigation" aria-label="Trang chủ" href="/">
                 Trang Chủ
               </Link>
             </li>
             <li>
-              <span className="text-black">Liên Hệ</span>
+              <Link role="navigation" aria-label="Liên hệ" href="">
+                Liên Hệ
+              </Link>
             </li>
           </ul>
         </div>

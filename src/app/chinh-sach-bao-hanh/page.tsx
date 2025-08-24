@@ -1,5 +1,4 @@
 'use client';
-
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,17 +8,16 @@ export default function WarrantyPage() {
     <div>
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
       <div className="py-[60px] xl:pt-0">
-        {/* breadcrumbs */}
-        <div className="breadcrumbs bg-primary-lighter px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
+        <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
             <li>
-              <Link role="navigation" aria-label="Trang chủ" href="/" className="text-primary hover:underline">
+              <Link role="navigation" aria-label="Trang chủ" href="/">
                 Trang Chủ
               </Link>
             </li>
             <li>
-              <Link role="navigation" aria-label="Bảo hành" href="/bao-hanh" className="text-black hover:text-primary">
-                Bảo Hành
+              <Link role="navigation" aria-label="Chính sách bảo hành" href="">
+                Chính Sách Bảo Hành
               </Link>
             </li>
           </ul>
