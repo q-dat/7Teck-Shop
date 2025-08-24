@@ -74,7 +74,7 @@ const BenefitsSection = () => {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative w-full overflow-hidden">
+    <section ref={containerRef} className="relative z-[9999998] w-full overflow-hidden">
       <div className="flex h-screen w-max flex-row">
         {programs.map((p, i) => (
           <div
