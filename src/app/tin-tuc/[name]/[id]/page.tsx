@@ -47,27 +47,8 @@ export default async function PostDetail({ params }: PageProps) {
   return (
     <>
       <Head>
-        {/* SEO cơ bản */}
-        <title>{post.title}</title>
-        <meta name="description" content={post.content.slice(0, 160)} />
-        {/* Open Graph cho Facebook / Zalo */}
-        <meta property="og:title" content={post.title} />
-        <meta property="og:description" content={post.content.slice(0, 160)} />
-        <meta property="og:image" content={post.imageUrl} />
-        <meta property="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL}/tin-tuc/${encodeURIComponent(post.title)}/${post._id}`} />
-        <meta property="og:type" content="article" />
-        <meta property="og:site_name" content="7Teck" />
-
-        {/* Twitter Card (nếu share lên Twitter/X) */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={post.title} />
-        <meta name="twitter:description" content={post.content.slice(0, 160)} />
-        <meta name="twitter:image" content={post.imageUrl} />
-
-        {/* JSON-LD schema.org cho Google */}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </Head>
-
       <ClientPostDetailPage posts={posts} post={post} />
     </>
   );
