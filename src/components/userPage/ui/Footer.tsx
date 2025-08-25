@@ -6,7 +6,7 @@ import { FaFacebook, FaFacebookMessenger, FaPhone } from 'react-icons/fa';
 import { IoMail } from 'react-icons/io5';
 import { images } from '../../../../public/images';
 import Link from 'next/link';
-import { address, contact, copyright, fanpageUrl, ggMapUrl, hotlineUrl, mail, mailUrl, messengerUrl, zaloUrl } from '@/utils/socialLinks';
+import { address, contact, copyright, fanpageUrl, ggMapShareUrl, hotlineUrl, mail, mailUrl, messengerUrl, zaloUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
 
 const suggestedProducts = [
@@ -129,7 +129,7 @@ export default function FooterFC() {
               <IoMail /> {mail}
             </Link>
             {/* Address */}
-            <Link title="Địa chỉ" target="_blank" className="flex items-center gap-2 font-medium hover:font-semibold hover:underline" href={ggMapUrl}>
+            <Link title="Địa chỉ" target="_blank" className="flex items-center gap-2 font-medium hover:font-semibold hover:underline" href={ggMapShareUrl}>
               <FaMapLocationDot className="text-xl" />
               {address}
             </Link>
