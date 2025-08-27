@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { FaQuoteLeft } from 'react-icons/fa';
 
 const testimonials = [
@@ -28,9 +29,9 @@ export default function TestimonialSection() {
           {testimonials.map((t, idx) => (
             <div key={idx} className="rounded-2xl bg-white p-6 shadow transition hover:shadow-lg">
               <FaQuoteLeft className="mx-auto mb-4 text-2xl text-blue-600" />
-              <p className="italic text-gray-700">"{t.comment}"</p>
+              <p className="italic text-gray-700">{`"${t.comment}"`}</p>
               <div className="mt-6 flex flex-col items-center">
-                <img src={t.avatar} alt={t.name} className="mb-2 h-12 w-12 rounded-full object-cover" />
+                <Image src={t.avatar} alt={t.name} width={50} height={50} className="mb-2 h-12 w-12 rounded-full object-cover" />
                 <span className="font-medium">{t.name}</span>
               </div>
             </div>
