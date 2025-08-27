@@ -24,9 +24,9 @@ export default function ConsultationPage() {
         </div>
 
         {/* Nội dung UI - Thêm nhiều sections và hình ảnh */}
-        <div className="px-[10px] py-6 xl:px-desktop-padding">
+        <div className="w-full px-2 py-6 xl:px-desktop-padding">
           {/* Section 1: Giới thiệu */}
-          <div className="rounded-xl bg-white p-6 shadow-md md:p-10">
+          <div className="rounded-xl bg-white p-2 shadow-lg xl:p-6">
             <h1 className="mb-4 text-2xl font-bold text-primary md:text-3xl">Tư Vấn Chọn Máy Theo Nhu Cầu</h1>
             <p className="mb-4 text-gray-700">
               Chúng tôi cung cấp dịch vụ tư vấn miễn phí giúp khách hàng chọn lựa điện thoại, laptop, PC theo từng nhu cầu: học tập, văn phòng, đồ
@@ -49,16 +49,20 @@ export default function ConsultationPage() {
             </div>
 
             {/* CTA */}
-            <button className="rounded-lg bg-primary px-6 py-3 font-semibold text-white shadow-md transition hover:bg-secondary">
-              Liên Hệ Tư Vấn
-            </button>
+            <Link
+              href="/lien-he"
+              target="_blank"
+              className="inline-block rounded-xl bg-primary px-8 py-3 font-semibold text-white shadow-md transition hover:bg-secondary"
+            >
+              Liên Hệ Ngay
+            </Link>
           </div>
 
           {/* Section 2: Các loại nhu cầu phổ biến */}
-          <div className="mt-10 rounded-xl bg-white p-6 shadow-md md:p-10">
+          <div className="mt-10 rounded-xl bg-white p-2 shadow-lg xl:p-6">
             <h2 className="mb-4 text-xl font-bold text-primary md:text-2xl">Các Nhu Cầu Phổ Biến</h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-lg bg-gray-100 p-4 text-center">
+              <div className="rounded-lg bg-primary-lighter p-4 text-center">
                 <Image
                   src="https://source.unsplash.com/random/300x200/?student,laptop"
                   alt="Học tập"
@@ -69,7 +73,7 @@ export default function ConsultationPage() {
                 <h3 className="text-lg font-semibold">Học Tập</h3>
                 <p className="text-gray-600">Laptop nhẹ, pin lâu, giá phải chăng cho sinh viên.</p>
               </div>
-              <div className="rounded-lg bg-gray-100 p-4 text-center">
+              <div className="rounded-lg bg-primary-lighter p-4 text-center">
                 <Image
                   src="https://source.unsplash.com/random/300x200/?office,pc"
                   alt="Văn phòng"
@@ -80,7 +84,7 @@ export default function ConsultationPage() {
                 <h3 className="text-lg font-semibold">Văn Phòng</h3>
                 <p className="text-gray-600">Máy tính ổn định, hỗ trợ làm việc đa nhiệm.</p>
               </div>
-              <div className="rounded-lg bg-gray-100 p-4 text-center">
+              <div className="rounded-lg bg-primary-lighter p-4 text-center">
                 <Image
                   src="https://source.unsplash.com/random/300x200/?graphic,design"
                   alt="Đồ họa"
@@ -91,7 +95,7 @@ export default function ConsultationPage() {
                 <h3 className="text-lg font-semibold">Đồ Họa</h3>
                 <p className="text-gray-600">Card đồ họa mạnh, màn hình chất lượng cao.</p>
               </div>
-              <div className="rounded-lg bg-gray-100 p-4 text-center">
+              <div className="rounded-lg bg-primary-lighter p-4 text-center">
                 <Image
                   src="https://source.unsplash.com/random/300x200/?gaming,pc"
                   alt="Gaming"
@@ -106,7 +110,7 @@ export default function ConsultationPage() {
           </div>
 
           {/* Section 3: Lợi ích tư vấn */}
-          <div className="mt-10 rounded-xl bg-white p-6 shadow-md md:p-10">
+          <div className="mt-10 rounded-xl bg-white p-2 shadow-lg xl:p-6">
             <h2 className="mb-4 text-xl font-bold text-primary md:text-2xl">Lợi Ích Khi Tư Vấn Tại 7Teck</h2>
             <ul className="list-disc space-y-2 pl-6 text-gray-700">
               <li>Tư vấn miễn phí 24/7 qua hotline hoặc chat online.</li>
@@ -126,7 +130,7 @@ export default function ConsultationPage() {
           </div>
 
           {/* Section 4: Câu hỏi thường gặp */}
-          <div className="mt-10 rounded-xl bg-white p-6 shadow-md md:p-10">
+          <div className="mt-10 rounded-xl bg-white p-2 shadow-lg xl:p-6">
             <h2 className="mb-4 text-xl font-bold text-primary md:text-2xl">Câu Hỏi Thường Gặp</h2>
             <div className="space-y-4">
               <div>

@@ -2,6 +2,8 @@
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import Link from 'next/link';
 import Image from 'next/image';
+import { images } from '../../../public/images';
+import { hotlineUrl, mailUrl, ggMapShareUrl, address, messengerUrl, zaloUrl, fanpageUrl } from '@/utils/socialLinks';
 
 export default function WarrantyPage() {
   return (
@@ -26,9 +28,9 @@ export default function WarrantyPage() {
         {/* Nội dung UI - Kết hợp nội dung chi tiết */}
         <div className="px-[10px] py-6 xl:px-desktop-padding">
           {/* Section 1: Giới thiệu bảo hành */}
-          <div className="rounded-xl bg-white p-6 shadow-md md:p-10">
+          <div className="rounded-xl bg-white p-2 shadow-lg xl:p-6">
             <h1 className="mb-6 text-center text-2xl font-bold text-gray-900 sm:text-3xl lg:text-4xl">Chính Sách Bảo Hành Sản Phẩm – 7teck</h1>
-            <p className="mx-auto mb-10 max-w-2xl text-center leading-relaxed text-gray-600">
+            <p className="mb-10 max-w-2xl text-center leading-relaxed text-gray-600">
               7teck cam kết mang đến cho khách hàng trải nghiệm mua sắm an tâm cùng chính sách bảo hành rõ ràng, minh bạch đối với các sản phẩm điện
               thoại và laptop.
             </p>
@@ -46,7 +48,7 @@ export default function WarrantyPage() {
           </div>
 
           {/* Grid Layout - Kết hợp Thời gian, Điều kiện, Quy trình, Từ chối */}
-          <div className="mt-10 rounded-xl bg-white p-6 shadow-md md:p-10">
+          <div className="mt-10 rounded-xl bg-white p-2 shadow-lg xl:p-6">
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
               {/* Left Column */}
               <section className="space-y-8">
@@ -104,39 +106,33 @@ export default function WarrantyPage() {
           </div>
 
           {/* Section: Bảo Hành Theo Sản Phẩm (từ nội dung cũ) */}
-          <div className="mt-10 rounded-xl bg-white p-6 shadow-md md:p-10">
+          <div className="mt-10 rounded-xl bg-white p-2 shadow-lg xl:p-6">
             <h2 className="mb-4 text-xl font-bold text-primary md:text-2xl">Bảo Hành Theo Sản Phẩm</h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="rounded-lg bg-gray-100 p-4 text-center">
+              <div className="rounded-lg bg-primary-lighter p-4 text-center">
                 <Image
                   src="https://source.unsplash.com/random/300x200/?laptop,warranty"
                   alt="Laptop"
                   width={300}
                   height={200}
-                  className="mx-auto mb-2 rounded-md"
+                  className="mb-2 rounded-md"
                 />
                 <h3 className="text-lg font-semibold">Laptop</h3>
                 <p className="text-gray-600">Bảo hành 12-24 tháng, hỗ trợ sửa chữa nhanh chóng.</p>
               </div>
-              <div className="rounded-lg bg-gray-100 p-4 text-center">
+              <div className="rounded-lg bg-primary-lighter p-4 text-center">
                 <Image
                   src="https://source.unsplash.com/random/300x200/?phone,warranty"
                   alt="Điện thoại"
                   width={300}
                   height={200}
-                  className="mx-auto mb-2 rounded-md"
+                  className="mb-2 rounded-md"
                 />
                 <h3 className="text-lg font-semibold">Điện Thoại</h3>
                 <p className="text-gray-600">Bảo hành 12 tháng, đổi mới nếu lỗi phần cứng.</p>
               </div>
-              <div className="rounded-lg bg-gray-100 p-4 text-center">
-                <Image
-                  src="https://source.unsplash.com/random/300x200/?pc,warranty"
-                  alt="PC"
-                  width={300}
-                  height={200}
-                  className="mx-auto mb-2 rounded-md"
-                />
+              <div className="rounded-lg bg-primary-lighter p-4 text-center">
+                <Image src="https://source.unsplash.com/random/300x200/?pc,warranty" alt="PC" width={300} height={200} className="mb-2 rounded-md" />
                 <h3 className="text-lg font-semibold">PC</h3>
                 <p className="text-gray-600">Bảo hành linh kiện riêng lẻ lên đến 36 tháng.</p>
               </div>
@@ -144,44 +140,78 @@ export default function WarrantyPage() {
           </div>
 
           {/* Contact Section */}
-          <section className="mt-10 rounded-xl bg-white p-6 shadow-md md:p-10">
-            <div className="flex flex-col items-center justify-center gap-4 bg-primary p-4 text-center md:flex-row xl:gap-10">
-              <div>
+          <section className="mt-10 rounded-xl bg-white p-2 shadow-lg xl:p-6">
+            <div className="flex w-full flex-col items-center justify-center gap-2 rounded-md bg-primary-lighter p-4 text-center xl:flex-row">
+              <div className="flex w-full items-center justify-center xl:w-1/2">
                 <Image
                   width={160}
                   height={160}
-                  src="https://source.unsplash.com/random/160x160/?logo,tech"
+                  src={images.Logo}
                   alt="7teck Logo"
-                  className="h-[160px] w-[160px] rounded-full object-contain"
+                  className="h-[160px] w-[160px] rounded-full object-contain xl:h-1/2 xl:w-1/2"
                   loading="lazy"
                 />
               </div>
 
-              <div>
-                <p className="mx-auto mb-4 max-w-xl text-white">Nếu quý khách có thắc mắc về chính sách bảo hành, vui lòng liên hệ:</p>
-                <ul className="inline-block space-y-2 text-left text-white">
+              <div className="w-full xl:w-1/2">
+                <h1 className="mb-4 text-2xl font-bold text-primary md:text-3xl">Liên Hệ Với 7Teck</h1>
+                <p className="mb-6 text-gray-700">Đội ngũ của chúng tôi luôn sẵn sàng hỗ trợ bạn 24/7. Hãy chọn kênh liên lạc thuận tiện nhất:</p>
+
+                <ul className="space-y-3 text-start text-gray-800">
                   <li>
-                    <a href="tel:0333133050" className="transition-colors duration-200 hover:text-blue-600" aria-label="Gọi hotline 0333133050">
-                      📞 Hotline: 0333133050
+                    📞 Hotline:{' '}
+                    <a href={hotlineUrl} className="font-semibold text-primary hover:underline">
+                      0333 133 050
                     </a>
                   </li>
                   <li>
-                    <a
-                      href="mailto:baohanh@7teck.vn"
-                      className="transition-colors duration-200 hover:text-blue-600"
-                      aria-label="Gửi email đến baohanh@7teck.vn"
-                    >
-                      📧 Email: cskh.7teck@gmail.com
+                    📧 Email:{' '}
+                    <a href={mailUrl} className="font-semibold text-primary hover:underline">
+                      cskh.7teck@gmail.com
                     </a>
                   </li>
-                  <li>🏢 Địa chỉ: 136/136 Trần Quang Diệu, Phường 12, Quận 3, HCM</li>
+                  <li>
+                    📍 Địa chỉ:{' '}
+                    <a href={ggMapShareUrl} target="_blank" className="font-semibold text-primary hover:underline">
+                      {address}
+                    </a>
+                  </li>
+                  <li>
+                    💬 Messenger:{' '}
+                    <a href={messengerUrl} target="_blank" className="text-primary hover:underline">
+                      Chat ngay
+                    </a>
+                  </li>
+                  <li>
+                    💬 Zalo:{' '}
+                    <a href={zaloUrl} target="_blank" className="text-primary hover:underline">
+                      Zalo 0333 133 050
+                    </a>
+                  </li>
+                  <li>
+                    💬 Fanpage:{' '}
+                    <a href={fanpageUrl} target="_blank" className="text-primary hover:underline">
+                      facebook.com/7teck.vn
+                    </a>
+                  </li>
                 </ul>
+
+                {/* CTA */}
+                <div className="mt-8">
+                  <Link
+                    href={messengerUrl}
+                    target="_blank"
+                    className="inline-block rounded-xl bg-primary px-8 py-3 font-semibold text-white shadow-md transition hover:bg-secondary"
+                  >
+                    Liên Hệ Ngay
+                  </Link>
+                </div>
               </div>
             </div>
           </section>
 
           {/* Section 4: Câu hỏi thường gặp (từ nội dung cũ) */}
-          <div className="mt-10 rounded-xl bg-white p-6 shadow-md md:p-10">
+          <div className="mt-10 rounded-xl bg-white p-2 shadow-lg xl:p-6">
             <h2 className="mb-4 text-xl font-bold text-primary md:text-2xl">Câu Hỏi Thường Gặp</h2>
             <div className="space-y-4">
               <div>
@@ -195,9 +225,13 @@ export default function WarrantyPage() {
             </div>
             {/* CTA */}
             <div className="mt-6">
-              <button className="rounded-lg bg-primary px-6 py-3 font-semibold text-white shadow-md transition hover:bg-secondary">
+              <Link
+                href="/lien-he"
+                target="_blank"
+                className="inline-block rounded-xl bg-primary px-8 py-3 font-semibold text-white shadow-md transition hover:bg-secondary"
+              >
                 Liên Hệ Bảo Hành
-              </button>
+              </Link>
             </div>
           </div>
         </div>

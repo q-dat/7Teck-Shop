@@ -81,7 +81,7 @@ export default function ContactPage() {
         </div>
 
         {/* Nội dung UI - Thêm sections và hình ảnh */}
-        <div className="px-[10px] py-6 xl:px-desktop-padding">
+        <div className="w-full px-2 py-6 xl:px-desktop-padding">
           {/* Section 1: Giới thiệu liên hệ */}
           <div className="rounded-2xl bg-white p-2 shadow-lg xl:p-6">
             <div className="grid gap-8 xl:grid-cols-2 xl:items-center">
@@ -131,13 +131,13 @@ export default function ContactPage() {
 
                 {/* CTA */}
                 <div className="mt-8">
-                  <a
+                  <Link
                     href={messengerUrl}
                     target="_blank"
                     className="inline-block rounded-xl bg-primary px-8 py-3 font-semibold text-white shadow-md transition hover:bg-secondary"
                   >
                     Liên Hệ Ngay
-                  </a>
+                  </Link>
                 </div>
               </div>
 
