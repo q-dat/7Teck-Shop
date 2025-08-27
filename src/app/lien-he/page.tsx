@@ -84,9 +84,9 @@ export default function ContactPage() {
         <div className="w-full px-2 py-6 xl:px-desktop-padding">
           {/* Section 1: Giới thiệu liên hệ */}
           <div className="rounded-2xl bg-white p-2 shadow-lg xl:p-6">
-            <div className="grid gap-8 xl:grid-cols-2 xl:items-center">
+            <div className="grid gap-8 xl:grid-cols-2 xl:items-start xl:justify-start">
               {/* Cột trái: Nội dung */}
-              <div>
+              <div className="w-full">
                 <h1 className="mb-4 text-2xl font-bold text-primary md:text-3xl">Liên Hệ Với 7Teck</h1>
                 <p className="mb-6 text-gray-700">Đội ngũ của chúng tôi luôn sẵn sàng hỗ trợ bạn 24/7. Hãy chọn kênh liên lạc thuận tiện nhất:</p>
 
@@ -142,8 +142,8 @@ export default function ContactPage() {
               </div>
 
               {/* Cột phải: Hình ảnh */}
-              <div className="flex justify-center">
-                <Image src={imagePages.ContactUsPage} alt="Đội ngũ liên hệ" width={600} height={400} className="rounded-xl shadow-lg" />
+              <div className="flex w-full justify-center">
+                <Image src={imagePages.ContactUsPage} alt="Đội ngũ liên hệ" width={600} height={400} className="h-full w-full rounded-xl shadow-lg" />
               </div>
             </div>
           </div>

@@ -2,6 +2,7 @@
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import Link from 'next/link';
 import Image from 'next/image';
+import { imagePages } from '../../../public/pages';
 
 export default function ConsultationPage() {
   return (
@@ -27,25 +28,30 @@ export default function ConsultationPage() {
         <div className="w-full px-2 py-6 xl:px-desktop-padding">
           {/* Section 1: Giới thiệu */}
           <div className="rounded-xl bg-white p-2 shadow-lg xl:p-6">
-            <h1 className="mb-4 text-2xl font-bold text-primary md:text-3xl">Tư Vấn Chọn Máy Theo Nhu Cầu</h1>
-            <p className="mb-4 text-gray-700">
-              Chúng tôi cung cấp dịch vụ tư vấn miễn phí giúp khách hàng chọn lựa điện thoại, laptop, PC theo từng nhu cầu: học tập, văn phòng, đồ
-              họa, gaming...
-            </p>
-            <p className="mb-6 text-gray-700">
-              Đội ngũ kỹ thuật viên nhiều kinh nghiệm sẽ giải thích chi tiết về cấu hình, hiệu năng và giá cả để bạn đưa ra quyết định mua hàng phù
-              hợp nhất.
-            </p>
-
-            {/* Hình ảnh minh họa */}
-            <div className="mb-6 flex justify-center">
-              <Image
-                src="https://source.unsplash.com/random/800x400/?consultation,tech"
-                alt="Tư vấn chọn máy"
-                width={800}
-                height={400}
-                className="rounded-lg shadow-md"
-              />
+            <div className="grid gap-8 xl:grid-cols-2 xl:items-center">
+              <div className="w-full">
+                <h1 className="mb-4 text-2xl font-bold text-primary md:text-3xl">Tư Vấn Chọn Máy Theo Nhu Cầu</h1>
+                <p className="mb-4 text-gray-700">
+                  Chúng tôi cung cấp dịch vụ tư vấn miễn phí giúp khách hàng chọn lựa điện thoại, laptop, PC theo từng nhu cầu: học tập, văn phòng, đồ
+                  họa, gaming...
+                </p>
+                <p className="mb-6 text-gray-700">
+                  Đội ngũ kỹ thuật viên nhiều kinh nghiệm sẽ giải thích chi tiết về cấu hình, hiệu năng và giá cả để bạn đưa ra quyết định mua hàng
+                  phù hợp nhất.
+                </p>
+              </div>
+              <div className="w-full">
+                {/* Hình ảnh minh họa */}
+                <div className="mb-6 flex justify-center">
+                  <Image
+                    src={imagePages.ConsultationPage1}
+                    alt="Tư vấn chọn máy"
+                    width={600}
+                    height={400}
+                    className="h-full w-full rounded-xl shadow-lg"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* CTA */}
@@ -120,11 +126,11 @@ export default function ConsultationPage() {
             </ul>
             <div className="mt-6 flex justify-center">
               <Image
-                src="https://source.unsplash.com/random/600x300/?team,consultation"
+                src={imagePages.ConsultationPage2}
                 alt="Đội ngũ tư vấn"
                 width={600}
                 height={300}
-                className="rounded-lg shadow-md"
+                className="h-full w-full rounded-lg shadow-md xl:h-1/2 xl:w-1/2"
               />
             </div>
           </div>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { images } from '../../../public/images';
 import { hotlineUrl, mailUrl, ggMapShareUrl, address, messengerUrl, zaloUrl, fanpageUrl } from '@/utils/socialLinks';
+import { imagePages } from '../../../public/pages';
 
 export default function WarrantyPage() {
   return (
@@ -29,21 +30,15 @@ export default function WarrantyPage() {
         <div className="px-[10px] py-6 xl:px-desktop-padding">
           {/* Section 1: Giới thiệu bảo hành */}
           <div className="rounded-xl bg-white p-2 shadow-lg xl:p-6">
-            <h1 className="mb-6 text-center text-2xl font-bold text-gray-900 sm:text-3xl lg:text-4xl">Chính Sách Bảo Hành Sản Phẩm – 7teck</h1>
-            <p className="mb-10 max-w-2xl text-center leading-relaxed text-gray-600">
+            <h1 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl lg:text-4xl">Chính Sách Bảo Hành Sản Phẩm – 7teck</h1>
+            <p className="w-full text-center leading-relaxed text-gray-600">
               7teck cam kết mang đến cho khách hàng trải nghiệm mua sắm an tâm cùng chính sách bảo hành rõ ràng, minh bạch đối với các sản phẩm điện
               thoại và laptop.
             </p>
 
             {/* Hình ảnh minh họa */}
-            <div className="mb-6 flex justify-center">
-              <Image
-                src="https://source.unsplash.com/random/800x400/?warranty,badge"
-                alt="Bảo hành chính hãng"
-                width={800}
-                height={400}
-                className="rounded-lg shadow-md"
-              />
+            <div className="mb-6 flex w-full justify-center ">
+              <Image src={imagePages.WarrantyPage1} alt="Bảo hành chính hãng" width={800} height={400} className="w-full rounded-lg shadow-md" />
             </div>
           </div>
 
@@ -95,13 +90,7 @@ export default function WarrantyPage() {
 
             {/* Hình ảnh minh họa cho quy trình */}
             <div className="mt-6 flex justify-center">
-              <Image
-                src="https://source.unsplash.com/random/600x300/?warranty,process"
-                alt="Quy trình bảo hành"
-                width={600}
-                height={300}
-                className="rounded-lg shadow-md"
-              />
+              <Image src={imagePages.WarrantyPage2} alt="Quy trình bảo hành" width={600} height={300} className="rounded-lg shadow-md" />
             </div>
           </div>
 
