@@ -74,7 +74,7 @@ export default function ChatBot() {
             <span className="text-sm font-medium text-white">Trợ lý AI - 7Teck</span>
           </div>
           {/* Messages */}
-          <div className="h-96 space-y-2 overflow-y-auto p-1   text-xs">
+          <div className="h-96 space-y-2 overflow-y-auto p-1 text-xs">
             {messages.map((m, i) => (
               <div key={i} className={`flex items-end gap-1 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {m.role === 'bot' && (
@@ -110,7 +110,9 @@ export default function ChatBot() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder="Nhập tin nhắn..."
+              readOnly
+              // placeholder="Nhập tin nhắn..."
+              placeholder="Tính năng đang được phát triển."
               className="flex-1 p-2 text-sm outline-none"
             />
             <button onClick={sendMessage} className="bg-primary px-3 text-sm text-white" disabled={loading}>
