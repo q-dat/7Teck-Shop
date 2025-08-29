@@ -1,9 +1,9 @@
 'use client';
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import { memo, useEffect, useState } from 'react';
-import ClientPhoneFC from './ClientPhoneFC';
+import ClientPhoneFC from '../components/userPage/ClientPhoneFC';
 import ClientProductFC, { Product } from '../components/userPage/page/ClientProductFC';
-import ClientPostSection from './ClientPostSection';
+import ClientPostSection from '../components/userPage/ClientPostSection';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
 import { IPost } from '@/types/type/products/post/post';
 import Image from 'next/image';

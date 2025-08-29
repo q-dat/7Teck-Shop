@@ -7,13 +7,13 @@ import { Button } from 'react-daisyui';
 import { FaRegEye } from 'react-icons/fa';
 import { IoIosArrowForward } from 'react-icons/io';
 import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
-import imageRepresent from '../../public/image-represent';
+import imageRepresent from '../../../public/image-represent';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { IPhone } from '@/types/type/products/phone/phone';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
-import { images } from '../../public/images';
+import { images } from '../../../public/images';
 import Tilt from 'react-parallax-tilt';
 
 interface ClientPhoneProps {

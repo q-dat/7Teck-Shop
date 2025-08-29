@@ -1,7 +1,7 @@
 'use client';
 import { slugify } from '@/utils/slugify';
 import React from 'react';
-import { images } from '../../public/images';
+import { images } from '../../../public/images';
 import Link from 'next/link';
 import { Button } from 'react-daisyui';
 import { IoIosArrowForward } from 'react-icons/io';
@@ -45,8 +45,8 @@ export default function ClientPostSection({ news, tricks }: ClientPostSectionPro
                 </Button>
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-              {news.slice(0, 4).map((post) => (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-6">
+              {news.slice(0, 6).map((post) => (
                 <article
                   key={post?._id}
                   className="group relative cursor-pointer overflow-hidden rounded-md bg-white/90 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
