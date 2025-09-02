@@ -30,7 +30,7 @@ export default {
         'prod-price-mobile': ['14px', { lineHeight: '18px' }],
         // desktop-font-size
         'prod-name-desktop': ['14px', { lineHeight: '19px' }],
-        'prod-price-desktop': ['18px', { lineHeight: '18px' }],
+        'prod-price-desktop': ['16px', { lineHeight: '18px' }],
       },
 
       fontFamily: {

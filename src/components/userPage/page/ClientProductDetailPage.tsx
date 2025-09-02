@@ -13,6 +13,8 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Button } from 'react-daisyui';
 import { IoIosArrowDropdownCircle } from 'react-icons/io';
 import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
+import imageRepresent from '../../../../public/image-represent';
+import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 
 export interface ProductCatalogGroup {
   [field: string]: string | number | string[] | null;
@@ -62,6 +64,11 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
   const scrollRef = useRef<HTMLDivElement>(null!);
   const [loading, setLoading] = useState(true);
   const thumbnails = [product?.img, ...(product?.thumbnail || [])];
+  // Image error
+  const fallbackSrc = imageRepresent.Fallback;
+  const { handleImageError, isImageErrored } = useImageErrorHandler();
+  const isErrored = isImageErrored(product._id);
+  const src = isErrored || !product.img ? fallbackSrc : product?.img;
 
   useLayoutEffect(() => {
     if (product && product?.catalog) {
@@ -129,14 +136,23 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       src={selectedImage || product?.img}
                       alt={product?.name || 'Hình ảnh'}
                       className="absolute left-0 top-0 z-10 h-[200px] w-full rounded-md object-contain xl:h-[480px] xl:w-full"
+                      onError={() => handleImageError(product._id)}
                     />
                   </Zoom>
 
                   {isExcluded && (
                     <div className="absolute inset-0 z-20 flex items-center justify-center rounded-md bg-default/40">
-                      <span className="-rotate-45 rounded-md bg-primary px-3 py-2 text-2xl font-bold uppercase text-white xl:text-4xl">
+                      {/* <span className="-rotate-45 rounded-md bg-primary px-3 py-2 text-2xl font-bold uppercase text-white xl:text-4xl">
                         {product?.status || 'HẾT HÀNG'}!
-                      </span>
+                      </span> */}
+                      <Image
+                        src={imageRepresent.soldOut}
+                        alt="Hình ảnh Hết Hàng"
+                        height={200}
+                        width={200}
+                        loading="lazy"
+                        className="z-10 h-[200px] w-[200px] xl:h-[300px] xl:w-[300px]"
+                      />
                     </div>
                   )}
                 </div>

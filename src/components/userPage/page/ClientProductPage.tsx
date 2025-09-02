@@ -197,120 +197,125 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                       key={variant?._id}
                       className="group relative flex h-full w-full flex-col justify-between rounded-md border border-primary-lighter text-black"
                     >
-                      <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`${basePath}/${productUrl}/${subUrl}`}>
-                        <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
-                          <Image
-                            src={src}
-                            alt="Hình ảnh"
-                            height={200}
-                            width={200}
-                            loading="lazy"
-                            className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
-                            onError={() => handleImageError(variant._id)}
-                          />
-                          {/* Overlay Hết hàng */}
-                          {isExcluded && (
-                            <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-md bg-black/40">
-                              <span className="-rotate-45 rounded-md bg-red-600 px-3 py-2 text-2xl font-bold uppercase text-white xl:text-4xl">
-                                {variant.status || 'HẾT HÀNG'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </Link>
-                      {/* Product Info */}
-                      <div className="flex h-full w-full flex-col items-start justify-between p-1">
-                        <div className="w-full">
-                          <Link
-                            aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
-                            href={`${basePath}/${productUrl}/${subUrl}`}
-                            className="w-full cursor-pointer"
-                          >
+                      <div className="w-full">
+                        <Link
+                          className="relative"
+                          aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh"
+                          href={`${basePath}/${productUrl}/${subUrl}`}
+                        >
+                          {/* Product Image */}
+                          <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
+                            <Image
+                              src={src}
+                              alt="Hình ảnh"
+                              height={200}
+                              width={200}
+                              loading="lazy"
+                              className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
+                              onError={() => handleImageError(variant._id)}
+                            />
+                          </div>
+                          {/* Product Title & Specifications */}
+                          <div className="w-full px-1">
                             <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-primary">
                               <span>{title}</span>
                               &nbsp;
                               <span>{variant.name}</span>
                             </p>
-                          </Link>
-                          {/* Product Specifications */}
-                          <div className="py-1 text-prod-name-mobile xl:text-prod-name-desktop">
-                            {specsToShow.map((field) => {
-                              const value = variant[field as keyof ProductBase];
-                              if (!value) return null;
+                            {/* Product Specifications */}
+                            <div className="py-1 text-prod-name-mobile xl:text-prod-name-desktop">
+                              {specsToShow.map((field) => {
+                                const value = variant[field as keyof ProductBase];
+                                if (!value) return null;
 
-                              const fieldLabelMap: Record<string, string> = {
-                                ram: 'RAM',
-                                cpu: 'CPU',
-                                lcd: 'Màn hình',
-                                gpu: 'GPU',
-                              };
+                                const fieldLabelMap: Record<string, string> = {
+                                  ram: 'RAM',
+                                  cpu: 'CPU',
+                                  lcd: 'Màn hình',
+                                  gpu: 'GPU',
+                                };
 
-                              return (
-                                <p key={field}>
-                                  <span className="rounded-sm bg-primary-lighter px-1 font-semibold">{fieldLabelMap[field]}:</span>
-                                  &nbsp;<span className="font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
-                                </p>
-                              );
-                            })}
+                                return (
+                                  <p key={field}>
+                                    <span className="rounded-sm bg-primary-lighter px-1 font-semibold">{fieldLabelMap[field]}:</span>
+                                    &nbsp;<span className="font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
+                                  </p>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                        {/* Select Product */}
-                        <div className="w-full">
-                          {Array.isArray(product.variants) && product.variants.length > 1 && (
-                            <div className="flex flex-wrap items-center gap-1 py-1">
-                              {product.variants.map((v) => (
-                                <Button
-                                  key={v._id}
-                                  size="xs"
-                                  className={`rounded-md bg-white p-1 text-xs font-normal ${
-                                    selectedVariants[product._id]?._id === v._id
-                                      ? 'border-primary bg-primary-lighter text-primary hover:bg-primary-lighter'
-                                      : 'border-spacing-px border-primary/40 text-black hover:border-primary'
-                                  }`}
-                                  onClick={() => handleVariantClick(product._id, v)}
-                                  title={v.color}
-                                >
-                                  {v.color}
-                                </Button>
-                              ))}
+                          {/* Overlay for Sold Out products */}
+                          {isExcluded && (
+                            <div className="pointer-events-none absolute inset-0 z-50 rounded-md">
+                              {/* Glass/blur background */}
+                              <div className="absolute inset-0 rounded-md backdrop-blur-[1px]"></div>
+                              {/* Sold out image at top-left corner */}
+                              <Image
+                                src={imageRepresent.soldOut2}
+                                alt="Hết hàng"
+                                height={80}
+                                width={80}
+                                loading="lazy"
+                                className="absolute -left-[5px] -top-[5px] z-50 h-[80px] w-[80px] object-contain"
+                              />
                             </div>
                           )}
-                          {/* Price and Buy Now Button */}
-                          <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
-                            <span className="font-semibold text-price">{formatCurrency(variant?.price)}</span> &nbsp;
-                            {variant?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(variant?.sale)}</del>}
-                          </p>
-                          <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
-                          <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
-                          <Button
-                            disabled={isExcluded ? true : false}
-                            size="xs"
-                            className={`mt-1 w-full rounded-md border border-primary/20 ${
-                              isExcluded
-                                ? 'cursor-not-allowed bg-primary text-white'
-                                : 'bg-primary-lighter text-primary hover:bg-primary hover:bg-opacity-20'
-                            }`}
-                            onClick={() => {
-                              if (isExcluded) return;
-                              const productToBuy = {
-                                _id: variant?._id,
-                                name: variant?.name,
-                                img: variant?.img,
-                                price: variant?.price,
-                                ram: variant?.ram,
-                                color: variant?.color,
-                                link: `${basePath}/${productUrl}/${subUrl}`,
-                              };
-                              localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
-                              window.location.href = '/thanh-toan';
-                            }}
-                          >
-                            {isExcluded ? 'Không khả dụng' : 'Mua Ngay'}
-                          </Button>
-                        </div>
+                        </Link>
+                      </div>
+                      {/* Select Product */}
+                      <div className="w-full px-1 pb-1">
+                        {Array.isArray(product.variants) && product.variants.length > 1 && (
+                          <div className="flex flex-wrap items-center gap-1 py-1">
+                            {product.variants.map((v) => (
+                              <Button
+                                key={v._id}
+                                size="xs"
+                                className={`rounded-md bg-white p-1 text-xs font-normal ${
+                                  selectedVariants[product._id]?._id === v._id
+                                    ? 'border-primary bg-primary-lighter text-primary hover:bg-primary-lighter'
+                                    : 'border-spacing-px border-primary/40 text-black hover:border-primary'
+                                }`}
+                                onClick={() => handleVariantClick(product._id, v)}
+                                title={v.color}
+                              >
+                                {v.color}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+                        {/* Price and Buy Now Button */}
+                        <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
+                          <span className="font-semibold text-price">{formatCurrency(variant?.price)}</span> &nbsp;
+                          {variant?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(variant?.sale)}</del>}
+                        </p>
+                        <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
+                        <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
+                        <Button
+                          disabled={isExcluded ? true : false}
+                          size="xs"
+                          className={`mt-1 w-full rounded-md border border-primary/20 ${
+                            isExcluded ? 'cursor-not-allowed' : 'bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20'
+                          }`}
+                          onClick={() => {
+                            if (isExcluded) return;
+                            const productToBuy = {
+                              _id: variant?._id,
+                              name: variant?.name,
+                              img: variant?.img,
+                              price: variant?.price,
+                              ram: variant?.ram,
+                              color: variant?.color,
+                              link: `${basePath}/${productUrl}/${subUrl}`,
+                            };
+                            localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
+                            window.location.href = '/thanh-toan';
+                          }}
+                        >
+                          {isExcluded ? 'Không khả dụng' : 'Mua Ngay'}
+                        </Button>
                       </div>
                       {/*  */}
-                      {variant?.status && (
+                      {!isExcluded && variant?.status && (
                         <div className="absolute -left-[3px] top-0 z-20">
                           <Image height={100} width={60} alt="" loading="lazy" className="h-full w-[60px]" src={imageRepresent.Status} />
                           <p className="absolute top-[1px] w-full pl-1 text-xs text-white">{variant?.status}</p>
