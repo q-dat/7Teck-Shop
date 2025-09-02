@@ -40,6 +40,8 @@ interface ClientProductPageProps {
   brands?: BrandItem[];
   onBrandSelect?: (brand: string | null) => void;
 }
+// Danh sách trạng thái hết hàng
+const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
 
 export default function ClientProductPage({ products, title, basePath, brands = [], onBrandSelect }: ClientProductPageProps) {
   const [loading, setLoading] = useState(true);
@@ -124,27 +126,27 @@ export default function ClientProductPage({ products, title, basePath, brands = 
         {/* Brand filter buttons */}
         <div className="my-2 px-2 xl:px-desktop-padding">
           {/* {currentProducts.length !== 0 && ( */}
-            <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1">
+            <Button
+              size="sm"
+              className={`rounded-sm border border-primary-lighter text-xs font-medium hover:border-primary ${selectedBrand === null ? 'bg-primary text-white hover:bg-primary xl:hover:bg-primary/80' : 'bg-white text-black'}`}
+              onClick={() => handleBrandClick(null)}
+            >
+              <FaThLarge className="text-base" /> Tất cả
+            </Button>
+            {brands.map((brand) => (
               <Button
+                key={brand.name}
                 size="sm"
-                className={`rounded-sm border border-primary-lighter text-xs font-medium hover:border-primary ${selectedBrand === null ? 'bg-primary text-white hover:bg-primary xl:hover:bg-primary/80' : 'bg-white text-black'}`}
-                onClick={() => handleBrandClick(null)}
+                className={`rounded-sm border border-primary-lighter text-xs font-medium hover:border-primary ${selectedBrand === brand.name ? 'bg-primary text-white hover:bg-primary xl:hover:bg-primary/80' : 'bg-white text-black'}`}
+                onClick={() => handleBrandClick(brand.name)}
               >
-                <FaThLarge className="text-base" /> Tất cả
+                {brand.icon && <span className="text-base">{brand.icon}</span>}
+                {brand.name}
               </Button>
-              {brands.map((brand) => (
-                <Button
-                  key={brand.name}
-                  size="sm"
-                  className={`rounded-sm border border-primary-lighter text-xs font-medium hover:border-primary ${selectedBrand === brand.name ? 'bg-primary text-white hover:bg-primary xl:hover:bg-primary/80' : 'bg-white text-black'}`}
-                  onClick={() => handleBrandClick(brand.name)}
-                >
-                  {brand.icon && <span className="text-base">{brand.icon}</span>}
-                  {brand.name}
-                </Button>
-              ))}
-              <hr />
-            </div>
+            ))}
+            <hr />
+          </div>
           {/* )} */}
           {/*  */}
         </div>
@@ -188,6 +190,8 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                   // handleImageError
                   const isErrored = isImageErrored(variant._id);
                   const src = isErrored || !variant.img ? fallbackSrc : variant?.img;
+                  const isExcluded = variant.status && EXCLUDED_STATUSES.includes(variant.status.toLowerCase());
+
                   return (
                     <section
                       key={variant?._id}
@@ -204,6 +208,14 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                             className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
                             onError={() => handleImageError(variant._id)}
                           />
+                          {/* Overlay Hết hàng */}
+                          {isExcluded && (
+                            <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-md bg-black/40">
+                              <span className="-rotate-45 rounded-md bg-red-600 px-3 py-2 text-2xl font-bold uppercase text-white xl:text-4xl">
+                                {variant.status || 'HẾT HÀNG'}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </Link>
                       {/* Product Info */}
@@ -271,9 +283,15 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                           <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
                           <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
                           <Button
+                            disabled={isExcluded ? true : false}
                             size="xs"
-                            className="mt-1 w-full rounded-md border border-primary/20 bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
+                            className={`mt-1 w-full rounded-md border border-primary/20 ${
+                              isExcluded
+                                ? 'cursor-not-allowed bg-primary text-white'
+                                : 'bg-primary-lighter text-primary hover:bg-primary hover:bg-opacity-20'
+                            }`}
                             onClick={() => {
+                              if (isExcluded) return;
                               const productToBuy = {
                                 _id: variant?._id,
                                 name: variant?.name,
@@ -287,7 +305,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                               window.location.href = '/thanh-toan';
                             }}
                           >
-                            Mua Ngay
+                            {isExcluded ? 'Không khả dụng' : 'Mua Ngay'}
                           </Button>
                         </div>
                       </div>

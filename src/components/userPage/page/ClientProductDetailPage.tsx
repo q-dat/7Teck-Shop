@@ -49,9 +49,13 @@ interface ClientProductDetailPageProps {
   basePath: string;
   relatedProducts?: Product[];
 }
+const EXCLUDED_STATUSES = ['Ngừng kinh doanh', 'Hết hàng', 'Ngưng bán'];
 
 export default function ClientProductDetailPage({ product, fieldMap, namePrefix, basePath, relatedProducts }: ClientProductDetailPageProps) {
   const [selectedImage, setSelectedImage] = useState<string | null | undefined>(null);
+  // check sản phẩm có hợp lệ để mua không
+  const isExcluded = product?.status && EXCLUDED_STATUSES.includes(product.status);
+
   const [activeTab, setActiveTab] = useState<string>('specs');
   const [isLeftButtonVisible, setIsLeftButtonVisible] = useState(true);
   const [isRightButtonVisible, setIsRightButtonVisible] = useState(true);
@@ -116,7 +120,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                 )}
               </h1>
               <div className="relative w-full">
-                <div className="h-[200px] w-full overflow-hidden rounded-md bg-white object-cover xl:h-[480px]">
+                <div className="relative h-[200px] w-full overflow-hidden rounded-md bg-white object-cover xl:h-[480px]">
                   <Zoom>
                     <Image
                       priority
@@ -127,6 +131,14 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       className="absolute left-0 top-0 z-10 h-[200px] w-full rounded-md object-contain xl:h-[480px] xl:w-full"
                     />
                   </Zoom>
+
+                  {isExcluded && (
+                    <div className="absolute inset-0 z-20 flex items-center justify-center rounded-md bg-default/40">
+                      <span className="-rotate-45 rounded-md bg-primary px-3 py-2 text-2xl font-bold uppercase text-white xl:text-4xl">
+                        {product?.status || 'HẾT HÀNG'}!
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               {/* Thumbnails */}
@@ -243,8 +255,12 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                 {/* Btn */}
                 <div className="flex w-full flex-col items-center justify-center gap-1">
                   <Button
-                    className="mt-6 w-full rounded-lg bg-primary text-white transition-colors hover:bg-primary/90 md:w-64"
+                    disabled={isExcluded ? true : false}
+                    className={`mt-6 w-full rounded-lg text-white transition-colors md:w-64 ${
+                      isExcluded ? 'cursor-not-allowed bg-gray-400' : 'bg-primary hover:bg-primary/90'
+                    }`}
                     onClick={() => {
+                      if (isExcluded) return; // chặn hẳn
                       const productToBuy = {
                         _id: product?._id,
                         name: product?.name,
@@ -258,8 +274,9 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       window.location.href = '/thanh-toan';
                     }}
                   >
-                    Mua Ngay
+                    {isExcluded ? 'Không khả dụng' : 'Mua Ngay'}
                   </Button>
+
                   <p className="mt-2 w-full text-start text-sm text-gray-500">{`*Nhấn "Mua ngay" để xác nhận sản phẩm!`}</p>
                 </div>
               </div>
