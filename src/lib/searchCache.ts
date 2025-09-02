@@ -13,8 +13,6 @@ export const keywordMap: Record<string, string> = {
   ip16: 'iphone 16',
   ip17: 'iphone 17',
   ss: 'samsung',
-  a36: 'samsung galaxy a36',
-  s25: 'samsung galaxy s25',
   mb: 'macbook',
   mtb: 'ipad',
   wm: 'windows',
@@ -22,7 +20,9 @@ export const keywordMap: Record<string, string> = {
   pr: 'pro',
   prx: 'promax',
   prm: 'promax',
+  pm: 'promax',
   pls: 'plus',
+  pl: 'plus',
 };
 
 export type CachedItem = {
@@ -33,6 +33,7 @@ export type CachedItem = {
   image: string;
   color?: string;
   price?: number;
+  catalogId?: string; // mới
 };
 
 interface RawItem {
@@ -45,7 +46,15 @@ let lastLoaded = 0;
 const CACHE_TTL = 60 * 1000; // 1 phút
 
 const COLLECTIONS = [
-  { model: Phone, nameField: 'name', url: '/dien-thoai', imageField: 'img', colorField: 'color', priceField: 'price' },
+  {
+    model: Phone,
+    nameField: 'name',
+    url: '/dien-thoai',
+    imageField: 'img',
+    colorField: 'color',
+    priceField: 'price',
+    catalogField: 'phone_catalog_id',
+  },
   {
     model: Tablet,
     nameField: 'tablet_name',
@@ -53,9 +62,26 @@ const COLLECTIONS = [
     imageField: 'tablet_img',
     colorField: 'tablet_color',
     priceField: 'tablet_price',
+    catalogField: 'tablet_catalog_id',
   },
-  { model: Macbook, nameField: 'macbook_name', url: '/macbook', imageField: 'macbook_img', colorField: 'macbook_color', priceField: 'macbook_price' },
-  { model: Windows, nameField: 'windows_name', url: '/windows', imageField: 'windows_img', colorField: 'windows_color', priceField: 'windows_price' },
+  {
+    model: Macbook,
+    nameField: 'macbook_name',
+    url: '/macbook',
+    imageField: 'macbook_img',
+    colorField: 'macbook_color',
+    priceField: 'macbook_price',
+    catalogField: 'macbook_catalog_id',
+  },
+  {
+    model: Windows,
+    nameField: 'windows_name',
+    url: '/windows',
+    imageField: 'windows_img',
+    colorField: 'windows_color',
+    priceField: 'windows_price',
+    catalogField: 'windows_catalog_id',
+  },
 ];
 
 function getNestedValue(obj: unknown, path: string): string {
@@ -73,8 +99,9 @@ export async function loadCache() {
   await connectDB();
   const allItems: CachedItem[] = [];
 
-  for (const { model, nameField, url, imageField, colorField, priceField } of COLLECTIONS) {
-    const items = (await model.find().select(`${nameField} ${imageField} ${colorField} ${priceField} _id`).lean()) as RawItem[];
+  for (const { model, nameField, url, imageField, colorField, priceField, catalogField } of COLLECTIONS) {
+    const items = (await model.find().select(`${nameField} ${imageField} ${colorField} ${priceField} ${catalogField} _id`).lean()) as RawItem[];
+
     items.forEach((item) => {
       const rawName = item[nameField];
       if (typeof rawName === 'string') {
@@ -82,6 +109,7 @@ export async function loadCache() {
         const image = getNestedValue(item, imageField);
         const color = getNestedValue(item, colorField);
         const price = item[priceField];
+        const catalogId = item[catalogField] ? String(item[catalogField]) : undefined;
 
         allItems.push({
           _id: String(item._id),
@@ -90,6 +118,7 @@ export async function loadCache() {
           image,
           color: typeof color === 'string' ? color : undefined,
           price: typeof price === 'number' ? price : undefined,
+          catalogId,
           link: `${url}/${slug}/${item._id}`,
         });
       }

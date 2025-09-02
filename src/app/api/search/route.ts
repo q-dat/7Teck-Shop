@@ -26,7 +26,10 @@ export async function GET(req: Request) {
     const cachedData = await getCache();
     const { searchParams } = new URL(req.url);
     const q = searchParams.get('q')?.trim();
-    if (!q) return NextResponse.json({ message: 'Thiếu từ khóa', success: false }, { status: 400 });
+
+    if (!q) {
+      return NextResponse.json({ message: 'Thiếu từ khóa', success: false }, { status: 400 });
+    }
 
     const isObjectId = ObjectId.isValid(q);
     const results: CachedItem[] = [];
@@ -44,11 +47,28 @@ export async function GET(req: Request) {
       }
     }
 
-    if (!results.length) {
+    // 3. Lọc theo catalogId, chỉ lấy 1 sản phẩm đầu tiên trong mỗi danh mục
+    const uniqueByCatalog = new Map<string, CachedItem>();
+    for (const item of results) {
+      const key = item.catalogId || item._id; // fallback nếu catalogId không có
+      if (!uniqueByCatalog.has(key)) {
+        uniqueByCatalog.set(key, item);
+      }
+    }
+    const finalResults = Array.from(uniqueByCatalog.values());
+
+    if (!finalResults.length) {
       return NextResponse.json({ message: 'Không tìm thấy sản phẩm', success: false }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, results }, { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=60' } });
+    return NextResponse.json(
+      { success: true, results: finalResults },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=60',
+        },
+      }
+    );
   } catch (err) {
     console.error(err);
     return NextResponse.json({ message: 'Lỗi server', success: false }, { status: 500 });
