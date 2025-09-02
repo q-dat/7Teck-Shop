@@ -216,7 +216,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                             />
                           </div>
                           {/* Product Title & Specifications */}
-                          <div className="w-full px-1">
+                          <div className="w-full px-1 pt-1">
                             <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-primary">
                               <span>{title}</span>
                               &nbsp;
