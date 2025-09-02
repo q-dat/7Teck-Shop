@@ -152,7 +152,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                       {product.status && (
                         <div className="absolute -left-[3px] top-0 z-20">
                           <Image alt="status" loading="lazy" width={60} height={100} className="h-full w-[60px]" src={imageRepresent.Status} />
-                          <p className="absolute top-[1px] w-full pl-1 text-xs text-white">{product.status}</p>
+                          <p className="absolute top-[1px] w-full pl-1 text-xs font-medium text-white">{product.status}</p>
                         </div>
                       )}
                     </section>
