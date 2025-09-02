@@ -133,7 +133,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       priority
                       width={500}
                       height={500}
-                      src={selectedImage || product?.img}
+                      src={selectedImage || src}
                       alt={product?.name || 'Hình ảnh'}
                       className="absolute left-0 top-0 z-10 h-[200px] w-full rounded-md object-contain xl:h-[480px] xl:w-full"
                       onError={() => handleImageError(product._id)}
@@ -147,7 +147,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       </span> */}
                       <Image
                         src={imageRepresent.soldOut}
-                        alt="Hình ảnh Hết Hàng"
+                        alt="Hết Hàng"
                         height={200}
                         width={200}
                         loading="lazy"
