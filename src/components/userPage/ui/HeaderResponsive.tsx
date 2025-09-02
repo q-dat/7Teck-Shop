@@ -21,6 +21,8 @@ interface SearchResult {
   image: string;
   color?: string;
   price?: number;
+  status?: string;
+  catalogId?: string;
 }
 
 interface HeaderResponsiveProps {
@@ -199,8 +201,11 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                     <Image src={item.image} alt={item.name} width={40} height={40} className="h-12 w-12 shrink-0 rounded object-cover" />
 
                     <div className="flex w-full flex-col">
-                      <span className="font-semibold text-primary group-hover:text-white">{item.name}</span>
-                      {item.color && <span className="font-semibold text-black group-hover:text-white">Màu: {item.color}</span>}
+                      <p className="text-sm">
+                        <span className="font-semibold text-black group-hover:text-white">{item.name}</span>
+                        {item?.status && <span className="mx-1 rounded-md bg-primary-content px-1 font-medium text-primary">{item?.status}</span>}
+                      </p>
+                      {/* {item.color && <span className="font-semibold text-black group-hover:text-white">Màu: {item.color}</span>} */}
                       {item.price !== undefined && (
                         <span className="text-sm font-semibold text-red-700 group-hover:text-white">{formatCurrency(item.price)}</span>
                       )}
