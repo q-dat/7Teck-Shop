@@ -68,10 +68,7 @@ export async function getWindowsByCatalogId(catalogID: string): Promise<IWindows
   try {
     const query = `?catalogID=${catalogID}`;
     const apiUrl = getServerApiUrl(`/api/laptop-windows${query}`);
-    const res = await fetch(apiUrl, {
-      cache: 'force-cache',
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(apiUrl, { cache: 'no-store' });
 
     if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
 
@@ -130,10 +127,7 @@ export async function getAllUsedWindows(): Promise<IWindows[]> {
 export async function getWindowsById(id: string): Promise<IWindows | null> {
   try {
     const apiUrl = getServerApiUrl(`/api/windows/${id}`);
-    const res = await fetch(apiUrl, {
-      cache: 'force-cache',
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(apiUrl, { cache: 'no-store' });
 
     if (!res.ok) {
       const errorText = await res.text();

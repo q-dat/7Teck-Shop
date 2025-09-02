@@ -110,10 +110,7 @@ export async function getPhonesByCatalogId(catalogID: string): Promise<IPhone[]>
   try {
     const query = `?catalogID=${catalogID}`;
     const apiUrl = getServerApiUrl(`/api/phones${query}`);
-    const res = await fetch(apiUrl, {
-      cache: 'force-cache',
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(apiUrl, { cache: 'no-store' });
 
     if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
 
@@ -171,10 +168,7 @@ export async function getAllUsedPhones(): Promise<IPhone[]> {
 export async function getPhoneById(id: string): Promise<IPhone | null> {
   try {
     const apiUrl = getServerApiUrl(`/api/phone/${id}`);
-    const res = await fetch(apiUrl, {
-      cache: 'force-cache',
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(apiUrl, { cache: 'no-store' });
 
     if (!res.ok) {
       const errorText = await res.text();

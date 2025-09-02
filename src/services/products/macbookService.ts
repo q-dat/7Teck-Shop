@@ -68,10 +68,7 @@ export async function getMacbookByCatalogId(catalogID: string): Promise<IMacbook
   try {
     const query = `?catalogID=${catalogID}`;
     const apiUrl = getServerApiUrl(`/api/laptop-macbook${query}`);
-    const res = await fetch(apiUrl, {
-      cache: 'force-cache',
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(apiUrl, { cache: 'no-store' });
 
     if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
 
@@ -130,10 +127,7 @@ export async function getAllUsedMacbook(): Promise<IMacbook[]> {
 export async function getMacbookById(id: string): Promise<IMacbook | null> {
   try {
     const apiUrl = getServerApiUrl(`/api/macbook/${id}`);
-    const res = await fetch(apiUrl, {
-      cache: 'force-cache',
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(apiUrl, { cache: 'no-store' });
 
     if (!res.ok) {
       const errorText = await res.text();

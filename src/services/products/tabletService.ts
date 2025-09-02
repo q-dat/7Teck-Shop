@@ -68,10 +68,7 @@ export async function getTabletsByCatalogId(catalogID: string): Promise<ITablet[
   try {
     const query = `?catalogID=${catalogID}`;
     const apiUrl = getServerApiUrl(`/api/tablets${query}`);
-    const res = await fetch(apiUrl, {
-      cache: 'force-cache',
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(apiUrl, { cache: 'no-store' });
 
     if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
 
@@ -130,10 +127,7 @@ export async function getAllUsedTablets(): Promise<ITablet[]> {
 export async function getTabletById(id: string): Promise<ITablet | null> {
   try {
     const apiUrl = getServerApiUrl(`/api/tablet/${id}`);
-    const res = await fetch(apiUrl, {
-      cache: 'force-cache',
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(apiUrl, { cache: 'no-store' });
 
     if (!res.ok) {
       const errorText = await res.text();
