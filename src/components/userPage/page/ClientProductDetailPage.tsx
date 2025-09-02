@@ -110,7 +110,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   {namePrefix} {product?.name}
                 </span>
                 {product?.status && (
-                  <sup className="bg-primary-lighter mx-2 rounded-md border border-primary p-1 text-sm font-semibold text-primary">
+                  <sup className="mx-2 rounded-md border border-primary bg-primary-lighter p-1 text-sm font-semibold text-primary">
                     {product?.status}
                   </sup>
                 )}
@@ -185,13 +185,13 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       {namePrefix} {product?.name}
                     </span>
                     {product?.status && (
-                      <sup className="bg-primary-lighter mx-2 rounded-md border border-primary p-1 text-sm font-semibold text-primary">
+                      <sup className="mx-2 rounded-md border border-primary bg-primary-lighter p-1 text-sm font-semibold text-primary">
                         {product?.status}
                       </sup>
                     )}
                   </h1>
                   {/* Price */}
-                  <p className="text-3xl font-semibold text-primary">
+                  <p className="text-3xl font-semibold text-price">
                     {formatCurrency(product?.price)}
                     {product?.sale && <del className="ml-2 text-base text-gray-400">{formatCurrency(product?.sale)}</del>}
                   </p>
@@ -199,13 +199,13 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   <div className="flex flex-wrap gap-2">
                     {/* Ram */}
                     {product?.ram && (
-                      <p className="bg-primary-lighter text-default rounded-md border border-primary p-1 font-semibold">
+                      <p className="rounded-md border border-primary bg-primary-lighter p-1 font-semibold text-default">
                         <span className="text-sm text-primary">RAM:</span> {product?.ram}
                       </p>
                     )}
                     {/* Color */}
                     {product?.color && (
-                      <p className="bg-primary-lighter text-default rounded-md border border-primary p-1 font-semibold">
+                      <p className="rounded-md border border-primary bg-primary-lighter p-1 font-semibold text-default">
                         <span className="text-sm text-primary">Màu sắc:</span> {product?.color}
                       </p>
                     )}
@@ -265,7 +265,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
               </div>
               {/* Contact */}
               <Link href={hotlineUrl}>
-                <div className="bg-primary-lighter mt-5 w-full rounded-lg p-4 text-center text-primary shadow-md transition-colors">
+                <div className="mt-5 w-full rounded-lg bg-primary-lighter p-4 text-center text-primary shadow-md transition-colors">
                   <p className="text-xl font-bold">Gọi ngay {contact}</p>
                   <p className="text-sm">Để nhận ưu đãi tốt nhất!</p>
                 </div>

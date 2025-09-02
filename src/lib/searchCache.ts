@@ -33,6 +33,7 @@ export type CachedItem = {
   image: string;
   color?: string;
   price?: number;
+  sale?: number;
   status?: string;
   catalogId?: string;
 };
@@ -54,6 +55,7 @@ const COLLECTIONS = [
     imageField: 'img',
     colorField: 'color',
     priceField: 'price',
+    saleField: 'sale',
     statusField: 'status',
     catalogField: 'phone_catalog_id',
   },
@@ -64,6 +66,7 @@ const COLLECTIONS = [
     imageField: 'tablet_img',
     colorField: 'tablet_color',
     priceField: 'tablet_price',
+    saleField: 'tablet_sale',
     statusField: 'tablet_status',
     catalogField: 'tablet_catalog_id',
   },
@@ -74,6 +77,7 @@ const COLLECTIONS = [
     imageField: 'macbook_img',
     colorField: 'macbook_color',
     priceField: 'macbook_price',
+    saleField: 'macbook_sale',
     statusField: 'macbook_status',
     catalogField: 'macbook_catalog_id',
   },
@@ -84,6 +88,7 @@ const COLLECTIONS = [
     imageField: 'windows_img',
     colorField: 'windows_color',
     priceField: 'windows_price',
+    saleField: 'windows_sale',
     statusField: 'windows_status',
     catalogField: 'windows_catalog_id',
   },
@@ -104,10 +109,10 @@ export async function loadCache() {
   await connectDB();
   const allItems: CachedItem[] = [];
 
-  for (const { model, nameField, url, imageField, colorField, priceField, statusField, catalogField } of COLLECTIONS) {
+  for (const { model, nameField, url, imageField, colorField, priceField, saleField, statusField, catalogField } of COLLECTIONS) {
     const items = (await model
       .find()
-      .select(`${nameField} ${imageField} ${colorField} ${priceField} ${statusField} ${catalogField} _id`)
+      .select(`${nameField} ${imageField} ${colorField} ${priceField} ${saleField} ${statusField} ${catalogField} _id`)
       .lean()) as RawItem[];
 
     items.forEach((item) => {
@@ -117,6 +122,7 @@ export async function loadCache() {
         const image = getNestedValue(item, imageField);
         const color = getNestedValue(item, colorField);
         const price = item[priceField];
+        const sale = item[saleField];
         const status = item[statusField] ? String(item[statusField]) : undefined;
         const catalogId = item[catalogField] ? String(item[catalogField]) : undefined;
 
@@ -127,6 +133,7 @@ export async function loadCache() {
           image,
           color: typeof color === 'string' ? color : undefined,
           price: typeof price === 'number' ? price : undefined,
+          sale: typeof sale === 'number' ? sale : undefined,
           status,
           catalogId,
           link: `${url}/${slug}/${item._id}`,

@@ -6,6 +6,22 @@ function normalizeString(str: string) {
   return str.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+function normalizeStatus(status?: string): string {
+  return status ? status.toLowerCase().trim().replace(/\s+/g, ' ') : '';
+}
+
+const EXCLUDED_STATUSES = [
+  'hết hàng',
+  'hết',
+  'out of stock',
+  'ngừng kinh doanh',
+  'dừng kinh doanh',
+  'ngừng bán',
+  'không kinh doanh',
+  'discontinued',
+  'stop selling',
+];
+
 // Kiểm tra query nhiều từ có match tên sản phẩm
 function queryMatchesName(query: string, name: string) {
   const qTokens = query
@@ -48,14 +64,31 @@ export async function GET(req: Request) {
     }
 
     // 3. Lọc theo catalogId, chỉ lấy 1 sản phẩm đầu tiên trong mỗi danh mục
-    const uniqueByCatalog = new Map<string, CachedItem>();
+    const groupedByCatalog = new Map<string, CachedItem[]>();
     for (const item of results) {
-      const key = item.catalogId || item._id; // fallback nếu catalogId không có
-      if (!uniqueByCatalog.has(key)) {
-        uniqueByCatalog.set(key, item);
+      const key = item.catalogId || item._id;
+      if (!groupedByCatalog.has(key)) {
+        groupedByCatalog.set(key, []);
       }
+      groupedByCatalog.get(key)!.push(item);
     }
-    const finalResults = Array.from(uniqueByCatalog.values());
+
+    const finalResults = Array.from(groupedByCatalog.values()).reduce<CachedItem[]>((acc, items) => {
+      if (items.length === 1) {
+        // Nếu chỉ có 1 sản phẩm thì giữ lại bất kể status
+        acc.push(items[0]);
+      } else {
+        // Nếu nhiều sản phẩm thì bỏ những cái có status không hợp lệ
+        const validItems = items.filter((item) => !EXCLUDED_STATUSES.includes(normalizeStatus(item.status)));
+        if (validItems.length > 0) {
+          acc.push(validItems[0]); // lấy sản phẩm đầu tiên hợp lệ
+        } else {
+          // fallback: nếu tất cả đều invalid, vẫn lấy 1 cái để tránh mất group
+          acc.push(items[0]);
+        }
+      }
+      return acc;
+    }, []);
 
     if (!finalResults.length) {
       return NextResponse.json({ message: 'Không tìm thấy sản phẩm', success: false }, { status: 404 });

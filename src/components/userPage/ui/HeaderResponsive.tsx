@@ -21,8 +21,25 @@ interface SearchResult {
   image: string;
   color?: string;
   price?: number;
+  sale?: number;
   status?: string;
   catalogId?: string;
+}
+
+const EXCLUDED_STATUSES = [
+  'hết hàng',
+  'hết',
+  'out of stock',
+  'ngừng kinh doanh',
+  'dừng kinh doanh',
+  'ngừng bán',
+  'không kinh doanh',
+  'discontinued',
+  'stop selling',
+];
+
+function normalizeStatus(status?: string): string {
+  return status ? status.toLowerCase().trim().replace(/\s+/g, ' ') : '';
 }
 
 interface HeaderResponsiveProps {
@@ -184,6 +201,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
             {/* Result */}
             {openSearch && query && results.length > 0 && (
               <ul className="fixed left-[50%] top-[100px] z-[99999] max-h-[500px] w-full max-w-[600px] -translate-x-1/2 overflow-auto rounded-none border bg-white p-2 text-primary shadow-md">
+                <span className="text-xs font-medium">Sản phẩm gợi ý</span>
                 {results.map((item, index) => (
                   <li
                     key={index}
@@ -201,13 +219,30 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                     <Image src={item.image} alt={item.name} width={40} height={40} className="h-12 w-12 shrink-0 rounded object-cover" />
 
                     <div className="flex w-full flex-col">
-                      <p className="text-sm">
-                        <span className="font-semibold text-black group-hover:text-white">{item.name}</span>
-                        {item?.status && <span className="mx-1 rounded-md bg-primary-content px-1 font-medium text-primary">{item?.status}</span>}
+                      <p className="">
+                        <span className="text-sm font-semibold text-black group-hover:text-white">{item.name}</span>
+                        {item?.status ? (
+                          normalizeStatus(item.status) === 'new' ? (
+                            <span></span>
+                          ) : EXCLUDED_STATUSES.includes(normalizeStatus(item.status)) ? (
+                            <span className="mx-1 rounded-sm border border-primary bg-primary-content p-[2px] text-xs font-medium text-primary line-through group-hover:border-white group-hover:text-black">
+                              Hết hàng
+                            </span>
+                          ) : (
+                            <span className="mx-1 rounded-sm border border-primary bg-orange-300 p-[2px] text-xs font-medium text-default group-hover:border-white">
+                              Máy cũ - giá tốt
+                            </span>
+                          )
+                        ) : null}
                       </p>
                       {/* {item.color && <span className="font-semibold text-black group-hover:text-white">Màu: {item.color}</span>} */}
                       {item.price !== undefined && (
-                        <span className="text-sm font-semibold text-red-700 group-hover:text-white">{formatCurrency(item.price)}</span>
+                        <p className="">
+                          <span className="text-sm font-semibold text-price group-hover:text-white">{formatCurrency(item?.price)}</span>
+                          {item?.sale && (
+                            <del className="ml-2 text-xs font-light text-gray-400 group-hover:text-white">{formatCurrency(item?.sale)}</del>
+                          )}
+                        </p>
                       )}
                     </div>
                   </li>
