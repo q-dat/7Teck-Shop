@@ -15,6 +15,8 @@ import { IoIosArrowDropdownCircle } from 'react-icons/io';
 import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
 import imageRepresent from '../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
+import { FaFacebookSquare } from 'react-icons/fa';
+import { handleProductShare } from '@/helper/handleShare';
 
 export interface ProductCatalogGroup {
   [field: string]: string | number | string[] | null;
@@ -293,7 +295,20 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                     {isExcluded ? 'Không khả dụng' : 'Mua Ngay'}
                   </Button>
 
-                  <p className="mt-2 w-full text-start text-sm text-gray-500">{`*Nhấn "Mua ngay" để xác nhận sản phẩm!`}</p>
+                  {/*  */}
+                  <div className="mt-2 flex w-full flex-col justify-between gap-1 text-blue-800 xl:flex-row">
+                    {/* Bên trái */}
+                    <div>
+                      <span className="text-sm text-gray-500">*Nhấn "Mua ngay" để xác nhận sản phẩm!</span>
+                    </div>
+                    {/* Bên phải */}
+                    <div className="flex flex-row items-center gap-1 text-blue-800">
+                      <span className="text-sm font-light">Chia sẽ sản phẩm này:</span>
+                      <button aria-label="Chia sẻ sản phẩm" onClick={() => handleProductShare(basePath, product.name, product._id)}>
+                        <FaFacebookSquare className="text-xl" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
               {/* Contact */}
