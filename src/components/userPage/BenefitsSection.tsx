@@ -60,26 +60,43 @@ const BenefitsSection = () => {
 
     const sections = gsap.utils.toArray<HTMLElement>('.benefit-card');
 
-    gsap.to(sections, {
-      xPercent: -100 * (sections.length - 1),
-      ease: 'none',
-      scrollTrigger: {
-        trigger: container,
-        pin: true,
-        scrub: 0,
-        start: 'center center',
-        end: () => `+=${container.scrollWidth - window.innerWidth}`,
+    const mm = gsap.matchMedia();
+
+    mm.add(
+      {
+        isMobile: '(max-width: 1279px)',
+        isDesktop: '(min-width: 1280px)',
       },
-    });
+      (context) => {
+        const { isMobile } = context.conditions!;
+
+        gsap.to(sections, {
+          xPercent: -100 * (sections.length - 1),
+          ease: 'none',
+          scrollTrigger: {
+            trigger: container,
+            pin: true,
+            scrub: 0,
+            start: isMobile ? 'top 60px' : 'top 130px',
+            end: () => `+=${container.scrollWidth - window.innerWidth}`,
+          },
+        });
+      }
+    );
+
+    return () => {
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
   }, []);
 
   return (
-    <section ref={containerRef} className="relative z-[9999998] w-full overflow-hidden">
-      <div className="flex h-screen w-max flex-row">
+    <section ref={containerRef} className="relative w-full overflow-hidden">
+      <div className="flex h-[calc(100vh-60px)] w-max flex-row xl:h-[calc(100vh-130px)]">
+        {/* Giới hạn chiều cao phần tử */}
         {programs.map((p, i) => (
           <div
             key={i}
-            className="benefit-card relative flex w-screen flex-col items-center justify-center bg-cover bg-center bg-no-repeat"
+            className="benefit-card relative flex h-[calc(100vh-60px)] w-screen flex-col items-center justify-center bg-cover bg-center bg-no-repeat xl:h-[calc(100vh-130px)]" // Áp dụng chiều cao giới hạn cho từng card
             style={{
               backgroundImage: `url(${p.bg})`,
             }}
