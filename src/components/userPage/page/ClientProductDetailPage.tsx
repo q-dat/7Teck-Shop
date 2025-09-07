@@ -299,7 +299,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   <div className="mt-2 flex w-full flex-col justify-between gap-1 text-blue-800 xl:flex-row">
                     {/* Bên trái */}
                     <div>
-                      <span className="text-sm text-gray-500">*Nhấn "Mua ngay" để xác nhận sản phẩm!</span>
+                      <span className="text-sm text-gray-500">{`*Nhấn "Mua ngay" để xác nhận sản phẩm!`}</span>
                     </div>
                     {/* Bên phải */}
                     <div className="flex flex-row items-center gap-1 text-blue-800">
