@@ -78,7 +78,7 @@ const BenefitsSection = () => {
             pin: true,
             scrub: 0,
             start: isMobile ? 'top 60px' : 'top 130px',
-            end: () => `+=${container.scrollWidth - window.innerWidth}`,
+            end: () => `+=${(container.scrollWidth - window.innerWidth) / 2}`,
           },
         });
       }

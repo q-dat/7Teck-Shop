@@ -98,7 +98,6 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
   }, [mostViewedPhones]);
 
   // Ánh xạ dữ liệu
-
   const transformTablets: Product[] = tablets.map((item) => ({
     _id: item._id,
     name: item.tablet_name || '',
@@ -154,7 +153,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
     {
       products: transformMacbook,
       category: {
-        name: 'Macbook',
+        name: 'Laptop Macbook',
         url: '/macbook',
         title: 'Macbook - Giảm giá mạnh',
         ariaLabel: 'Xem thêm sản phẩm laptop Macbook',
@@ -163,7 +162,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
     {
       products: transformWindows,
       category: {
-        name: 'Windows',
+        name: 'Laptop Windows',
         url: '/windows',
         title: 'Windows - Giảm giá mạnh',
         ariaLabel: 'Xem thêm sản phẩm laptop Windows',

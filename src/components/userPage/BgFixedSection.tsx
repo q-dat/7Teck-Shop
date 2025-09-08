@@ -24,7 +24,7 @@ const BgFixedSection = () => {
           scrollTrigger: {
             trigger: titleRef.current,
             start: 'top bottom',
-            end: '+=80%',
+            end: '+=85%',
             scrub: true,
           },
         }
@@ -42,7 +42,7 @@ const BgFixedSection = () => {
           scrollTrigger: {
             trigger: descRef.current,
             start: 'top bottom',
-            end: '+=80%',
+            end: '+=85%',
             scrub: true,
           },
         }
