@@ -21,6 +21,8 @@ import { searchProducts } from '@/services/searchService';
 import { suggestions } from '@/utils/suggestions';
 import { createPortal } from 'react-dom';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { IoIosContacts } from 'react-icons/io';
+import { LiaShippingFastSolid } from 'react-icons/lia';
 
 interface SearchResult {
   name: string;
@@ -53,7 +55,7 @@ const items = [
     icon: <RiArrowLeftRightFill />,
     text: (
       <>
-        <p className="font-bold">Thu cũ</p> đổi mới <p className="font-bold">lên tới 90%</p>
+        <p className="font-bold">Thu cũ </p> đổi mới <p className="font-bold">lên tới 90%</p>
       </>
     ),
   },
@@ -61,7 +63,7 @@ const items = [
     icon: <GiRibbonMedal />,
     text: (
       <>
-        Sản phẩm <p className="font-bold">Chính hãng</p>
+        Sản phẩm <p className="font-bold">chính hãng</p>
       </>
     ),
   },
@@ -69,7 +71,23 @@ const items = [
     icon: <TbPigMoney />,
     text: (
       <>
-        Hỗ trợ <p className="font-bold">Trả góp</p>
+        Hỗ trợ <p className="font-bold">trả góp linh hoạt</p>
+      </>
+    ),
+  },
+  {
+    icon: <IoIosContacts />,
+    text: (
+      <>
+        Tư vấn <p className="font-bold">chọn máy theo nhu cầu</p>
+      </>
+    ),
+  },
+  {
+    icon: <LiaShippingFastSolid />,
+    text: (
+      <>
+        <p className="font-bold">FREESHIP </p>nội thành <p className="font-bold">HCM </p>
       </>
     ),
   },
@@ -165,14 +183,27 @@ const Header: React.FC = () => {
   return (
     <div className="fixed left-0 top-0 z-[99999] hidden w-full flex-col xl:block">
       {/* Benefits */}
-      <div className="h-[30px] bg-[#FFC107] text-black xl:px-desktop-padding">
-        <div className="flex h-full w-full flex-row items-center justify-around">
+      <div className="h-[30px] overflow-hidden bg-[#FFC107] text-black xl:px-desktop-padding">
+        <div className="animate-marquee flex h-full w-full flex-row items-center justify-around whitespace-nowrap gap-20">
           {items.map((item, index) => (
-            <div key={index} className="flex items-center justify-center gap-1 font-light">
+            <div key={index} className="inline-flex items-center justify-center">
               {React.cloneElement(item.icon, {
                 className: 'text-xl text-black',
               })}
-              <>{item.text}</>
+              <div className="flex items-center justify-center gap-1 text-sm font-light">
+                <>{item.text}</>
+              </div>
+            </div>
+          ))}
+          {/* Nhân bản nội dung để scroll liên tục mượt hơn */}
+          {items.map((item, index) => (
+            <div key={index} className="inline-flex items-center justify-center">
+              {React.cloneElement(item.icon, {
+                className: 'text-xl text-black',
+              })}
+              <div className="flex items-center justify-center gap-1 text-sm font-light">
+                <>{item.text}</>
+              </div>
             </div>
           ))}
         </div>

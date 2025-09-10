@@ -35,7 +35,7 @@ function PhoneModel({ scrollY, modelScale }: PhoneModelProps) {
 
     ref.current.scale.set(modelScale, modelScale, modelScale);
 
-    ref.current.rotation.y = THREE.MathUtils.lerp(ref.current.rotation.y, progress * Math.PI * 2, 0.1);
+    ref.current.rotation.y = THREE.MathUtils.lerp(ref.current.rotation.y, progress * Math.PI * 3, 0.3);
     ref.current.rotation.x = Math.sin(progress * Math.PI * 4) * 0.15;
     ref.current.rotation.z = Math.sin(progress * Math.PI * 2) * 0.1;
 
@@ -64,7 +64,7 @@ function PhoneModel({ scrollY, modelScale }: PhoneModelProps) {
     }
 
     const margin = 0.5;
-    const maxX = viewport.width / 2 - margin;
+    const maxX = viewport.width / 2.5 - margin;
     const minX = -maxX;
 
     if (x >= maxX) dirX.current = -1;
@@ -110,8 +110,8 @@ export default function ZigzagSection() {
           <ambientLight intensity={1.2} />
           <directionalLight position={[5, 5, 5]} intensity={1.8} />
           <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1.5} />
-          <PhoneModel scrollY={scroll} modelScale={modelScale} />
-        </Canvas>
+              <PhoneModel scrollY={scroll} modelScale={modelScale} />
+            </Canvas>
         {/* Overlay cho section đầu */}
         <div className="pointer-events-none absolute left-0 top-10 z-20 flex h-[100vh] w-full items-start justify-center">
           <div className="absolute left-0 top-0 flex h-screen w-full items-start justify-center">
@@ -172,17 +172,17 @@ export default function ZigzagSection() {
         <section className="relative z-20 flex h-[100vh] w-full items-start justify-center px-desktop-padding">
           <div className="flex w-full flex-row-reverse items-center">
             <div className="mb-4 w-1/2 text-left">
-              <h1 className="mb-4 text-8xl font-bold">Camera 48MP</h1>
+              <h1 className="mb-4 text-7xl font-bold">Camera 48MP</h1>
               <p className="mb-4 text-2xl">Hệ thống camera sau triple 48MP với zoom quang 8x, hỗ trợ quay video 8K và chế độ đêm cải tiến.</p>
-              <p className="mb-4 text-lg italic text-gray-200">
+              <p className="mb-4 text-sm italic text-gray-100 2xl:text-xl">
                 Với cảm biến thế hệ mới, iPhone 17 Pro Max mang lại khả năng chụp ảnh cực kỳ sắc nét, màu sắc trung thực ngay cả trong điều kiện thiếu
                 sáng.
               </p>
-              <p className="mb-4 text-lg italic text-gray-200">
+              <p className="mb-4 text-sm italic text-gray-100 2xl:text-xl">
                 Tính năng Photonic Engine kết hợp cùng thuật toán AI giúp xử lý chi tiết nhanh chóng, hạn chế nhiễu và giữ lại độ sâu trường ảnh tự
                 nhiên.
               </p>
-              <p className="text-lg italic text-gray-200">
+              <p className="text-sm italic text-gray-100 2xl:text-xl">
                 Ngoài ra, chế độ quay video chuyên nghiệp ProRes 8K mở ra trải nghiệm điện ảnh trên smartphone, đáp ứng nhu cầu của cả nhà sáng tạo
                 nội dung lẫn người dùng phổ thông.
               </p>
@@ -194,31 +194,30 @@ export default function ZigzagSection() {
         <section className="relative z-20 flex h-[100vh] items-start justify-center px-desktop-padding">
           <div className="flex w-full flex-row items-end">
             <div className="mb-4 w-1/2 text-left">
-              <h1 className="mb-4 text-8xl font-bold">Hiệu năng A19 Pro</h1>
-              <p className="mb-4 text-2xl">Chip A19 Pro với 12GB RAM mang lại tốc độ vượt trội, tiết kiệm năng lượng và hỗ trợ AI tối ưu.</p>
-              <p className="mb-4 text-lg italic text-gray-200">
-                Được sản xuất trên tiến trình 2nm tiên tiến, A19 Pro nâng tầm hiệu năng xử lý, cho khả năng đa nhiệm mượt mà và phản hồi tức thì trong
-                mọi tác vụ.
-              </p>
-              <p className="mb-4 text-lg italic text-gray-200">
-                GPU thế hệ mới đem lại trải nghiệm chơi game đỉnh cao, đồ họa sắc nét cùng khả năng xử lý ray tracing thời gian thực.
-              </p>
-              <p className="mb-4 text-lg italic text-gray-200">
-                Công nghệ Neural Engine cải tiến tăng tốc độ xử lý AI gấp đôi, từ nhận diện hình ảnh, giọng nói đến tối ưu hoá ứng dụng hằng ngày.
-              </p>
-              <p className="text-lg italic text-gray-200">
-                Hiệu suất mạnh mẽ nhưng vẫn tiết kiệm pin, đảm bảo người dùng có thể làm việc, giải trí và sáng tạo cả ngày dài mà không lo gián đoạn.
-              </p>
-            </div>
-            <div className="relative w-1/2 p-2">
+              <h1 className="mb-4 text-7xl font-bold">Hiệu năng A19 Pro </h1>
               <Image
                 src={images.A19pro}
                 alt="iPhone 17 Pro Max Chip"
-                width={300}
-                height={300}
-                className="h-[300px] w-[300px] rounded-md object-contain"
+                width={200}
+                height={200}
+                className="float-left mr-2 h-[200px] w-[200px] rounded-md object-contain"
               />
+              <p className="mb-4 text-2xl">Chip A19 Pro với 12GB RAM mang lại tốc độ vượt trội, tiết kiệm năng lượng và hỗ trợ AI tối ưu.</p>
+              <p className="mb-4 text-sm italic text-gray-100 2xl:text-xl">
+                Được sản xuất trên tiến trình 2nm tiên tiến, A19 Pro nâng tầm hiệu năng xử lý, cho khả năng đa nhiệm mượt mà và phản hồi tức thì trong
+                mọi tác vụ.
+              </p>
+              <p className="mb-4 text-sm italic text-gray-100 2xl:text-xl">
+                GPU thế hệ mới đem lại trải nghiệm chơi game đỉnh cao, đồ họa sắc nét cùng khả năng xử lý ray tracing thời gian thực.
+              </p>
+              <p className="mb-4 text-sm italic text-gray-100 2xl:text-xl">
+                Công nghệ Neural Engine cải tiến tăng tốc độ xử lý AI gấp đôi, từ nhận diện hình ảnh, giọng nói đến tối ưu hoá ứng dụng hằng ngày.
+              </p>
+              <p className="text-sm italic text-gray-100 2xl:text-xl">
+                Hiệu suất mạnh mẽ nhưng vẫn tiết kiệm pin, đảm bảo người dùng có thể làm việc, giải trí và sáng tạo cả ngày dài mà không lo gián đoạn.
+              </p>
             </div>
+            <div className="relative w-1/2 p-2">{''}</div>
           </div>
         </section>
       </div>
