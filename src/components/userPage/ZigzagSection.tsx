@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { RiScrollToBottomLine } from 'react-icons/ri';
+import { images } from '../../../public/images';
 
 // Preload GLTF để tối ưu
 useGLTF.preload('/models/Phone.glb');
@@ -157,7 +158,7 @@ export default function ZigzagSection() {
             </div>
             <div className="relative flex w-1/2 flex-row items-center justify-center overflow-hidden rounded-md">
               <Image
-                src="https://images2.thanhnien.vn/528068263637045248/2025/9/5/1-17570585040741298991054.jpg"
+                src={images.Ip17PM}
                 alt="iPhone 17 Pro Max"
                 width={400}
                 height={500}
@@ -211,7 +212,7 @@ export default function ZigzagSection() {
             </div>
             <div className="relative w-1/2 p-2">
               <Image
-                src="https://galaxydidong.vn/wp-content/uploads/2025/05/A19pro.jpg"
+                src={images.A19pro}
                 alt="iPhone 17 Pro Max Chip"
                 width={300}
                 height={300}
