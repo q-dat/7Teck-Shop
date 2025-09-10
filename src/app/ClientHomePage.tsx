@@ -14,6 +14,7 @@ import { IWindows } from '@/types/type/products/windows/windows';
 import Link from 'next/link';
 import BgFixedSection from '@/components/userPage/BgFixedSection';
 import BenefitsSection from '@/components/userPage/BenefitsSection';
+import ZigzagSection from '@/components/userPage/ZigzagSection';
 
 // Thành phần Banner
 const BannerComponent = memo(() => (
@@ -171,27 +172,19 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
   ];
 
   return (
-    <div>
-      {/* Thanh điều hướng responsive */}
+    <div className="w-full">
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
       <div className="pt-[60px] xl:pt-0">
-        {/* Banner quảng cáo */}
         <Banner />
-        {/* Phần sản phẩm điện thoại */}
-        {/* <div data-aos="fade-down"> */}
+        <ZigzagSection />
         <ClientPhoneFC mostViewedPhones={mostViewedPhones} loading={loading} />
-        {/* </div> */}
-        {/* Phần nền cố định */}
         {mostViewedPhones.length !== 0 && <BgFixedSection />}
-        {/* Phần sản phẩm giảm giá */}
         {productCategories.map((config, index) => (
           <div key={index} /* data-aos="fade-up" */ className="w-full">
             <ClientProductFC products={config.products} category={config.category} loading={loading} />
           </div>
         ))}
-        {/* Phần lợi ích */}
         <BenefitsSection />
-        {/* Phần bài viết */}
         <ClientPostSection news={news} tricks={tricks} />
       </div>
     </div>

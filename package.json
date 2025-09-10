@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@react-three/drei": "^10.7.4",
+    "@react-three/fiber": "^9.3.0",
     "@types/lodash.debounce": "^4.0.9",
     "@vercel/og": "^0.6.8",
     "axios": "^1.10.0",
@@ -37,7 +39,8 @@
     "react-toastify": "^11.0.5",
     "semantic-ui-react": "^2.1.5",
     "tailwind-scrollbar": "^3.0.0",
-    "tailwind-scrollbar-hide": "^2.0.0"
+    "tailwind-scrollbar-hide": "^2.0.0",
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
