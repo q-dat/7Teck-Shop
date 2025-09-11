@@ -12,6 +12,7 @@ import imageRepresent from '../../../../public/image-represent';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
+import { FaFrown } from 'react-icons/fa';
 
 export interface ProductBase {
   _id: string;
@@ -190,7 +191,25 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                   );
                 })
               ) : (
-                <div className="col-span-full text-center text-2xl">Rất tiếc. Không tìm thấy sản phẩm nào!</div>
+                <div className="col-span-full flex flex-col items-center justify-center py-10 text-center">
+                  <FaFrown className="mb-4 h-16 w-16 text-gray-400" />
+                  <h2 className="text-xl font-semibold text-gray-800 xl:text-3xl">Rất tiếc, không tìm thấy sản phẩm nào!</h2>
+                  <p className="mb-6 mt-2 text-gray-500">Có thể sản phẩm đã hết hàng hoặc đường dẫn không chính xác.</p>
+                  <div className="flex gap-4">
+                    <Link
+                      href="/"
+                      className="rounded-2xl bg-primary px-5 py-2 font-medium text-white shadow transition hover:border hover:border-primary hover:bg-primary-lighter hover:text-primary"
+                    >
+                      Về Trang Chủ
+                    </Link>
+                    <Link
+                      href="/lien-he"
+                      className="rounded-2xl border border-black px-5 py-2 font-medium text-black shadow-sm transition hover:bg-primary-lighter"
+                    >
+                      Trang Liên Hệ
+                    </Link>
+                  </div>
+                </div>
               )}
             </div>
           </div>
