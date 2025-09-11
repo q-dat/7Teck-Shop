@@ -3,8 +3,28 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import lightConfig from './phoneLights.json';
 
+// Kiểu dữ liệu thô (như JSON export từ viewer)
+interface RawLight {
+  r?: number;
+  g?: number;
+  b?: number;
+  intensity?: number;
+  Red?: number;
+  Green?: number;
+  Blue?: number;
+  Intensity?: number;
+}
+
+// Kiểu dữ liệu sau khi normalize
+interface NormalizedLight {
+  r: number;
+  g: number;
+  b: number;
+  intensity: number;
+}
+
 // Hàm normalize để chấp nhận cả key Viewer (Red/Green/Blue/Intensity) và key chuẩn (r/g/b/intensity)
-function normalizeLight(obj: any) {
+function normalizeLight(obj: RawLight): NormalizedLight {
   return {
     r: obj.r ?? obj.Red ?? 0,
     g: obj.g ?? obj.Green ?? 0,
