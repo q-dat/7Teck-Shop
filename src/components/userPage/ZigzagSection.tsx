@@ -152,7 +152,7 @@ export default function ZigzagSection() {
           <div className="flex w-full flex-row items-center">
             <div className="mb-4 w-1/2 text-left">
               <h1 className="mb-6 text-7xl font-extrabold">iPhone 17 Pro Max</h1>
-              <p className="mb-4 text-2xl">Siêu phẩm 2025: màn hình 6.9" Super Retina XDR, chip A19 Pro và camera Pro 48MP toàn diện.</p>
+              <p className="mb-4 text-2xl">Siêu phẩm 2025: màn hình 6.9&quot; Super Retina XDR, chip A19 Pro và camera Pro 48MP toàn diện.</p>
               <p className="text-xl text-gray-300">
                 Thiết kế khung nhôm sang trọng, màu sắc mới mẻ, pin kỷ lục đến 37 giờ video cùng kết nối Wi-Fi 7, USB-C tốc độ cao.
               </p>
