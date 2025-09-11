@@ -110,8 +110,8 @@ export default function ZigzagSection() {
           <ambientLight intensity={1.2} />
           <directionalLight position={[5, 5, 5]} intensity={1.8} />
           <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1.5} />
-              <PhoneModel scrollY={scroll} modelScale={modelScale} />
-            </Canvas>
+          <PhoneModel scrollY={scroll} modelScale={modelScale} />
+        </Canvas>
         {/* Overlay cho section đầu */}
         <div className="pointer-events-none absolute left-0 top-10 z-20 flex h-[100vh] w-full items-start justify-center">
           <div className="absolute left-0 top-0 flex h-screen w-full items-start justify-center">
@@ -147,14 +147,15 @@ export default function ZigzagSection() {
 
           {/* Scroll Indicator */}
         </div>
-
         {/* Section 1: Intro */}
         <section className="relative z-20 flex h-[100vh] w-full items-start justify-between px-desktop-padding">
           <div className="flex w-full flex-row items-center">
             <div className="mb-4 w-1/2 text-left">
               <h1 className="mb-6 text-7xl font-extrabold">iPhone 17 Pro Max</h1>
-              <p className="mb-4 text-2xl">Trải nghiệm đỉnh cao với chip A19 Pro, camera 48MP cải tiến và thiết kế titan siêu bền.</p>
-              <p className="text-xl text-gray-300">Kết hợp sức mạnh công nghệ và sự tinh xảo, mang đến trải nghiệm khác biệt.</p>
+              <p className="mb-4 text-2xl">Siêu phẩm 2025: màn hình 6.9" Super Retina XDR, chip A19 Pro và camera Pro 48MP toàn diện.</p>
+              <p className="text-xl text-gray-300">
+                Thiết kế khung nhôm sang trọng, màu sắc mới mẻ, pin kỷ lục đến 37 giờ video cùng kết nối Wi-Fi 7, USB-C tốc độ cao.
+              </p>
             </div>
             <div className="relative flex w-1/2 flex-row items-center justify-center overflow-hidden rounded-md">
               <Image
@@ -168,33 +169,29 @@ export default function ZigzagSection() {
             </div>
           </div>
         </section>
+
         {/* Section 2: Camera */}
         <section className="relative z-20 flex h-[100vh] w-full items-start justify-center px-desktop-padding">
           <div className="flex w-full flex-row-reverse items-center">
             <div className="mb-4 w-1/2 text-left">
-              <h1 className="mb-4 text-7xl font-bold">Camera 48MP</h1>
-              <p className="mb-4 text-2xl">Hệ thống camera sau triple 48MP với zoom quang 8x, hỗ trợ quay video 8K và chế độ đêm cải tiến.</p>
+              <h1 className="mb-4 text-7xl font-bold">Camera Pro 48MP</h1>
+              <p className="mb-4 text-2xl">Bộ 3 camera 48MP đồng bộ, zoom quang học 8x, quay video ProRes 8K chuyên nghiệp.</p>
               <p className="mb-4 text-sm italic text-gray-100 2xl:text-xl">
-                Với cảm biến thế hệ mới, iPhone 17 Pro Max mang lại khả năng chụp ảnh cực kỳ sắc nét, màu sắc trung thực ngay cả trong điều kiện thiếu
-                sáng.
-              </p>
-              <p className="mb-4 text-sm italic text-gray-100 2xl:text-xl">
-                Tính năng Photonic Engine kết hợp cùng thuật toán AI giúp xử lý chi tiết nhanh chóng, hạn chế nhiễu và giữ lại độ sâu trường ảnh tự
-                nhiên.
+                Photonic Engine + AI giữ chi tiết và màu sắc nhất quán trên cả 3 ống kính, chụp đêm rõ ràng hơn bao giờ hết.
               </p>
               <p className="text-sm italic text-gray-100 2xl:text-xl">
-                Ngoài ra, chế độ quay video chuyên nghiệp ProRes 8K mở ra trải nghiệm điện ảnh trên smartphone, đáp ứng nhu cầu của cả nhà sáng tạo
-                nội dung lẫn người dùng phổ thông.
+                Camera trước 18MP với Center Stage, đảm bảo bạn luôn nổi bật trong mọi cuộc gọi video.
               </p>
             </div>
             <div className="relative w-1/2">{''}</div>
           </div>
         </section>
+
         {/* Section 3: Performance */}
         <section className="relative z-20 flex h-[100vh] items-start justify-center px-desktop-padding">
           <div className="flex w-full flex-row items-end">
             <div className="mb-4 w-1/2 text-left">
-              <h1 className="mb-4 text-7xl font-bold">Hiệu năng A19 Pro </h1>
+              <h1 className="mb-4 text-7xl font-bold">Hiệu năng A19 Pro</h1>
               <Image
                 src={images.A19pro}
                 alt="iPhone 17 Pro Max Chip"
@@ -202,19 +199,12 @@ export default function ZigzagSection() {
                 height={200}
                 className="float-left mr-2 h-[200px] w-[200px] rounded-md object-contain"
               />
-              <p className="mb-4 text-2xl">Chip A19 Pro với 12GB RAM mang lại tốc độ vượt trội, tiết kiệm năng lượng và hỗ trợ AI tối ưu.</p>
+              <p className="mb-4 text-2xl">Chip A19 Pro tiến trình 2nm + 12GB RAM, sức mạnh vượt trội cho đa nhiệm, gaming và sáng tạo nội dung.</p>
               <p className="mb-4 text-sm italic text-gray-100 2xl:text-xl">
-                Được sản xuất trên tiến trình 2nm tiên tiến, A19 Pro nâng tầm hiệu năng xử lý, cho khả năng đa nhiệm mượt mà và phản hồi tức thì trong
-                mọi tác vụ.
-              </p>
-              <p className="mb-4 text-sm italic text-gray-100 2xl:text-xl">
-                GPU thế hệ mới đem lại trải nghiệm chơi game đỉnh cao, đồ họa sắc nét cùng khả năng xử lý ray tracing thời gian thực.
-              </p>
-              <p className="mb-4 text-sm italic text-gray-100 2xl:text-xl">
-                Công nghệ Neural Engine cải tiến tăng tốc độ xử lý AI gấp đôi, từ nhận diện hình ảnh, giọng nói đến tối ưu hoá ứng dụng hằng ngày.
+                GPU 6 nhân hỗ trợ ray tracing thời gian thực, chơi game AAA mượt mà, chỉnh sửa video 4K nhanh chóng.
               </p>
               <p className="text-sm italic text-gray-100 2xl:text-xl">
-                Hiệu suất mạnh mẽ nhưng vẫn tiết kiệm pin, đảm bảo người dùng có thể làm việc, giải trí và sáng tạo cả ngày dài mà không lo gián đoạn.
+                Neural Engine thế hệ mới tăng tốc AI gấp đôi, trong khi pin tối ưu cho phép dùng thoải mái 2 ngày liên tục.
               </p>
             </div>
             <div className="relative w-1/2 p-2">{''}</div>
