@@ -1,12 +1,13 @@
 'use client';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF } from '@react-three/drei';
+import { Environment, useGLTF } from '@react-three/drei';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { RiScrollToBottomLine } from 'react-icons/ri';
-import { images } from '../../../public/images';
+import { images } from '../../../../public/images';
+import SceneLights from './SceneLights';
 
 // Preload GLTF để tối ưu
 useGLTF.preload('/models/Phone.glb');
@@ -107,11 +108,10 @@ export default function ZigzagSection() {
           camera={{ position: [0, 0, modelScale * 2 + 5], fov: 5 }} // Fixed fov desktop
           gl={{ antialias: true }}
         >
-          <ambientLight intensity={1.2} />
-          <directionalLight position={[5, 5, 5]} intensity={1.8} />
-          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1.5} />
+          <SceneLights />
           <PhoneModel scrollY={scroll} modelScale={modelScale} />
         </Canvas>
+
         {/* Overlay cho section đầu */}
         <div className="pointer-events-none absolute left-0 top-10 z-20 flex h-[100vh] w-full items-start justify-center">
           <div className="absolute left-0 top-0 flex h-screen w-full items-start justify-center">

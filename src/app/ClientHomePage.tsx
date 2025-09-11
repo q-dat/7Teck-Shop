@@ -14,7 +14,7 @@ import { IWindows } from '@/types/type/products/windows/windows';
 import Link from 'next/link';
 import BgFixedSection from '@/components/userPage/BgFixedSection';
 import BenefitsSection from '@/components/userPage/BenefitsSection';
-import ZigzagSection from '@/components/userPage/ZigzagSection';
+import ZigzagSection from '@/components/userPage/ZigzagSection/ZigzagSection';
 
 // Thành phần Banner
 const BannerComponent = memo(() => (
