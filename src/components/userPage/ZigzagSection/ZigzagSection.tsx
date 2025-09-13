@@ -145,7 +145,7 @@ export default function ZigzagSection() {
                 </div>
                 {/* Headline */}
                 <h1 className="text-5xl font-extrabold leading-tight text-white drop-shadow-md">
-                  <span className="inline-flex gap-2">
+                  <span className="inline-flex items-center justify-center gap-2">
                     Thu Cũ Đổi Mới
                     <IoShieldCheckmarkOutline className="text-green-400" />
                   </span>

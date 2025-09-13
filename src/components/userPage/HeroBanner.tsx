@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
 import { images } from '../../../public/images';
+import { IoShieldCheckmarkOutline } from 'react-icons/io5';
 
 // Thành phần Banner
 export default function HeroBanner() {
@@ -16,7 +17,7 @@ export default function HeroBanner() {
         up to 90%
       </h2>
     </div> */}
-      <div className="absolute inset-0 flex flex-col justify-end gap-4 bg-gradient-to-tr from-primary/30 via-default/30 to-transparent px-2 pb-5 xl:px-desktop-padding">
+      <div className="absolute inset-0 flex flex-col justify-end gap-4 bg-gradient-to-tr from-primary/30 to-default/50 px-2 pb-5 xl:px-desktop-padding">
         {/* Tagline */}
         <span className="relative inline-block w-fit text-sm font-semibold uppercase tracking-wider text-white md:text-base">
           Ưu đãi trao đổi
@@ -25,7 +26,10 @@ export default function HeroBanner() {
         {/* Tiêu đề và mô tả */}
         <div className="w-full">
           <h1 className="text-2xl font-extrabold leading-snug text-white drop-shadow-md 2xl:text-3xl">
-            Thu Cũ Đổi Mới
+            <span className="inline-flex items-center justify-center gap-2">
+              Thu Cũ Đổi Mới
+              <IoShieldCheckmarkOutline className="text-green-400" />
+            </span>
             <br />
             Nhận Ngay Giá Tốt Nhất!
           </h1>
