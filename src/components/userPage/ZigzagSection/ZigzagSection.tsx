@@ -8,6 +8,8 @@ import { motion } from 'framer-motion';
 import { RiScrollToBottomLine } from 'react-icons/ri';
 import { images } from '../../../../public/images';
 import SceneLights from './SceneLights';
+import Link from 'next/link';
+import { IoShieldCheckmarkOutline } from 'react-icons/io5';
 
 // Preload GLTF để tối ưu
 useGLTF.preload('/models/Phone.glb');
@@ -113,43 +115,98 @@ export default function ZigzagSection() {
         </Canvas>
 
         {/* Overlay cho section đầu */}
-        <div className="pointer-events-none absolute left-0 top-10 z-20 flex h-[100vh] w-full items-start justify-center">
-          <div className="absolute left-0 top-0 flex h-screen w-full items-start justify-center">
-            <div className="rounded-3xl bg-default/20 p-10 shadow-2xl backdrop-blur-lg">
-              {/* Phần 1: Giới thiệu */}
-              <div className="mb-8 text-center">
-                <h2 className="mb-4 text-6xl font-extrabold text-gray-100 drop-shadow-lg">Khám phá iPhone 17 Pro Max</h2>
-                <p className="text-2xl italic text-gray-200">Thiết kế titan siêu bền. Camera đột phá. Hiệu năng vượt trội.</p>
-              </div>
-
-              {/* Phần 2: Thương hiệu / CTA */}
-              <div className="border-t border-gray-300/30 pt-6 text-center">
-                <p className="text-xl text-gray-300">
-                  Trải nghiệm ngay tại <span className="font-semibold text-white underline">www.7teck.vn</span>
-                </p>
-                <p className="mt-2 text-xl font-medium text-gray-200">Nơi công nghệ hội tụ - Khẳng định đẳng cấp.</p>
-              </div>
-              <div className="mt-10">
-                <motion.div
-                  animate={{ y: [0, 12, 0] }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                  className="flex items-center justify-center"
-                >
-                  <RiScrollToBottomLine className="text-5xl text-white opacity-100 drop-shadow-lg transition-transform duration-300 hover:scale-125" />
-                </motion.div>
-              </div>
+        <div className="absolute left-0 top-0 z-20 flex h-[100vh] w-full items-start justify-center">
+          {/* Banner */}
+          <header className="relative h-[85vh] w-full overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+            {/* Background image */}
+            <div className="pointer-events-none absolute inset-0">
+              <Image
+                src={images.MacProM4}
+                alt="Hero background"
+                fill
+                sizes="(max-width: 640px) 100vw, 50vw"
+                className="scale-105 transform-gpu object-cover object-center opacity-60 will-change-transform"
+                priority
+              />
+              <div className="via-defrom-default/20 absolute inset-0 bg-gradient-to-t from-default/70 to-transparent" />
             </div>
-          </div>
+            {/* Content */}
+            <div className="relative mt-20 flex h-full w-full flex-col items-start justify-start px-desktop-padding">
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="flex flex-col items-start gap-6"
+              >
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1 text-xs font-medium ring-1 ring-white/10 backdrop-blur-sm">
+                  <span className="flex-shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold">www.7Teck.vn</span>
+                  <span className="uppercase">Ưu Đãi Trao Đổi</span>
+                </div>
+                {/* Headline */}
+                <h1 className="text-5xl font-extrabold leading-tight text-white drop-shadow-md">
+                  <span className="inline-flex gap-2">
+                    Thu Cũ Đổi Mới
+                    <IoShieldCheckmarkOutline className="text-green-400" />
+                  </span>
+                  <br />
+                  Nhận Ngay Giá Tốt Nhất!
+                </h1>
+                {/* Subtitle / Extended content */}
+                <p className="w-[50vw] text-xl text-slate-200/95">
+                  Đổi điện thoại cũ lấy siêu phẩm mới với mức giá hấp dẫn.
+                  <br />
+                  Giải pháp thông minh để bạn nâng cấp thiết bị yêu thích ngay hôm nay.
+                  <br />
+                  Lên đến <i className="text-4xl font-bold text-yellow-300">90%</i> giá trị sản phẩm - uy tín, nhanh chóng, minh bạch, tiện lợi.
+                </p>
+                {/* CTA */}
+                <div className="mt-2 flex flex-wrap gap-4 uppercase">
+                  <Link
+                    href="/bang-gia-thu-mua"
+                    className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-md ring-1 ring-white/30 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 hover:scale-[1.05]"
+                    aria-label="Mua ngay"
+                  >
+                    Điều Kiện Áp Dụng
+                  </Link>
 
-          {/* Scroll Indicator */}
+                  <Link
+                    href="/dien-thoai"
+                    className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm text-white/90 ring-1 ring-white/10 transition-colors hover:bg-white/5"
+                  >
+                    Điện Thoại New Seal - Chính Hãng
+                  </Link>
+                </div>
+                {/* Extra info */}
+                <div className="w-full">
+                  <span className="text-sm text-slate-200/80">
+                    Được tin dùng bởi hơn hàng trăm khách hàng công nghệ. Xem thêm{' '}
+                    <Link className="italic underline" href="/hanh-trinh-khach-hang">
+                      tại đây.
+                    </Link>
+                  </span>
+                </div>
+              </motion.div>
+            </div>
+            {/* Scroll Indicator */}
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2">
+              <motion.div
+                animate={{ y: [0, 12, 0] }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="flex items-center justify-center"
+              >
+                <RiScrollToBottomLine className="text-5xl text-white opacity-100 drop-shadow-lg transition-transform duration-300 hover:scale-125" />
+              </motion.div>
+            </div>
+          </header>
         </div>
         {/* Section 1: Intro */}
         <section className="relative z-20 flex h-[100vh] w-full items-start justify-between px-desktop-padding">
-          <div className="flex w-full flex-row items-center">
+          <div className="flex w-full flex-row items-start">
             <div className="mb-4 w-1/2 text-left">
               <h1 className="mb-6 text-7xl font-extrabold">iPhone 17 Pro Max</h1>
               <p className="mb-4 text-2xl">Siêu phẩm 2025: màn hình 6.9&quot; Super Retina XDR, chip A19 Pro và camera Pro 48MP toàn diện.</p>
@@ -164,7 +221,7 @@ export default function ZigzagSection() {
                 width={400}
                 height={500}
                 className="h-full w-full transform rounded-md object-contain transition-transform duration-700 ease-out"
-                style={{ transform: `translateY(${Math.max(scroll * 0.2 - 200, -50)}px)` }}
+                style={{ transform: `translateY(${Math.max(scroll * 0.2 - 100, -50)}px)` }}
               />
             </div>
           </div>
