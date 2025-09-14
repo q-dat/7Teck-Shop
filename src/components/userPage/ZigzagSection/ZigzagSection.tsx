@@ -17,7 +17,6 @@ import { useScroll } from '@/hooks/useScroll';
 import ProductPlaceholders from '../ProductPlaceholders';
 import { slugify } from '@/utils/slugify';
 import { FaCartPlus, FaRegEye } from 'react-icons/fa';
-import { Button } from 'react-daisyui';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { MdArrowBackIosNew, MdArrowForwardIos, MdNavigateNext } from 'react-icons/md';
 import Section1 from './Section1';
