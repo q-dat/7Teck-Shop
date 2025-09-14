@@ -52,7 +52,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
   }, []);
 
   return (
-    <div className="mt-10 p-0 block xl:hidden xl:px-desktop-padding">
+    <div className="mt-10 block p-0 xl:hidden xl:px-desktop-padding">
       {/* Title */}
       <div role="region" aria-label="Danh sách sản phẩm nổi bật" className="flex w-full flex-col items-start justify-center px-2 xl:rounded-t-lg">
         <h1 className="py-2 text-2xl font-semibold">{loading ? 'Đang tải...' : mostViewedPhones.length > 0 ? 'Sản phẩm nổi bật' : ''}</h1>
@@ -119,7 +119,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                           width={200}
                           alt="Hình ảnh"
                           loading="lazy"
-                          className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
+                          className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out group-hover:scale-110"
                           src={src}
                           onError={() => handleImageError(phone?._id)}
                         />
@@ -128,8 +128,8 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
 
                     {/* Product Info */}
                     <div className="flex h-full w-full flex-col items-start justify-between p-1">
+                      {/* Product Name and View Count */}
                       <div className="w-full">
-                        {/* Product Name and View Count */}
                         <Link
                           aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
                           className="w-full cursor-pointer"
@@ -160,7 +160,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                       </div>
                       {/* Price and Buy Button */}
                       <div className="w-full">
-                        <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
+                        <p className="text-prod-price-mobile xl:text-prod-price-desktop">
                           <span className="font-semibold text-price">{formatCurrency(phone?.price)}</span> &nbsp;
                           {phone?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(phone?.sale)}</del>}
                         </p>

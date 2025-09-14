@@ -95,7 +95,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                               height={200}
                               width={200}
                               loading="lazy"
-                              className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out hover:scale-110"
+                              className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out group-hover:scale-110"
                               onError={() => handleImageError(product._id)}
                             />
                           </div>
