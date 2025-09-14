@@ -112,11 +112,11 @@ export default function PurchasePage() {
             <h1 className="text-2xl font-bold">Liên Hệ Thanh Toán Trực Tiếp</h1>
           </div>
           {/*  */}
-          <div className="mt-4 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="mt-5 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="w-full">
               {/* List Product */}
               {selectedProduct && (
-                <div className="mb-4 rounded-md border p-3 shadow-sm">
+                <div className="mb-4 block rounded-md border p-3 shadow-sm xl:hidden">
                   <h2 className="text-md mb-2 font-semibold">Sản phẩm bạn muốn mua:</h2>
                   <div className="flex items-center gap-4">
                     <Image src={selectedProduct.img} alt="Ảnh sản phẩm" width={80} height={80} />
@@ -141,7 +141,7 @@ export default function PurchasePage() {
               {/* Form */}
               <div className="w-full space-y-5">
                 <div>
-                  <h2 className="text-xl font-bold">Cách 1: Điền thông tin liên hệ</h2>
+                  <h2 className="text-lg font-bold">Cách 1: Điền thông tin liên hệ</h2>
                   <p className="text-sm text-gray-500">
                     Để lại thông tin liên hệ của bạn để chúng tôi có thể hỗ trợ bạn tốt nhất. <br />
                     Chúng tôi sẽ liên hệ lại với bạn trong thời gian sớm nhất. <br />
@@ -226,53 +226,87 @@ export default function PurchasePage() {
                 </form>
               </div>
             </div>
-            <div className="flex w-full flex-col xl:flex-row">
+            <div className="flex w-full flex-col gap-5 xl:gap-1">
+              {/* List Product */}
+              {selectedProduct && (
+                <div className="mb-4 hidden rounded-md border p-3 shadow-sm xl:block">
+                  <h2 className="text-md mb-2 font-semibold">Sản phẩm bạn muốn mua:</h2>
+                  <div className="flex items-center gap-4">
+                    <Image src={selectedProduct.img} alt="Ảnh sản phẩm" width={80} height={80} />
+                    <div>
+                      <p className="text-xl font-bold">{selectedProduct.name}</p>
+                      <p className="text-sm">
+                        <span className="font-semibold">Màu: </span>
+                        {selectedProduct.color}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-semibold">RAM: </span>
+                        {selectedProduct.ram}
+                      </p>
+                      <p className="text-md font-bold text-red-700">{formatCurrency(selectedProduct.price)}</p>
+                      <Link href={selectedProduct.link} className="text-sm text-blue-700 underline">
+                        Xem trang chi tiết sản phẩm
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
               {/* Social */}
-              {/* Zalo */}
-              <div className="flex w-full flex-col items-center justify-start gap-5">
-                <div className="w-full text-start">
-                  <h2 className="text-xl font-bold">Cách 2: Liên hệ trực tiếp qua Zalo</h2>
-                  <p className="text-sm text-gray-500">
-                    Quét mã QR hoặc truy cập qua link Zalo: <br />
-                    <Link className="font-semibold text-blue-600 underline" href={zaloUrl} target="_blank">
-                      {zaloUrl}
-                    </Link>
-                  </p>
+              <div className="flex w-full flex-col gap-5 xl:flex-row xl:gap-1">
+                {/* Zalo */}
+                <div className="flex w-full flex-col items-center justify-start gap-5 rounded-md border border-primary-lighter p-3 xl:w-1/2">
+                  <div className="w-full text-start">
+                    <h2 className="text-lg font-bold">Cách 2: Liên hệ trực tiếp qua Zalo</h2>
+                    <p className="text-sm text-gray-500">
+                      Quét mã QR hoặc truy cập qua link Zalo App: <br />
+                      <Link
+                        className="block max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap break-all font-semibold text-blue-600 underline"
+                        href={zaloUrl}
+                        target="_blank"
+                      >
+                        {zaloUrl}
+                      </Link>
+                    </p>
+                  </div>
+                  {/* Image with fallback */}
+                  <Zoom>
+                    <Image
+                      src={imgZaloQRSrc}
+                      alt="Img"
+                      width={300}
+                      height={300}
+                      className="h-full w-[300px]"
+                      onError={() => setImgZaloQRSrc(fallbackSrc)}
+                    />
+                  </Zoom>
                 </div>
-                {/* Image with fallback */}
-                <Zoom>
-                  <Image
-                    src={imgZaloQRSrc}
-                    alt="Img"
-                    width={300}
-                    height={300}
-                    className="h-full w-[300px]"
-                    onError={() => setImgZaloQRSrc(fallbackSrc)}
-                  />
-                </Zoom>
-              </div>
-              {/* Message */}
-              <div className="flex w-full flex-col items-center justify-start gap-5">
-                <div className="w-full text-start">
-                  <h2 className="text-xl font-bold">Cách 3: Liên hệ trực tiếp qua Message</h2>
-                  <p className="text-sm text-gray-500">
-                    Quét mã QR hoặc truy cập qua link Message: <br />
-                    <Link className="font-semibold text-blue-600 underline" href={messengerUrl} target="_blank">
-                      {messengerUrl}
-                    </Link>
-                  </p>
+                {/* Message */}
+                <div className="flex w-full flex-col items-center justify-start gap-5 rounded-md border border-primary-lighter p-3 xl:w-1/2">
+                  <div className="w-full text-start">
+                    <h2 className="text-lg font-bold">Cách 3: Liên hệ trực tiếp qua Message</h2>
+                    <p className="text-sm text-gray-500">
+                      Quét mã QR hoặc truy cập qua link Message: <br />
+                      <Link
+                        className="block max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap break-all font-semibold text-blue-600 underline"
+                        href={messengerUrl}
+                        target="_blank"
+                      >
+                        {messengerUrl}
+                      </Link>
+                    </p>
+                  </div>
+                  {/* Image with fallback */}
+                  <Zoom>
+                    <Image
+                      src={imgMessageQRSrc}
+                      alt="Img"
+                      width={300}
+                      height={300}
+                      className="h-full w-[300px]"
+                      onError={() => setImgMessageQRSrc(fallbackSrc)}
+                    />
+                  </Zoom>
                 </div>
-                {/* Image with fallback */}
-                <Zoom>
-                  <Image
-                    src={imgMessageQRSrc}
-                    alt="Img"
-                    width={300}
-                    height={300}
-                    className="h-full w-[300px]"
-                    onError={() => setImgMessageQRSrc(fallbackSrc)}
-                  />
-                </Zoom>
               </div>
             </div>
           </div>
