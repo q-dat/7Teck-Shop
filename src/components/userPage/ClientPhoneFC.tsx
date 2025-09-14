@@ -52,7 +52,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
   }, []);
 
   return (
-    <div className="mt-10 p-0 xl:px-desktop-padding">
+    <div className="mt-10 p-0 block xl:hidden xl:px-desktop-padding">
       {/* Title */}
       <div role="region" aria-label="Danh sách sản phẩm nổi bật" className="flex w-full flex-col items-start justify-center px-2 xl:rounded-t-lg">
         <h1 className="py-2 text-2xl font-semibold">{loading ? 'Đang tải...' : mostViewedPhones.length > 0 ? 'Sản phẩm nổi bật' : ''}</h1>
@@ -97,7 +97,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
         <div className="relative w-full xl:w-2/3 2xl:w-3/4">
           <section
             ref={scrollRef}
-            className="grid w-full grid-flow-col grid-rows-1 items-center justify-start gap-[10px] overflow-x-auto scroll-smooth rounded-none border-[10px] border-transparent bg-white pt-0 scrollbar-hide xl:rounded-t-lg xl:pt-0"
+            className="grid w-full grid-flow-col grid-rows-1 items-center justify-start gap-[10px] overflow-x-auto scroll-smooth rounded-none border-[10px] border-transparent bg-white pt-0 scrollbar-hide xl:rounded-t-lg"
           >
             {loading ? (
               <ProductPlaceholders count={12} />
