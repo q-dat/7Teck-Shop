@@ -6,8 +6,10 @@ import { images } from '../../../public/images';
 import Link from 'next/link';
 
 gsap.registerPlugin(ScrollTrigger);
-
-const BgFixedSection = () => {
+interface BgFixedSectionProps {
+  className?: string;
+}
+const BgFixedSection: React.FC<BgFixedSectionProps> = ({ className = '' }) => {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
 
@@ -53,7 +55,7 @@ const BgFixedSection = () => {
 
   return (
     <div
-      className="relative my-10 h-[200px] w-full bg-cover bg-fixed bg-center bg-no-repeat md:h-[300px] xl:h-[400px]"
+      className={`relative my-10 h-[200px] w-full bg-cover bg-fixed bg-center bg-no-repeat md:h-[300px] xl:h-[400px] ${className}`}
       style={{ backgroundImage: `url(${images.bgFixed})` }}
     >
       <div className="absolute inset-0 flex w-full flex-col items-center justify-center overflow-hidden bg-black/30 font-light text-white">

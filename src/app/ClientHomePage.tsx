@@ -118,12 +118,13 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
         <HeroBanner />
         <ZigzagSection mostViewedPhones={mostViewedPhones} loading={loading} />
         <ClientPhoneFC mostViewedPhones={mostViewedPhones} loading={loading} />
-        {mostViewedPhones.length !== 0 && <BgFixedSection />}
+        <BgFixedSection className="block xl:hidden" />
         {productCategories.map((config, index) => (
-          <div key={index} /* data-aos="fade-up" */ className="w-full">
+          <div key={index} /* data-aos="fade-up" */ className="mt-0 w-full xl:mt-10">
             <ClientProductFC products={config.products} category={config.category} loading={loading} />
           </div>
         ))}
+        <BgFixedSection className="hidden xl:block" />
         <BenefitsSection />
         <ClientPostSection news={news} tricks={tricks} />
       </div>
