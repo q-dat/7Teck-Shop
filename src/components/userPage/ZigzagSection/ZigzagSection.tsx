@@ -123,9 +123,9 @@ export default function ZigzagSection({ mostViewedPhones, loading }: ClientPhone
   return (
     <div className="relative hidden w-full bg-gradient-to-b from-gray-950 via-black to-gray-950 text-white xl:block">
       <div className="absolute inset-0 bg-gradient-to-tr from-[#009485]/20 via-transparent to-[#a92d30]/20" />
-
-      <div className="relative h-[400vh] w-full">
+      <div className="relative h-[80vh] w-full 2xl:h-[400vh]">
         <Canvas
+          className="hidden 2xl:block"
           style={{ position: 'sticky', top: '10%', height: '100vh', width: '100%' }}
           camera={{ position: [0, 0, modelScale * 2 + 5], fov: 5 }} // Fixed fov desktop
           gl={{ antialias: true }}

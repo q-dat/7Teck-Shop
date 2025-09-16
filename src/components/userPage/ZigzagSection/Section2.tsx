@@ -1,7 +1,7 @@
 'use client';
 export default function Section2() {
   return (
-    <section className="relative z-20 flex h-[100vh] w-full items-start justify-center px-desktop-padding">
+    <section className="relative z-20 hidden h-[100vh] w-full px-desktop-padding 2xl:block">
       <div className="flex w-full flex-row-reverse items-center">
         <div className="mb-4 w-1/2 text-left">
           <h1 className="mb-4 text-7xl font-bold">Camera Pro 48MP</h1>

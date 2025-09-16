@@ -4,7 +4,7 @@ import { images } from '../../../../public/images';
 
 export default function Section3() {
   return (
-    <section className="relative z-20 flex h-[100vh] items-start justify-center px-desktop-padding">
+    <section className="relative z-20 hidden h-[100vh] w-full px-desktop-padding 2xl:block">
       <div className="flex w-full flex-row items-end">
         <div className="mb-4 w-1/2 text-left">
           <h1 className="mb-4 text-7xl font-bold">Hiệu năng A19 Pro</h1>
