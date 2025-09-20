@@ -128,7 +128,14 @@ export default function ZigzagSection({ mostViewedPhones, loading }: ClientPhone
           className="hidden 2xl:block"
           style={{ position: 'sticky', top: '10%', height: '100vh', width: '100%' }}
           camera={{ position: [0, 0, modelScale * 2 + 5], fov: 5 }} // Fixed fov desktop
-          gl={{ antialias: true }}
+          gl={{
+            antialias: true,
+            powerPreference: 'high-performance',
+            alpha: true,
+            stencil: false,
+            depth: true,
+          }}
+          dpr={[1, 2]} // cho màn hình retina tự tối ưu
         >
           <SceneLights />
           <PhoneModel scrollY={scroll} modelScale={modelScale} />
