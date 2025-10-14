@@ -1,6 +1,7 @@
 'use client';
+
 import { useEffect, useRef } from 'react';
-import Link from 'next/link'; // thêm import
+import Link from 'next/link';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { FaShippingFast, FaShieldAlt, FaTags } from 'react-icons/fa';
@@ -10,40 +11,40 @@ gsap.registerPlugin(ScrollTrigger);
 
 const programs = [
   {
-    icon: <FaShippingFast className="text-5xl text-primary" />,
+    icon: <FaShippingFast className="text-4xl text-primary" />,
     title: 'Tư Vấn Chọn Máy Theo Nhu Cầu',
     subtitle: 'Hỗ trợ tìm sản phẩm phù hợp',
-    desc: 'Chúng tôi giúp khách hàng lựa chọn điện thoại, laptop, PC theo từng mục đích: học tập, văn phòng, đồ họa hay gaming. Đội ngũ kỹ thuật sẽ giải thích chi tiết về cấu hình và hiệu năng để bạn chọn đúng sản phẩm cần thiết.',
+    desc: 'Đội ngũ kỹ thuật giúp bạn chọn điện thoại, laptop, PC phù hợp từng nhu cầu: học tập, văn phòng, đồ họa, gaming.',
     badge: 'Expert',
     cta: 'Nhận Tư Vấn',
     link: '/tu-van',
     bg: `${images.Ip16PM}`,
   },
   {
-    icon: <FaShieldAlt className="text-5xl text-primary" />,
+    icon: <FaShieldAlt className="text-4xl text-primary" />,
     title: 'Cam Kết Hàng Chính Hãng',
     subtitle: 'Bảo hành minh bạch',
-    desc: 'Tất cả sản phẩm đều nhập chính ngạch từ Apple, Dell, Asus, HP… và đi kèm đầy đủ hóa đơn VAT. Chế độ bảo hành rõ ràng, có hỗ trợ 1 đổi 1 nếu lỗi do nhà sản xuất, giúp khách hàng yên tâm khi mua sắm lâu dài.',
+    desc: 'Sản phẩm nhập chính ngạch, kèm hóa đơn VAT, bảo hành rõ ràng, 1 đổi 1 nếu lỗi NSX.',
     badge: 'Trust',
     cta: 'Xem Chi Tiết',
     link: '/chinh-sach-bao-hanh',
     bg: `${images.MacProM4}`,
   },
   {
-    icon: <FaTags className="text-5xl text-primary" />,
+    icon: <FaTags className="text-4xl text-primary" />,
     title: 'Thu Cũ Đổi Mới & Trả Góp Linh Hoạt',
     subtitle: 'Giải pháp mua sắm dễ dàng',
-    desc: 'Khách hàng có thể đổi thiết bị cũ lấy máy mới với mức giá thu hợp lý. Ngoài ra, chúng tôi hỗ trợ thanh toán trả góp linh hoạt qua thẻ tín dụng, giúp bạn dễ dàng sở hữu điện thoại, laptop hoặc PC mà không cần chi trả toàn bộ ngay từ đầu.',
+    desc: 'Đổi thiết bị cũ lấy máy mới, trả góp linh hoạt 0%, sở hữu thiết bị dễ dàng hơn.',
     badge: 'Value',
     cta: 'Tìm Hiểu Thêm',
     link: '/bang-gia-thu-mua',
     bg: `${images.OppoReno14}`,
   },
   {
-    icon: <FaShippingFast className="text-5xl text-primary" />,
+    icon: <FaShippingFast className="text-4xl text-primary" />,
     title: 'Dịch Vụ Cài Đặt & Hỗ Trợ 24/7',
     subtitle: 'Đồng hành cùng khách hàng',
-    desc: 'Tất cả máy khi mua đều được cài đặt phần mềm cơ bản miễn phí: Windows bản quyền, Office, diệt virus, drivers và tối ưu hiệu suất. Đội ngũ kỹ thuật hỗ trợ online 24/7, sẵn sàng giải đáp mọi thắc mắc trong quá trình sử dụng.',
+    desc: 'Miễn phí cài đặt phần mềm cơ bản, tối ưu hiệu suất và hỗ trợ online 24/7.',
     badge: 'Support',
     cta: 'Liên Hệ',
     link: '/lien-he',
@@ -59,7 +60,6 @@ const BenefitsSection = () => {
     if (!container) return;
 
     const sections = gsap.utils.toArray<HTMLElement>('.benefit-card');
-
     const mm = gsap.matchMedia();
 
     mm.add(
@@ -90,36 +90,50 @@ const BenefitsSection = () => {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative w-full overflow-hidden">
-      <div className="flex h-[calc(100vh-60px)] w-max flex-row xl:h-[calc(100vh-130px)]">
-        {/* Giới hạn chiều cao phần tử */}
+    <section ref={containerRef} className="relative w-full overflow-hidden bg-gray-50">
+      <div className="flex h-[80vh] w-max flex-row xl:h-[calc(100vh-150px)]">
         {programs.map((p, i) => (
           <div
             key={i}
-            className="benefit-card relative flex h-[calc(100vh-60px)] w-screen flex-col items-center justify-center bg-cover bg-center bg-no-repeat xl:h-[calc(100vh-130px)]" // Áp dụng chiều cao giới hạn cho từng card
-            style={{
-              backgroundImage: `url(${p.bg})`,
-            }}
+            className="benefit-card relative flex h-full w-screen items-center justify-center bg-cover bg-center bg-no-repeat xl:w-[80vw]"
+            style={{ backgroundImage: `url(${p.bg})` }}
           >
-            {/* overlay gradient */}
-            <div className="absolute inset-0 bg-black/20" />
+            {/* Overlay gradient */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-black/40 to-black/10" />
 
-            <div className="relative z-10 mx-2 max-w-2xl rounded-2xl bg-white/60 p-6 text-center shadow-lg backdrop-blur-md md:mx-0 md:p-8">
-              {/* badge */}
-              <span className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-sm font-semibold text-white shadow-md">{p.badge}</span>
+            {/* Nội dung chính */}
+            <div className="relative z-10 flex w-full max-w-6xl flex-col items-center gap-8 px-6 md:flex-row md:items-center md:justify-between xl:gap-16">
+              {/* LEFT CONTENT */}
+              <div className="max-w-md text-center md:text-left">
+                <span className="inline-block rounded-full bg-primary px-3 py-1 text-sm font-semibold text-white shadow-md mb-4">
+                  {p.badge}
+                </span>
+                <h1 className="mb-2 text-2xl font-bold text-white drop-shadow-md md:text-3xl">
+                  {p.title}
+                </h1>
+                <p className="mb-2 text-sm italic text-gray-100">{p.subtitle}</p>
+                <p className="mb-4 text-sm text-gray-200 md:text-base">{p.desc}</p>
+                <Link
+                  href={p.link}
+                  className="inline-block rounded-xl bg-primary px-5 py-2 text-sm font-medium text-white shadow-lg transition hover:bg-primary/90"
+                >
+                  {p.cta}
+                </Link>
+              </div>
 
-              <div className="mb-4 flex justify-center">{p.icon}</div>
-              <h1 className="mb-1 text-xl font-bold text-gray-900 md:text-3xl">{p.title}</h1>
-              <p className="mb-2 text-xs italic text-gray-600 xl:text-sm">{p.subtitle}</p>
-              <p className="mb-3 text-sm text-gray-700 md:text-lg xl:text-base">{p.desc}</p>
-
-              {/* CTA link */}
-              <Link
-                href={p.link}
-                className="inline-block rounded-lg bg-primary px-5 py-2 font-medium text-white shadow transition hover:bg-primary/90"
-              >
-                {p.cta}
-              </Link>
+              {/* RIGHT CARD MINI (banner hoặc sản phẩm) */}
+              <div className="hidden md:flex flex-col items-center justify-center rounded-2xl bg-white/70 p-6 text-gray-900 shadow-lg backdrop-blur-md">
+                <div className="mb-4 flex justify-center">{p.icon}</div>
+                <p className="text-center text-sm font-medium">
+                  Ưu đãi dành riêng cho <span className="text-primary font-semibold">{p.badge}</span>
+                </p>
+                <Link
+                  href={p.link}
+                  className="mt-3 text-sm font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  Tìm hiểu thêm
+                </Link>
+              </div>
             </div>
           </div>
         ))}
