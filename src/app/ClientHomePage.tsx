@@ -115,8 +115,8 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
     <div className="w-full">
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
       <div className="pt-[60px] xl:pt-0">
-        <HeroBanner />
-        <ZigzagSection mostViewedPhones={mostViewedPhones} loading={loading} />
+        <HeroBanner /> {/* Mobile */}
+        <ZigzagSection mostViewedPhones={mostViewedPhones} loading={loading} /> {/* Desktop */}
         <ClientPhoneFC mostViewedPhones={mostViewedPhones} loading={loading} />
         <BgFixedSection className="block xl:hidden" />
         {productCategories.map((config, index) => (
