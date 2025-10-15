@@ -75,7 +75,7 @@ const BenefitsSection = () => {
   }, []);
 
   return (
-    <section className="relative grid min-h-[100vh] grid-cols-2 gap-2 px-desktop-padding">
+    <section className="relative grid hidden min-h-[100vh] grid-cols-2 gap-2 px-desktop-padding xl:block">
       {/* LEFT: BENEFITS SLIDER */}
       <div ref={containerRef} className="relative h-[calc(100vh-80px)] w-full overflow-hidden rounded-xl shadow-lg">
         <div className="flex w-max flex-row">
