@@ -75,61 +75,66 @@ const BenefitsSection = () => {
   }, []);
 
   return (
-    <section className="relative grid hidden min-h-[100vh] grid-cols-2 gap-2 px-desktop-padding xl:block">
-      {/* LEFT: BENEFITS SLIDER */}
-      <div ref={containerRef} className="relative h-[calc(100vh-80px)] w-full overflow-hidden rounded-xl shadow-lg">
-        <div className="flex w-max flex-row">
-          {programs.map((p, i) => (
-            <div
-              key={i}
-              className="benefit-card relative flex h-[100vh] w-[50vw] flex-col items-center justify-center bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url(${p.bg})` }}
-            >
-              <div className="absolute inset-0 bg-black/30" />
-              <div className="relative z-10 mx-4 max-w-md rounded-2xl bg-white/60 p-6 text-center shadow-lg backdrop-blur-md">
-                <span className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white shadow">{p.badge}</span>
-                <div className="mb-3 flex justify-center">{p.icon}</div>
-                <h3 className="text-lg font-bold text-gray-900 md:text-2xl">{p.title}</h3>
-                <p className="mb-2 text-xs italic text-gray-600">{p.subtitle}</p>
-                <p className="mb-3 text-sm text-gray-700 md:text-base">{p.desc}</p>
-                <Link
-                  href={p.link}
-                  className="inline-block rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white shadow hover:bg-primary/90"
-                >
-                  {p.cta}
+    <div className="hidden xl:block">
+      <section className="relative grid min-h-[100vh] grid-cols-2 gap-2 px-desktop-padding">
+        {/* LEFT: BENEFITS SLIDER */}
+        <div ref={containerRef} className="relative h-[calc(100vh-80px)] w-full overflow-hidden rounded-xl shadow-lg">
+          <div className="flex w-max flex-row">
+            {programs.map((p, i) => (
+              <div
+                key={i}
+                className="benefit-card relative flex h-[100vh] w-[50vw] flex-col items-center justify-center bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: `url(${p.bg})` }}
+              >
+                <div className="absolute inset-0 bg-black/30" />
+                <div className="relative z-10 mx-4 max-w-md rounded-2xl bg-white/60 p-6 text-center shadow-lg backdrop-blur-md">
+                  <span className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white shadow">{p.badge}</span>
+                  <div className="mb-3 flex justify-center">{p.icon}</div>
+                  <h3 className="text-lg font-bold text-gray-900 md:text-2xl">{p.title}</h3>
+                  <p className="mb-2 text-xs italic text-gray-600">{p.subtitle}</p>
+                  <p className="mb-3 text-sm text-gray-700 md:text-base">{p.desc}</p>
+                  <Link
+                    href={p.link}
+                    className="inline-block rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white shadow hover:bg-primary/90"
+                  >
+                    {p.cta}
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* RIGHT: FEATURED PRODUCTS */}
+        <div className="flex w-full flex-col justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-600 p-10 text-white shadow-lg">
+          <div className="text-left">
+            <h2 className="mb-3 text-3xl font-bold">Sản Phẩm Nổi Bật</h2>
+            <p className="mb-6 text-sm text-white/90 md:text-base">Những thiết bị được khách hàng lựa chọn nhiều nhất tháng này.</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {['iPhone 16 Pro', 'MacBook M4', 'Dell XPS 14', 'Oppo Reno 14'].map((item, i) => (
+              <div
+                key={i}
+                className="flex flex-col items-center rounded-2xl bg-white/10 p-5 text-center backdrop-blur-sm transition hover:bg-white/20"
+              >
+                <div className="mb-3 h-28 w-full rounded-xl bg-white/20" />
+                <h3 className="text-sm font-semibold md:text-base">{item}</h3>
+                <Link href="/san-pham" className="mt-2 text-xs font-medium text-white underline-offset-2 hover:underline">
+                  Xem chi tiết
                 </Link>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            ))}
+          </div>
 
-      {/* RIGHT: FEATURED PRODUCTS */}
-      <div className="flex w-full flex-col justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-600 p-10 text-white shadow-lg">
-        <div className="text-left">
-          <h2 className="mb-3 text-3xl font-bold">Sản Phẩm Nổi Bật</h2>
-          <p className="mb-6 text-sm text-white/90 md:text-base">Những thiết bị được khách hàng lựa chọn nhiều nhất tháng này.</p>
+          <div className="mt-8 text-left">
+            <Link href="/san-pham" className="inline-block rounded-xl bg-white px-6 py-2 text-sm font-semibold text-primary shadow hover:bg-gray-100">
+              Xem tất cả sản phẩm
+            </Link>
+          </div>
         </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {['iPhone 16 Pro', 'MacBook M4', 'Dell XPS 14', 'Oppo Reno 14'].map((item, i) => (
-            <div key={i} className="flex flex-col items-center rounded-2xl bg-white/10 p-5 text-center backdrop-blur-sm transition hover:bg-white/20">
-              <div className="mb-3 h-28 w-full rounded-xl bg-white/20" />
-              <h3 className="text-sm font-semibold md:text-base">{item}</h3>
-              <Link href="/san-pham" className="mt-2 text-xs font-medium text-white underline-offset-2 hover:underline">
-                Xem chi tiết
-              </Link>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-8 text-left">
-          <Link href="/san-pham" className="inline-block rounded-xl bg-white px-6 py-2 text-sm font-semibold text-primary shadow hover:bg-gray-100">
-            Xem tất cả sản phẩm
-          </Link>
-        </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 };
 
