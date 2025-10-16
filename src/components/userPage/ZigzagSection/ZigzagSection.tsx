@@ -158,7 +158,7 @@ export default function ZigzagSection({ mostViewedPhones, loading }: ClientPhone
               <div className="via-defrom-default/20 absolute inset-0 bg-gradient-to-t from-default/70 to-transparent" />
             </div>
             {/* Content */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, ease: 'easeOut' }}>
               <div className="relative mt-20 flex h-full w-full flex-row items-start justify-start gap-1 px-desktop-padding">
                 {/* Text Content */}
                 <div className="flex w-full flex-col items-start gap-6">
