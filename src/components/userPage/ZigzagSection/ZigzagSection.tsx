@@ -19,9 +19,9 @@ import { slugify } from '@/utils/slugify';
 import { FaCartPlus, FaRegEye } from 'react-icons/fa';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { MdArrowBackIosNew, MdArrowForwardIos, MdNavigateNext } from 'react-icons/md';
-import Section1 from './Section1';
-import Section2 from './Section2';
-import Section3 from './Section3';
+// import Section1 from './Section1';
+// import Section2 from './Section2';
+// import Section3 from './Section3';
 
 // Preload GLTF để tối ưu
 useGLTF.preload('/models/Phone.glb');
@@ -386,11 +386,11 @@ export default function ZigzagSection({ mostViewedPhones, loading }: ClientPhone
           </header>
         </div>
         {/* Section 1: Intro */}
-        <Section1 />
+        {/* <Section1 /> */}
         {/* Section 2: Camera */}
-        <Section2 />
+        {/* <Section2 /> */}
         {/* Section 3: Performance */}
-        <Section3 />
+        {/* <Section3 /> */}
       </div>
     </div>
   );
