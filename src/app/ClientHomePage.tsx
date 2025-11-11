@@ -10,7 +10,6 @@ import { IPhone } from '@/types/type/products/phone/phone';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 import { IWindows } from '@/types/type/products/windows/windows';
 import BgFixedSection from '@/components/userPage/BgFixedSection';
-import BenefitsSection from '@/components/userPage/BenefitsSection';
 import ZigzagSection from '@/components/userPage/ZigzagSection/ZigzagSection';
 import HeroBanner from '@/components/userPage/HeroBanner';
 
@@ -125,7 +124,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
           </div>
         ))}
         <BgFixedSection className="hidden xl:block" />
-        <BenefitsSection />
+        {/* <BenefitsSection /> */}
         <ClientPostSection news={news} tricks={tricks} />
       </div>
     </div>
