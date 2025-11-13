@@ -1,5 +1,5 @@
 import { PageProps } from '@/types/type/pages/page-props';
-import { getAllPosts, getPostById } from '@/services/postService';
+import { getAllPosts, getPostById, logPostCache } from '@/services/postService';
 import ClientPostDetailPage from './ClientPostDetailPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 import { IPost } from '@/types/type/products/post/post';
@@ -29,7 +29,8 @@ export default async function PostDetail({ params }: PageProps) {
 
   const posts: IPost[] = await getAllPosts();
   const post: IPost | null = await getPostById(id);
-
+  logPostCache();
+  
   if (!posts || !post) {
     return <ErrorLoading />;
   }
