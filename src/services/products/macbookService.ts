@@ -124,28 +124,52 @@ export async function getAllUsedMacbook(): Promise<IMacbook[]> {
   return getMacbookByStatus(1);
 }
 
+// Cache server-side theo URL
+type MacbookCacheEntry = { data: IMacbook; timestamp: number };
+const macbookCacheById: Record<string, MacbookCacheEntry> = {};
+const CACHE_TTL = 60_000; // 1 phút
+
 export async function getMacbookById(id: string): Promise<IMacbook | null> {
+  const apiUrl = getServerApiUrl(`/api/macbook/${id}`);
+
+  const now = Date.now();
+  // Check cache
+  const cached = macbookCacheById[apiUrl];
+  if (cached && now - cached.timestamp < CACHE_TTL) {
+    console.log('Cache hit for macbook ID:', id);
+    return cached.data;
+  }
+
   try {
-    const apiUrl = getServerApiUrl(`/api/macbook/${id}`);
+    console.log('Fetching macbook detail:', apiUrl);
     const res = await fetch(apiUrl, { cache: 'no-store' });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Lỗi API: ${res.status} ${res.statusText} - ${errorText}`);
-    }
-
-    // Kiểm tra trạng thái cache
+    // Log cache header
     logCacheStatus(res, `macbook:${id}`);
-    const data = await res.json();
 
-    if (!data || typeof data !== 'object' || !data.macbook) {
-      console.warn('Dữ liệu API Macbook theo ID không hợp lệ:', data);
-      return null;
-    }
+    if (!res.ok) throw new Error(`Fetch macbook lỗi: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+    if (!data || !data.macbook) return null;
+
+    // Lưu cache
+    macbookCacheById[apiUrl] = { data: data.macbook, timestamp: now };
+    console.log('Cache saved for macbook ID:', id);
 
     return data.macbook;
   } catch (error) {
-    console.error('Lỗi khi lấy macbook:', error);
-    return null;
+    console.error('Lỗi tải macbook:', error);
+    return cached?.data ?? null; // fallback dùng cache nếu có
   }
+}
+
+// Hàm log snapshot cache
+export function logMacbookCache() {
+  // console.log('[Macbook Cache Snapshot]:', macbookCacheById);
+}
+
+// Hàm clear cache
+export function invalidateMacbookCache() {
+  for (const key in macbookCacheById) delete macbookCacheById[key];
+  console.log('Macbook cache cleared');
 }

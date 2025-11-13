@@ -124,27 +124,52 @@ export async function getAllUsedWindows(): Promise<IWindows[]> {
   return getWindowsByStatus(1);
 }
 
+// Cache server-side theo URL
+type WindowsCacheEntry = { data: IWindows; timestamp: number };
+const windowsCacheById: Record<string, WindowsCacheEntry> = {};
+const CACHE_TTL = 60_000; // 1 phút
+
 export async function getWindowsById(id: string): Promise<IWindows | null> {
+  const apiUrl = getServerApiUrl(`/api/windows/${id}`);
+
+  const now = Date.now();
+  // Check cache
+  const cached = windowsCacheById[apiUrl];
+  if (cached && now - cached.timestamp < CACHE_TTL) {
+    console.log('Cache hit for windows ID:', id);
+    return cached.data;
+  }
+
   try {
-    const apiUrl = getServerApiUrl(`/api/windows/${id}`);
+    console.log('Fetching windows detail:', apiUrl);
     const res = await fetch(apiUrl, { cache: 'no-store' });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Lỗi API: ${res.status} ${res.statusText} - ${errorText}`);
-    }
-    // Kiểm tra trạng thái cache
+    // Log cache header
     logCacheStatus(res, `windows:${id}`);
-    const data = await res.json();
 
-    if (!data || typeof data !== 'object' || !data.windows) {
-      console.warn('Dữ liệu API Windows theo ID không hợp lệ:', data);
-      return null;
-    }
+    if (!res.ok) throw new Error(`Fetch windows lỗi: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+    if (!data || !data.windows) return null;
+
+    // Lưu cache
+    windowsCacheById[apiUrl] = { data: data.windows, timestamp: now };
+    console.log('Cache saved for windows ID:', id);
 
     return data.windows;
   } catch (error) {
-    console.error('Lỗi khi lấy windows:', error);
-    return null;
+    console.error('Lỗi tải windows:', error);
+    return cached?.data ?? null; // fallback dùng cache nếu có
   }
+}
+
+// Hàm log snapshot cache
+export function logWindowsCache() {
+  // console.log('[Windows Cache Snapshot]:', windowsCacheById);
+}
+
+// Hàm clear cache
+export function invalidateWindowsCache() {
+  for (const key in windowsCacheById) delete windowsCacheById[key];
+  console.log('Windows cache cleared');
 }
