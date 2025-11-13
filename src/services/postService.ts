@@ -74,7 +74,7 @@ export async function getPostById(id: string): Promise<IPost | null> {
 
 // Hàm log snapshot cache
 export function logPostCache() {
-  console.log('[Post Cache Snapshot]:', postCacheById);
+  // console.log('[Post Cache Snapshot]:', postCacheById);
 }
 
 // Hàm clear cache
