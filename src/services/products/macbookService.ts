@@ -1,4 +1,3 @@
-import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { GroupedMacbook, IMacbook } from '../../types/type/products/macbook/macbook';
 

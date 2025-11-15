@@ -1,4 +1,3 @@
-import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { GroupedPhone, IPhone } from '@/types/type/products/phone/phone';
 

@@ -1,5 +1,4 @@
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
-import { logCacheStatus } from '@/utils/logCacheStatus';
 import { GroupedWindows, IWindows } from '@/types/type/products/windows/windows';
 
 type CacheEntryWindows = {
