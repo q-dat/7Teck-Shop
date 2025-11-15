@@ -11,13 +11,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Button } from 'react-daisyui';
-import { IoIosArrowDropdownCircle } from 'react-icons/io';
-import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
+import { IoIosArrowDropdownCircle, IoMdCheckmarkCircleOutline } from 'react-icons/io';
+import { MdArrowBackIosNew, MdArrowForwardIos, MdMemory, MdOutlineInvertColors } from 'react-icons/md';
 import imageRepresent from '../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { FaFacebookSquare } from 'react-icons/fa';
 import { handleProductShare } from '@/helper/handleShare';
-
+import { TfiRulerPencil } from 'react-icons/tfi';
 export interface ProductCatalogGroup {
   [field: string]: string | number | string[] | null;
 }
@@ -96,6 +96,21 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
     return <LoadingLocal />;
   }
 
+  const handleScrollTo = (targetId: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    // Offset theo breakpoint
+    const offset = window.innerWidth >= 1280 ? 150 : 70;
+    const y = target.getBoundingClientRect().top + window.scrollY - offset;
+
+    window.scrollTo({
+      top: y,
+      behavior: 'smooth',
+    });
+  };
+
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
@@ -108,13 +123,32 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
               </Link>
             </li>
             <li>
-              <Link role="navigation" aria-label="Thông tin sản phẩm" href="">
-                Thông Tin Sản Phẩm
+              <Link role="navigation" aria-label={namePrefix} href="">
+                {namePrefix}
               </Link>
             </li>
           </ul>
         </div>
         <div className="mt-2 px-2 xl:px-[150px]">
+          {/*  */}
+          <div className="my-4 flex w-full flex-row items-center justify-between xl:justify-start xl:gap-10">
+            {/* Tên sản phẩm – chỉ hiện ở desktop */}
+            <p className="hidden xl:block xl:text-xl xl:font-semibold xl:text-gray-900">{product?.name}</p>
+            {/*  */}
+            <div className="flex flex-row gap-5">
+              {[
+                { id: 'cam-ket', label: 'Cam Kết', icon: <IoMdCheckmarkCircleOutline  fontSize={18} /> },
+                { id: 'thong-so', label: 'Thông Số', icon: <TfiRulerPencil fontSize={18} /> },
+              ].map((link) => (
+                <Link key={link.id} href={`#${link.id}`} onClick={handleScrollTo(link.id)} className="flex flex-row items-center gap-px text-blue-600">
+                  {link.icon}
+                  <span className="text-sm font-medium">{link.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Sản Phẩm */}
           <div className="flex flex-col items-start justify-start gap-5 xl:flex-row">
             {/* IMG */}
             <div className="flex w-full flex-col gap-5">
@@ -226,24 +260,31 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                     {product?.sale && <del className="ml-2 text-base text-gray-400">{formatCurrency(product?.sale)}</del>}
                   </p>
                   {/* Product details */}
-                  <div className="flex flex-wrap gap-2">
-                    {/* Ram */}
-                    {product?.ram && (
-                      <p className="rounded-md border border-primary bg-primary-lighter p-1 font-semibold text-default">
-                        <span className="text-sm text-primary">RAM:</span> {product?.ram}
-                      </p>
-                    )}
-                    {/* Color */}
-                    {product?.color && (
-                      <p className="rounded-md border border-primary bg-primary-lighter p-1 font-semibold text-default">
-                        <span className="text-sm text-primary">Màu sắc:</span> {product?.color}
-                      </p>
-                    )}
+                  <div className="w-full">
+                    <p className="text-sm font-semibold text-black">
+                      Cấu hình chung: <span className="text-xs text-secondary">(Dung lượng RAM & Màu Sắc)</span>
+                    </p>
+                    <div className="flex flex-wrap items-center justify-start gap-2">
+                      {[
+                        { key: 'ram', label: product?.ram, icon: <MdMemory size={18} /> },
+                        { key: 'color', label: product?.color, icon: <MdOutlineInvertColors size={18} /> },
+                      ]
+                        .filter((item) => item.label)
+                        .map((item) => (
+                          <div
+                            key={item.key}
+                            className="flex items-center justify-center gap-1 rounded-md border border-dashed border-black bg-primary-lighter px-2 py-0.5 font-semibold text-black shadow-sm transition-all hover:shadow-md"
+                          >
+                            {item.icon}
+                            <span className="text-sm">{item.label}</span>
+                          </div>
+                        ))}
+                    </div>
                   </div>
                   {/* Related Products */}
-                  {relatedProducts && relatedProducts.length > 1 && (
-                    <div>
-                      <p className="text-sm font-semibold text-black">Sản phẩm liên quan:</p>
+                  <div className="w-full">
+                    <p className="text-sm font-semibold text-black">Lựa chọn liên quan:</p>
+                    {relatedProducts && relatedProducts.length > 1 && (
                       <div className="flex flex-wrap items-center justify-start gap-2">
                         {/* Map through related products */}
                         {relatedProducts
@@ -252,7 +293,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                             <Link
                               key={item._id}
                               href={`/${basePath}/${slugify(item.name)}/${item._id}`}
-                              className="flex flex-row items-center justify-center gap-2 rounded-md border bg-white p-1 shadow transition-all hover:shadow-md"
+                              className="flex flex-row items-center justify-center gap-2 rounded-md border border-primary/50 bg-white px-2 py-1 shadow transition-all hover:shadow-md"
                             >
                               <Image src={item.img} alt={item.name} width={40} height={40} className="h-[40px] w-[40px] object-contain" />
                               <div className="font-semibold">
@@ -262,10 +303,14 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                             </Link>
                           ))}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   {/*  */}
-                  <p className="text-lg italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
+                  <div className="mt-2 flex flex-col">
+                    <p className="text-base font-medium italic text-gray-600">"Sở hữu công nghệ, nâng tầm trải nghiệm"</p>
+                    <p className="text-sm font-light text-secondary">Khám phá hiệu năng vượt trội với thiết kế tối ưu và bền bỉ.</p>
+                    <p className="text-sm font-light text-secondary">Trải nghiệm sự khác biệt ngay hôm nay với sản phẩm chính hãng.</p>
+                  </div>
                   {/* Des */}
                   {product?.des && <p className="whitespace-pre-line font-medium text-primary">{product?.des}</p>}
                 </div>
@@ -299,11 +344,11 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   <div className="mt-2 flex w-full flex-col justify-between gap-1 text-blue-800 xl:flex-row">
                     {/* Bên trái */}
                     <div>
-                      <span className="text-sm text-gray-500">{`*Nhấn "Mua ngay" để xác nhận sản phẩm!`}</span>
+                      <span className="text-sm text-gray-700">{`*Nhấn "Mua ngay" để xác nhận sản phẩm!`}</span>
                     </div>
                     {/* Bên phải */}
-                    <div className="flex flex-row items-center gap-1 text-blue-800">
-                      <span className="text-sm font-light">Chia sẽ sản phẩm này:</span>
+                    <div className="flex flex-row items-center gap-1 text-blue-900">
+                      <span className="text-sm font-medium">Chia sẽ sản phẩm này:</span>
                       <button aria-label="Chia sẻ sản phẩm" onClick={() => handleProductShare(basePath, product.name, product._id)}>
                         <FaFacebookSquare className="text-xl" />
                       </button>
@@ -313,7 +358,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
               </div>
               {/* Contact */}
               <Link href={hotlineUrl}>
-                <div className="mt-5 w-full rounded-lg bg-primary-lighter p-4 text-center text-primary shadow-md transition-colors">
+                <div className="mt-5 w-full rounded-lg bg-primary-lighter p-2 text-center text-primary shadow-md transition-colors">
                   <p className="text-xl font-bold">Gọi ngay {contact}</p>
                   <p className="text-sm">Để nhận ưu đãi tốt nhất!</p>
                 </div>
@@ -321,8 +366,34 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
             </div>
           </div>
 
-          {/* Tab */}
-          <div className="w-full">
+          {/* Cam Kết */}
+          <div id="cam-ket" className="my-6 w-full">
+            <div className="flex flex-col gap-3 rounded-lg border border-secondary/20 bg-white p-2 shadow-sm xl:p-6">
+              <h2 className="text-center text-lg font-bold uppercase text-secondary">7teck cam kết</h2>
+
+              <div className="mt-2 flex flex-col gap-2 text-sm text-gray-700">
+                {/* Cam kết */}
+                <p className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Máy nguyên zin đúng phiên bản quý khách chọn.</p>
+
+                <p className="rounded-md bg-secondary/5 p-2 leading-relaxed">
+                  • Bao test 7 ngày và bảo hành 3 tháng / 6 tháng / 1 năm tùy dòng sản phẩm.
+                </p>
+
+                <p className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Hỗ trợ trả góp qua thẻ tín dụng nhanh chóng, thao tác đơn giản.</p>
+
+                <p className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Tặng kèm cường lực và ốp lưng miễn phí.</p>
+
+                {/* Bộ sản phẩm bao gồm */}
+
+                <p className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Ốp lưng bảo vệ và kính cường lực được tặng kèm.</p>
+
+                <p className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Phiếu bảo hành 7teck theo thời hạn từng sản phẩm.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Thông Số */}
+          <div id="thong-so" className="w-full">
             <div className="mt-5 flex flex-row items-center justify-center rounded-md border-b-2 border-secondary uppercase">
               <div
                 className={`w-full cursor-pointer rounded-l-md py-2 text-center font-light transition-all duration-500 ease-in-out ${activeTab === 'specs' ? 'bg-secondary font-semibold text-white' : 'bg-white text-black'}`}
@@ -341,13 +412,13 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
             <div className="w-full">
               {/* Details */}
               {activeTab === 'specs' && (
-                <div className="mt-5 divide-y-[1px] divide-primary divide-opacity-20 rounded-md border border-primary bg-white leading-10 text-black">
+                <div className="mt-5 divide-y-[1px] divide-secondary divide-opacity-20 rounded-md border border-secondary bg-white leading-10 text-black">
                   <h1 className="rounded-sm rounded-b-none bg-secondary p-2 text-center text-lg font-light uppercase text-white">
                     Các thông số chi tiết
                   </h1>
-                  {fieldMap.map((group) => (
+                  {fieldMap.map((group, index) => (
                     <div key={group?.group}>
-                      <details className="group transform divide-y-[1px] bg-secondary/5">
+                      <details open={index < 2} className="group transform divide-y-[1px] bg-secondary/5">
                         <summary className="flex cursor-pointer items-center justify-between p-2">
                           <span className="font-semibold text-secondary">{group?.name}</span>
                           <span className="transform text-secondary transition-transform duration-300 ease-in-out group-open:rotate-180">
@@ -382,14 +453,19 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                 </div>
               )}
               {/* Detailed description */}
-              {activeTab === 'details' && (
-                <p
-                  className="mt-5"
-                  dangerouslySetInnerHTML={{
-                    __html: product?.catalogContent ?? '',
-                  }}
-                ></p>
-              )}
+              {activeTab === 'details' &&
+                (product?.catalogContent?.trim() ? (
+                  <p
+                    className="mt-5"
+                    dangerouslySetInnerHTML={{
+                      __html: product.catalogContent,
+                    }}
+                  />
+                ) : (
+                  <p className="mt-6 rounded-lg bg-primary/5 p-4 text-center text-base font-medium text-primary xl:text-lg">
+                    Hiện tại chưa có bài viết cho sản phẩm này.
+                  </p>
+                ))}
             </div>
           </div>
         </div>

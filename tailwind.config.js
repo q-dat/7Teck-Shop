@@ -41,6 +41,7 @@ export default {
         primary: '#a92d30',
         'primary-lighter': '#fee2e2',
         secondary: '#003f6f',
+        'secondary-lighter': '#e6f2fb',
         info: '#312e91',
         success: '#009485',
         warning: '#ff9900',
