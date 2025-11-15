@@ -1,11 +1,11 @@
+export const revalidate = 18000;
+
 import { PageProps } from '@/types/type/pages/page-props';
 import { getAllPosts, getPostById, logPostCache } from '@/services/postService';
 import ClientPostDetailPage from './ClientPostDetailPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 import { IPost } from '@/types/type/products/post/post';
 import { buildPostDetailMetadata } from '@/metadata/id/postDetailMetadata';
-
-export const revalidate = 60;
 
 // Dùng generateMetadata để dynamic meta
 export async function generateMetadata({ params }: PageProps) {

@@ -1,11 +1,11 @@
-export const revalidate = 60;
+export const revalidate = 18000;
 
 import { PageProps } from '@/types/type/pages/page-props';
 import React from 'react';
 import ClientMacbookDetailPage from './ClientMacbookDetailPage';
 import { slugify } from '@/utils/slugify';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
-import { getMacbookById, logMacbookCache } from '@/services/products/macbookService';
+import { getMacbookById } from '@/services/products/macbookService';
 import { generateMacbookMetadata } from '@/metadata/id/macbookMetadata';
 import { StructuredData } from '@/metadata/structuredData';
 
@@ -30,7 +30,6 @@ export default async function MacbookDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
   const id = resolvedParams.id;
   const mac: IMacbook | null = await getMacbookById(id);
-  logMacbookCache();
 
   if (!mac) {
     return <div className="mt-10 text-center">Không có dữ liệu.</div>;

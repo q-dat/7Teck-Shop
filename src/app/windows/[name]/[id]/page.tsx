@@ -1,11 +1,11 @@
-export const revalidate = 60;
+export const revalidate = 18000;
 
 import { PageProps } from '@/types/type/pages/page-props';
 import React from 'react';
 import { slugify } from '@/utils/slugify';
 import ClientWindowsDetailPage from './ClientWindowsDetailPage';
 import { IWindows } from '@/types/type/products/windows/windows';
-import { getWindowsById, logWindowsCache } from '@/services/products/windowsService';
+import { getWindowsById } from '@/services/products/windowsService';
 import { generateWindowsMetadata } from '@/metadata/id/windowsMetadata';
 import { StructuredData } from '@/metadata/structuredData';
 
@@ -30,7 +30,6 @@ export default async function WindowsDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
   const id = resolvedParams.id;
   const win: IWindows | null = await getWindowsById(id);
-  logWindowsCache();
 
   if (!win) {
     return <div className="mt-10 text-center">Không có dữ liệu.</div>;

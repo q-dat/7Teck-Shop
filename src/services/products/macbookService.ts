@@ -1,4 +1,3 @@
-import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { GroupedMacbook, IMacbook } from '../../types/type/products/macbook/macbook';
 
@@ -124,52 +123,17 @@ export async function getAllUsedMacbook(): Promise<IMacbook[]> {
   return getMacbookByStatus(1);
 }
 
-// Cache server-side theo URL
-type MacbookCacheEntry = { data: IMacbook; timestamp: number };
-const macbookCacheById: Record<string, MacbookCacheEntry> = {};
-const CACHE_TTL = 60_000; // 1 phút
-
 export async function getMacbookById(id: string): Promise<IMacbook | null> {
   const apiUrl = getServerApiUrl(`/api/macbook/${id}`);
 
-  const now = Date.now();
-  // Check cache
-  const cached = macbookCacheById[apiUrl];
-  if (cached && now - cached.timestamp < CACHE_TTL) {
-    console.log('Cache hit for macbook ID:', id);
-    return cached.data;
-  }
+  const res = await fetch(apiUrl, {
+    // Không được dùng cache: "no-store"
+    // Để Next.js tự cache theo revalidate của page
+    // next: { revalidate: 18000 }, // chỉ dùng nếu muốn override tại đây
+  });
 
-  try {
-    console.log('Fetching macbook detail:', apiUrl);
-    const res = await fetch(apiUrl, { cache: 'no-store' });
+  if (!res.ok) return null;
 
-    // Log cache header
-    logCacheStatus(res, `macbook:${id}`);
-
-    if (!res.ok) throw new Error(`Fetch macbook lỗi: ${res.status} ${res.statusText}`);
-
-    const data = await res.json();
-    if (!data || !data.macbook) return null;
-
-    // Lưu cache
-    macbookCacheById[apiUrl] = { data: data.macbook, timestamp: now };
-    console.log('Cache saved for macbook ID:', id);
-
-    return data.macbook;
-  } catch (error) {
-    console.error('Lỗi tải macbook:', error);
-    return cached?.data ?? null; // fallback dùng cache nếu có
-  }
-}
-
-// Hàm log snapshot cache
-export function logMacbookCache() {
-  // console.log('[Macbook Cache Snapshot]:', macbookCacheById);
-}
-
-// Hàm clear cache
-export function invalidateMacbookCache() {
-  for (const key in macbookCacheById) delete macbookCacheById[key];
-  console.log('Macbook cache cleared');
+  const data = await res.json();
+  return data?.macbook ?? null;
 }

@@ -1,6 +1,6 @@
-export const revalidate = 60;
+export const revalidate = 18000;
 
-import { getPhoneById, logPhoneCache } from '@/services/products/phoneService';
+import { getPhoneById } from '@/services/products/phoneService';
 import { PageProps } from '@/types/type/pages/page-props';
 import { IPhone } from '@/types/type/products/phone/phone';
 import ClientPhoneDetailPage from './ClientPhoneDetailPage';
@@ -29,7 +29,6 @@ export default async function PhoneDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
   const id = resolvedParams.id;
   const phone: IPhone | null = await getPhoneById(id);
-  logPhoneCache();
 
   if (!phone) {
     return <div className="mt-10 text-center">Không có dữ liệu.</div>;

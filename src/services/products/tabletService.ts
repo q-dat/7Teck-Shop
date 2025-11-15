@@ -1,4 +1,3 @@
-import { logCacheStatus } from '@/utils/logCacheStatus';
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { GroupedTablet, ITablet } from '@/types/type/products/tablet/tablet';
 
@@ -124,52 +123,17 @@ export async function getAllUsedTablets(): Promise<ITablet[]> {
   return getTabletsByStatus(1);
 }
 
-// Cache server-side theo URL
-type TabletCacheEntry = { data: ITablet; timestamp: number };
-const tabletCacheById: Record<string, TabletCacheEntry> = {};
-const CACHE_TTL = 60_000; // 1 phút
-
 export async function getTabletById(id: string): Promise<ITablet | null> {
   const apiUrl = getServerApiUrl(`/api/tablet/${id}`);
 
-  const now = Date.now();
-  // Check cache
-  const cached = tabletCacheById[apiUrl];
-  if (cached && now - cached.timestamp < CACHE_TTL) {
-    console.log('Cache hit for tablet ID:', id);
-    return cached.data;
-  }
+  const res = await fetch(apiUrl, {
+    // Không được dùng cache: "no-store"
+    // Để Next.js tự cache theo revalidate của page
+    // next: { revalidate: 18000 }, // chỉ dùng nếu muốn override tại đây
+  });
 
-  try {
-    console.log('Fetching tablet detail:', apiUrl);
-    const res = await fetch(apiUrl, { cache: 'no-store' });
+  if (!res.ok) return null;
 
-    // Log cache header
-    logCacheStatus(res, `tablets:${id}`);
-
-    if (!res.ok) throw new Error(`Fetch tablet lỗi: ${res.status} ${res.statusText}`);
-
-    const data = await res.json();
-    if (!data || !data.tablet) return null;
-
-    // Lưu cache
-    tabletCacheById[apiUrl] = { data: data.tablet, timestamp: now };
-    console.log('Cache saved for tablet ID:', id);
-
-    return data.tablet;
-  } catch (error) {
-    console.error('Lỗi tải tablet:', error);
-    return cached?.data ?? null; // fallback dùng cache nếu có
-  }
-}
-
-// Hàm log snapshot cache
-export function logTabletCache() {
-  // console.log('[Tablet Cache Snapshot]:', tabletCacheById);
-}
-
-// Hàm clear cache
-export function invalidateTabletCache() {
-  for (const key in tabletCacheById) delete tabletCacheById[key];
-  console.log('Tablet cache cleared');
+  const data = await res.json();
+  return data?.tablet ?? null;
 }
