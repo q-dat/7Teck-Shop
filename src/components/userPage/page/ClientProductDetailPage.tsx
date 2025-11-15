@@ -208,7 +208,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
             </div>
             {/* Description */}
             <div className="w-full select-none">
-              <div className="flex flex-col items-start justify-between rounded-lg bg-white p-3 shadow-md xl:h-[480px]">
+              <div className="flex flex-col items-start justify-between rounded-lg bg-white p-3 shadow-md xl:min-h-[480px]">
                 <div className="flex flex-col gap-2">
                   <h1 className="hidden text-2xl font-bold text-gray-800 md:text-3xl xl:block">
                     <span>
@@ -267,7 +267,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   {/*  */}
                   <p className="text-lg italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
                   {/* Des */}
-                  {product?.des && <p className="font-medium text-primary">{product?.des}</p>}
+                  {product?.des && <p className="whitespace-pre-line font-medium text-primary">{product?.des}</p>}
                 </div>
 
                 {/* Btn */}
