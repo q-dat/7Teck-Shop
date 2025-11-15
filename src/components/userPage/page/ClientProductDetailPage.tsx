@@ -137,10 +137,15 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
             {/*  */}
             <div className="flex flex-row gap-5">
               {[
-                { id: 'cam-ket', label: 'Cam Kết', icon: <IoMdCheckmarkCircleOutline  fontSize={18} /> },
+                { id: 'cam-ket', label: 'Cam Kết', icon: <IoMdCheckmarkCircleOutline fontSize={18} /> },
                 { id: 'thong-so', label: 'Thông Số', icon: <TfiRulerPencil fontSize={18} /> },
               ].map((link) => (
-                <Link key={link.id} href={`#${link.id}`} onClick={handleScrollTo(link.id)} className="flex flex-row items-center gap-px text-blue-600">
+                <Link
+                  key={link.id}
+                  href={`#${link.id}`}
+                  onClick={handleScrollTo(link.id)}
+                  className="flex flex-row items-center gap-px text-blue-600"
+                >
                   {link.icon}
                   <span className="text-sm font-medium">{link.label}</span>
                 </Link>
@@ -307,7 +312,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   </div>
                   {/*  */}
                   <div className="mt-2 flex flex-col">
-                    <p className="text-base font-medium italic text-gray-600">"Sở hữu công nghệ, nâng tầm trải nghiệm"</p>
+                    <p className="text-base font-medium italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
                     <p className="text-sm font-light text-secondary">Khám phá hiệu năng vượt trội với thiết kế tối ưu và bền bỉ.</p>
                     <p className="text-sm font-light text-secondary">Trải nghiệm sự khác biệt ngay hôm nay với sản phẩm chính hãng.</p>
                   </div>
