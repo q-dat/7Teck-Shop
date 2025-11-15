@@ -40,7 +40,7 @@ export default {
       colors: {
         primary: '#a92d30',
         'primary-lighter': '#fee2e2',
-        secondary: '#009485',
+        secondary: '#003f6f',
         info: '#312e91',
         success: '#009485',
         warning: '#ff9900',
