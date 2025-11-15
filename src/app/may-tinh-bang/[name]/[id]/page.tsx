@@ -1,4 +1,4 @@
-export const revalidate = 60;
+export const revalidate = 18000;
 
 import { PageProps } from '@/types/type/pages/page-props';
 import React from 'react';
