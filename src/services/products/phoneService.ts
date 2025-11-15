@@ -165,52 +165,17 @@ export async function getAllUsedPhones(): Promise<IPhone[]> {
   return getPhonesByStatus(1);
 }
 
-// Cache server-side theo URL
-type PhoneCacheEntry = { data: IPhone; timestamp: number };
-const phoneCacheById: Record<string, PhoneCacheEntry> = {};
-const CACHE_TTL = 60_000; // 1 phút
-
 export async function getPhoneById(id: string): Promise<IPhone | null> {
   const apiUrl = getServerApiUrl(`/api/phone/${id}`);
 
-  const now = Date.now();
-  // Check cache
-  const cached = phoneCacheById[apiUrl];
-  if (cached && now - cached.timestamp < CACHE_TTL) {
-    console.log('Cache hit for phone ID:', id);
-    return cached.data;
-  }
+  const res = await fetch(apiUrl, {
+    // Không được dùng cache: "no-store"
+    // Để Next.js tự cache theo revalidate của page
+    // next: { revalidate: 18000 }, // chỉ dùng nếu muốn override tại đây
+  });
 
-  try {
-    console.log('Fetching phone detail:', apiUrl);
-    const res = await fetch(apiUrl, { cache: 'no-store' });
+  if (!res.ok) return null;
 
-    // Log cache header
-    logCacheStatus(res, `phones:${id}`);
-
-    if (!res.ok) throw new Error(`Fetch phone lỗi: ${res.status} ${res.statusText}`);
-
-    const data = await res.json();
-    if (!data || !data.phone) return null;
-
-    // Lưu cache
-    phoneCacheById[apiUrl] = { data: data.phone, timestamp: now };
-    console.log('Cache saved for phone ID:', id);
-
-    return data.phone;
-  } catch (error) {
-    console.error('Lỗi tải phone:', error);
-    return cached?.data ?? null; // fallback dùng cache nếu có
-  }
-}
-
-// Hàm log snapshot cache
-export function logPhoneCache() {
-  // console.log('[Phone Cache Snapshot]:', phoneCacheById);
-}
-
-// Hàm clear cache
-export function invalidatePhoneCache() {
-  for (const key in phoneCacheById) delete phoneCacheById[key];
-  console.log('Phone cache cleared');
+  const data = await res.json();
+  return data?.phone ?? null;
 }
