@@ -267,7 +267,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   {/* Product details */}
                   <div className="w-full">
                     <p className="text-sm font-semibold text-black">
-                      Cấu hình chung: <span className="text-xs text-secondary">(Dung lượng RAM & Màu Sắc)</span>
+                      Đặc điểm: <span className="text-xs text-secondary">({product?.ram && 'Dung lượng RAM & '}Màu Sắc)</span>
                     </p>
                     <div className="flex flex-wrap items-center justify-start gap-2">
                       {[
@@ -298,7 +298,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                             <Link
                               key={item._id}
                               href={`/${basePath}/${slugify(item.name)}/${item._id}`}
-                              className="flex flex-row items-center justify-center gap-2 rounded-md border border-primary/50 bg-white px-2 py-1 shadow transition-all hover:shadow-md"
+                              className="flex flex-row items-center justify-center gap-2 rounded-md border border-primary/50 bg-white px-2 py-1 shadow transition-all hover:scale-105 hover:border-dashed hover:shadow-md"
                             >
                               <Image src={item.img} alt={item.name} width={40} height={40} className="h-[40px] w-[40px] object-contain" />
                               <div className="font-semibold">
@@ -310,14 +310,18 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       </div>
                     )}
                   </div>
-                  {/*  */}
-                  <div className="mt-2 flex flex-col">
-                    <p className="text-base font-medium italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
-                    <p className="text-sm font-light text-secondary">Khám phá hiệu năng vượt trội với thiết kế tối ưu và bền bỉ.</p>
-                    <p className="text-sm font-light text-secondary">Trải nghiệm sự khác biệt ngay hôm nay với sản phẩm chính hãng.</p>
-                  </div>
                   {/* Des */}
-                  {product?.des && <p className="whitespace-pre-line font-medium text-primary">{product?.des}</p>}
+                  {product?.des ? (
+                    <>
+                      <p className="whitespace-pre-line text-sm font-medium text-black">{product?.des}</p>
+                    </>
+                  ) : (
+                    <div className="mt-2 flex flex-col">
+                      <p className="text-base font-medium italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
+                      <p className="text-sm font-light text-secondary">Khám phá hiệu năng vượt trội với thiết kế tối ưu và bền bỉ.</p>
+                      <p className="text-sm font-light text-secondary">Trải nghiệm sự khác biệt ngay hôm nay với sản phẩm chính hãng.</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Btn */}
@@ -376,24 +380,24 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
             <div className="flex flex-col gap-3 rounded-lg border border-secondary/20 bg-white p-2 shadow-sm xl:p-6">
               <h2 className="text-center text-lg font-bold uppercase text-secondary">7teck cam kết</h2>
 
-              <div className="mt-2 flex flex-col gap-2 text-sm text-gray-700">
+              <ul className="mt-2 flex flex-col gap-2 text-sm text-gray-700">
                 {/* Cam kết */}
-                <p className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Máy nguyên zin đúng phiên bản quý khách chọn.</p>
+                <li className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Máy nguyên zin đúng phiên bản quý khách chọn.</li>
 
-                <p className="rounded-md bg-secondary/5 p-2 leading-relaxed">
+                <li className="rounded-md bg-secondary/5 p-2 leading-relaxed">
                   • Bao test 7 ngày và bảo hành 3 tháng / 6 tháng / 1 năm tùy dòng sản phẩm.
-                </p>
+                </li>
 
-                <p className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Hỗ trợ trả góp qua thẻ tín dụng nhanh chóng, thao tác đơn giản.</p>
+                <li className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Hỗ trợ trả góp qua thẻ tín dụng nhanh chóng, thao tác đơn giản.</li>
 
-                <p className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Tặng kèm cường lực và ốp lưng miễn phí.</p>
+                <li className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Tặng kèm cường lực và ốp lưng miễn phí.</li>
 
                 {/* Bộ sản phẩm bao gồm */}
 
-                <p className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Ốp lưng bảo vệ và kính cường lực được tặng kèm.</p>
+                <li className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Ốp lưng bảo vệ và kính cường lực được tặng kèm.</li>
 
-                <p className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Phiếu bảo hành 7teck theo thời hạn từng sản phẩm.</p>
-              </div>
+                <li className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Phiếu bảo hành 7teck theo thời hạn từng sản phẩm.</li>
+              </ul>
             </div>
           </div>
 
