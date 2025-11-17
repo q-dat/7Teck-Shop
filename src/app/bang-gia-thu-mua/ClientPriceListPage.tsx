@@ -7,6 +7,7 @@ import { LoadingLocal } from '@/components/orther/loading';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { IPriceListApi, IProductVariant } from '@/types/type/price-list/price-list';
+import { motion } from 'framer-motion';
 
 interface CatalogsType {
   [catalog: string]: IProductVariant[];
@@ -59,6 +60,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
+
       <div className="py-[60px] xl:pt-0">
         <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
@@ -103,60 +105,107 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                     : categoryType === 'macbookProducts'
                       ? 'Bảng Giá Thu Mua Laptop Macbook'
                       : 'Bảng Giá Thu Mua Laptop Windows';
-              
+
+              const tabs = Object.keys(groupObj);
+              const active = activeTabs[categoryType];
+
               return (
-                <section key={categoryType} className="">
+                <section key={categoryType} className="my-8 text-center">
                   <header role="region" aria-label={label}>
-                    <h2 className="my-3 text-2xl font-extrabold leading-tight text-primary">
-                      <span className="block">{label}</span>
-                    </h2>
+                    <h2 className="text-2xl font-semibold text-black">{label}</h2>
                   </header>
 
-                  {/* giữ nguyên toàn bộ phần tab + table */}
-                  <div className="my-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
-                    {Object.keys(groupObj).map((catalog) => (
-                      <Button
-                        key={catalog}
-                        onClick={() => setActiveTabs({ ...activeTabs, [categoryType]: catalog })}
-                        className={`flex transform items-center justify-center rounded-lg text-sm font-medium shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md ${
-                          activeTabs[categoryType] === catalog
-                            ? 'bg-primary text-white shadow-lg hover:bg-primary-lighter hover:text-primary'
-                            : 'border border-gray-200 bg-white text-primary hover:bg-primary-lighter'
-                        }`}
-                      >
-                        {catalog}
-                      </Button>
-                    ))}
+                  {/* TABS */}
+                  <div className="relative mt-4 grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8">
+                    {tabs.map((catalog) => {
+                      const isActive = catalog === active;
+
+                      return (
+                        <div key={catalog} className="relative w-full">
+                          {isActive && (
+                            <motion.div
+                              layoutId="highlight"
+                              transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+                              className="absolute inset-0 bg-primary"
+                            />
+                          )}
+
+                          <Button
+                            size="sm"
+                            onClick={() => setActiveTabs({ ...activeTabs, [categoryType]: catalog })}
+                            className={`relative z-10 w-full rounded-none border-none text-sm font-medium shadow-none transition-all ${
+                              isActive ? 'text-white' : 'bg-transparent text-primary hover:bg-primary/10'
+                            }`}
+                          >
+                            {catalog}
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  <div className="mt-5 w-full overflow-x-auto border border-primary scrollbar-hide">
-                    <Table className="w-full" zebra>
-                      <Table.Head className="bg-primary-lighter text-center text-primary">
-                        <span>Tên sản phẩm</span>
-                        <span>Giá máy mới</span>
-                        <span>Giá máy 99%</span>
-                      </Table.Head>
-                      <Table.Body className="text-center text-sm">
-                        {groupObj[activeTabs[categoryType]]?.map((product, index) => (
-                          <Table.Row key={index}>
-                            <span>{product.name}</span>
-                            <span>{product.price_new !== null ? formatCurrency(product.price_new) : 'Liên Hệ'}</span>
-                            <span>{product.price_used !== null ? formatCurrency(product.price_used) : 'Liên Hệ'}</span>
-                          </Table.Row>
-                        ))}
-                      </Table.Body>
-                    </Table>
+                  {/* TABLE */}
+                  <div className="mt-2 w-full overflow-x-auto rounded-none border border-primary/40 bg-white shadow-sm scrollbar-hide">
+                    <motion.div
+                      key={active}
+                      initial={{
+                        opacity: 0,
+                        x: 120,
+                        scale: 0.85,
+                        rotateY: -25, // chuyển động 3D rõ rệt
+                        rotateX: 8,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        x: 0,
+                        scale: 1,
+                        rotateY: 0,
+                        rotateX: 0,
+                      }}
+                      exit={{
+                        opacity: 0,
+                        x: -100,
+                        scale: 0.9,
+                        rotateY: 20,
+                        rotateX: -6,
+                      }}
+                      transition={{
+                        duration: 0.55,
+                        ease: [0.2, 0.9, 0.2, 1], // bật mạnh – dừng mượt
+                      }}
+                      className="w-full origin-center rounded-md bg-white shadow"
+                    >
+                      <Table className="w-full text-sm">
+                        <Table.Head className="bg-primary/10 text-center font-semibold text-primary">
+                          <span>Tên sản phẩm</span>
+                          <span>Giá máy mới</span>
+                          <span>Giá máy 99%</span>
+                        </Table.Head>
+
+                        <Table.Body className="text-center text-sm">
+                          {groupObj[active]?.map((product, index) => (
+                            <motion.tr
+                              key={index}
+                              initial={{ opacity: 0, x: 40, scale: 0.92 }}
+                              animate={{ opacity: 1, x: 0, scale: 1 }}
+                              transition={{ duration: 0.35, delay: index * 0.03 }}
+                              className="hover:bg-primary-lighter"
+                            >
+                              <td className="font-medium text-gray-700">{product.name}</td>
+                              <td>{product.price_new !== null ? formatCurrency(product.price_new) : 'Liên Hệ'}</td>
+                              <td>{product.price_used !== null ? formatCurrency(product.price_used) : 'Liên Hệ'}</td>
+                            </motion.tr>
+                          ))}
+                        </Table.Body>
+                      </Table>
+                    </motion.div>
                   </div>
 
-                  {/* Display conditions for the selected catalog */}
-                  {conditionsMap[activeTabs[categoryType]] ? (
-                    <div
-                      className="prose my-5 max-w-full"
-                      aria-label={`Điều kiện thu mua cho ${activeTabs[categoryType]}`}
-                      dangerouslySetInnerHTML={{ __html: conditionsMap[activeTabs[categoryType]] }}
-                    />
+                  {/* CONDITIONS */}
+                  {conditionsMap[active] ? (
+                    <div className="prose mt-5 max-w-full" dangerouslySetInnerHTML={{ __html: conditionsMap[active] }} />
                   ) : (
-                    <div className="my-5 text-gray-500">Không có điều kiện thu mua cho danh mục này.</div>
+                    <div className="mt-5 text-gray-500">Không có điều kiện thu mua cho danh mục này.</div>
                   )}
                 </section>
               );
