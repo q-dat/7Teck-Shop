@@ -85,7 +85,6 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
             </p>
           </div>
         </div>
-
         {/*  */}
         {loading ? (
           <LoadingLocal />
@@ -111,12 +110,12 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
 
               return (
                 <section key={categoryType} className="my-8 text-center">
+                  {/*  */}
                   <header role="region" aria-label={label}>
                     <h2 className="text-2xl font-semibold text-black">{label}</h2>
                   </header>
-
                   {/* TABS */}
-                  <div className="relative mt-4 grid grid-cols-2 gap-0 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8">
+                  <div className="relative mt-4 grid grid-cols-2 gap-0 border border-b-0 border-primary/40 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8">
                     {tabs.map((catalog) => {
                       const isActive = catalog === active;
 
@@ -145,38 +144,32 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                   </div>
 
                   {/* TABLE */}
-                  <div className="mt-2 w-full overflow-x-auto rounded-none border border-primary/40 bg-white shadow-sm scrollbar-hide">
+                  <div className="perspective-1000 w-full overflow-x-auto rounded-b-md rounded-t-none border border-t-0 border-primary/40 bg-white shadow-sm scrollbar-hide">
                     <motion.div
                       key={active}
                       initial={{
-                        opacity: 0,
-                        x: 120,
+                        x: 140,
+                        rotateY: -35,
                         scale: 0.85,
-                        rotateY: -25, // chuyển động 3D rõ rệt
-                        rotateX: 8,
                       }}
                       animate={{
-                        opacity: 1,
                         x: 0,
-                        scale: 1,
                         rotateY: 0,
-                        rotateX: 0,
+                        scale: 1,
                       }}
                       exit={{
-                        opacity: 0,
-                        x: -100,
+                        x: -140,
+                        rotateY: 30,
                         scale: 0.9,
-                        rotateY: 20,
-                        rotateX: -6,
                       }}
                       transition={{
                         duration: 0.55,
-                        ease: [0.2, 0.9, 0.2, 1], // bật mạnh – dừng mượt
+                        ease: [0.22, 1, 0.36, 1], // cinematic, mạnh và rõ
                       }}
-                      className="w-full origin-center rounded-md bg-white shadow"
+                      className="origin-center bg-white"
                     >
                       <Table className="w-full text-sm">
-                        <Table.Head className="bg-primary/10 text-center font-semibold text-primary">
+                        <Table.Head className="bg-primary-lighter text-center text-sm font-semibold uppercase text-primary  ">
                           <span>Tên sản phẩm</span>
                           <span>Giá máy mới</span>
                           <span>Giá máy 99%</span>
@@ -186,9 +179,9 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                           {groupObj[active]?.map((product, index) => (
                             <motion.tr
                               key={index}
-                              initial={{ opacity: 0, x: 40, scale: 0.92 }}
-                              animate={{ opacity: 1, x: 0, scale: 1 }}
-                              transition={{ duration: 0.35, delay: index * 0.03 }}
+                              initial={{ x: 60, scale: 0.92 }}
+                              animate={{ x: 0, scale: 1 }}
+                              transition={{ duration: 0.35, delay: index * 0.025 }}
                               className="hover:bg-primary-lighter"
                             >
                               <td className="font-medium text-gray-700">{product.name}</td>
