@@ -8,6 +8,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { IPriceListApi, IProductVariant } from '@/types/type/price-list/price-list';
 import { motion } from 'framer-motion';
+import { images } from '../../../public/images';
 
 interface CatalogsType {
   [catalog: string]: IProductVariant[];
@@ -60,7 +61,6 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
-
       <div className="py-[60px] xl:pt-0">
         <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
@@ -94,7 +94,10 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
             <p className="text-sm text-gray-500">Vui lòng quay lại sau để xem thông tin mới nhất.</p>
           </div>
         ) : (
-          <div className="px-2 xl:px-desktop-padding">
+          <div
+            className="h-screen w-full bg-cover bg-fixed bg-center bg-no-repeat px-2 xl:px-desktop-padding"
+            style={{ backgroundImage: `url(${images.bgBlog})` }}
+          >
             {Object.entries(catalogs).map(([categoryType, groupObj]) => {
               const label =
                 categoryType === 'phoneProducts'
@@ -109,13 +112,15 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
               const active = activeTabs[categoryType];
 
               return (
-                <section key={categoryType} className="my-8 text-center">
+                <section key={categoryType} className="text-center">
                   {/*  */}
                   <header role="region" aria-label={label}>
-                    <h2 className="text-2xl font-semibold text-black">{label}</h2>
+                    <h2 className="pb-4 pt-8 text-4xl font-bold uppercase text-white [text-shadow:1px_1px_0_black,-1px_1px_0_black,1px_-1px_0_black,-1px_-1px_0_black,0_0_6px_rgba(255,140,0,1),0_0_12px_rgba(255,160,50,0.9)] [text-stroke-color:black] [text-stroke-width:1px]">
+                      {label}
+                    </h2>
                   </header>
                   {/* TABS */}
-                  <div className="relative mt-4 grid grid-cols-2 gap-0 border border-b-0 border-primary/40 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8">
+                  <div className="relative grid grid-cols-2 gap-0 border border-b-0 border-primary/40 bg-white/90 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8">
                     {tabs.map((catalog) => {
                       const isActive = catalog === active;
 
@@ -130,10 +135,10 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                           )}
 
                           <Button
-                            size="sm"
+                            size="md"
                             onClick={() => setActiveTabs({ ...activeTabs, [categoryType]: catalog })}
-                            className={`relative z-10 w-full rounded-none border-none text-sm font-medium shadow-none transition-all ${
-                              isActive ? 'text-white' : 'bg-transparent text-primary hover:bg-primary/10'
+                            className={`relative z-10 w-full rounded-none border-none text-sm font-semibold shadow-none transition-all ${
+                              isActive ? 'bg-primary text-white' : 'bg-transparent text-black hover:bg-primary/10'
                             }`}
                           >
                             {catalog}
@@ -169,7 +174,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                       className="origin-center bg-white"
                     >
                       <Table className="w-full text-sm">
-                        <Table.Head className="bg-primary-lighter text-center text-sm font-semibold uppercase text-primary  ">
+                        <Table.Head className="bg-primary-lighter text-center text-sm font-semibold uppercase text-primary">
                           <span>Tên sản phẩm</span>
                           <span>Giá máy mới</span>
                           <span>Giá máy 99%</span>
@@ -198,7 +203,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                   {conditionsMap[active] ? (
                     <div className="prose mt-5 max-w-full" dangerouslySetInnerHTML={{ __html: conditionsMap[active] }} />
                   ) : (
-                    <div className="mt-5 text-gray-500">Không có điều kiện thu mua cho danh mục này.</div>
+                    <div className="boder-white mt-5 border bg-white p-3 text-primary">Không có điều kiện thu mua cho danh mục này.</div>
                   )}
                 </section>
               );
