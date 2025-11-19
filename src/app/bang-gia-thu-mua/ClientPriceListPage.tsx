@@ -95,7 +95,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
           </div>
         ) : (
           <div
-            className="h-screen w-full bg-cover bg-fixed bg-center bg-no-repeat px-2 xl:px-desktop-padding"
+            className="h-auto min-h-[100vh] w-full bg-cover bg-fixed bg-center bg-no-repeat px-2 pb-10 xl:px-desktop-padding"
             style={{ backgroundImage: `url(${images.bgBlog})` }}
           >
             {Object.entries(catalogs).map(([categoryType, groupObj]) => {
@@ -173,14 +173,14 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                       }}
                       className="origin-center bg-white"
                     >
-                      <Table className="w-full text-sm">
-                        <Table.Head className="bg-primary-lighter text-center text-sm font-semibold uppercase text-primary">
+                      <Table className="w-full">
+                        <Table.Head className="bg-primary-lighter text-center text-xs font-semibold uppercase text-primary md:text-sm">
                           <span>Tên sản phẩm</span>
                           <span>Giá máy mới</span>
                           <span>Giá máy 99%</span>
                         </Table.Head>
 
-                        <Table.Body className="text-center text-sm">
+                        <Table.Body className="text-center text-xs md:text-sm">
                           {groupObj[active]?.map((product, index) => (
                             <motion.tr
                               key={index}
@@ -189,7 +189,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                               transition={{ duration: 0.35, delay: index * 0.025 }}
                               className="hover:bg-primary-lighter"
                             >
-                              <td className="font-medium text-gray-700">{product.name}</td>
+                              <td className="text-start font-bold text-gray-700 pl-5">{product.name}</td>
                               <td>{product.price_new !== null ? formatCurrency(product.price_new) : 'Liên Hệ'}</td>
                               <td>{product.price_used !== null ? formatCurrency(product.price_used) : 'Liên Hệ'}</td>
                             </motion.tr>
