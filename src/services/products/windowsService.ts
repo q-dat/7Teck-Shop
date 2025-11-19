@@ -1,5 +1,6 @@
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { GroupedWindows, IWindows } from '@/types/type/products/windows/windows';
+import { getWithFallback } from '../shared/getWithFallback';
 
 type CacheEntryWindows = {
   data: GroupedWindows[];
@@ -138,3 +139,6 @@ export async function getWindowsById(id: string): Promise<IWindows | null> {
     return data?.windows ?? null;
   }
   
+  export async function getWindowsWithFallback(id: string): Promise<IWindows | null> {
+    return getWithFallback<IWindows>(id, getAllWindows, getWindowsById);
+  }

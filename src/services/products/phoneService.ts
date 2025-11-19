@@ -1,5 +1,6 @@
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { GroupedPhone, IPhone } from '@/types/type/products/phone/phone';
+import { getWithFallback } from '../shared/getWithFallback';
 
 export async function getAllmostViewedPhones(): Promise<IPhone[]> {
   try {
@@ -177,4 +178,8 @@ export async function getPhoneById(id: string): Promise<IPhone | null> {
 
   const data = await res.json();
   return data?.phone ?? null;
+}
+
+export async function getPhoneWithFallback(id: string): Promise<IPhone | null> {
+  return getWithFallback<IPhone>(id, getAllPhones, getPhoneById);
 }

@@ -1,5 +1,6 @@
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { GroupedMacbook, IMacbook } from '../../types/type/products/macbook/macbook';
+import { getWithFallback } from '../shared/getWithFallback';
 
 type CacheEntryMacbook = {
   data: GroupedMacbook[];
@@ -136,4 +137,8 @@ export async function getMacbookById(id: string): Promise<IMacbook | null> {
 
   const data = await res.json();
   return data?.macbook ?? null;
+}
+
+export async function getMacbookWithFallback(id: string): Promise<IMacbook | null> {
+  return getWithFallback<IMacbook>(id, getAllMacbook, getMacbookById);
 }

@@ -1,5 +1,6 @@
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
 import { GroupedTablet, ITablet } from '@/types/type/products/tablet/tablet';
+import { getWithFallback } from '../shared/getWithFallback';
 
 type CacheEntryTablet = {
   data: GroupedTablet[];
@@ -136,4 +137,8 @@ export async function getTabletById(id: string): Promise<ITablet | null> {
 
   const data = await res.json();
   return data?.tablet ?? null;
+}
+
+export async function getTabletWithFallback(id: string): Promise<ITablet | null> {
+  return getWithFallback<ITablet>(id, getAllTablets, getTabletById);
 }

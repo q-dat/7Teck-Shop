@@ -1,6 +1,6 @@
 export const revalidate = 18000;
 
-import { getPhoneById } from '@/services/products/phoneService';
+import { getPhoneWithFallback } from '@/services/products/phoneService';
 import { PageProps } from '@/types/type/pages/page-props';
 import { IPhone } from '@/types/type/products/phone/phone';
 import ClientPhoneDetailPage from './ClientPhoneDetailPage';
@@ -12,7 +12,7 @@ import { StructuredData } from '@/metadata/structuredData';
 export async function generateMetadata({ params }: PageProps) {
   const resolvedParams = await params;
   const id = resolvedParams.id;
-  const phone: IPhone | null = await getPhoneById(id);
+  const phone: IPhone | null = await getPhoneWithFallback(id);
 
   if (!phone) {
     return {
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function PhoneDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
   const id = resolvedParams.id;
-  const phone: IPhone | null = await getPhoneById(id);
+  const phone: IPhone | null = await getPhoneWithFallback(id);
 
   if (!phone) {
     return <div className="mt-10 text-center">Không có dữ liệu.</div>;

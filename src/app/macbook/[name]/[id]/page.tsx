@@ -5,7 +5,7 @@ import React from 'react';
 import ClientMacbookDetailPage from './ClientMacbookDetailPage';
 import { slugify } from '@/utils/slugify';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
-import { getMacbookById } from '@/services/products/macbookService';
+import { getMacbookWithFallback } from '@/services/products/macbookService';
 import { generateMacbookMetadata } from '@/metadata/id/macbookMetadata';
 import { StructuredData } from '@/metadata/structuredData';
 
@@ -13,7 +13,7 @@ import { StructuredData } from '@/metadata/structuredData';
 export async function generateMetadata({ params }: PageProps) {
   const resolvedParams = await params;
   const id = resolvedParams.id;
-  const mac: IMacbook | null = await getMacbookById(id);
+  const mac: IMacbook | null = await getMacbookWithFallback(id);
 
   if (!mac) {
     return {
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function MacbookDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
   const id = resolvedParams.id;
-  const mac: IMacbook | null = await getMacbookById(id);
+  const mac: IMacbook | null = await getMacbookWithFallback(id);
 
   if (!mac) {
     return <div className="mt-10 text-center">Không có dữ liệu.</div>;
