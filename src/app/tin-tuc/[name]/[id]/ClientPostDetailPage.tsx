@@ -77,23 +77,32 @@ export default function ClientPostDetailPage({ posts, post }: ClientPostDetailPa
               <FaArrowLeftLong />
               Trở về trang tin tức
             </Link>
+            {/*  */}
 
             {loading ? (
-              <>Đang tải...</>
+              <div className="flex w-full items-center justify-center py-10">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                <span className="ml-3 text-sm text-primary">Đang tải...</span>
+              </div>
             ) : (
-              <div>
+              <>
                 {selectedPost ? (
-                  <div className="mb-10">
-                    <p className="text-[35px] font-bold">{selectedPost?.title}</p>
-                    <p className="text-[14px] text-blue-500">{new Date(selectedPost?.updatedAt).toLocaleDateString('vi-VN')}</p>
-                    <p className="text-[14px] font-light">Danh mục:&nbsp;{selectedPost?.catalog}</p>
+                  <div className="mb-10 xl:w-[50vw]">
+                    <p className="text-3xl font-bold">{selectedPost?.title}</p>
+                    <p className="text-sm text-blue-500">{new Date(selectedPost?.updatedAt).toLocaleDateString('vi-VN')}</p>
+                    <p className="text-sm font-light">Danh mục:&nbsp;{selectedPost?.catalog}</p>
                     <hr className="my-4" />
                     <div
                       dangerouslySetInnerHTML={{
                         __html: selectedPost?.content,
                       }}
-                      className="text-[18px] text-black"
+                      className="pb-5 text-base text-black"
                     ></div>
+                    <hr className="my-4" />
+                    Nguồn:&nbsp;
+                    <Link target="_blank" className="line-clamp-1 italic text-blue-500" href={`${selectedPost?.source}`}>
+                      {selectedPost.source}
+                    </Link>
                   </div>
                 ) : (
                   <p aria-label="Bài viết này không tồn tại" className="my-3 rounded-md bg-white p-2 text-center text-2xl font-light text-primary">
@@ -108,15 +117,15 @@ export default function ClientPostDetailPage({ posts, post }: ClientPostDetailPa
                     </span>
                   </p>
                 )}
-              </div>
+              </>
             )}
           </div>
           <div className="px-0 xl:px-desktop-padding">
             <div role="region" aria-label="Bài viết nổi bật khác">
-              <h1 className="p-1 font-semibold uppercase">Bài viết khác</h1>
+              <h1 className="p-1 font-bold text-2xl uppercase">Tin liên quan</h1>
               <p className="mx-1 mb-3 h-[2px] w-[110px] bg-primary"></p>
             </div>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-4">
               {otherPosts.slice(0, 6).map((post) => (
                 <div
                   key={post?._id}
@@ -125,8 +134,8 @@ export default function ClientPostDetailPage({ posts, post }: ClientPostDetailPa
                 >
                   <div className="min-h-[100px] w-2/3 overflow-hidden">
                     <Image
-                      height={300}
-                      width={300}
+                      height={500}
+                      width={500}
                       loading="lazy"
                       src={post?.imageUrl}
                       alt="Ảnh đại diện"
@@ -134,7 +143,7 @@ export default function ClientPostDetailPage({ posts, post }: ClientPostDetailPa
                     />
                   </div>
                   <div className="flex w-full flex-col items-start justify-start">
-                    <p className="line-clamp-5 w-full py-1 text-sm text-black">{post?.title}</p>
+                    <p className="line-clamp-5 w-full py-1 text-sm font-medium text-black">{post?.title}</p>
                     <p className="pt-2 text-[12px] text-primary">
                       {new Date(post?.updatedAt).toLocaleDateString('vi-VN')}
                       &nbsp;(
