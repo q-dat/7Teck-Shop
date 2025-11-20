@@ -1,7 +1,7 @@
 export const revalidate = 18000;
 
 import { PageProps } from '@/types/type/pages/page-props';
-import { getAllPosts, getPostById, logPostCache } from '@/services/postService';
+import { getAllPosts, getPostWithFallback } from '@/services/postService';
 import ClientPostDetailPage from './ClientPostDetailPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 import { IPost } from '@/types/type/products/post/post';
@@ -11,7 +11,7 @@ import { buildPostDetailMetadata } from '@/metadata/id/postDetailMetadata';
 export async function generateMetadata({ params }: PageProps) {
   const resolvedParams = await params;
   const id = resolvedParams.id;
-  const post: IPost | null = await getPostById(id);
+  const post: IPost | null = await getPostWithFallback(id);
 
   if (!post) {
     return {
@@ -28,8 +28,7 @@ export default async function PostDetail({ params }: PageProps) {
   const id = resolvedParams.id;
 
   const posts: IPost[] = await getAllPosts();
-  const post: IPost | null = await getPostById(id);
-  logPostCache();
+  const post: IPost | null = await getPostWithFallback(id);
   
   if (!posts || !post) {
     return <ErrorLoading />;
