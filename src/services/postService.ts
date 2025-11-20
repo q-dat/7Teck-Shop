@@ -1,10 +1,11 @@
 import { IPost } from '@/types/type/products/post/post';
 import { getServerApiUrl } from '../../hooks/useApiUrl';
 import { getWithFallback } from './shared/getWithFallback';
+import { slugify } from '@/utils/slugify';
 
 export async function getPostsByCatalog(catalog: string): Promise<IPost[]> {
   try {
-    const query = `?catalog=${catalog}`;
+    const query = `?catalog=${slugify(catalog)}`;
     const apiUrl = `${getServerApiUrl(`/api/posts${query}`)}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
@@ -49,7 +50,7 @@ export async function getPostById(id: string): Promise<IPost | null> {
   if (!res.ok) return null;
 
   const data = await res.json();
-  return data?.phone ?? null;
+  return data?.posts ?? null;
 }
 
 export async function getPostWithFallback(id: string): Promise<IPost | null> {
