@@ -1,13 +1,46 @@
 import { Metadata } from 'next';
 
+const tit = 'Điện thoại, smartphone chính hãng giá rẻ, trả góp 0% lãi suất - 12/2025';
+const des =
+  'Mua online điện thoại, smartphone, điện thoại thông minh giá rẻ, chính hãng. Giao nhanh, đem nhiều mẫu chọn, cà thẻ tại nhà. Trả góp 0%, bảo hành chính hãng';
+
 export const homeMetadata: Metadata = {
   icons: {
     icon: '/favicon.png',
   },
-  title: 'Mua Điện Thoại, Laptop, MacBook Giá Rẻ Chính Hãng - Giao Nhanh tại 7teck.vn',
-  description:
-    'Khám phá điện thoại, máy tính bảng, laptop Windows, MacBook chính hãng tại 7teck.vn. Ưu đãi cực sốc, bảo hành chính hãng, giao hàng toàn quốc!',
+  title: tit,
+  description: des,
   keywords: [
+    'Đth',
+    'điện thoại',
+    'dtdd',
+    'smartphone',
+    'điện thoại thông minh',
+    'điện thoại di động',
+    'Samsung',
+    'Apple',
+    'iPhone',
+    'OPPO',
+    'Vivo',
+    'Xiaomi',
+    'Huawei',
+    'Realme',
+    'Vsmart',
+    'Nokia',
+    'Mobell',
+    'Itel',
+    'Coolpad',
+    'Mobiistar',
+    'ASUS',
+    'ASUS',
+    'Zenfone',
+    'BlackBerry',
+    'HTC',
+    'Redmi',
+    'Mi',
+    'Điên thoại',
+    ' điê n thoa i',
+
     'mua điện thoại chính hãng',
     'điện thoại giá rẻ',
     'smartphone 2025',
@@ -29,10 +62,10 @@ export const homeMetadata: Metadata = {
   robots: 'index, follow',
   metadataBase: new URL('https://www.7teck.vn'),
   openGraph: {
-    title: 'Mua Điện Thoại, Laptop, MacBook Giá Rẻ Chính Hãng - Giao Nhanh tại 7teck.vn',
-    description: 'Điện thoại, máy tính bảng, laptop chính hãng với giá cực tốt tại 7teck.vn. Giao nhanh, hỗ trợ trả góp, hàng chính hãng 100%!',
+    title: tit,
+    description: des,
     url: 'https://www.7teck.vn',
-    siteName: '7teck.vn',
+    siteName: 'www.7teck.vn',
     images: [
       {
         url: '/favicon.png',
@@ -45,8 +78,8 @@ export const homeMetadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Mua Điện Thoại, Laptop, MacBook Giá Rẻ Chính Hãng - Giao Nhanh tại 7teck.vn',
-    description: 'Khuyến mãi sốc điện thoại, laptop, MacBook tại 7teck.vn. Hàng chính hãng, giao siêu tốc, bảo hành uy tín!',
+    title: tit,
+    description: des,
     images: ['/favicon.png'],
   },
 };
