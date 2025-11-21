@@ -1,4 +1,5 @@
 'use client';
+import LoadingSpinner from '@/components/orther/loading/LoadingSpinner';
 import TimeAgo from '@/components/orther/timeAgo/TimeAgo';
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import { IPost } from '@/types/type/products/post/post';
@@ -11,10 +12,10 @@ import React, { useEffect, useState } from 'react';
 import { FaArrowLeftLong } from 'react-icons/fa6';
 
 interface ClientPostDetailPageProps {
-  posts: IPost[];
+  relatedPosts: IPost[];
   post: IPost | null;
 }
-export default function ClientPostDetailPage({ posts, post }: ClientPostDetailPageProps) {
+export default function ClientPostDetailPage({ relatedPosts, post }: ClientPostDetailPageProps) {
   const router = useRouter();
   const { id } = useParams<{ id: string; title: string }>();
 
@@ -36,9 +37,6 @@ export default function ClientPostDetailPage({ posts, post }: ClientPostDetailPa
     fetchPost();
   }, [id, post]);
 
-  // Các bài viết khác (loại bỏ bài hiện tại)
-  const otherPosts: IPost[] = posts.filter((p) => p._id !== selectedPost?._id);
-
   // Điều hướng tới chi tiết bài viết khác
   const handlePostSelect = (post: IPost) => {
     const titleSlug = encodeURIComponent(slugify(post?.title));
@@ -50,7 +48,7 @@ export default function ClientPostDetailPage({ posts, post }: ClientPostDetailPa
     <div>
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
       <div className="py-[60px] xl:pt-0">
-        <div className="breadcrumbs mb-10 px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
+        <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
             <li>
               <Link aria-label="Trang chủ" href="/">
@@ -73,32 +71,28 @@ export default function ClientPostDetailPage({ posts, post }: ClientPostDetailPa
 
         <div className="px-2">
           <div className="xl:px-desktop-padding">
-            <Link aria-label="Trở về trang tin tức" href="/tin-tuc-moi-nhat" className="flex items-center justify-start text-primary">
+            <Link aria-label="Trở về trang tin tức" href="/tin-tuc-moi-nhat" className="flex items-center justify-start py-2 text-sm text-primary">
               <FaArrowLeftLong />
               Trở về trang tin tức
             </Link>
             {/*  */}
-
             {loading ? (
-              <div className="flex w-full items-center justify-center py-10">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                <span className="ml-3 text-sm text-primary">Đang tải...</span>
-              </div>
+              <LoadingSpinner />
             ) : (
               <>
                 {selectedPost ? (
                   <div className="mb-10 xl:w-[50vw]">
                     <p className="text-3xl font-bold">{selectedPost?.title}</p>
-                    <p className="text-sm text-blue-500">{new Date(selectedPost?.updatedAt).toLocaleDateString('vi-VN')}</p>
-                    <p className="text-sm font-light">Danh mục:&nbsp;{selectedPost?.catalog}</p>
-                    <hr className="my-4" />
+                    <p className="text-xs text-blue-500">{new Date(selectedPost?.updatedAt).toLocaleDateString('vi-VN')}</p>
+                    <p className="text-xs font-light">Danh mục:&nbsp;{selectedPost?.catalog}</p>
+                    <hr className="my-2" />
                     <div
                       dangerouslySetInnerHTML={{
                         __html: selectedPost?.content,
                       }}
-                      className="pb-5 text-base text-black"
+                      className="text-sm text-black"
                     ></div>
-                    <hr className="my-4" />
+                    <hr className="my-2" />
                     Nguồn:&nbsp;
                     <Link target="_blank" className="line-clamp-1 italic text-blue-500" href={`${selectedPost?.source}`}>
                       {selectedPost.source}
@@ -122,11 +116,11 @@ export default function ClientPostDetailPage({ posts, post }: ClientPostDetailPa
           </div>
           <div className="px-0 xl:px-desktop-padding">
             <div role="region" aria-label="Bài viết nổi bật khác">
-              <h1 className="p-1 font-bold text-2xl uppercase">Tin liên quan</h1>
+              <h1 className="p-1 text-2xl font-bold uppercase">Tin liên quan</h1>
               <p className="mx-1 mb-3 h-[2px] w-[110px] bg-primary"></p>
             </div>
             <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-4">
-              {otherPosts.slice(0, 6).map((post) => (
+              {relatedPosts.slice(0, 6).map((post) => (
                 <div
                   key={post?._id}
                   className="flex cursor-pointer flex-row items-start justify-start gap-2 rounded bg-white p-1"

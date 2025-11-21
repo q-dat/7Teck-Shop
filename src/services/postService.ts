@@ -1,12 +1,12 @@
 import { IPost } from '@/types/type/products/post/post';
 import { getServerApiUrl } from '../../hooks/useApiUrl';
 import { getWithFallback } from './shared/getWithFallback';
-import { slugify } from '@/utils/slugify';
 
 export async function getPostsByCatalog(catalog: string): Promise<IPost[]> {
   try {
-    const query = `?catalog=${slugify(catalog)}`;
+    const query = `?catalog=${catalog}`;
     const apiUrl = `${getServerApiUrl(`/api/posts${query}`)}`;
+
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
@@ -29,8 +29,14 @@ export async function getPostsByCatalog(catalog: string): Promise<IPost[]> {
   }
 }
 export async function getAllNews(): Promise<IPost[]> {
-  return getPostsByCatalog('tin');
+  const posts = await getPostsByCatalog('');
+
+  return posts.filter((p) => {
+    const catalog = p.catalog?.toLowerCase() ?? '';
+    return !catalog.includes('mẹo');
+  });
 }
+
 export async function getAllTipsAndTricks(): Promise<IPost[]> {
   return getPostsByCatalog('mẹo');
 }

@@ -104,7 +104,10 @@ export default function ClientNewsPage({ news }: { news: IPost[] }) {
               {/* Featured Section */}
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                 {/* Featured big */}
-                <div className="group relative cursor-pointer overflow-hidden rounded lg:col-span-2" onClick={() => handlePostClick(featuredPost)}>
+                <div
+                  className="group relative mb-5 cursor-pointer overflow-hidden rounded lg:col-span-2"
+                  onClick={() => handlePostClick(featuredPost)}
+                >
                   <Image
                     src={featuredPost?.imageUrl}
                     alt={featuredPost?.title}
