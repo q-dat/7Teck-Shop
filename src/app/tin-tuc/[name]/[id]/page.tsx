@@ -1,12 +1,11 @@
 export const revalidate = 18000;
 
 import { PageProps } from '@/types/type/pages/page-props';
-import { getPostsByCatalog, getPostWithFallback } from '@/services/postService';
+import { getAllCatalogs, getPostsByCatalog, getPostWithFallback } from '@/services/postService';
 import ClientPostDetailPage from './ClientPostDetailPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 import { IPost } from '@/types/type/products/post/post';
 import { buildPostDetailMetadata } from '@/metadata/id/postDetailMetadata';
-import { log } from 'console';
 
 // Dùng generateMetadata để dynamic meta
 export async function generateMetadata({ params }: PageProps) {
@@ -36,6 +35,25 @@ export default async function PostDetail({ params }: PageProps) {
 
   // Loại bỏ chính nó
   const filteredRelated = relatedPosts.filter((p) => p._id !== post._id);
+
+  // Lấy danh mục
+  const catalogs = await getAllCatalogs();
+
+  // Lấy danh mục hiện tại của bài viết
+  const currentCatalogName = post.catalog;
+
+  // Lấy bài theo từng danh mục, loại bỏ danh mục hiện tại
+  const catalogWithPosts = await Promise.all(
+    catalogs
+      .filter((catalogItem) => catalogItem.name !== currentCatalogName) // loại bỏ danh mục bài đang xem
+      .map(async (catalogItem) => {
+        const posts = await getPostsByCatalog(catalogItem.name);
+        return {
+          catalog: catalogItem,
+          posts,
+        };
+      })
+  );
 
   if (!relatedPosts || !post) {
     return <ErrorLoading />;
@@ -71,7 +89,7 @@ export default async function PostDetail({ params }: PageProps) {
     <>
       {/* JSON-LD Structured Data */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <ClientPostDetailPage relatedPosts={filteredRelated} post={post} />
+      <ClientPostDetailPage relatedPosts={filteredRelated} post={post} catalogWithPosts={catalogWithPosts} />
     </>
   );
 }

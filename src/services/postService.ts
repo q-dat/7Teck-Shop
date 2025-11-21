@@ -1,6 +1,26 @@
 import { IPost } from '@/types/type/products/post/post';
 import { getServerApiUrl } from '../../hooks/useApiUrl';
 import { getWithFallback } from './shared/getWithFallback';
+import { IPostCatalog } from '@/types/type/catalogs/post-catalog/post-catalog';
+
+export async function getAllCatalogs(): Promise<IPostCatalog[]> {
+  try {
+    const apiUrl = getServerApiUrl('/api/post-catalogs');
+
+    const res = await fetch(apiUrl, {
+      cache: 'force-cache',
+      next: { revalidate: 1800 },
+    });
+
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+    return Array.isArray(data.postCatalogs) ? data.postCatalogs : [];
+  } catch (error) {
+    console.error('Lỗi khi lấy danh mục Posts:', error);
+    return [];
+  }
+}
 
 export async function getPostsByCatalog(catalog: string): Promise<IPost[]> {
   try {
