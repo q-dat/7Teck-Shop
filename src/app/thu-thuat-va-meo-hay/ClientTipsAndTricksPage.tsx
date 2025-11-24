@@ -100,10 +100,10 @@ export default function ClientTipsAndTricksPage({ tricks }: { tricks: IPost[] })
           ) : (
             <div className="w-full">
               {/* Featured Section */}
-              <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                 {/* Featured big */}
                 <div
-                  className="group relative mb-5 cursor-pointer overflow-hidden rounded lg:col-span-2"
+                  className="group relative cursor-pointer overflow-hidden rounded border lg:col-span-2 xl:mb-5"
                   onClick={() => handlePostClick(featuredPost)}
                 >
                   <Image
@@ -122,7 +122,7 @@ export default function ClientTipsAndTricksPage({ tricks }: { tricks: IPost[] })
                 </div>
 
                 {/* Side list */}
-                <div className="space-y-4">
+                <div className="mb-5 flex flex-col gap-3">
                   {secondaryPosts.map((post) => (
                     <div key={post?._id} className="group flex cursor-pointer gap-3" onClick={() => handlePostClick(post)}>
                       <Image
@@ -130,7 +130,7 @@ export default function ClientTipsAndTricksPage({ tricks }: { tricks: IPost[] })
                         alt={post?.title}
                         width={120}
                         height={80}
-                        className="h-[80px] w-[120px] flex-shrink-0 rounded object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="h-[80px] w-[120px] flex-shrink-0 rounded border object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                       <div>
                         <h3 className="line-clamp-2 text-sm font-semibold group-hover:text-primary">{post?.title}</h3>
@@ -144,7 +144,7 @@ export default function ClientTipsAndTricksPage({ tricks }: { tricks: IPost[] })
               </div>
 
               {/* Remaining posts grid */}
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
                 {remainingPosts.map((post) => (
                   <div
                     key={post?._id}
@@ -157,7 +157,7 @@ export default function ClientTipsAndTricksPage({ tricks }: { tricks: IPost[] })
                         alt={post?.title}
                         width={300}
                         height={200}
-                        className="h-[180px] w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="h-[180px] w-full border object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                     </div>
                     <div className="p-3">
