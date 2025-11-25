@@ -44,14 +44,14 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
         img: defaultVariant.img,
         price: defaultVariant.price,
         color: defaultVariant.color,
-        ram: config?.ram ?? 'N/A',
-        cpu: config?.cpu_chip ?? 'N/A',
+        ram: config?.ram ?? '',
+        cpu: config?.cpu_chip ?? '',
         sale: defaultVariant.sale,
         status: defaultVariant.status,
         variants: group.variants.map((v) => ({
           ...v,
-          ram: config?.ram ?? 'N/A',
-          cpu: config?.cpu_chip ?? 'N/A',
+          ram: config?.ram ?? '',
+          cpu: config?.cpu_chip ?? '',
         })),
       };
     });

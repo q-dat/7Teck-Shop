@@ -65,7 +65,7 @@ function generateCardsFromResults(products: CachedItem[]): string {
                <img src="${product.image}" alt="${product.name}" class="w-20 h-20 object-contain mb-3 rounded-md bg-white">
                <div class="w-full">
                    <p class="text-gray-800 font-medium text-xs">${product.name}</p>
-                   <p class="text-gray-500 text-xs mb-1">Màu: ${product.color || 'N/A'}</p>
+                   <p class="text-gray-500 text-xs mb-1">Màu: ${product.color || ''}</p>
                    <p class="text-price font-semibold text-sm">${((product.price || 0) * 1000).toLocaleString('vi-VN')} VNĐ</p>
                    <span class="text-primary text-xs font-medium hover:underline">Xem chi tiết</span>
                  </div>
