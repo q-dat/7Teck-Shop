@@ -68,20 +68,31 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
       }
 
       if (data.length > 0) {
-        const segmentPaths = data.map((item: Item) => {
+        const segmentPaths = data.flatMap((item: Item) => {
           const slug = slugify(item[endpoint.nameField] || '');
           const lastModified = item.updatedAt ? new Date(item.updatedAt) : new Date();
 
-          const url = endpoint.includeIdInUrl
-            ? `https://www.7teck.vn/${endpoint.path}/${slug}/${item._id}`
-            : `https://www.7teck.vn/${endpoint.path}/${slug}`;
-
-          return {
+          const baseEntry = (url: string): MetadataRoute.Sitemap[number] => ({
             url,
             lastModified,
-            changeFrequency: 'daily' as const,
+            changeFrequency: 'daily',
             priority: 0.7,
-          };
+          });
+
+          // 1) URL chính: /path/slug/id
+          const mainUrl = `https://www.7teck.vn/${endpoint.path}/${slug}/${item._id}`;
+
+          // 2) URL base/name: /path/slug
+          const nameOnlyUrl = `https://www.7teck.vn/${endpoint.path}/${slug}`;
+
+          // 3) URL name/id: /slug/id
+          const nameIdUrl = `https://www.7teck.vn/${slug}/${item._id}`;
+
+          return [
+            baseEntry(mainUrl), // dạng chính
+            baseEntry(nameOnlyUrl), // dạng slug
+            baseEntry(nameIdUrl), // dạng slug/id rút gọn
+          ];
         });
 
         paths.push(...segmentPaths);

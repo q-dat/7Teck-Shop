@@ -70,5 +70,14 @@ export default function ClientWindowsPage({ groupedWindows }: { groupedWindows: 
     setMappedWindows(mapGroupedWindows(data));
   };
 
-  return <ClientProductPage products={mappedWidnows} title="Laptop" basePath="windows" brands={brands} onBrandSelect={handleBrandSelect} />;
+  return (
+    <ClientProductPage
+      products={mappedWidnows}
+      title="Laptop"
+      //  basePath="windows"
+      basePath=""
+      brands={brands}
+      onBrandSelect={handleBrandSelect}
+    />
+  );
 }

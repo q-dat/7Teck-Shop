@@ -37,7 +37,7 @@ type ProductPageProps = {
 // Danh sách trạng thái hết hàng
 const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
 
-export default function ClientUsedProductByCatalogPage({ products, title, basePath }: ProductPageProps) {
+export default function ClientUsedProductByCatalogPage({ products, title }: ProductPageProps) {
   const [loading, setLoading] = useState(true);
   // Image error
   const fallbackSrc = imageRepresent.Fallback;
@@ -74,7 +74,8 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
               ) : filtered.length > 0 ? (
                 filtered.map((product) => {
                   const slug = slugify(product.name);
-                  const url = `/${basePath}/${slug}/${product._id}`;
+                  // const url = `/${basePath}/${slug}/${product._id}`;
+                  const url = `/${slug}/${product._id}`;
                   // handleImageError
                   const isErrored = isImageErrored(product._id);
                   const src = isErrored || !product.img ? fallbackSrc : product?.img;
@@ -86,7 +87,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                       className="group relative flex h-full w-full flex-col justify-between rounded-md border border-primary-lighter text-black"
                     >
                       <div className="w-full">
-                        <Link className="relative" aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={url}>
+                        <Link className="relative" target="_blank" aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={url}>
                           {/* Product Image */}
                           <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                             <Image
@@ -171,7 +172,8 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                               price: product?.price,
                               ram: product?.ram,
                               color: product?.color,
-                              link: `${basePath}/${slugify(product.name)}/${product._id}`,
+                              // link: `${basePath}/${slugify(product.name)}/${product._id}`,
+                              link: `/${slugify(product.name)}/${product._id}`,
                             };
                             localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                             window.location.href = '/thanh-toan';

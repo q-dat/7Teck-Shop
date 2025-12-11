@@ -44,13 +44,5 @@ export default function ClientWindowsDetailPage({ win }: { win: IWindows }) {
     catalog: win.windows_catalog_id as unknown as Record<string, ProductCatalogGroup>,
     catalogContent: win.windows_catalog_id?.w_cat_content ?? '',
   }));
-  return (
-    <ClientProductDetailPage
-      product={mappedProduct}
-      fieldMap={windowsFieldMap}
-      namePrefix="Laptop"
-      basePath="windows"
-      relatedProducts={mappedRelated}
-    />
-  );
+  return <ClientProductDetailPage product={mappedProduct} fieldMap={windowsFieldMap} namePrefix="Laptop" relatedProducts={mappedRelated} />;
 }

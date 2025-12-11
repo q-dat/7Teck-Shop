@@ -65,6 +65,13 @@ export default function ClientTabletPage({ groupedTablets }: { groupedTablets: G
   };
 
   return (
-    <ClientProductPage products={mappedTabelets} title="Máy Tính Bảng" basePath="may-tinh-bang" brands={brands} onBrandSelect={handleBrandSelect} />
+    <ClientProductPage
+      products={mappedTabelets}
+      title="Máy Tính Bảng"
+      //  basePath="may-tinh-bang"
+      basePath=""
+      brands={brands}
+      onBrandSelect={handleBrandSelect}
+    />
   );
 }

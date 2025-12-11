@@ -50,12 +50,11 @@ interface ClientProductDetailPageProps {
   product: Product;
   fieldMap: FieldMap[];
   namePrefix: string;
-  basePath: string;
   relatedProducts?: Product[];
 }
 const EXCLUDED_STATUSES = ['Ngừng kinh doanh', 'Hết hàng', 'Ngưng bán'];
 
-export default function ClientProductDetailPage({ product, fieldMap, namePrefix, basePath, relatedProducts }: ClientProductDetailPageProps) {
+export default function ClientProductDetailPage({ product, fieldMap, namePrefix, relatedProducts }: ClientProductDetailPageProps) {
   const [selectedImage, setSelectedImage] = useState<string | null | undefined>(null);
   // check sản phẩm có hợp lệ để mua không
   const isExcluded = product?.status && EXCLUDED_STATUSES.includes(product.status);
@@ -297,7 +296,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                           .map((item) => (
                             <Link
                               key={item._id}
-                              href={`/${basePath}/${slugify(item.name)}/${item._id}`}
+                              href={`/${slugify(item.name)}/${item._id}`}
                               className="flex flex-row items-center justify-center gap-2 rounded-md border border-primary/50 bg-white px-2 py-1 shadow transition-all hover:scale-105 hover:border-dashed hover:shadow-md"
                             >
                               <Image src={item.img} alt={item.name} width={40} height={40} className="h-[40px] w-[40px] object-contain" />
@@ -340,7 +339,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                         price: product?.price,
                         ram: product?.ram,
                         color: product?.color,
-                        link: `${basePath}/${slugify(product?.name)}/${product?._id}`,
+                        link: `${slugify(product?.name)}/${product?._id}`,
                       };
                       localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                       window.location.href = '/thanh-toan';
@@ -358,7 +357,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                     {/* Bên phải */}
                     <div className="flex flex-row items-center gap-1 text-blue-900">
                       <span className="text-sm font-medium">Chia sẽ sản phẩm này:</span>
-                      <button aria-label="Chia sẻ sản phẩm" onClick={() => handleProductShare(basePath, product.name, product._id)}>
+                      <button aria-label="Chia sẻ sản phẩm" onClick={() => handleProductShare(product.name, product._id)}>
                         <FaFacebookSquare className="text-xl" />
                       </button>
                     </div>

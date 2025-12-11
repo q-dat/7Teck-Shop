@@ -72,5 +72,14 @@ export default function ClientMacbookPage({ groupedMacbook }: { groupedMacbook: 
     setMappedMacbook(mapGroupedMacbook(data));
   };
 
-  return <ClientProductPage products={mappedMacbook} title="Laptop" basePath="macbook" brands={brands} onBrandSelect={handleBrandSelect} />;
+  return (
+    <ClientProductPage
+      products={mappedMacbook}
+      title="Laptop"
+      // basePath="macbook"
+      basePath=""
+      brands={brands}
+      onBrandSelect={handleBrandSelect}
+    />
+  );
 }

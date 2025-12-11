@@ -45,13 +45,5 @@ export default function ClientTabletDetailPage({ tablet }: { tablet: ITablet }) 
     catalogContent: tablet.tablet_catalog_id?.t_cat_content ?? '',
   }));
 
-  return (
-    <ClientProductDetailPage
-      product={mappedProduct}
-      fieldMap={tabletFieldMap}
-      namePrefix="Máy Tính Bảng"
-      basePath="may-tinh-bang"
-      relatedProducts={mappedRelated}
-    />
-  );
+  return <ClientProductDetailPage product={mappedProduct} fieldMap={tabletFieldMap} namePrefix="Máy Tính Bảng" relatedProducts={mappedRelated} />;
 }

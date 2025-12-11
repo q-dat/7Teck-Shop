@@ -91,7 +91,7 @@ export default function ClientProductFC({ products, category, loading: externalL
                   key={product._id}
                   className="group relative flex h-full w-[185px] flex-col justify-between rounded-md border border-primary-lighter text-black xl:w-[195px]"
                 >
-                  <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`${category.url}/${productUrl}/${product._id}`}>
+                  <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" target="_blank" href={`/${productUrl}/${product._id}`}>
                     <div className="h-[200px] w-full cursor-pointer overflow-hidden">
                       <Image
                         height={200}
@@ -109,7 +109,8 @@ export default function ClientProductFC({ products, category, loading: externalL
                       <Link
                         aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
                         className="w-full cursor-pointer"
-                        href={`${category.url}/${productUrl}/${product._id}`}
+                        target="_blank"
+                        href={`/${productUrl}/${product._id}`}
                       >
                         <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
                           <span>{category.name}</span>&nbsp;<span>{product.name}</span>
@@ -149,7 +150,7 @@ export default function ClientProductFC({ products, category, loading: externalL
                             price: product?.price,
                             ram: product?.ram,
                             color: product?.color,
-                            link: `${category.url}/${productUrl}/${product._id}`,
+                            link: `/${productUrl}/${product._id}`,
                           };
                           localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                           window.location.href = '/thanh-toan';

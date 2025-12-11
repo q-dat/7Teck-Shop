@@ -63,5 +63,14 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
     setMappedPhones(mapGroupedPhones(data));
   };
 
-  return <ClientProductPage products={mappedPhones} title="Điện Thoại" basePath="dien-thoai" brands={brands} onBrandSelect={handleBrandSelect} />;
+  return (
+    <ClientProductPage
+      products={mappedPhones}
+      title="Điện Thoại"
+      // basePath="dien-thoai"
+      basePath=""
+      brands={brands}
+      onBrandSelect={handleBrandSelect}
+    />
+  );
 }

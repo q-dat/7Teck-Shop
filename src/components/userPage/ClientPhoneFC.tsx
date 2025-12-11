@@ -112,7 +112,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                     key={phone?._id}
                     className="group relative flex h-full w-[185px] flex-col justify-between rounded-md border border-primary-lighter text-black xl:w-[195px]"
                   >
-                    <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/dien-thoai/${phoneUrl}/${phone?._id}`}>
+                    <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/${phoneUrl}/${phone?._id}`}>
                       <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                         <Image
                           height={200}
@@ -133,7 +133,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                         <Link
                           aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
                           className="w-full cursor-pointer"
-                          href={`/dien-thoai/${phoneUrl}/${phone?._id}`}
+                          href={`/${phoneUrl}/${phone?._id}`}
                         >
                           <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] text-black">
                             <FaRegEye />

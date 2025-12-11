@@ -99,7 +99,6 @@ function PhoneModel({ scrollY, modelScale }: PhoneModelProps) {
 export default function ZigzagSection({ mostViewedPhones, loading }: ClientPhoneProps) {
   const [scroll, setScroll] = useState(0);
   const [modelScale] = useState(5); // Fixed scale cho desktop large
-  const basePath = 'dien-thoai';
   const { scrollRef, isLeftVisible, isRightVisible, hasOverflow, scrollBy } = useScroll();
   //  handleImageError
   const fallbackSrc = imageRepresent.Fallback;
@@ -252,7 +251,7 @@ export default function ZigzagSection({ mostViewedPhones, loading }: ClientPhone
                             className="group relative flex h-full w-[240px] flex-col justify-between rounded-md border border-primary-lighter text-white"
                           >
                             {/* Product Image */}
-                            <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/dien-thoai/${phoneUrl}/${phone?._id}`}>
+                            <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" target="_blank" href={`/${phoneUrl}/${phone?._id}`}>
                               <div className="h-[240px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                                 <Image
                                   height={240}
@@ -272,7 +271,7 @@ export default function ZigzagSection({ mostViewedPhones, loading }: ClientPhone
                                 <Link
                                   aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
                                   className="w-full cursor-pointer"
-                                  href={`/dien-thoai/${phoneUrl}/${phone?._id}`}
+                                  href={`/${phoneUrl}/${phone?._id}`}
                                 >
                                   <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px]">
                                     <FaRegEye />
@@ -329,7 +328,7 @@ export default function ZigzagSection({ mostViewedPhones, loading }: ClientPhone
                                       price: phone?.price,
                                       ram: phone?.phone_catalog_id?.configuration_and_memory?.ram,
                                       color: phone?.color,
-                                      link: `${basePath}/${slugify(phone?.name)}/${phone?._id}`,
+                                      link: `/${slugify(phone?.name)}/${phone?._id}`,
                                     };
                                     localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                                     window.location.href = '/thanh-toan';

@@ -201,6 +201,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                         <Link
                           className="relative"
                           aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh"
+                          target="_blank"
                           href={`${basePath}/${productUrl}/${subUrl}`}
                         >
                           {/* Product Image */}

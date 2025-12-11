@@ -45,13 +45,5 @@ export default function ClientMacbookDetailPage({ mac }: { mac: IMacbook }) {
     catalogContent: mac.macbook_catalog_id?.m_cat_content ?? '',
   }));
 
-  return (
-    <ClientProductDetailPage
-      product={mappedProduct}
-      fieldMap={macbookFieldMap}
-      namePrefix="Laptop"
-      basePath="macbook"
-      relatedProducts={mappedRelated}
-    />
-  );
+  return <ClientProductDetailPage product={mappedProduct} fieldMap={macbookFieldMap} namePrefix="Laptop" relatedProducts={mappedRelated} />;
 }
