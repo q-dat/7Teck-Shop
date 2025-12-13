@@ -1,12 +1,12 @@
 'use client';
+
 import { useScroll } from '@/hooks/useScroll';
 import { slugify } from '@/utils/slugify';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { Button } from 'react-daisyui';
 import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
-import { IoIosArrowForward } from 'react-icons/io';
-import imageRepresent from '../../../../public/image-represent';
+import { FaShoppingCart, FaArrowRight } from 'react-icons/fa';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -21,39 +21,34 @@ export interface Product {
   color: string;
   ram: string;
 }
+
 interface ClientProductFCProps {
   products: Product[];
   category: {
-    name: string; // Ví dụ: "Máy Tính Bảng", "Macbook", "Windows"
-    url: string; // Ví dụ: "/may-tinh-bang", "/macbook", "/windows"
-    title: string; // Ví dụ: "Máy Tính Bảng - Giảm giá mạnh"
-    ariaLabel: string; // Ví dụ: "Xem thêm sản phẩm Máy Tính Bảng"
+    name: string;
+    url: string;
+    title: string;
+    ariaLabel: string;
   };
-  loading?: boolean; // Thêm prop loading tùy chọn
+  loading?: boolean;
 }
 
 export default function ClientProductFC({ products, category, loading: externalLoading }: ClientProductFCProps) {
   const { scrollRef, isLeftVisible, isRightVisible, scrollBy } = useScroll();
   const [internalLoading, setInternalLoading] = useState(true);
 
-  // Sử dụng externalLoading nếu được truyền, nếu không dùng internalLoading
   const loading = externalLoading !== undefined ? externalLoading : internalLoading;
 
-  // Kiểm tra trạng thái tải nội bộ nếu không có externalLoading
   useEffect(() => {
     if (externalLoading === undefined) {
-      if (products.length === 0) {
-        setInternalLoading(true);
-      } else {
-        setInternalLoading(false);
-      }
+      setInternalLoading(products.length === 0);
     }
   }, [products, externalLoading]);
 
-  // Lọc các sản phẩm có sale
-  const sortedProducts = products.filter((product) => product.sale);
+  const sortedProducts = React.useMemo(() => {
+    return [...products].sort((a, b) => (b.sale ? 1 : 0) - (a.sale ? 1 : 0));
+  }, [products]);
 
-  //  placeholder
   if (loading) {
     return (
       <div className="p-0 xl:px-desktop-padding">
@@ -65,146 +60,158 @@ export default function ClientProductFC({ products, category, loading: externalL
     );
   }
 
-  if (sortedProducts.length === 0) {
-    return null;
-  }
+  if (sortedProducts.length === 0) return null;
 
   return (
-    <div className="mb-10 p-0 xl:px-desktop-padding">
-      {/* Tiêu đề */}
-      <div
-        role="region"
-        aria-label={`Danh sách giảm giá mạnh ${category.name}`}
-        className="flex w-full flex-col items-start justify-center px-2 xl:rounded-t-lg"
-      >
-        <h1 className="pb-2 text-2xl font-semibold">{category.title}</h1>
+    <div className="w-full border-t border-black/5 bg-white px-2 py-8 xl:p-0 xl:px-desktop-padding">
+      {/* --- Header Section: Clean & Sharp --- */}
+      <div className="mb-8 mt-2 flex flex-col items-start justify-between gap-2 md:flex-row md:items-end xl:px-0">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-3xl font-black uppercase tracking-tighter text-black xl:text-4xl">{category.title}</h2>
+          <div className="h-1 w-12 rounded-sm bg-black"></div> {/* Divider đen đậm */}
+          <p className="mt-1 text-sm font-medium text-gray-500">Lựa chọn tốt nhất dành cho bạn</p>
+        </div>
+
+        <Link
+          href={category.url}
+          aria-label={category.ariaLabel}
+          className="group flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-black transition-all hover:opacity-70"
+        >
+          Xem tất cả
+          <span className="flex h-6 w-6 items-center justify-center rounded-md border border-black transition-all group-hover:bg-black group-hover:text-white">
+            <MdArrowForwardIos className="text-xs" />
+          </span>
+        </Link>
       </div>
 
-      {/* Phần sản phẩm */}
-      <div className="relative">
-        <section ref={scrollRef} className="w-full">
-          <div className="grid w-full grid-flow-col grid-rows-1 items-center justify-start gap-[10px] overflow-x-auto scroll-smooth border-[10px] border-transparent bg-white scrollbar-hide xl:rounded-t-lg">
-            {sortedProducts.map((product) => {
-              const productUrl = slugify(product.name);
-              return (
-                <div
-                  key={product._id}
-                  className="group relative flex h-full w-[185px] flex-col justify-between rounded-md border border-primary-lighter text-black xl:w-[195px]"
-                >
-                  <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" target="_blank" href={`/${productUrl}/${product._id}`}>
-                    <div className="h-[200px] w-full cursor-pointer overflow-hidden">
-                      <Image
-                        height={200}
-                        width={200}
-                        alt="Hình ảnh"
-                        loading="lazy"
-                        className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out group-hover:scale-110"
-                        src={product.image}
-                      />
-                    </div>
-                  </Link>
-                  {/* Product Info */}
-                  <div className="flex h-full w-full flex-col items-start justify-between p-1">
-                    <div className="w-full">
-                      <Link
-                        aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
-                        className="w-full cursor-pointer"
-                        target="_blank"
-                        href={`/${productUrl}/${product._id}`}
-                      >
-                        <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-secondary">
-                          <span>{category.name}</span>&nbsp;<span>{product.name}</span>
-                        </p>
-                      </Link>
-                      {/* Product Specifications */}
-                      <div className="py-1 text-prod-name-mobile xl:text-prod-name-desktop">
-                        {[
-                          { label: 'Màu', value: product?.color },
-                          { label: 'RAM', value: product?.ram },
-                        ]
-                          .filter((item) => item.value?.toString().trim())
-                          .map((item, index) => (
-                            <p key={index}>
-                              <span className="rounded-sm bg-primary-lighter px-1 font-semibold">{item.label}:</span>
-                              &nbsp;<span className="font-light">{item.value}</span>
-                            </p>
-                          ))}
-                      </div>
-                    </div>
-                    {/* Price and Buy Now Button */}
-                    <div className="w-full">
-                      <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
-                        <span className="font-semibold text-price">{formatCurrency(product?.price)}</span> &nbsp;
-                        {product?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
-                      </p>
-                      <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
-                      <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
-                      <Button
-                        size="xs"
-                        className="mt-1 w-full rounded-md border border-primary/20 bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20"
-                        onClick={() => {
-                          const productToBuy = {
-                            _id: product?._id,
-                            name: product?.name,
-                            img: product?.image,
-                            price: product?.price,
-                            ram: product?.ram,
-                            color: product?.color,
-                            link: `/${productUrl}/${product._id}`,
-                          };
-                          localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
-                          window.location.href = '/thanh-toan';
-                        }}
-                      >
-                        Mua Ngay
-                      </Button>
-                    </div>
-                  </div>
+      {/* --- Product Carousel --- */}
+      <div className="group/section relative">
+        {/* Navigation Buttons: Square & Black */}
+        {isLeftVisible && (
+          <button
+            onClick={() => scrollBy(-320)}
+            className="absolute -left-4 top-1/2 z-30 hidden -translate-y-1/2 rounded-md border border-black bg-white p-3 text-black transition-all hover:bg-black hover:text-white xl:block"
+          >
+            <MdArrowBackIosNew size={20} />
+          </button>
+        )}
 
+        {isRightVisible && (
+          <button
+            onClick={() => scrollBy(320)}
+            className="absolute -right-4 top-1/2 z-30 hidden -translate-y-1/2 rounded-md border border-black bg-white p-3 text-black transition-all hover:bg-black hover:text-white xl:block"
+          >
+            <MdArrowForwardIos size={20} />
+          </button>
+        )}
+
+        {/* Scrollable Container */}
+        <section ref={scrollRef} className="flex touch-pan-x snap-x snap-mandatory gap-2 overflow-x-auto px-2 pb-10 pt-2 scrollbar-hide">
+          {sortedProducts.map((product) => {
+            const productUrl = `/${slugify(product.name)}/${product._id}`;
+            const discountPercentage =
+              product.sale && product.price > product.sale ? Math.round(((product.price - product.sale) / product.price) * 100) : 0;
+
+            return (
+              <div
+                key={product._id}
+                // Thay đổi chính: Bỏ shadow mềm, dùng border trong suốt chuyển sang đen khi hover
+                className="group relative flex h-full min-w-[200px] max-w-[200px] snap-start flex-col justify-between overflow-hidden rounded-md border border-gray-200 bg-white transition-all duration-300 hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] xl:min-w-[260px] xl:max-w-[260px]"
+              >
+                {/* Badges */}
+                <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
+                  {discountPercentage > 0 && (
+                    <span className="w-fit rounded-md bg-black px-2 py-1 text-[12px] font-bold text-white">-{discountPercentage}%</span>
+                  )}
                   {product.status && (
-                    <div className="absolute -left-[3px] top-0 z-20">
-                      <Image height={100} width={60} alt="" loading="lazy" className="h-full w-[60px]" src={imageRepresent.Status} />
-                      <p className="absolute top-[1px] w-full pl-2 text-xs font-medium text-white">{product.status}</p>
-                    </div>
+                    <span className="w-fit rounded-md border border-black bg-white px-2 py-1 text-[10px] font-bold uppercase text-black">
+                      {product.status}
+                    </span>
                   )}
                 </div>
-              );
-            })}
-          </div>
+
+                {/* Image Area */}
+                <Link href={productUrl} target="_blank" className="relative block aspect-square w-full overflow-hidden bg-white p-3">
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    width={260}
+                    height={260}
+                    // Bỏ mix-blend nếu nền đã trắng, giữ object-contain
+                    className="h-full w-full object-contain transition-transform duration-500 ease-in-out group-hover:scale-110"
+                    loading="lazy"
+                  />
+                </Link>
+
+                {/* Content Area */}
+                <div className="flex flex-1 flex-col p-2">
+                  {/* Title */}
+                  <Link href={productUrl} target="_blank" title={product.name}>
+                    <h3 className="line-clamp-2 min-h-[48px] text-sm font-bold leading-tight text-gray-900 transition-colors hover:text-black xl:text-lg">
+                      {product.name}
+                    </h3>
+                  </Link>
+
+                  {/* Specs: Clean Text, No Background Pills */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
+                    {[product.ram, product.color].filter(Boolean).map((spec, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        {i > 0 && <span className="h-3 w-[1px] bg-black"></span>} {/* Separator line */}
+                        <span>{spec}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Price Area */}
+                  <div className="mt-4 flex flex-col">
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-lg font-black text-price xl:text-xl">{formatCurrency(product.sale || product.price)}</span>
+                      {product.sale !== 0 && <del className="text-xs font-medium text-gray-400 decoration-1">{formatCurrency(product.price)}</del>}
+                    </div>
+                    <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
+                    <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
+                  </div>
+
+                  {/* Action Button: Solid Black, Square */}
+                  <Button
+                    size="sm"
+                    className="mt-4 w-full gap-2 rounded-md border-none bg-black text-white transition-all duration-300 hover:bg-gray-800 xl:translate-y-2 xl:opacity-0 xl:group-hover:translate-y-0 xl:group-hover:opacity-100"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const productToBuy = {
+                        _id: product._id,
+                        name: product.name,
+                        img: product.image,
+                        price: product.sale || product.price,
+                        ram: product.ram,
+                        color: product.color,
+                        link: productUrl,
+                      };
+                      localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
+                      window.location.href = '/thanh-toan';
+                    }}
+                  >
+                    <FaShoppingCart size={14} /> MUA NGAY
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Card "Xem Thêm": Minimalist Border Style */}
+          <Link
+            href={category.url}
+            className="group flex min-w-[120px] snap-start items-center justify-center rounded-md border border-dashed border-gray-300 bg-white transition-all hover:border-black hover:bg-black hover:text-white xl:min-w-[180px]"
+          >
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 transition-colors group-hover:border-white">
+                <FaArrowRight size={16} />
+              </div>
+              <span className="text-sm font-bold uppercase tracking-wider">Xem tất cả</span>
+            </div>
+          </Link>
         </section>
-
-        {/* Nút điều hướng */}
-        <div className="absolute top-1/2 flex w-full items-center justify-between">
-          <div className="relative w-full">
-            {isLeftVisible && (
-              <button
-                aria-label="Cuộn sang trái"
-                onClick={() => scrollBy(-390)}
-                className="absolute left-0 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 shadow hover:scale-110"
-              >
-                <MdArrowBackIosNew className="text-2xl" />
-              </button>
-            )}
-            {isRightVisible && (
-              <button
-                aria-label="Cuộn sang phải"
-                onClick={() => scrollBy(390)}
-                className="absolute right-0 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 shadow hover:scale-110"
-              >
-                <MdArrowForwardIos className="text-2xl" />
-              </button>
-            )}
-          </div>
-        </div>
       </div>
-
-      {/* Link xem thêm */}
-      <Link href={category.url} aria-label={category.ariaLabel}>
-        <button className="flex w-full cursor-pointer items-center justify-center bg-gradient-to-r from-white via-secondary to-white py-1 text-sm text-white xl:rounded-b-lg">
-          Xem Thêm {category.name}
-          <IoIosArrowForward className="text-xl" />
-        </button>
-      </Link>
     </div>
   );
 }

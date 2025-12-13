@@ -104,7 +104,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
       category: {
         name: 'Laptop Windows',
         url: '/windows',
-        title: 'Windows - Giảm giá mạnh',
+        title: 'Laptop Windows - Giảm giá mạnh',
         ariaLabel: 'Xem thêm sản phẩm laptop Windows',
       },
     },
