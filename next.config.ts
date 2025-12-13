@@ -2,6 +2,10 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false, // false → build production sẽ không tạo source map → file nhẹ hơn, deploy nhanh hơn, kẻ khác cũng khó “đọc” code của bạn hơn.
+  // KHẮC PHỤC XUNG ĐỘT TURBOPACK vs WEBPACK CUSTOM CONFIG
+  // Thêm 'turbopack: {}' để tắt cảnh báo và cho phép build tiếp tục.
+  // Điều này là cần thiết vì bạn đang dùng Next.js 16.
+  turbopack: {},
   // Cấu hình Webpack cho dev
   webpack(config, { dev }) {
     if (dev) {
