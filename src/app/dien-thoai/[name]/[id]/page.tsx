@@ -1,17 +1,22 @@
 export const revalidate = 18000;
 
 import { getPhoneWithFallback } from '@/services/products/phoneService';
-import { PageProps } from '@/types/type/pages/page-props';
 import { IPhone } from '@/types/type/products/phone/phone';
 import ClientPhoneDetailPage from './ClientPhoneDetailPage';
 import { slugify } from '@/utils/slugify';
 import { generatePhoneMetadata } from '@/metadata/id/phoneMetadata';
 import { StructuredData } from '@/metadata/structuredData';
+import { Metadata } from 'next';
+
+type RouteParams = {
+  slug: string;
+  id: string;
+};
 
 // SEO metadata generation for phone detail page
-export async function generateMetadata({ params }: PageProps) {
-  const resolvedParams = await params;
-  const id = resolvedParams.id;
+export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
+  const { id } = await params;
+
   const phone: IPhone | null = await getPhoneWithFallback(id);
 
   if (!phone) {
@@ -25,15 +30,15 @@ export async function generateMetadata({ params }: PageProps) {
   return generatePhoneMetadata(phone);
 }
 
-export default async function PhoneDetailPage({ params }: PageProps) {
-  const resolvedParams = await params;
-  const id = resolvedParams.id;
+export default async function PhoneDetailPage({ params }: { params: Promise<RouteParams> }) {
+  const { id } = await params;
+
   const phone: IPhone | null = await getPhoneWithFallback(id);
 
   if (!phone) {
     return <div className="mt-10 text-center">Không có dữ liệu.</div>;
   }
-  //
+
   const jsonLd = {
     '@context': 'https://schema.org/',
     '@type': 'Product',

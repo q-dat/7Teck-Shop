@@ -1,16 +1,20 @@
 export const revalidate = 18000;
 
-import { PageProps } from '@/types/type/pages/page-props';
-import React from 'react';
 import { slugify } from '@/utils/slugify';
 import ClientWindowsDetailPage from './ClientWindowsDetailPage';
 import { IWindows } from '@/types/type/products/windows/windows';
 import { getWindowsWithFallback } from '@/services/products/windowsService';
 import { generateWindowsMetadata } from '@/metadata/id/windowsMetadata';
 import { StructuredData } from '@/metadata/structuredData';
+import { Metadata } from 'next';
+
+type RouteParams = {
+  slug: string;
+  id: string;
+};
 
 // SEO metadata generation for windows detail page
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
   const resolvedParams = await params;
   const id = resolvedParams.id;
   const win: IWindows | null = await getWindowsWithFallback(id);
@@ -26,7 +30,7 @@ export async function generateMetadata({ params }: PageProps) {
   return generateWindowsMetadata(win);
 }
 
-export default async function WindowsDetailPage({ params }: PageProps) {
+export default async function WindowsDetailPage({ params }: { params: Promise<RouteParams> }) {
   const resolvedParams = await params;
   const id = resolvedParams.id;
   const win: IWindows | null = await getWindowsWithFallback(id);

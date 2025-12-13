@@ -1,18 +1,21 @@
 export const revalidate = 18000;
 
-import { PageProps } from '@/types/type/pages/page-props';
-import React from 'react';
 import ClientMacbookDetailPage from './ClientMacbookDetailPage';
 import { slugify } from '@/utils/slugify';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
 import { getMacbookWithFallback } from '@/services/products/macbookService';
 import { generateMacbookMetadata } from '@/metadata/id/macbookMetadata';
 import { StructuredData } from '@/metadata/structuredData';
+import { Metadata } from 'next';
 
+type RouteParams = {
+  slug: string;
+  id: string;
+};
 // SEO metadata generation for macbook detail page
-export async function generateMetadata({ params }: PageProps) {
-  const resolvedParams = await params;
-  const id = resolvedParams.id;
+export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
+  const { id } = await params;
+
   const mac: IMacbook | null = await getMacbookWithFallback(id);
 
   if (!mac) {
@@ -26,9 +29,9 @@ export async function generateMetadata({ params }: PageProps) {
   return generateMacbookMetadata(mac);
 }
 
-export default async function MacbookDetailPage({ params }: PageProps) {
-  const resolvedParams = await params;
-  const id = resolvedParams.id;
+export default async function MacbookDetailPage({ params }: { params: Promise<RouteParams> }) {
+  const { id } = await params;
+
   const mac: IMacbook | null = await getMacbookWithFallback(id);
 
   if (!mac) {

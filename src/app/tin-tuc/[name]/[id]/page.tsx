@@ -1,16 +1,21 @@
 export const revalidate = 18000;
 
-import { PageProps } from '@/types/type/pages/page-props';
 import { getAllCatalogs, getPostsByCatalog, getPostWithFallback } from '@/services/postService';
 import ClientPostDetailPage from './ClientPostDetailPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 import { IPost } from '@/types/type/products/post/post';
 import { buildPostDetailMetadata } from '@/metadata/id/postDetailMetadata';
+import { Metadata } from 'next';
+
+type RouteParams = {
+  slug: string;
+  id: string;
+};
 
 // Dùng generateMetadata để dynamic meta
-export async function generateMetadata({ params }: PageProps) {
-  const resolvedParams = await params;
-  const id = resolvedParams.id;
+export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
+  const { id } = await params;
+
   const post: IPost | null = await getPostWithFallback(id);
 
   if (!post) {
@@ -23,9 +28,8 @@ export async function generateMetadata({ params }: PageProps) {
   return buildPostDetailMetadata(post);
 }
 
-export default async function PostDetail({ params }: PageProps) {
-  const resolvedParams = await params;
-  const id = resolvedParams.id;
+export default async function PostDetail({ params }: { params: Promise<RouteParams> }) {
+  const { id } = await params;
 
   const post: IPost | null = await getPostWithFallback(id);
   if (!post) return <ErrorLoading />;

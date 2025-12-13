@@ -1,18 +1,21 @@
 export const revalidate = 18000;
 
-import { PageProps } from '@/types/type/pages/page-props';
-import React from 'react';
 import { slugify } from '@/utils/slugify';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 import { getTabletWithFallback } from '@/services/products/tabletService';
 import ClientTabletDetailPage from './ClientTabletDetailPage';
 import { generateTabletMetadata } from '@/metadata/id/tabletMetadata';
 import { StructuredData } from '@/metadata/structuredData';
+import { Metadata } from 'next';
 
+type RouteParams = {
+  slug: string;
+  id: string;
+};
 // SEO metadata generation for tablet detail page
-export async function generateMetadata({ params }: PageProps) {
-  const resolvedParams = await params;
-  const id = resolvedParams.id;
+export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
+  const { id } = await params;
+
   const tablet: ITablet | null = await getTabletWithFallback(id);
 
   if (!tablet) {
@@ -26,9 +29,9 @@ export async function generateMetadata({ params }: PageProps) {
   return generateTabletMetadata(tablet);
 }
 
-export default async function TabletDetailPage({ params }: PageProps) {
-  const resolvedParams = await params;
-  const id = resolvedParams.id;
+export default async function TabletDetailPage({ params }: { params: Promise<RouteParams> }) {
+  const { id } = await params;
+
   const tablet: ITablet | null = await getTabletWithFallback(id);
 
   if (!tablet) {
