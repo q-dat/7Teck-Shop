@@ -20,6 +20,13 @@ const ContactForm: React.FC = () => {
       <div className="fixed bottom-[58px] right-1 space-y-2 pl-1 xl:bottom-5 xl:right-2">
         {collapsed ? (
           <div className="flex flex-col items-end gap-1">
+            <span className="wave-text mb-1 block select-none rounded-md border border-dashed border-primary/70 bg-primary-lighter p-[3px] text-[10px] font-medium text-primary xl:hidden">
+              {`Liên Hệ Nhanh`.split('').map((char, i) => (
+                <span key={i} style={{ animationDelay: `${i * 0.1}s` }}>
+                  {char === ' ' ? '\u00A0' : char}
+                </span>
+              ))}
+            </span>
             {/* Nút mở liên hệ nhanh */}
             <button
               onClick={() => setCollapsed(false)}
@@ -45,7 +52,7 @@ const ContactForm: React.FC = () => {
                 animation: wave 1s ease-in-out infinite;
               }
             `}</style>
-            <span className="wave-text mb-1 select-none rounded-md border border-dashed border-primary/70 bg-primary-lighter p-[3px] text-[10px] font-medium text-primary">
+            <span className="wave-text mb-1 hidden select-none rounded-md border border-dashed border-primary/70 bg-primary-lighter p-[3px] text-[10px] font-medium text-primary xl:block">
               {`Liên Hệ Nhanh`.split('').map((char, i) => (
                 <span key={i} style={{ animationDelay: `${i * 0.1}s` }}>
                   {char === ' ' ? '\u00A0' : char}

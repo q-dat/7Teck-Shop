@@ -2,7 +2,7 @@
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import React from 'react';
 import { Button } from 'react-daisyui';
-import { IoIosArrowDropleft, IoIosArrowDropright } from 'react-icons/io';
+import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
 
 interface PaginationProps {
   currentPage: number;
@@ -14,52 +14,51 @@ interface PaginationProps {
 const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNextPage, onPrevPage }) => {
   if (totalPages <= 1) return null;
 
+  const buttonClass =
+    'flex min-w-[80px] items-center justify-center rounded-md border border-black bg-white text-black transition-all duration-300 hover:bg-black hover:text-white';
+  const disabledClass = 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-100 hover:text-gray-400 hover:border-gray-300';
+
   return (
-    <div className="mt-10 flex flex-row items-center justify-center gap-x-10 px-2 text-primary">
-      <div className="text-primary">
-        {currentPage > 1 ? (
-          <Button
-            className="rounded-md p-1 shadow-headerMenu shadow-gray-50"
-            color="primary"
-            size="sm"
-            // disabled={currentPage === 1}
-            onClick={() => {
-              onPrevPage();
-              scrollToTopInstantly();
-            }}
-          >
-            <span className="flex items-center justify-center gap-1">
-              <IoIosArrowDropleft className="text-xl" /> Trang Trước
-            </span>
-          </Button>
-        ) : (
-          <div className="h-[36px] w-[120px]"></div>
-        )}
-      </div>
+    // THAY ĐỔI CHÍNH: Sticky container
+    <div className="sticky bottom-[50px] z-50 w-full rounded-md border-t border-black/10 py-2 backdrop-blur-sm xl:bottom-0">
+      <div className="flex flex-row items-center justify-center gap-x-6 px-2 text-black xl:gap-x-12">
+        {/* --- Nút Trang Trước (Prev Page) --- */}
+        <Button
+          className={`${buttonClass} ${currentPage === 1 ? disabledClass : ''}`}
+          size="xs"
+          disabled={currentPage === 1}
+          onClick={() => {
+            onPrevPage();
+            scrollToTopInstantly();
+          }}
+        >
+          <span className="flex items-center justify-center gap-1 font-semibold uppercase tracking-wider">
+            <MdArrowBackIosNew size={14} className="h-4 w-4" />
+            Trước
+          </span>
+        </Button>
 
-      <div className="mx-2 flex flex-row items-center justify-center text-primary">
-        <p>{currentPage}</p> / <p>{totalPages}</p>
-      </div>
+        {/* --- Hiển thị Trang Hiện tại / Tổng số Trang --- */}
+        <div className="mx-2 flex flex-row items-baseline gap-1 text-black">
+          <span className="text-xl font-extrabold xl:text-2xl">{currentPage}</span>
+          <span className="text-base font-medium">/</span>
+          <span className="text-base font-medium">{totalPages}</span>
+        </div>
 
-      <div className="text-primary">
-        {currentPage < totalPages ? (
-          <Button
-            className="rounded-md p-1 shadow-headerMenu shadow-gray-50"
-            color="primary"
-            size="sm"
-            // disabled={currentPage === totalPages}
-            onClick={() => {
-              onNextPage();
-              scrollToTopInstantly();
-            }}
-          >
-            <span className="flex items-center justify-center gap-1">
-              Trang Tiếp <IoIosArrowDropright className="text-xl" />
-            </span>
-          </Button>
-        ) : (
-          <div className="h-[36px] w-[120px]"></div>
-        )}
+        {/* --- Nút Trang Tiếp (Next Page) --- */}
+        <Button
+          className={`${buttonClass} ${currentPage === totalPages ? disabledClass : ''}`}
+          size="xs"
+          disabled={currentPage === totalPages}
+          onClick={() => {
+            onNextPage();
+            scrollToTopInstantly();
+          }}
+        >
+          <span className="flex items-center justify-center gap-1 font-semibold uppercase tracking-wider">
+            Tiếp <MdArrowForwardIos size={14} className="h-4 w-4" />
+          </span>
+        </Button>
       </div>
     </div>
   );
