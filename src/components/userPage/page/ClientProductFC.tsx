@@ -75,7 +75,7 @@ export default function ClientProductFC({ products, category, loading: externalL
         <Link
           href={category.url}
           aria-label={category.ariaLabel}
-          className="group flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-black transition-all hover:opacity-70"
+          className="group flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-black transition-all xl:hover:opacity-70"
         >
           Xem tất cả
           <span className="flex h-6 w-6 items-center justify-center rounded-md border border-black transition-all group-hover:bg-black group-hover:text-white">
@@ -90,7 +90,7 @@ export default function ClientProductFC({ products, category, loading: externalL
         {isLeftVisible && (
           <button
             onClick={() => scrollBy(-320)}
-            className="absolute -left-4 top-1/2 z-30 hidden -translate-y-1/2 rounded-md border border-black bg-white p-3 text-black transition-all hover:bg-black hover:text-white xl:block"
+            className="absolute -left-4 top-1/2 z-30 hidden -translate-y-1/2 rounded-md border border-black bg-white p-3 text-black transition-all xl:block xl:hover:bg-black xl:hover:text-white"
           >
             <MdArrowBackIosNew size={20} />
           </button>
@@ -99,7 +99,7 @@ export default function ClientProductFC({ products, category, loading: externalL
         {isRightVisible && (
           <button
             onClick={() => scrollBy(320)}
-            className="absolute -right-4 top-1/2 z-30 hidden -translate-y-1/2 rounded-md border border-black bg-white p-3 text-black transition-all hover:bg-black hover:text-white xl:block"
+            className="absolute -right-4 top-1/2 z-30 hidden -translate-y-1/2 rounded-md border border-black bg-white p-3 text-black transition-all xl:block xl:hover:bg-black xl:hover:text-white"
           >
             <MdArrowForwardIos size={20} />
           </button>
@@ -116,7 +116,7 @@ export default function ClientProductFC({ products, category, loading: externalL
               <div
                 key={product._id}
                 // Thay đổi chính: Bỏ shadow mềm, dùng border trong suốt chuyển sang đen khi hover
-                className="group relative flex h-full min-w-[200px] max-w-[200px] snap-start flex-col justify-between overflow-hidden rounded-md border border-gray-200 bg-white transition-all duration-300 hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] xl:min-w-[260px] xl:max-w-[260px]"
+                className="group relative flex h-full min-w-[200px] max-w-[200px] snap-start flex-col justify-between overflow-hidden rounded-md border border-gray-200 bg-white transition-all duration-300 xl:min-w-[260px] xl:max-w-[260px] xl:hover:border-black xl:hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
               >
                 {/* Badges */}
                 <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
@@ -147,7 +147,7 @@ export default function ClientProductFC({ products, category, loading: externalL
                 <div className="flex flex-1 flex-col p-2">
                   {/* Title */}
                   <Link href={productUrl} target="_blank" title={product.name}>
-                    <h3 className="line-clamp-2 min-h-[48px] text-sm font-bold leading-tight text-gray-900 transition-colors hover:text-black xl:text-lg">
+                    <h3 className="line-clamp-2 min-h-[48px] text-sm font-bold leading-tight text-gray-900 transition-colors xl:text-lg xl:hover:text-black">
                       {product.name}
                     </h3>
                   </Link>
@@ -175,7 +175,7 @@ export default function ClientProductFC({ products, category, loading: externalL
                   {/* Action Button: Solid Black, Square */}
                   <Button
                     size="sm"
-                    className="mt-4 w-full gap-2 rounded-md border-none bg-black text-white transition-all duration-300 hover:bg-gray-800 xl:translate-y-2 xl:opacity-0 xl:group-hover:translate-y-0 xl:group-hover:opacity-100"
+                    className="mt-4 w-full gap-2 rounded-md border-none bg-black text-white transition-all duration-300 xl:translate-y-2 xl:opacity-0 xl:group-hover:translate-y-0 xl:group-hover:opacity-100 xl:hover:bg-gray-800"
                     onClick={(e) => {
                       e.preventDefault();
                       const productToBuy = {
@@ -201,7 +201,7 @@ export default function ClientProductFC({ products, category, loading: externalL
           {/* Card "Xem Thêm": Minimalist Border Style */}
           <Link
             href={category.url}
-            className="group flex min-w-[120px] snap-start items-center justify-center rounded-md border border-dashed border-gray-300 bg-white transition-all hover:border-black hover:bg-black hover:text-white xl:min-w-[180px]"
+            className="group flex min-w-[120px] snap-start items-center justify-center rounded-md border border-dashed border-gray-300 bg-white transition-all xl:min-w-[180px] xl:hover:border-black xl:hover:bg-black xl:hover:text-white"
           >
             <div className="flex flex-col items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 transition-colors group-hover:border-white">
