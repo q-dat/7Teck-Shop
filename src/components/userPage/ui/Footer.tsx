@@ -35,6 +35,7 @@ export default function FooterFC() {
         <div className="flex w-full flex-wrap gap-2 rounded-md bg-white p-2 text-sm text-black shadow">
           {suggestedProducts.map((product, index) => (
             <Link
+            target="_blank"
               key={index}
               href={product.url}
               className="max-w-[200px] rounded-md bg-[#f3f3f3] p-2 text-xs focus:outline-none hover:underline"
