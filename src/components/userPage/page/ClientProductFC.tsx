@@ -106,7 +106,7 @@ export default function ClientProductFC({ products, category, loading: externalL
         )}
 
         {/* Scrollable Container */}
-        <section ref={scrollRef} className="flex touch-pan-x snap-x snap-mandatory gap-2 overflow-x-auto px-2 pb-10 pt-2 scrollbar-hide">
+        <section ref={scrollRef} className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-2 pb-10 pt-2 scrollbar-hide">
           {sortedProducts.map((product) => {
             const productUrl = `/${slugify(product.name)}/${product._id}`;
             const discountPercentage =
