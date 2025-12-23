@@ -73,13 +73,16 @@ const BgFixedSection: React.FC<BgFixedSectionProps> = ({ className = '' }) => {
             <span className="font-bold">iPhone 16 Series</span> tiếp tục khẳng định đẳng cấp và mang đến trải nghiệm mượt mà cho mọi nhu cầu.
           </p>
           {/* Button */}
-          <Link
-            aria-label="Xem chi tiết iPhone 16 Series"
-            href="/dien-thoai/iphone-16-series"
-            className="rounded-full border border-white bg-white/10 px-4 py-1 text-sm font-medium uppercase backdrop-blur-md transition-transform duration-300 hover:scale-105 hover:bg-white/20 md:text-lg"
-          >
-            Thông Tin Chi tiết
-          </Link>
+          <div className="pt-4">
+            <Link
+              href="/dien-thoai/iphone-16-series"
+              aria-label="Xem chi tiết iPhone 16 Series"
+              className="group relative inline-flex items-center justify-center overflow-hidden rounded-full border border-white/30 bg-white/10 px-8 py-3 text-xs font-bold uppercase tracking-widest text-white backdrop-blur-md transition-all duration-500 hover:bg-white hover:text-black xl:px-12 xl:py-4 xl:text-sm"
+            >
+              <span className="relative z-10">Khám phá chi tiết</span>
+              <div className="absolute inset-0 z-0 translate-y-[100%] bg-white transition-transform duration-500 group-hover:translate-y-0" />
+            </Link>
+          </div>
         </div>
       </div>
     </div>

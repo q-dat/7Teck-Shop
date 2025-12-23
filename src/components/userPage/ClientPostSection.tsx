@@ -1,12 +1,15 @@
 'use client';
 
-import { slugify } from '@/utils/slugify';
+import React, { useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { Button } from 'react-daisyui';
 import { IoIosArrowForward } from 'react-icons/io';
-import { IPost } from '@/types/type/products/post/post';
-import Image from 'next/image';
 import { FaRegNewspaper } from 'react-icons/fa';
+
+import { slugify } from '@/utils/slugify';
+import { IPost } from '@/types/type/products/post/post';
 import { images } from '../../../public/images';
 
 interface ClientPostSectionProps {
@@ -14,104 +17,140 @@ interface ClientPostSectionProps {
   tricks: IPost[];
 }
 
-const urlNews = '/tin-tuc-moi-nhat';
-const urlTipsAndTricksPage = '/thu-thuat-va-meo-hay';
+/**
+ * PostCard Component: Tối ưu hóa hiển thị bài viết
+ * Sử dụng aspect-ratio 16:9 chuẩn Cinematic cho ảnh bìa
+ */
+const PostCard = ({ post, index }: { post: IPost; index: number }) => {
+  const postUrl = `/tin-tuc/${encodeURIComponent(slugify(post?.title))}/${post._id}`;
 
-export default function ClientPostSection({ news, tricks }: ClientPostSectionProps) {
-  // Shared Card Component để đồng bộ style
-
-  const PostCard = ({ post }: { post: IPost }) => (
-    <article className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-md border border-gray-200 bg-white transition-all duration-300 hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-      <Link target="_blank" href={`/tin-tuc/${encodeURIComponent(slugify(post?.title))}/${post._id}`}>
-        <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-gray-100">
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.1, duration: 0.5 }}
+      className="group flex flex-col bg-white/80 backdrop-blur-sm xl:bg-white"
+    >
+      <Link href={postUrl} className="flex h-full flex-col">
+        {/* MEDIA SECTION */}
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-neutral-100">
           <Image
             fill
-            loading="lazy"
             src={post?.imageUrl}
             alt={post?.title}
-            className="object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
+            sizes="(max-width: 768px) 50vw, 33vw"
+            className="object-cover transition-transform duration-1000 ease-out group-hover:scale-110"
+            loading="lazy"
           />
-          {/* Overlay rất nhẹ khi hover để tăng độ sâu */}
-          <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/5"></div>
+          <div className="absolute inset-0 bg-neutral-900/0 transition-colors duration-300 group-hover:bg-neutral-900/10" />
         </div>
 
-        <div className="flex flex-1 flex-col justify-between p-2">
-          <div>
-            <h3 className="line-clamp-2 text-sm font-bold leading-snug text-gray-900 transition-colors group-hover:text-black xl:text-base xl:leading-normal">
-              {post?.title}
-            </h3>
+        {/* CONTENT SECTION */}
+        <div className="flex flex-1 flex-col p-2">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Technology</span>
+            <span className="h-px w-4 bg-neutral-200" />
+            <span className="text-[10px] text-neutral-400">{new Date(post?.updatedAt).toLocaleDateString('vi-VN')}</span>
           </div>
-          <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500">
-            <span>{new Date(post?.updatedAt).toLocaleDateString('vi-VN')}</span>
-            <span className="font-medium text-black opacity-0 transition-opacity group-hover:opacity-100">Đọc ngay</span>
+
+          <h3 className="line-clamp-2 text-sm font-medium leading-relaxed text-neutral-900 transition-colors group-hover:text-primary xl:text-lg">
+            {post?.title}
+          </h3>
+
+          <div className="mt-auto flex translate-x-[-10px] items-center gap-2 pt-4 text-[10px] font-bold uppercase tracking-widest text-neutral-900 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
+            Đọc bài viết <IoIosArrowForward className="text-xs" />
           </div>
         </div>
       </Link>
-    </article>
+    </motion.article>
   );
+};
+
+export default function ClientPostSection({ news, tricks }: ClientPostSectionProps) {
+  const urlNews = '/tin-tuc-moi-nhat';
+  const urlTipsAndTricksPage = '/thu-thuat-va-meo-hay';
+
+  // Memoize data để tránh re-render thừa
+  const displayedNews = useMemo(() => news.slice(0, 4), [news]);
+  const displayedTricks = useMemo(() => tricks.slice(0, 4), [tricks]);
 
   return (
-    <div
-      style={{
-        backgroundImage: `url(${images.bgBlog})`,
-      }}
-      className="relative bg-cover bg-fixed bg-center bg-no-repeat py-12"
-    >
-      {/* --- Main Section Header --- */}
-      <div className="mb-5 flex flex-col items-center gap-3 px-2 text-center xl:px-desktop-padding">
-        <div className="flex h-12 w-12 items-center justify-center rounded-md border border-white text-white">
-          <FaRegNewspaper className="text-xl" />
-        </div>
-        <h2 className="text-3xl font-black uppercase tracking-tight text-white xl:text-4xl">Tin Tức Công Nghệ</h2>
-        <div className="h-1 w-16 rounded-sm bg-white"></div>
+    <div className="relative min-h-screen">
+      {/* BACKGROUND LAYER */}
+      <div className="absolute inset-0 z-0 bg-cover bg-fixed bg-center bg-no-repeat" style={{ backgroundImage: `url(${images.bgBlog})` }}>
+        <div className="absolute inset-0 bg-neutral-900/40 backdrop-blur-[2px]" />
       </div>
 
-      <div className="flex flex-col gap-12 px-2 xl:px-desktop-padding">
-        {/* --- Section: Bản Tin --- */}
-        {news.length > 0 && (
-          <section role="region" aria-label="Bản tin mới nhất">
-            <div className="mb-6 flex items-end justify-between border-b border-white pb-4">
-              <h3 className="text-xl font-bold uppercase tracking-wider text-white">Bản Tin Mới</h3>
-              <Link href={urlNews}>
-                <Button
-                  size="sm"
-                  className="rounded-md border border-gray-300 bg-transparent text-white transition-all hover:border-black hover:bg-black hover:text-white"
-                >
-                  Xem Thêm <IoIosArrowForward />
-                </Button>
-              </Link>
-            </div>
+      <div className="relative z-10 py-10">
+        {/* MAIN HEADER */}
+        <header className="mb-5 flex flex-col items-center px-2 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-white/30 text-white backdrop-blur-md"
+          >
+            <FaRegNewspaper size={24} />
+          </motion.div>
+          <h2 className="text-4xl font-light tracking-tighter text-white xl:text-6xl">Insight & Update</h2>
+          <p className="mt-4 max-w-xl text-sm font-light leading-relaxed text-neutral-300 xl:text-base">
+            Cập nhật những xu hướng công nghệ mới nhất và những thủ thuật hữu ích giúp bạn làm chủ thiết bị của mình.
+          </p>
+        </header>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-              {news.slice(0, 6).map((post) => (
-                <PostCard key={post._id} post={post} />
-              ))}
-            </div>
-          </section>
-        )}
+        <div className="w-full space-y-10 px-2 xl:px-desktop-padding">
+          {/* SECTION: BẢN TIN */}
+          {displayedNews.length > 0 && (
+            <section>
+              <div className="mb-10 flex items-end justify-between border-b border-white/20 pb-6">
+                <div className="space-y-1">
+                  <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-white/60">Tin tức</h3>
+                  <p className="text-2xl font-light text-white">Bản tin công nghệ mới</p>
+                </div>
+                <Link href={urlNews}>
+                  <Button
+                    size="sm"
+                    className="group rounded-none border-white/30 bg-transparent text-xs font-bold uppercase tracking-widest text-white hover:bg-white hover:text-neutral-900"
+                  >
+                    Tất cả <IoIosArrowForward className="transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
+              </div>
 
-        {/* --- Section: Thủ Thuật (Nếu muốn khác biệt, có thể dùng layout khác, ở đây dùng grid thống nhất) --- */}
-        {tricks.length > 0 && (
-          <section role="region" aria-label="Thủ thuật và mẹo hay">
-            <div className="mb-6 flex items-end justify-between border-b border-white pb-4">
-              <h3 className="text-xl font-bold uppercase tracking-wider text-white">Thủ Thuật & Mẹo</h3>
-              <Link href={urlTipsAndTricksPage}>
-                <Button
-                  size="sm"
-                  className="rounded-md border border-gray-300 bg-transparent text-black transition-all hover:border-black hover:bg-black hover:text-white"
-                >
-                  Xem Thêm <IoIosArrowForward />
-                </Button>
-              </Link>
-            </div>
+              <div className="grid grid-cols-2 gap-2 xl:grid-cols-6">
+                {displayedNews.map((post, idx) => (
+                  <PostCard key={post._id} post={post} index={idx} />
+                ))}
+              </div>
+            </section>
+          )}
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-              {tricks.slice(0, 6).map((post) => (
-                <PostCard key={post._id} post={post} />
-              ))}
-            </div>
-          </section>
-        )}
+          {/* SECTION: THỦ THUẬT */}
+          {displayedTricks.length > 0 && (
+            <section>
+              <div className="mb-10 flex items-end justify-between border-b border-white/20 pb-6">
+                <div className="space-y-1">
+                  <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-white/60">Knowledge</h3>
+                  <p className="text-2xl font-light text-white">Thủ thuật & Mẹo hay</p>
+                </div>
+                <Link href={urlTipsAndTricksPage}>
+                  <Button
+                    size="sm"
+                    className="group rounded-none border-white/30 bg-transparent text-xs font-bold uppercase tracking-widest text-white hover:bg-white hover:text-neutral-900"
+                  >
+                    Khám phá <IoIosArrowForward className="transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 xl:grid-cols-6">
+                {displayedTricks.map((post, idx) => (
+                  <PostCard key={post._id} post={post} index={idx} />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -22,6 +22,27 @@ interface ClientHomePageProps {
   tricks: IPost[];
 }
 
+//
+const ServiceCommitment = () => (
+  <section className="block border-y border-neutral-100 bg-white py-4 xl:hidden">
+    <div className="mx-auto max-w-7xl px-2 xl:px-8">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {[
+          { label: 'Bảo hành chính hãng', sub: 'Cam kết 12 tháng' },
+          { label: 'Giao hàng siêu tốc', sub: 'Nội thành trong 2h' },
+          { label: 'Đổi trả tận tâm', sub: '7 ngày dùng thử' },
+          { label: 'Hỗ trợ kỹ thuật', sub: '24/7 chuyên nghiệp' },
+        ].map((item, i) => (
+          <div key={i} className="border border-neutral-100/50 p-2 text-center xl:text-left">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-900">{item.label}</h3>
+            <p className="mt-1 text-[11px] text-neutral-400">{item.sub}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
 export default function ClientHomePage({ mostViewedPhones, tablets, macbook, windows, news, tricks }: ClientHomePageProps) {
   const [loading, setLoading] = useState(true);
 
@@ -115,6 +136,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
       <div className="pt-[60px] xl:pt-0">
         <HeroBanner /> {/* Mobile */}
+        <ServiceCommitment />
         <ZigzagSection mostViewedPhones={mostViewedPhones} loading={loading} /> {/* Desktop */}
         <ClientPhoneFC mostViewedPhones={mostViewedPhones} loading={loading} />
         <BgFixedSection className="block xl:hidden" />

@@ -1,15 +1,18 @@
 'use client';
 
-import { useScroll } from '@/hooks/useScroll';
-import { slugify } from '@/utils/slugify';
+import React, { useEffect, useState, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from 'react-daisyui';
 import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
 import { FaShoppingCart, FaArrowRight } from 'react-icons/fa';
-import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
-import Image from 'next/image';
+
+import { useScroll } from '@/hooks/useScroll';
+import { slugify } from '@/utils/slugify';
 import { formatCurrency } from '@/utils/formatCurrency';
+import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 
 export interface Product {
   _id: string;
@@ -33,7 +36,93 @@ interface ClientProductFCProps {
   loading?: boolean;
 }
 
+/**
+ * Component nội bộ hiển thị từng thẻ sản phẩm
+ * Tối ưu hóa việc render và quản lý trạng thái hover cục bộ
+ */
+const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p: Product, url: string) => void }) => {
+  const productUrl = `/${slugify(product.name)}/${product._id}`;
+  const discountPercentage = useMemo(() => {
+    if (!product.sale || product.price <= product.sale) return 0;
+    return Math.round(((product.price - product.sale) / product.price) * 100);
+  }, [product.price, product.sale]);
+
+  return (
+    <motion.div
+      whileHover={{ y: -5 }}
+      className="group relative flex h-full min-w-[240px] max-w-[240px] snap-start flex-col border border-neutral-200 bg-white xl:min-w-[280px] xl:max-w-[280px]"
+    >
+      {/* Khối Media - Tỉ lệ vàng 1:1 cho E-commerce */}
+      <div className="relative aspect-square w-full overflow-hidden bg-neutral-50 p-6 transition-colors duration-300 group-hover:bg-neutral-100/50">
+        <Link href={productUrl} className="relative block h-full w-full">
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            sizes="(max-width: 1280px) 240px, 280px"
+            className="object-contain transition-transform duration-700 ease-out group-hover:scale-110"
+            loading="lazy"
+          />
+        </Link>
+
+        {/* Badges tối giản */}
+        <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">
+          {discountPercentage > 0 && (
+            <span className="bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">-{discountPercentage}%</span>
+          )}
+          {product.status && (
+            <span className="bg-neutral-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white">{product.status}</span>
+          )}
+        </div>
+
+        {/* Nút hành động nhanh - Xuất hiện khi hover trên Desktop */}
+        <div className="absolute inset-x-4 bottom-4 hidden translate-y-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 xl:block">
+          <Button
+            onClick={() => onQuickBuy(product, productUrl)}
+            className="w-full rounded-none border-none bg-neutral-900 text-[10px] font-bold tracking-[0.2em] text-white transition-colors hover:bg-primary"
+          >
+            MUA NGAY
+          </Button>
+        </div>
+      </div>
+
+      {/* Thông tin chi tiết */}
+      <div className="flex flex-col px-1 py-5">
+        <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+          <span>{product.ram || 'Tiêu chuẩn'}</span>
+          <span className="font-medium">{product.color}</span>
+        </div>
+
+        <Link href={productUrl}>
+          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-snug text-neutral-900 transition-colors group-hover:text-primary xl:text-base">
+            {product.name}
+          </h3>
+        </Link>
+
+        <div className="mt-4 flex items-baseline gap-2">
+          <span className="text-lg font-bold tracking-tight text-neutral-900 xl:text-xl">{formatCurrency(product.sale || product.price)}</span>
+
+          {product.sale !== 0 && <del className="text-xs font-medium text-gray-400 decoration-1">{formatCurrency(product.price)}</del>}
+        </div>
+
+        {/* Thông tin bổ trợ niềm tin (Trust signals) */}
+        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-neutral-100 pt-4 text-[9px] font-semibold uppercase tracking-tighter text-neutral-500">
+          <div className="flex flex-col">
+            <span className="text-neutral-900">Trả góp 0%</span>
+            <span>Xét duyệt nhanh</span>
+          </div>
+          <div className="flex flex-col border-l border-neutral-100 pl-3">
+            <span className="text-neutral-900">Giao hỏa tốc</span>
+            <span>Nội thành HCM</span>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 export default function ClientProductFC({ products, category, loading: externalLoading }: ClientProductFCProps) {
+  const router = useRouter();
   const { scrollRef, isLeftVisible, isRightVisible, scrollBy } = useScroll();
   const [internalLoading, setInternalLoading] = useState(true);
 
@@ -45,16 +134,30 @@ export default function ClientProductFC({ products, category, loading: externalL
     }
   }, [products, externalLoading]);
 
-  const sortedProducts = React.useMemo(() => {
-    return [...products].sort((a, b) => (b.sale ? 1 : 0) - (a.sale ? 1 : 0));
+  const sortedProducts = useMemo(() => {
+    return [...products].sort((a, b) => (b.sale ? -1 : 1));
   }, [products]);
+
+  const handleQuickBuy = (product: Product, productUrl: string) => {
+    const productToBuy = {
+      _id: product._id,
+      name: product.name,
+      img: product.image,
+      price: product.sale || product.price,
+      ram: product.ram,
+      color: product.color,
+      link: productUrl,
+    };
+    localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
+    router.push('/thanh-toan');
+  };
 
   if (loading) {
     return (
-      <div className="p-0 xl:px-desktop-padding">
-        <h1 className="py-2 text-2xl font-semibold">Đang tải...</h1>
-        <div className="grid w-full grid-flow-col grid-rows-1 gap-[10px] overflow-x-auto scroll-smooth border-[10px] border-transparent bg-white scrollbar-hide xl:rounded-t-lg">
-          <ProductPlaceholders count={12} />
+      <div className="bg-white py-12 xl:px-desktop-padding">
+        <div className="mb-8 h-10 w-64 animate-pulse rounded bg-neutral-100" />
+        <div className="flex gap-6 overflow-hidden">
+          <ProductPlaceholders count={4} />
         </div>
       </div>
     );
@@ -63,155 +166,78 @@ export default function ClientProductFC({ products, category, loading: externalL
   if (sortedProducts.length === 0) return null;
 
   return (
-    <div className="w-full border-t border-black/5 bg-white px-2 py-8 xl:p-0 xl:px-desktop-padding">
-      {/* --- Header Section: Clean & Sharp --- */}
-      <div className="mb-8 mt-2 flex flex-col items-start justify-between gap-2 md:flex-row md:items-end xl:px-0">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-3xl font-black uppercase tracking-tighter text-black xl:text-4xl">{category.title}</h2>
-          <div className="h-1 w-12 rounded-sm bg-black"></div> {/* Divider đen đậm */}
-          <p className="mt-1 text-sm font-medium text-gray-500">Lựa chọn tốt nhất dành cho bạn</p>
+    <section className="w-full bg-white px-2 py-16 xl:px-desktop-padding xl:py-24">
+      {/* Header Section: Minimalist & Clean */}
+      <div className="mb-12 flex flex-col items-start justify-between gap-8 border-b border-neutral-100 pb-10 md:flex-row md:items-end">
+        <div className="max-w-2xl space-y-3">
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.4em] text-primary">
+            <span className="h-px w-6 bg-primary" />
+            Collection
+          </div>
+          <h2 className="text-3xl font-light tracking-tight text-neutral-900 xl:text-5xl">{category.title}</h2>
+          <p className="text-sm font-light leading-relaxed text-neutral-500 xl:text-base">
+            Tuyển chọn những giải pháp công nghệ tối ưu, mang lại hiệu quả vượt trội cho công việc và giải trí của bạn.
+          </p>
         </div>
 
         <Link
           href={category.url}
           aria-label={category.ariaLabel}
-          className="group flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-black transition-all xl:hover:opacity-70"
+          className="group flex items-center gap-4 text-xs font-bold uppercase tracking-[0.2em] text-neutral-900 transition-colors hover:text-primary"
         >
-          Xem tất cả
-          <span className="flex h-6 w-6 items-center justify-center rounded-md border border-black transition-all group-hover:bg-black group-hover:text-white">
+          Khám phá tất cả
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-neutral-200 transition-all duration-500 group-hover:border-primary group-hover:bg-primary group-hover:text-white">
             <MdArrowForwardIos className="text-xs" />
-          </span>
+          </div>
         </Link>
       </div>
 
-      {/* --- Product Carousel --- */}
-      <div className="group/section relative">
-        {/* Navigation Buttons: Square & Black */}
-        {isLeftVisible && (
-          <button
-            onClick={() => scrollBy(-320)}
-            className="absolute -left-4 top-1/2 z-30 hidden -translate-y-1/2 rounded-md border border-black bg-white p-3 text-black transition-all xl:block xl:hover:bg-black xl:hover:text-white"
-          >
-            <MdArrowBackIosNew size={20} />
-          </button>
-        )}
+      {/* Carousel Container */}
+      <div className="group/carousel relative">
+        <AnimatePresence>
+          {isLeftVisible && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={() => scrollBy(-350)}
+              className="absolute -left-6 top-1/2 z-40 hidden -translate-y-1/2 items-center justify-center rounded-full bg-white p-4 shadow-2xl ring-1 ring-neutral-100 transition-all hover:scale-110 xl:flex"
+            >
+              <MdArrowBackIosNew size={18} className="text-neutral-900" />
+            </motion.button>
+          )}
+          {isRightVisible && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={() => scrollBy(350)}
+              className="absolute -right-6 top-1/2 z-40 hidden -translate-y-1/2 items-center justify-center rounded-full bg-white p-4 shadow-2xl ring-1 ring-neutral-100 transition-all hover:scale-110 xl:flex"
+            >
+              <MdArrowForwardIos size={18} className="text-neutral-900" />
+            </motion.button>
+          )}
+        </AnimatePresence>
 
-        {isRightVisible && (
-          <button
-            onClick={() => scrollBy(320)}
-            className="absolute -right-4 top-1/2 z-30 hidden -translate-y-1/2 rounded-md border border-black bg-white p-3 text-black transition-all xl:block xl:hover:bg-black xl:hover:text-white"
-          >
-            <MdArrowForwardIos size={20} />
-          </button>
-        )}
+        <div ref={scrollRef} className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-10 pt-2 scrollbar-hide">
+          {sortedProducts.map((product) => (
+            <ProductItem key={product._id} product={product} onQuickBuy={handleQuickBuy} />
+          ))}
 
-        {/* Scrollable Container */}
-        <section ref={scrollRef} className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-2 pb-10 pt-2 scrollbar-hide">
-          {sortedProducts.map((product) => {
-            const productUrl = `/${slugify(product.name)}/${product._id}`;
-            const discountPercentage =
-              product.sale && product.price > product.sale ? Math.round(((product.price - product.sale) / product.price) * 100) : 0;
-
-            return (
-              <div
-                key={product._id}
-                // Thay đổi chính: Bỏ shadow mềm, dùng border trong suốt chuyển sang đen khi hover
-                className="group relative flex h-full min-w-[200px] max-w-[200px] snap-start flex-col justify-between overflow-hidden rounded-md border border-gray-200 bg-white transition-all duration-300 xl:min-w-[260px] xl:max-w-[260px] xl:hover:border-black xl:hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-              >
-                {/* Badges */}
-                <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
-                  {discountPercentage > 0 && (
-                    <span className="w-fit rounded-md bg-black px-2 py-1 text-[12px] font-bold text-white">-{discountPercentage}%</span>
-                  )}
-                  {product.status && (
-                    <span className="w-fit rounded-md border border-black bg-white px-2 py-1 text-[10px] font-bold uppercase text-black">
-                      {product.status}
-                    </span>
-                  )}
-                </div>
-
-                {/* Image Area */}
-                <Link href={productUrl} target="_blank" className="relative block aspect-square w-full overflow-hidden bg-white p-3">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    width={260}
-                    height={260}
-                    // Bỏ mix-blend nếu nền đã trắng, giữ object-contain
-                    className="h-full w-full object-contain transition-transform duration-500 ease-in-out group-hover:scale-110"
-                    loading="lazy"
-                  />
-                </Link>
-
-                {/* Content Area */}
-                <div className="flex flex-1 flex-col p-2">
-                  {/* Title */}
-                  <Link href={productUrl} target="_blank" title={product.name}>
-                    <h3 className="line-clamp-2 min-h-[48px] text-sm font-bold leading-tight text-gray-900 transition-colors xl:text-lg xl:hover:text-black">
-                      {product.name}
-                    </h3>
-                  </Link>
-
-                  {/* Specs: Clean Text, No Background Pills */}
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
-                    {[product.ram, product.color].filter(Boolean).map((spec, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        {i > 0 && <span className="h-3 w-[1px] bg-black"></span>} {/* Separator line */}
-                        <span>{spec}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Price Area */}
-                  <div className="mt-4 flex flex-col">
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-lg font-black text-price xl:text-xl">{formatCurrency(product.sale || product.price)}</span>
-                      {product.sale !== 0 && <del className="text-xs font-medium text-gray-400 decoration-1">{formatCurrency(product.price)}</del>}
-                    </div>
-                    <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
-                    <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
-                  </div>
-
-                  {/* Action Button: Solid Black, Square */}
-                  <Button
-                    size="sm"
-                    className="mt-4 w-full gap-2 rounded-md border-none bg-black text-white transition-all duration-300 xl:translate-y-2 xl:opacity-0 xl:group-hover:translate-y-0 xl:group-hover:opacity-100 xl:hover:bg-gray-800"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const productToBuy = {
-                        _id: product._id,
-                        name: product.name,
-                        img: product.image,
-                        price: product.sale || product.price,
-                        ram: product.ram,
-                        color: product.color,
-                        link: productUrl,
-                      };
-                      localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
-                      window.location.href = '/thanh-toan';
-                    }}
-                  >
-                    <FaShoppingCart size={14} /> MUA NGAY
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Card "Xem Thêm": Minimalist Border Style */}
+          {/* End Card: View All - Tối giản */}
           <Link
             href={category.url}
-            className="group flex min-w-[120px] snap-start items-center justify-center rounded-md border border-dashed border-gray-300 bg-white transition-all xl:min-w-[180px] xl:hover:border-black xl:hover:bg-black xl:hover:text-white"
+            className="group flex min-w-[200px] snap-start items-center justify-center bg-neutral-50 transition-all duration-500 hover:bg-neutral-900 xl:min-w-[240px]"
           >
-            <div className="flex flex-col items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-md border border-gray-300 transition-colors group-hover:border-white">
-                <FaArrowRight size={16} />
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-neutral-200 bg-white transition-transform duration-500 group-hover:scale-110 group-hover:border-primary group-hover:bg-primary">
+                <FaArrowRight className="text-neutral-400 group-hover:text-white" />
               </div>
-              <span className="text-sm font-bold uppercase tracking-wider">Xem tất cả</span>
+              <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-900 transition-colors group-hover:text-white">Xem toàn bộ</p>
             </div>
           </Link>
-        </section>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
