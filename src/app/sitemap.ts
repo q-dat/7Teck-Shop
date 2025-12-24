@@ -1,5 +1,7 @@
 import { MetadataRoute } from 'next';
 import axios, { AxiosResponse } from 'axios';
+import { log } from 'console';
+import { encodeObjectId } from '@/utils/DetailPage/objectIdCodec';
 
 // Interface cho các mục trong phản hồi API
 interface Item {
@@ -34,12 +36,13 @@ const slugify = (text: string): string =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+const domain = 'https://www.7teck.vn';
 
 // Hàm lấy dữ liệu từ API
 async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
   const paths: MetadataRoute.Sitemap = [];
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.7teck.vn';
-  console.log('API Base URL:', baseUrl); // Debug
+  // console.log('API Base URL:', baseUrl); // Debug
 
   const endpoints = [
     { path: 'dien-thoai', url: '/api/phones', nameField: 'name', dataField: 'phones', includeIdInUrl: true },
@@ -56,7 +59,7 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
 
   for (const endpoint of endpoints) {
     try {
-      console.log(`Fetching API: ${baseUrl}${endpoint.url} ✓`); // Debug
+      // console.log(`Fetching API: ${baseUrl}${endpoint.url} ✓`); // Debug
       const res: AxiosResponse<ApiResponse> = await axios.get<ApiResponse>(`${baseUrl}${endpoint.url}`);
       // console.log(`API Response for ${endpoint.path}:`, res.data); // Debug
 
@@ -79,19 +82,37 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
             priority: 0.7,
           });
 
-          // 1) URL chính: /path/slug/id
-          const mainUrl = `https://www.7teck.vn/${endpoint.path}/${slug}/${item._id}`;
+          // raw & encoded id
+          const rawId = item._id;
+          const encodedId = encodeObjectId(rawId);
 
-          // 2) URL base/name: /path/slug
-          const nameOnlyUrl = `https://www.7teck.vn/${endpoint.path}/${slug}`;
+          // URL chính: /path/slug/id (CANONICAL)
+          const mainUrl = `${domain}/${endpoint.path}/${slug}/${rawId}`;
 
-          // 3) URL name/id: /slug/id
-          const nameIdUrl = `https://www.7teck.vn/${slug}/${item._id}`;
+          // URL base/name: /path/slug
+          const nameOnlyUrl = `${domain}/${endpoint.path}/${slug}`;
+
+          // URL name/id: /slug/id
+          const nameIdUrl = `${domain}/${slug}/${rawId}`;
+
+          // ====== MỞ RỘNG BIẾN THỂ SEO ======
+
+          // /slug/encodedId
+          const nameEncodedIdUrl = `${domain}/${slug}/${encodedId}`;
+
+          // /slug-id
+          const slugRawIdUrl = `${domain}/${slug}-${rawId}`;
+
+          // /slug-encodedId
+          const slugEncodedIdUrl = `${domain}/${slug}-${encodedId}`;
 
           return [
-            baseEntry(mainUrl), // dạng chính
-            baseEntry(nameOnlyUrl), // dạng slug
-            baseEntry(nameIdUrl), // dạng slug/id rút gọn
+            baseEntry(mainUrl), // canonical
+            baseEntry(nameOnlyUrl), // slug
+            baseEntry(nameIdUrl), // slug/id (raw)
+            baseEntry(nameEncodedIdUrl), // slug/encodedId
+            baseEntry(slugRawIdUrl), // slug-id
+            baseEntry(slugEncodedIdUrl), // slug-encodedId
           ];
         });
 
@@ -104,92 +125,92 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  console.log('Dynamic Paths:', paths); // Debug
+  // console.log('Dynamic Paths:', paths); // Debug
   return paths;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     {
-      url: 'https://www.7teck.vn',
+      url: `${domain}`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/dien-thoai',
+      url: `${domain}/dien-thoai`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/may-tinh-bang',
+      url: `${domain}/may-tinh-bang`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/macbook',
+      url: `${domain}/macbook`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/windows',
+      url: `${domain}/windows`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/bang-gia-thu-mua',
+      url: `${domain}/bang-gia-thu-mua`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/thanh-toan',
+      url: `${domain}/thanh-toan`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/thu-thuat-va-meo-hay',
+      url: `${domain}/thu-thuat-va-meo-hay`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/tin-tuc-moi-nhat',
+      url: `${domain}/tin-tuc-moi-nhat`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/thiet-bi-da-qua-su-dung',
+      url: `${domain}/thiet-bi-da-qua-su-dung`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/chinh-sach-quyen-rieng-tu',
+      url: `${domain}/chinh-sach-quyen-rieng-tu`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/dieu-khoan-dich-vu',
+      url: `${domain}/dieu-khoan-dich-vu`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/chinh-sach-bao-hanh',
+      url: `${domain}/chinh-sach-bao-hanh`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
     },
     {
-      url: 'https://www.7teck.vn/hanh-trinh-khach-hang',
+      url: `${domain}/hanh-trinh-khach-hang`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
@@ -197,7 +218,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const dynamicPages = await getDynamicPaths();
-  console.log('Total Pages:', [...staticPages, ...dynamicPages].length); // Debug
+  log('____Static Pages Count:', staticPages.length); // Debug
+  log('____Dynamic Pages Count:', dynamicPages.length); // Debug
+  console.log('____Total Pages:', [...staticPages, ...dynamicPages].length); // Debug
 
   const allPages = [...staticPages, ...dynamicPages].filter((page) => !page.url.includes('/cms/'));
 
