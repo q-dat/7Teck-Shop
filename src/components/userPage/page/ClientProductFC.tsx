@@ -87,7 +87,7 @@ const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p
       </div>
 
       {/* Thông tin chi tiết */}
-      <div className="flex flex-col px-1 py-5">
+      <div className="flex flex-col px-1 py-2">
         <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-neutral-400">
           <span>{product.ram || 'Tiêu chuẩn'}</span>
           <span className="font-medium">{product.color}</span>
@@ -99,16 +99,16 @@ const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p
           </h3>
         </Link>
 
-        <div className="mt-4 flex items-baseline gap-2">
+        <div className="flex items-baseline gap-2">
           <span className="text-lg font-bold tracking-tight text-neutral-900 xl:text-xl">{formatCurrency(product.sale || product.price)}</span>
 
           {product.sale !== 0 && <del className="text-xs font-medium text-gray-400 decoration-1">{formatCurrency(product.price)}</del>}
         </div>
 
         {/* Thông tin bổ trợ niềm tin (Trust signals) */}
-        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-neutral-100 pt-4 text-[9px] font-semibold uppercase tracking-tighter text-neutral-500">
+        <div className="mt-2 grid grid-cols-2 gap-2 border-t border-neutral-100 pt-4 text-[9px] font-semibold uppercase tracking-tighter text-neutral-500">
           <div className="flex flex-col">
-            <span className="text-neutral-900">Trả góp 0%</span>
+            <span className="text-neutral-900">Hỗ trợ trả góp</span>
             <span>Xét duyệt nhanh</span>
           </div>
           <div className="flex flex-col border-l border-neutral-100 pl-3">
@@ -166,15 +166,15 @@ export default function ClientProductFC({ products, category, loading: externalL
   if (sortedProducts.length === 0) return null;
 
   return (
-    <section className="w-full bg-white px-2 py-16 xl:px-desktop-padding xl:py-24">
+    <section className="w-full bg-white px-2 py-4 xl:px-desktop-padding">
       {/* Header Section: Minimalist & Clean */}
-      <div className="mb-12 flex flex-col items-start justify-between gap-8 border-b border-neutral-100 pb-10 md:flex-row md:items-end">
+      <div className="mb-10 flex flex-col items-start justify-between gap-8 border-b border-neutral-100 pb-5 md:flex-row md:items-end">
         <div className="max-w-2xl space-y-3">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.4em] text-primary">
             <span className="h-px w-6 bg-primary" />
             Collection
           </div>
-          <h2 className="text-3xl font-light tracking-tight text-neutral-900 xl:text-5xl">{category.title}</h2>
+          <h2 className="text-3xl font-light tracking-tight text-neutral-900 xl:text-4xl">{category.title}</h2>
           <p className="text-sm font-light leading-relaxed text-neutral-500 xl:text-base">
             Tuyển chọn những giải pháp công nghệ tối ưu, mang lại hiệu quả vượt trội cho công việc và giải trí của bạn.
           </p>
