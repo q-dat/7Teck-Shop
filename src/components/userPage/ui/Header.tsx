@@ -184,7 +184,7 @@ const Header: React.FC = () => {
     <div className="fixed left-0 top-0 z-[99999] hidden w-full flex-col xl:block">
       {/* Benefits */}
       <div className="h-[30px] overflow-hidden bg-[#FFC107] text-black xl:px-desktop-padding">
-        <div className="animate-marquee flex h-full w-full flex-row items-center justify-around whitespace-nowrap gap-20">
+        <div className="animate-marquee flex h-full w-full flex-row items-center justify-around gap-20 whitespace-nowrap">
           {items.map((item, index) => (
             <div key={index} className="inline-flex items-center justify-center">
               {React.cloneElement(item.icon, {
@@ -386,8 +386,8 @@ const Header: React.FC = () => {
                   href={item.link}
                   className={`btn relative flex w-full items-center justify-center gap-1 rounded-none border-none ${
                     item.name === activeItem
-                      ? 'bg-primary bg-opacity-20 text-sm font-bold text-primary'
-                      : 'border-none bg-transparent text-sm font-light text-primary shadow-none hover:scale-110 hover:border hover:border-primary hover:bg-gray-50 hover:bg-opacity-30'
+                      ? 'bg-primary bg-opacity-20 text-xs font-bold text-primary 2xl:text-sm'
+                      : 'border-none bg-transparent text-xs font-light text-primary shadow-none hover:scale-110 hover:border hover:border-primary hover:bg-gray-50 hover:bg-opacity-30 2xl:text-sm'
                   }`}
                 >
                   <>
