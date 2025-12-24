@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from 'react-daisyui';
 import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
-import { FaShoppingCart, FaArrowRight } from 'react-icons/fa';
-
+import { FaArrowRight } from 'react-icons/fa';
 import { useScroll } from '@/hooks/useScroll';
 import { slugify } from '@/utils/slugify';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -123,7 +122,7 @@ const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p
 
 export default function ClientProductFC({ products, category, loading: externalLoading }: ClientProductFCProps) {
   const router = useRouter();
-  const { scrollRef, isLeftVisible, isRightVisible, scrollBy } = useScroll();
+  const { scrollRef, isLeftVisible, isRightVisible, hasOverflow, scrollBy } = useScroll();
   const [internalLoading, setInternalLoading] = useState(true);
 
   const loading = externalLoading !== undefined ? externalLoading : internalLoading;
@@ -157,7 +156,7 @@ export default function ClientProductFC({ products, category, loading: externalL
       <div className="bg-white py-12 xl:px-desktop-padding">
         <div className="mb-8 h-10 w-64 animate-pulse rounded bg-neutral-100" />
         <div className="flex gap-6 overflow-hidden">
-          <ProductPlaceholders count={4} />
+          <ProductPlaceholders count={24} />
         </div>
       </div>
     );
@@ -193,43 +192,39 @@ export default function ClientProductFC({ products, category, loading: externalL
       </div>
 
       {/* Carousel Container */}
-      <div className="group/carousel relative">
-        <AnimatePresence>
-          {isLeftVisible && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              onClick={() => scrollBy(-350)}
-              className="absolute -left-6 top-1/2 z-40 hidden -translate-y-1/2 items-center justify-center rounded-full bg-white p-4 shadow-2xl ring-1 ring-neutral-100 transition-all hover:scale-110 xl:flex"
-            >
-              <MdArrowBackIosNew size={18} className="text-neutral-900" />
-            </motion.button>
-          )}
-          {isRightVisible && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              onClick={() => scrollBy(350)}
-              className="absolute -right-6 top-1/2 z-40 hidden -translate-y-1/2 items-center justify-center rounded-full bg-white p-4 shadow-2xl ring-1 ring-neutral-100 transition-all hover:scale-110 xl:flex"
-            >
-              <MdArrowForwardIos size={18} className="text-neutral-900" />
-            </motion.button>
-          )}
-        </AnimatePresence>
+      <div className="relative w-full">
+        <div className="">
+          <button
+            aria-label="Cuộn sang trái"
+            onClick={() => scrollBy(-390)}
+            className={`absolute -left-2 top-1/2 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
+              isLeftVisible ? '' : 'hidden'
+            }`}
+          >
+            <MdArrowBackIosNew className="text-2xl" />
+          </button>
+          <button
+            aria-label="Cuộn sang phải"
+            onClick={() => scrollBy(390)}
+            className={`absolute -right-2 top-1/2 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
+              isRightVisible ? '' : 'hidden'
+            }`}
+          >
+            <MdArrowForwardIos className="text-2xl" />
+          </button>
+        </div>
 
         <div ref={scrollRef} className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-10 pt-2 scrollbar-hide">
           {sortedProducts.map((product) => (
             <ProductItem key={product._id} product={product} onQuickBuy={handleQuickBuy} />
           ))}
 
-          {/* End Card: View All - Tối giản */}
+          {/* End Card: View All */}
           <Link
             href={category.url}
             className="group flex min-w-[200px] snap-start items-center justify-center bg-neutral-50 transition-all duration-500 hover:bg-neutral-900 xl:min-w-[240px]"
           >
-            <div className="flex flex-col items-center gap-2 text-center">
+            <div className="mt-[50px] flex flex-col items-center gap-1 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full border border-neutral-200 bg-white transition-transform duration-500 group-hover:scale-110 group-hover:border-primary group-hover:bg-primary">
                 <FaArrowRight className="text-neutral-400 group-hover:text-white" />
               </div>

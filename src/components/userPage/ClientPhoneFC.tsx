@@ -1,8 +1,7 @@
 'use client';
-import { useScroll } from '@/hooks/useScroll';
 import { slugify } from '@/utils/slugify';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from 'react-daisyui';
 import { FaRegEye } from 'react-icons/fa';
 import { IoIosArrowForward } from 'react-icons/io';
@@ -15,6 +14,7 @@ import { IPhone } from '@/types/type/products/phone/phone';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { images } from '../../../public/images';
 import Tilt from 'react-parallax-tilt';
+import { useScroll } from '@/hooks/useScroll';
 
 interface ClientPhoneProps {
   mostViewedPhones: IPhone[];
