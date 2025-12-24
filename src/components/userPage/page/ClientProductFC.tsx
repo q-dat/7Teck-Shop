@@ -193,27 +193,28 @@ export default function ClientProductFC({ products, category, loading: externalL
 
       {/* Carousel Container */}
       <div className="relative w-full">
-        <div className="">
-          <button
-            aria-label="Cuộn sang trái"
-            onClick={() => scrollBy(-390)}
-            className={`absolute -left-2 top-1/2 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
-              isLeftVisible ? '' : 'hidden'
-            }`}
-          >
-            <MdArrowBackIosNew className="text-2xl" />
-          </button>
-          <button
-            aria-label="Cuộn sang phải"
-            onClick={() => scrollBy(390)}
-            className={`absolute -right-2 top-1/2 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
-              isRightVisible ? '' : 'hidden'
-            }`}
-          >
-            <MdArrowForwardIos className="text-2xl" />
-          </button>
-        </div>
-
+        {hasOverflow && (
+          <div className="">
+            <button
+              aria-label="Cuộn sang trái"
+              onClick={() => scrollBy(-390)}
+              className={`absolute -left-2 top-1/2 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
+                isLeftVisible ? '' : 'hidden'
+              }`}
+            >
+              <MdArrowBackIosNew className="text-2xl" />
+            </button>
+            <button
+              aria-label="Cuộn sang phải"
+              onClick={() => scrollBy(390)}
+              className={`absolute -right-2 top-1/2 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
+                isRightVisible ? '' : 'hidden'
+              }`}
+            >
+              <MdArrowForwardIos className="text-2xl" />
+            </button>
+          </div>
+        )}
         <div ref={scrollRef} className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-10 pt-2 scrollbar-hide">
           {sortedProducts.map((product) => (
             <ProductItem key={product._id} product={product} onQuickBuy={handleQuickBuy} />
