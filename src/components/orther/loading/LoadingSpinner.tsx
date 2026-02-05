@@ -1,7 +1,4 @@
 'use client';
-
-import React from 'react';
-
 interface LoadingSpinnerProps {
   text?: string; // Nội dung hiển thị dưới spinner
   size?: number; // Kích thước icon (px)

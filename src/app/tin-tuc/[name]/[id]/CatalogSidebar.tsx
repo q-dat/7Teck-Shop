@@ -1,18 +1,17 @@
 'use client';
-import React from 'react';
-import Image from 'next/image';
 import { IPostCatalog } from '@/types/type/catalogs/post-catalog/post-catalog';
 import { IPost } from '@/types/type/products/post/post';
+import Image from 'next/image';
 
 interface CatalogSidebarProps {
-  catalogWithPosts: {
+  catalogWithPosts?: {
     catalog: IPostCatalog;
     posts: IPost[];
   }[];
   onSelectPost: (post: IPost) => void;
 }
 
-export default function CatalogSidebar({ catalogWithPosts, onSelectPost }: CatalogSidebarProps) {
+export default function CatalogSidebar({ catalogWithPosts = [], onSelectPost }: CatalogSidebarProps) {
   return (
     <div className="w-full py-5">
       <div className="flex flex-col gap-5">
@@ -26,7 +25,7 @@ export default function CatalogSidebar({ catalogWithPosts, onSelectPost }: Catal
               <p className="text-sm text-gray-500">Không có bài viết nào trong danh mục này.</p>
             ) : (
               <div className="flex flex-col gap-3">
-                {item.posts.slice(0, 4).map((p) => (
+                {item.posts.map((p) => (
                   <button
                     key={p._id}
                     onClick={() => onSelectPost(p)}
@@ -35,7 +34,7 @@ export default function CatalogSidebar({ catalogWithPosts, onSelectPost }: Catal
                     {/* Image */}
                     <div className="h-full w-1/3 overflow-hidden rounded-md">
                       <Image
-                        src={p.imageUrl}
+                        src={p.imageUrl || ''}
                         width={300}
                         height={300}
                         loading="lazy"
