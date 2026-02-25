@@ -127,8 +127,6 @@ export default function ClientProductPage({ products, title, basePath, brands = 
         {/* Brand filter buttons */}
         <div className="my-2 px-2 xl:px-desktop-padding">
           {/* Sort */}
-          {filterNode}
-
           <div className="flex flex-wrap gap-1">
             <Button
               size="sm"
@@ -150,8 +148,8 @@ export default function ClientProductPage({ products, title, basePath, brands = 
             ))}
             <hr />
           </div>
-
           {/*  */}
+          {filterNode}
         </div>
         <div className="mt-4 space-y-10 px-2 xl:px-desktop-padding">
           {/* Product grid */}
