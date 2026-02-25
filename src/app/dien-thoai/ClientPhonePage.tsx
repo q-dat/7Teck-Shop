@@ -4,6 +4,7 @@ import ClientProductPage from '@/components/userPage/page/ClientProductPage';
 import { GroupedPhone, PhoneFilterParams } from '@/types/type/products/phone/phone';
 import { getNewGroupedPhones } from '@/services/products/phoneService';
 import { SiSamsung, SiApple, SiOppo, SiXiaomi, SiVivo } from 'react-icons/si';
+import PhoneFilterBar from '@/components/userPage/ui/sort/PhoneFilterBar';
 
 // export default function ClientPhonePage({ phones }: { phones: IPhone[] }) {
 //   const mappedPhones = phones.map((phone) => ({
@@ -25,6 +26,7 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
   const [mappedPhones, setMappedPhones] = useState(() => mapGroupedPhones(groupedPhones));
   const [activeFilters, setActiveFilters] = useState<PhoneFilterParams>({
     status: '0',
+    sort: 'newest',
   });
 
   // Danh sách thương hiệu tĩnh
@@ -71,6 +73,18 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
     const data = await getNewGroupedPhones(mergedFilters);
     setMappedPhones(mapGroupedPhones(data));
   };
+  // Handle khi thay đổi sắp xếp
+  const handleSortChange = async (sort: 'price_asc' | 'price_desc' | 'newest') => {
+    const newFilters: PhoneFilterParams = {
+      ...activeFilters,
+      sort,
+    };
+
+    setActiveFilters(newFilters);
+
+    const data = await getNewGroupedPhones(newFilters);
+    setMappedPhones(mapGroupedPhones(data));
+  };
   // Handle khi chọn brand
   const handleBrandSelect = async (brand: string | null) => {
     const newFilters: PhoneFilterParams = {
@@ -91,8 +105,8 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
       title="Điện Thoại"
       basePath=""
       brands={brands}
+      filterNode={<PhoneFilterBar activeFilters={activeFilters} onChange={handleFilterChange} />}
       onBrandSelect={handleBrandSelect}
-      onFilterChange={handleFilterChange}
     />
   );
 }

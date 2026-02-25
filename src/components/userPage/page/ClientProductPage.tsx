@@ -12,9 +12,7 @@ import { Button } from 'react-daisyui';
 import imageRepresent from '../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { FaBoxOpen, FaThLarge } from 'react-icons/fa';
-import { PhoneFilterParams } from '@/types/type/products/phone/phone';
 
-// Interface
 interface ProductBase {
   _id: string;
   name: string;
@@ -39,21 +37,13 @@ interface ClientProductPageProps {
   title: string;
   basePath: string;
   brands?: BrandItem[];
+  filterNode?: React.ReactNode;
   onBrandSelect?: (brand: string | null) => void;
-  onFilterChange?: (filters: PhoneFilterParams) => Promise<void>;
 }
-// Danh sách trạng thái hết hàng
+
 const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
 
-export default function ClientProductPage({ products, title, basePath, brands = [], onBrandSelect, onFilterChange }: ClientProductPageProps) {
-  const [filters, setFilters] = useState({
-    minPrice: '',
-    maxPrice: '',
-    color: '',
-    ram: '',
-    storage: '',
-    sort: 'newest' as 'price_asc' | 'price_desc' | 'newest',
-  });
+export default function ClientProductPage({ products, title, basePath, brands = [], filterNode, onBrandSelect }: ClientProductPageProps) {
   const [loading, setLoading] = useState(true);
 
   // Image error
@@ -108,23 +98,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
     }
     // Khi products mới được set => useEffect sẽ tự setLoading(false)
   };
-  const applyFilters = async () => {
-    if (!onFilterChange) return;
 
-    setLoading(true);
-    setCurrentPage(1);
-
-    await onFilterChange({
-      status: '0',
-      name: selectedBrand ?? undefined,
-      minPrice: filters.minPrice || undefined,
-      maxPrice: filters.maxPrice || undefined,
-      color: filters.color || undefined,
-      ram: filters.ram || undefined,
-      storage: filters.storage || undefined,
-      sort: filters.sort,
-    });
-  };
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile={'7teck.vn'} />
@@ -152,7 +126,9 @@ export default function ClientProductPage({ products, title, basePath, brands = 
 
         {/* Brand filter buttons */}
         <div className="my-2 px-2 xl:px-desktop-padding">
-          {/* {currentProducts.length !== 0 && ( */}
+          {/* Sort */}
+          {filterNode}
+
           <div className="flex flex-wrap gap-1">
             <Button
               size="sm"
@@ -174,126 +150,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
             ))}
             <hr />
           </div>
-          {/* )} */}
-          {/* Filter */}
-          <div className="my-4 rounded-xl border border-primary/10 bg-white p-3 shadow-sm xl:p-5">
-            <div className="flex flex-col gap-4">
-              {/* Row 1: Sort + Price */}
-              <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
-                {/* Sort */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-500">Sắp xếp</label>
-                  <select
-                    className="select select-bordered select-sm w-full xl:w-48"
-                    value={filters.sort}
-                    onChange={(e) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        sort: e.target.value as 'price_asc' | 'price_desc' | 'newest',
-                      }))
-                    }
-                  >
-                    <option value="newest">Mới nhất</option>
-                    <option value="price_asc">Giá tăng dần</option>
-                    <option value="price_desc">Giá giảm dần</option>
-                  </select>
-                </div>
 
-                {/* Price Range */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-500">Khoảng giá</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      placeholder="Từ"
-                      className="input input-sm input-bordered w-full xl:w-32"
-                      value={filters.minPrice}
-                      onChange={(e) => setFilters((prev) => ({ ...prev, minPrice: e.target.value }))}
-                    />
-                    <span className="text-xs text-gray-400">-</span>
-                    <input
-                      type="number"
-                      placeholder="Đến"
-                      className="input input-sm input-bordered w-full xl:w-32"
-                      value={filters.maxPrice}
-                      onChange={(e) => setFilters((prev) => ({ ...prev, maxPrice: e.target.value }))}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 2: Specs + Action */}
-              <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
-                {/* RAM */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-500">RAM</label>
-                  <select
-                    className="select select-bordered select-sm w-full xl:w-32"
-                    value={filters.ram}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, ram: e.target.value }))}
-                  >
-                    <option value="">Tất cả</option>
-                    <option value="4GB">4GB</option>
-                    <option value="6GB">6GB</option>
-                    <option value="8GB">8GB</option>
-                    <option value="12GB">12GB</option>
-                  </select>
-                </div>
-
-                {/* Storage */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-500">Bộ nhớ</label>
-                  <select
-                    className="select select-bordered select-sm w-full xl:w-32"
-                    value={filters.storage}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, storage: e.target.value }))}
-                  >
-                    <option value="">Tất cả</option>
-                    <option value="64GB">64GB</option>
-                    <option value="128GB">128GB</option>
-                    <option value="256GB">256GB</option>
-                    <option value="512GB">512GB</option>
-                  </select>
-                </div>
-
-                {/* Color */}
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-500">Màu sắc</label>
-                  <input
-                    type="text"
-                    placeholder="Ví dụ: Đen"
-                    className="input input-sm input-bordered w-full xl:w-40"
-                    value={filters.color}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, color: e.target.value }))}
-                  />
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <Button size="sm" className="bg-primary text-white hover:bg-primary/90" onClick={applyFilters}>
-                    Lọc
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    color="ghost"
-                    onClick={() =>
-                      setFilters({
-                        minPrice: '',
-                        maxPrice: '',
-                        color: '',
-                        ram: '',
-                        storage: '',
-                        sort: 'newest',
-                      })
-                    }
-                  >
-                    Reset
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
           {/*  */}
         </div>
         <div className="mt-4 space-y-10 px-2 xl:px-desktop-padding">
