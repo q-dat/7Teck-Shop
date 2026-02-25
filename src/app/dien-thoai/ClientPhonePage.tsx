@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import ClientProductPage from '@/components/userPage/page/ClientProductPage';
-import { GroupedPhone } from '@/types/type/products/phone/phone';
+import { GroupedPhone, PhoneFilterParams } from '@/types/type/products/phone/phone';
 import { getNewGroupedPhones } from '@/services/products/phoneService';
 import { SiSamsung, SiApple, SiOppo, SiXiaomi, SiVivo } from 'react-icons/si';
 
@@ -23,6 +23,9 @@ import { SiSamsung, SiApple, SiOppo, SiXiaomi, SiVivo } from 'react-icons/si';
 
 export default function ClientPhonePage({ groupedPhones }: { groupedPhones: GroupedPhone[] }) {
   const [mappedPhones, setMappedPhones] = useState(() => mapGroupedPhones(groupedPhones));
+  const [activeFilters, setActiveFilters] = useState<PhoneFilterParams>({
+    status: '0',
+  });
 
   // Danh sách thương hiệu tĩnh
   const brands = [
@@ -56,10 +59,29 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
       };
     });
   }
+  // Handle khi thay đổi filter (giá, màu sắc, ram, cpu, sắp xếp)
+  const handleFilterChange = async (newFilters: PhoneFilterParams) => {
+    const mergedFilters: PhoneFilterParams = {
+      ...activeFilters,
+      ...newFilters,
+    };
 
+    setActiveFilters(mergedFilters);
+
+    const data = await getNewGroupedPhones(mergedFilters);
+    setMappedPhones(mapGroupedPhones(data));
+  };
   // Handle khi chọn brand
   const handleBrandSelect = async (brand: string | null) => {
-    const data = await getNewGroupedPhones(brand ?? undefined);
+    const newFilters: PhoneFilterParams = {
+      ...activeFilters,
+      status: '0',
+      name: brand ?? undefined,
+    };
+
+    setActiveFilters(newFilters);
+
+    const data = await getNewGroupedPhones(newFilters);
     setMappedPhones(mapGroupedPhones(data));
   };
 
@@ -67,10 +89,10 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
     <ClientProductPage
       products={mappedPhones}
       title="Điện Thoại"
-      // basePath="dien-thoai"
       basePath=""
       brands={brands}
       onBrandSelect={handleBrandSelect}
+      onFilterChange={handleFilterChange}
     />
   );
 }

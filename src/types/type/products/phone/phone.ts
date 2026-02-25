@@ -1,4 +1,4 @@
-import { IPhoneCatalog } from "../../catalogs/phone-catalog/phone-catalog";
+import { IPhoneCatalog } from '../../catalogs/phone-catalog/phone-catalog';
 
 export interface IPhone {
   _id: string;
@@ -19,4 +19,14 @@ export interface IPhone {
 export interface GroupedPhone {
   catalog: IPhoneCatalog;
   variants: IPhone[];
+}
+export interface PhoneFilterParams {
+  status?: string;
+  name?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  color?: string;
+  ram?: string;
+  storage?: string;
+  sort?: 'price_asc' | 'price_desc' | 'newest';
 }

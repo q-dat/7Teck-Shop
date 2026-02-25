@@ -1,5 +1,5 @@
 import { getServerApiUrl } from '../../../hooks/useApiUrl';
-import { GroupedPhone, IPhone } from '@/types/type/products/phone/phone';
+import { GroupedPhone, IPhone, PhoneFilterParams } from '@/types/type/products/phone/phone';
 import { getWithFallback } from '../shared/getWithFallback';
 
 export async function getAllmostViewedPhones(): Promise<IPhone[]> {
@@ -62,47 +62,36 @@ if (typeof setInterval !== 'undefined') {
  * Lấy danh sách grouped phones từ API với cache
  * @param name Tên filter (optional)
  */
-export async function getNewGroupedPhones(name?: string): Promise<GroupedPhone[]> {
+export async function getNewGroupedPhones(filters?: PhoneFilterParams): Promise<GroupedPhone[]> {
   try {
-    // --- Tạo query params ---
     const searchParams = new URLSearchParams();
+
     searchParams.set('status', '0');
-    if (name) searchParams.set('name', name);
 
-    const apiUrl = `${getServerApiUrl(`/api/grouped-phones?${searchParams}`)}`;
-    const cacheKey = apiUrl; // cache riêng cho từng URL
+    if (filters?.name) searchParams.set('name', filters.name);
+    if (filters?.minPrice) searchParams.set('minPrice', filters.minPrice);
+    if (filters?.maxPrice) searchParams.set('maxPrice', filters.maxPrice);
+    if (filters?.color) searchParams.set('color', filters.color);
+    if (filters?.ram) searchParams.set('ram', filters.ram);
+    if (filters?.storage) searchParams.set('storage', filters.storage);
+    if (filters?.sort) searchParams.set('sort', filters.sort);
 
-    const now = Date.now();
+    const apiUrl = getServerApiUrl(`/api/grouped-phones?${searchParams.toString()}`);
 
-    // --- Kiểm tra cache còn hiệu lực 60s ---
-    const cached = cache[cacheKey];
-    if (cached && now - cached.timestamp < 60_000) {
-      return cached.data;
-    }
+    const hasDynamicFilter = filters && (filters.minPrice || filters.maxPrice || filters.color || filters.ram || filters.storage || filters.sort);
 
-    // --- Fetch mới từ API, kết hợp Next.js ISR ---
-    const res = await fetch(apiUrl, { next: { revalidate: 60 } });
+    const res = await fetch(apiUrl, {
+      cache: hasDynamicFilter ? 'no-store' : 'force-cache',
+      next: hasDynamicFilter ? undefined : { revalidate: 60 },
+    });
 
-    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+    if (!res.ok) throw new Error();
 
     const data = await res.json();
 
-    // --- Kiểm tra dữ liệu hợp lệ ---
-    if (!data || typeof data !== 'object' || !Array.isArray(data.groupedPhones)) {
-      console.warn('Dữ liệu groupedPhones không hợp lệ:', data);
-      return cached?.data || [];
-    }
-
-    // --- Lưu cache mới ---
-    cache[cacheKey] = { data: data.groupedPhones, timestamp: now };
-
-    return data.groupedPhones;
-  } catch (error) {
-    console.error('Lỗi khi gọi API groupedPhones:', error);
-
-    // --- Fallback dùng cache nếu có ---
-    const fallbackCache = cache[`${getServerApiUrl(`/api/grouped-phones?status=0${name ? `&name=${name}` : ''}`)}`];
-    return fallbackCache?.data || [];
+    return data.groupedPhones ?? [];
+  } catch {
+    return [];
   }
 }
 
