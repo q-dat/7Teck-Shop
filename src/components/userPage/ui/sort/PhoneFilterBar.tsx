@@ -34,7 +34,7 @@ export default function PhoneFilterBar({ activeFilters, onChange }: PhoneFilterB
   const max = Number(filters.maxPrice || PRICE_MAX_QUERY);
 
   const selectStyle =
-    'w-full rounded-sm border border-primary-lighter bg-white pl-8 font-medium text-black focus:outline-none hover:border-primary placeholder:text-black';
+    'w-full rounded-sm border border-primary-lighter bg-white pl-8 font-medium text-black focus:outline-none xl:hover:border-primary placeholder:text-black';
   const iconStyle = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black';
 
   useEffect(() => {
@@ -163,7 +163,7 @@ export default function PhoneFilterBar({ activeFilters, onChange }: PhoneFilterB
 
       {/* Price */}
       <div className="relative col-span-2 w-full md:col-span-3 xl:col-span-2">
-        <div className="flex h-8 items-center rounded-sm border border-primary-lighter bg-white shadow-sm transition-all hover:border-primary">
+        <div className="flex h-8 items-center rounded-sm border border-primary-lighter bg-white shadow-sm transition-all xl:hover:border-primary">
           {/* Value */}
           <div className="flex w-full items-center justify-between px-1 font-medium text-black">
             <span className="pointer-events-none z-40">
@@ -226,7 +226,7 @@ export default function PhoneFilterBar({ activeFilters, onChange }: PhoneFilterB
       <div className="col-span-2 flex justify-end gap-1 md:col-span-1">
         <Button
           size="xs"
-          className="flex items-center gap-1 rounded-full border border-black bg-success font-medium text-white transition-all hover:bg-primary/90"
+          className="flex items-center gap-1 rounded-full border border-black bg-success font-medium text-white transition-all xl:hover:bg-primary/90"
           onClick={applyFilters}
         >
           <FaFilter className="" />
@@ -235,7 +235,7 @@ export default function PhoneFilterBar({ activeFilters, onChange }: PhoneFilterB
 
         <Button
           size="xs"
-          className="flex items-center gap-1 rounded-full bg-white font-medium text-black transition-all hover:bg-primary/5"
+          className="flex items-center gap-1 rounded-full bg-white font-medium text-black transition-all xl:hover:bg-primary/5"
           onClick={resetFilters}
         >
           <FaUndo className="" />
