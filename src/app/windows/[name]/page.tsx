@@ -1,4 +1,3 @@
-import React from 'react';
 import ClientUsedWindowsByCatalogPage from './ClientUsedWindowsByCatalogPage';
 import { getAllWindows } from '@/services/products/windowsService';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';

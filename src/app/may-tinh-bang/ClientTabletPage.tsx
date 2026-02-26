@@ -4,22 +4,6 @@ import { getNewGroupedTablets } from '@/services/products/tabletService';
 import { GroupedTablet } from '@/types/type/products/tablet/tablet';
 import { useState } from 'react';
 
-// export default function ClientTabletPage({ tablets }: { tablets: ITablet[] }) {
-//   const mapped = tablets.map((tablet) => ({
-//     _id: tablet._id,
-//     name: tablet.tablet_name,
-//     img: tablet.tablet_img,
-//     price: tablet.tablet_price,
-//     color: tablet.tablet_color,
-//     ram: tablet.tablet_catalog_id.t_cat_memory_and_storage.t_cat_ram,
-//     cpu: tablet.tablet_catalog_id.t_cat_operating_system_and_cpu.t_cat_cpu_chip,
-//     sale: tablet.tablet_sale,
-//     status: tablet.tablet_status,
-//   }));
-
-//   return <ClientProductPage products={mapped} title="Máy Tính Bảng" basePath="may-tinh-bang" />;
-// }
-
 export default function ClientTabletPage({ groupedTablets }: { groupedTablets: GroupedTablet[] }) {
   const [mappedTabelets, setMappedTablets] = useState(() => mapGroupedTablets(groupedTablets));
 
@@ -64,14 +48,5 @@ export default function ClientTabletPage({ groupedTablets }: { groupedTablets: G
     setMappedTablets(mapGroupedTablets(data));
   };
 
-  return (
-    <ClientProductPage
-      products={mappedTabelets}
-      title="Máy Tính Bảng"
-      //  basePath="may-tinh-bang"
-      basePath=""
-      brands={brands}
-      onBrandSelect={handleBrandSelect}
-    />
-  );
+  return <ClientProductPage products={mappedTabelets} title="Máy Tính Bảng" basePath="" brands={brands} onBrandSelect={handleBrandSelect} />;
 }
