@@ -20,7 +20,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
 
   return (
     // THAY ĐỔI CHÍNH: Sticky container
-    <div className="sticky bottom-[50px] z-50 w-full rounded-md border-t border-black/10 py-2 backdrop-blur-sm xl:bottom-0">
+    <div className="sticky bottom-[50px] z-50 w-full rounded-md border-t border-black/10 pb-2 pt-1 backdrop-blur-sm xl:bottom-0">
       <div className="flex flex-row items-center justify-center gap-x-6 px-2 text-black xl:gap-x-12">
         {/* --- Nút Trang Trước (Prev Page) --- */}
         <Button
@@ -32,16 +32,16 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
             scrollToTopInstantly();
           }}
         >
-          <span className="flex items-center justify-center gap-1 font-semibold uppercase tracking-wider">
-            <MdArrowBackIosNew size={14} className="h-4 w-4" />
+          <span className="flex text-[10px] font-semibold uppercase tracking-wider">
+            <MdArrowBackIosNew size={12} />
             Trước
           </span>
         </Button>
 
         {/* --- Hiển thị Trang Hiện tại / Tổng số Trang --- */}
         <div className="mx-2 flex flex-row items-baseline gap-1 text-black">
-          <span className="text-xl font-extrabold xl:text-2xl">{currentPage}</span>
-          <span className="text-base font-medium">/</span>
+          <span className="text-lg font-extrabold xl:text-xl">{currentPage}</span>
+          <span className="text-lg font-medium">/</span>
           <span className="text-base font-medium">{totalPages}</span>
         </div>
 
@@ -55,8 +55,8 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
             scrollToTopInstantly();
           }}
         >
-          <span className="flex items-center justify-center gap-1 font-semibold uppercase tracking-wider">
-            Tiếp <MdArrowForwardIos size={14} className="h-4 w-4" />
+          <span className="flex text-[10px] font-semibold uppercase tracking-wider">
+            Tiếp <MdArrowForwardIos size={12} />
           </span>
         </Button>
       </div>
