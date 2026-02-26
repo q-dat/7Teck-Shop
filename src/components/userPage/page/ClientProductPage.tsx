@@ -13,7 +13,7 @@ import imageRepresent from '../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { IconType } from 'react-icons';
 import { FaBoxOpen, FaDesktop, FaMicrochip, FaThLarge } from 'react-icons/fa';
-import { MdMemory, MdMonitor } from 'react-icons/md';
+import { MdMemory, MdMonitor, MdOutlineInvertColors } from 'react-icons/md';
 
 interface ProductBase {
   _id: string;
@@ -50,6 +50,7 @@ interface ClientProductPageProps {
 
 const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
 const specConfigMap: Record<string, SpecConfig> = {
+  color: { icon: MdOutlineInvertColors, label: 'Màu sắc' },
   ram: { icon: MdMemory, label: 'RAM' },
   cpu: { icon: FaMicrochip, label: 'CPU' },
   lcd: { icon: MdMonitor, label: 'LCD' },
@@ -250,7 +251,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
 
                                 return (
                                   <div key={field} className="flex items-center">
-                                    <Icon size={18} className="text-gray-600" />
+                                    <Icon size={16} className="text-gray-600" />
                                     <span className="text-xs font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
                                   </div>
                                 );

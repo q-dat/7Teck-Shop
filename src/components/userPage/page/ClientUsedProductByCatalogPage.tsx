@@ -14,8 +14,8 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { IconType } from 'react-icons';
 import { FaFrown } from 'react-icons/fa';
-import { FaBoxOpen, FaDesktop, FaMicrochip, FaThLarge } from 'react-icons/fa';
-import { MdMemory, MdMonitor } from 'react-icons/md';
+import { FaDesktop, FaMicrochip, FaThLarge } from 'react-icons/fa';
+import { MdMemory, MdMonitor, MdOutlineInvertColors } from 'react-icons/md';
 export interface ProductBase {
   _id: string;
   name: string;
@@ -42,6 +42,7 @@ type ProductPageProps = {
 // Danh sách trạng thái hết hàng
 const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
 const specConfigMap: Record<string, SpecConfig> = {
+  color: { icon: MdOutlineInvertColors, label: 'Màu sắc' },
   ram: { icon: MdMemory, label: 'RAM' },
   cpu: { icon: FaMicrochip, label: 'CPU' },
   lcd: { icon: MdMonitor, label: 'LCD' },
@@ -85,7 +86,6 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
               ) : filtered.length > 0 ? (
                 filtered.map((product) => {
                   const slug = slugify(product.name);
-                  // const url = `/${basePath}/${slug}/${product._id}`;
                   const url = `/${slug}/${product._id}`;
                   // handleImageError
                   const isErrored = isImageErrored(product._id);
@@ -131,7 +131,7 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
 
                                 return (
                                   <div key={field} className="flex items-center">
-                                    <Icon size={18} className="text-gray-600" />
+                                    <Icon size={16} className="text-gray-600" />
                                     <span className="text-xs font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
                                   </div>
                                 );
@@ -180,7 +180,6 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
                               price: product?.price,
                               ram: product?.ram,
                               color: product?.color,
-                              // link: `${basePath}/${slugify(product.name)}/${product._id}`,
                               link: `/${slugify(product.name)}/${product._id}`,
                             };
                             localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
