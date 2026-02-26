@@ -34,6 +34,7 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
         price: defaultVariant.price,
         color: defaultVariant.color,
         ram: config?.ram ?? '',
+        storage: config?.storage_capacity ?? '',
         cpu: config?.cpu_chip ?? '',
         sale: defaultVariant.sale,
         status: defaultVariant.status,
@@ -41,6 +42,7 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
           ...v,
           ram: config?.ram ?? '',
           cpu: config?.cpu_chip ?? '',
+          storage: config?.storage_capacity ?? '',
         })),
       };
     });

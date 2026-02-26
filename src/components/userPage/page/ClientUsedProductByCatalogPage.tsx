@@ -14,22 +14,10 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { IconType } from 'react-icons';
 import { FaFrown } from 'react-icons/fa';
-import { FaDesktop, FaMicrochip, FaThLarge } from 'react-icons/fa';
+import { FaDesktop, FaMicrochip } from 'react-icons/fa';
 import { MdMemory, MdMonitor, MdOutlineInvertColors } from 'react-icons/md';
-export interface ProductBase {
-  _id: string;
-  name: string;
-  img: string;
-  price: number;
-  sale: number | null;
-  status: string | null;
-  view: number;
-  color: string;
-  ram?: string;
-  cpu?: string;
-  lcd?: string;
-  gpu?: string;
-}
+import { ProductBase } from './ClientProductPage';
+
 interface SpecConfig {
   icon: IconType;
   label: string;

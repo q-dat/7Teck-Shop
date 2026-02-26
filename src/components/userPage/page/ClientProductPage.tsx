@@ -13,15 +13,16 @@ import imageRepresent from '../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { IconType } from 'react-icons';
 import { FaBoxOpen, FaDesktop, FaMicrochip, FaThLarge } from 'react-icons/fa';
-import { MdMemory, MdMonitor, MdOutlineInvertColors } from 'react-icons/md';
+import { MdMemory, MdMonitor, MdOutlineInvertColors, MdSdStorage } from 'react-icons/md';
 
-interface ProductBase {
+export interface ProductBase {
   _id: string;
   name: string;
   img: string;
   price: number;
   color: string;
   ram?: string;
+  storage?: string;
   cpu?: string;
   lcd?: string;
   gpu?: string;
@@ -52,6 +53,7 @@ const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
 const specConfigMap: Record<string, SpecConfig> = {
   color: { icon: MdOutlineInvertColors, label: 'Màu sắc' },
   ram: { icon: MdMemory, label: 'RAM' },
+  storage: { icon: MdSdStorage, label: 'Dung lượng' },
   cpu: { icon: FaMicrochip, label: 'CPU' },
   lcd: { icon: MdMonitor, label: 'LCD' },
   gpu: { icon: FaDesktop, label: 'GPU' },
@@ -69,7 +71,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
 
   // Variants
   const [selectedVariants, setSelectedVariants] = useState<Record<string, ProductBase>>({});
-  const specsToShow = ['ram', 'cpu', 'lcd', 'gpu'];
+  const specsToShow = ['ram', 'cpu', 'storage', 'lcd', 'gpu'];
 
   // State lưu brand đang chọn
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -233,13 +235,8 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                           </div>
                           {/* Product Title & Specifications */}
                           <div className="w-full px-1 pt-1">
-                            <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-primary">
-                              <span>{title}</span>
-                              &nbsp;
-                              <span>{variant.name}</span>
-                            </p>
                             {/* Product Specifications */}
-                            <div className="w-full">
+                            <div className="flex w-full flex-wrap items-center gap-2">
                               {specsToShow.map((field) => {
                                 const value = variant[field as keyof ProductBase];
                                 if (!value) return null;
@@ -257,6 +254,17 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                                 );
                               })}
                             </div>
+                            {/* Title */}
+                            <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-primary">
+                              <span>{title}</span>
+                              &nbsp;
+                              <span>
+                                {
+                                  variant.name
+                                  // .replace(/\s\d+\s?GB(?:[\/\-]\d+\s?GB)?$/gi, '').trim()
+                                }
+                              </span>
+                            </p>
                           </div>
                           {/* Overlay for Sold Out products */}
                           {isExcluded && (
