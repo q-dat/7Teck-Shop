@@ -49,6 +49,12 @@ interface ClientProductPageProps {
 }
 
 const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
+const specConfigMap: Record<string, SpecConfig> = {
+  ram: { icon: MdMemory, label: 'RAM' },
+  cpu: { icon: FaMicrochip, label: 'CPU' },
+  lcd: { icon: MdMonitor, label: 'LCD' },
+  gpu: { icon: FaDesktop, label: 'GPU' },
+};
 
 export default function ClientProductPage({ products, title, basePath, brands = [], filterNode, onBrandSelect }: ClientProductPageProps) {
   const [loading, setLoading] = useState(true);
@@ -106,12 +112,6 @@ export default function ClientProductPage({ products, title, basePath, brands = 
     // Khi products mới được set => useEffect sẽ tự setLoading(false)
   };
 
-  const specConfigMap: Record<string, SpecConfig> = {
-    ram: { icon: MdMemory, label: 'RAM' },
-    cpu: { icon: FaMicrochip, label: 'CPU' },
-    lcd: { icon: MdMonitor, label: 'LCD' },
-    gpu: { icon: FaDesktop, label: 'GPU' },
-  };
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile={'7teck.vn'} />
@@ -237,25 +237,25 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                               &nbsp;
                               <span>{variant.name}</span>
                             </p>
-                          </div>
-                          {/* Product Specifications */}
-                          <div className="w-full px-1 pt-1">
-                            {specsToShow.map((field) => {
-                              const value = variant[field as keyof ProductBase];
-                              if (!value) return null;
+                            {/* Product Specifications */}
+                            <div className="w-full">
+                              {specsToShow.map((field) => {
+                                const value = variant[field as keyof ProductBase];
+                                if (!value) return null;
 
-                              const config = specConfigMap[field];
-                              if (!config) return null;
+                                const config = specConfigMap[field];
+                                if (!config) return null;
 
-                              const Icon = config.icon;
+                                const Icon = config.icon;
 
-                              return (
-                                <div key={field} className="flex items-center">
-                                  <Icon size={18} className="text-gray-600" />
-                                  <span className="text-xs font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
-                                </div>
-                              );
-                            })}
+                                return (
+                                  <div key={field} className="flex items-center">
+                                    <Icon size={18} className="text-gray-600" />
+                                    <span className="text-xs font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                           {/* Overlay for Sold Out products */}
                           {isExcluded && (

@@ -1,19 +1,21 @@
 // TRANG THIẾT BỊ ĐÃ QUA SỬ DỤNG
 'use client';
+import { useEffect, useState } from 'react';
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { slugify } from '@/utils/slugify';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
 import { Button } from 'react-daisyui';
 import imageRepresent from '../../../../public/image-represent';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
+import { IconType } from 'react-icons';
 import { FaFrown } from 'react-icons/fa';
-
+import { FaBoxOpen, FaDesktop, FaMicrochip, FaThLarge } from 'react-icons/fa';
+import { MdMemory, MdMonitor } from 'react-icons/md';
 export interface ProductBase {
   _id: string;
   name: string;
@@ -28,7 +30,10 @@ export interface ProductBase {
   lcd?: string;
   gpu?: string;
 }
-
+interface SpecConfig {
+  icon: IconType;
+  label: string;
+}
 type ProductPageProps = {
   title: string;
   products: ProductBase[];
@@ -36,6 +41,12 @@ type ProductPageProps = {
 };
 // Danh sách trạng thái hết hàng
 const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
+const specConfigMap: Record<string, SpecConfig> = {
+  ram: { icon: MdMemory, label: 'RAM' },
+  cpu: { icon: FaMicrochip, label: 'CPU' },
+  lcd: { icon: MdMonitor, label: 'LCD' },
+  gpu: { icon: FaDesktop, label: 'GPU' },
+};
 
 export default function ClientUsedProductByCatalogPage({ products, title }: ProductPageProps) {
   const [loading, setLoading] = useState(true);
@@ -108,24 +119,21 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
                               <span>{product.name}</span>
                             </p>
                             {/* Product Specifications */}
-                            <div className="py-1 text-prod-name-mobile xl:text-prod-name-desktop">
+                            <div className="">
                               {specsToShow.map((field) => {
                                 const value = product[field as keyof ProductBase];
                                 if (!value) return null;
 
-                                const fieldLabelMap: Record<string, string> = {
-                                  color: 'Màu',
-                                  ram: 'RAM',
-                                  cpu: 'CPU',
-                                  lcd: 'Màn hình',
-                                  gpu: 'GPU',
-                                };
+                                const config = specConfigMap[field];
+                                if (!config) return null;
+
+                                const Icon = config.icon;
 
                                 return (
-                                  <p key={field}>
-                                    <span className="rounded-sm bg-primary-lighter px-1 font-semibold">{fieldLabelMap[field]}:</span>
-                                    &nbsp;<span className="font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
-                                  </p>
+                                  <div key={field} className="flex items-center">
+                                    <Icon size={18} className="text-gray-600" />
+                                    <span className="text-xs font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
+                                  </div>
                                 );
                               })}
                             </div>
