@@ -1,8 +1,8 @@
 'use client';
-import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import React from 'react';
 import { Button } from 'react-daisyui';
 import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
+import { scrollToTopInstantly } from '@/utils/scrollToTop';
 
 interface PaginationProps {
   currentPage: number;
@@ -29,7 +29,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
           disabled={currentPage === 1}
           onClick={() => {
             onPrevPage();
-            scrollToTopInstantly();
+            // scrollToTopInstantly();
           }}
         >
           <span className="flex text-[10px] font-semibold uppercase tracking-wider">

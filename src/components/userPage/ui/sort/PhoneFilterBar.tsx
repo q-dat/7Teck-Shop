@@ -34,8 +34,8 @@ export default function PhoneFilterBar({ activeFilters, onChange }: PhoneFilterB
   const max = Number(filters.maxPrice || PRICE_MAX_QUERY);
 
   const selectStyle =
-    'rounded-sm bg-white pl-10 pr-5 text-sm font-medium text-primary focus:outline-none border border-primary-lighter hover:border-primary w-[150px]';
-  const iconStyle = 'pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-primary';
+    'w-full rounded-sm border border-primary-lighter bg-white pl-8 font-medium text-black focus:outline-none hover:border-primary placeholder:text-black';
+  const iconStyle = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black';
 
   useEffect(() => {
     setFilters({
@@ -72,7 +72,7 @@ export default function PhoneFilterBar({ activeFilters, onChange }: PhoneFilterB
   };
 
   return (
-    <div className="my-2 flex flex-wrap items-center gap-1">
+    <div className="my-2 grid grid-cols-2 items-end gap-1 text-xs md:grid-cols-4 xl:grid-cols-7">
       {/* Sort */}
       <div className="relative">
         <FaSortAmountDown className={iconStyle} />
@@ -91,6 +91,30 @@ export default function PhoneFilterBar({ activeFilters, onChange }: PhoneFilterB
           <option value="price_asc">Giá tăng dần</option>
           <option value="price_desc">Giá giảm dần</option>
         </Select>
+      </div>
+
+      {/* Color */}
+      <div className="relative">
+        <FaPalette className={iconStyle} />
+        <Input
+          className={selectStyle}
+          size="sm"
+          list="color-options"
+          type="text"
+          placeholder="Màu sắc"
+          value={filters.color}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              color: e.target.value,
+            }))
+          }
+        />
+        <datalist id="color-options">
+          {COLOR_OPTIONS.map((color) => (
+            <option key={color} value={color} />
+          ))}
+        </datalist>
       </div>
 
       {/* RAM */}
@@ -137,40 +161,19 @@ export default function PhoneFilterBar({ activeFilters, onChange }: PhoneFilterB
         </Select>
       </div>
 
-      {/* Color */}
-      <div className="relative">
-        <FaPalette className={iconStyle} />
-        <Input
-          size="sm"
-          list="color-options"
-          type="text"
-          placeholder="Màu sắc"
-          className={selectStyle}
-          value={filters.color}
-          onChange={(e) =>
-            setFilters((prev) => ({
-              ...prev,
-              color: e.target.value,
-            }))
-          }
-        />
-        <datalist id="color-options">
-          {COLOR_OPTIONS.map((color) => (
-            <option key={color} value={color} />
-          ))}
-        </datalist>
-      </div>
       {/* Price */}
-      <div className="relative w-full md:w-72">
-        <div className="flex h-8 items-center rounded-sm border border-primary-lighter bg-white px-2 shadow-sm transition-all hover:border-primary">
+      <div className="relative col-span-2 w-full md:col-span-3 xl:col-span-2">
+        <div className="flex h-8 items-center rounded-sm border border-primary-lighter bg-white shadow-sm transition-all hover:border-primary">
           {/* Value */}
-          <div className="flex w-full items-center justify-between px-1 text-xs font-medium text-primary">
-            <span className="pointer-events-none z-40">{min / 1000}tr</span>
-            <span className="pointer-events-none z-40">{max / 1000}tr</span>
+          <div className="flex w-full items-center justify-between px-1 font-medium text-black">
+            <span className="pointer-events-none z-40">
+              Từ <b>{min / 1000}tr</b>
+            </span>
+            <b className="pointer-events-none z-40">{max / 1000}tr</b>
           </div>
 
           {/* Sliders overlay */}
-          <div className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 px-10">
+          <div className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 pl-14 pr-10">
             <div className="relative h-1 w-full rounded-full bg-primary-lighter">
               {/* Selected range */}
               <div
@@ -220,22 +223,22 @@ export default function PhoneFilterBar({ activeFilters, onChange }: PhoneFilterB
       </div>
 
       {/* Actions */}
-      <div className="ml-auto flex gap-2">
+      <div className="col-span-2 flex justify-end gap-1 md:col-span-1">
         <Button
-          size="sm"
-          className="flex items-center gap-1 rounded-full bg-primary text-xs font-medium text-white transition-all hover:bg-primary/90"
+          size="xs"
+          className="flex items-center gap-1 rounded-full border border-black bg-success font-medium text-white transition-all hover:bg-primary/90"
           onClick={applyFilters}
         >
-          <FaFilter className="text-xs" />
+          <FaFilter className="" />
           Áp dụng
         </Button>
 
         <Button
-          size="sm"
-          className="flex items-center gap-1 rounded-full bg-white text-xs font-medium text-primary transition-all hover:bg-primary/5"
+          size="xs"
+          className="flex items-center gap-1 rounded-full bg-white font-medium text-black transition-all hover:bg-primary/5"
           onClick={resetFilters}
         >
-          <FaUndo className="text-xs" />
+          <FaUndo className="" />
           Đặt lại
         </Button>
       </div>

@@ -114,19 +114,10 @@ export default function ClientProductPage({ products, title, basePath, brands = 
             </li>
           </ul>
         </div>
-        {/* Title & Slogan */}
-        <div className="my-2 px-2 text-center xl:px-desktop-padding">
-          <p className="text-sm tracking-wide text-black">
-            <span className="rounded-full bg-gradient-to-r from-primary/50 via-primary-lighter to-transparent px-3 py-1 font-semibold text-primary shadow-sm">
-              7teck.vn
-            </span>
-            <span className="ml-1 font-light italic">Chất lượng bạn tin - Giá trị bạn giữ.</span>
-          </p>
-        </div>
 
-        {/* Brand filter buttons */}
+        {/* Filter Btn */}
         <div className="my-2 px-2 xl:px-desktop-padding">
-          {/* Sort */}
+          {/* Brand */}
           <div className="flex flex-wrap gap-1">
             <Button
               size="sm"
@@ -146,13 +137,22 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                 {brand.name}
               </Button>
             ))}
-            <hr />
+            {/* Title & Slogan */}
+            <div className="my-2 ml-auto hidden text-center md:block">
+              <p className="text-sm tracking-wide text-black">
+                <span className="rounded-full bg-gradient-to-r from-primary/50 via-primary-lighter to-transparent px-3 py-1 font-semibold text-primary shadow-sm">
+                  7teck.vn
+                </span>
+                <span className="ml-1 font-light italic">Chất lượng bạn tin - Giá trị bạn giữ.</span>
+              </p>
+            </div>
           </div>
-          {/*  */}
+          {/* Sort */}
           {filterNode}
         </div>
+
+        {/* Product grid */}
         <div className="mt-4 space-y-10 px-2 xl:px-desktop-padding">
-          {/* Product grid */}
           <div className="w-full">
             <div className="grid w-full grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6">
               {loading ? (
