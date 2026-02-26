@@ -11,7 +11,9 @@ import Image from 'next/image';
 import { Button } from 'react-daisyui';
 import imageRepresent from '../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
-import { FaBoxOpen, FaThLarge } from 'react-icons/fa';
+import { IconType } from 'react-icons';
+import { FaBoxOpen, FaDesktop, FaMicrochip, FaThLarge } from 'react-icons/fa';
+import { MdMemory, MdMonitor } from 'react-icons/md';
 
 interface ProductBase {
   _id: string;
@@ -30,6 +32,11 @@ interface ProductBase {
 interface BrandItem {
   name: string;
   icon?: React.ReactNode;
+}
+
+interface SpecConfig {
+  icon: IconType;
+  label: string;
 }
 
 interface ClientProductPageProps {
@@ -99,6 +106,12 @@ export default function ClientProductPage({ products, title, basePath, brands = 
     // Khi products mới được set => useEffect sẽ tự setLoading(false)
   };
 
+  const specConfigMap: Record<string, SpecConfig> = {
+    ram: { icon: MdMemory, label: 'RAM' },
+    cpu: { icon: FaMicrochip, label: 'CPU' },
+    lcd: { icon: MdMonitor, label: 'LCD' },
+    gpu: { icon: FaDesktop, label: 'GPU' },
+  };
   return (
     <div>
       <HeaderResponsive Title_NavbarMobile={'7teck.vn'} />
@@ -224,27 +237,25 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                               &nbsp;
                               <span>{variant.name}</span>
                             </p>
-                            {/* Product Specifications */}
-                            <div className="py-1 text-prod-name-mobile xl:text-prod-name-desktop">
-                              {specsToShow.map((field) => {
-                                const value = variant[field as keyof ProductBase];
-                                if (!value) return null;
+                          </div>
+                          {/* Product Specifications */}
+                          <div className="w-full px-1 pt-1">
+                            {specsToShow.map((field) => {
+                              const value = variant[field as keyof ProductBase];
+                              if (!value) return null;
 
-                                const fieldLabelMap: Record<string, string> = {
-                                  ram: 'RAM',
-                                  cpu: 'CPU',
-                                  lcd: 'Màn hình',
-                                  gpu: 'GPU',
-                                };
+                              const config = specConfigMap[field];
+                              if (!config) return null;
 
-                                return (
-                                  <p key={field}>
-                                    <span className="rounded-sm bg-primary-lighter px-1 font-semibold">{fieldLabelMap[field]}:</span>
-                                    &nbsp;<span className="font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
-                                  </p>
-                                );
-                              })}
-                            </div>
+                              const Icon = config.icon;
+
+                              return (
+                                <div key={field} className="flex items-center">
+                                  <Icon size={18} className="text-gray-600" />
+                                  <span className="text-xs font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
+                                </div>
+                              );
+                            })}
                           </div>
                           {/* Overlay for Sold Out products */}
                           {isExcluded && (
