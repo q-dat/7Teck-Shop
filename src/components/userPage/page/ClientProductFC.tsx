@@ -1,10 +1,9 @@
 'use client';
-
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Button } from 'react-daisyui';
 import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
 import { FaArrowRight } from 'react-icons/fa';
@@ -88,7 +87,7 @@ const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p
       {/* Thông tin chi tiết */}
       <div className="flex flex-col px-1 py-2">
         <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-          <span>{product.ram || 'Tiêu chuẩn'}</span>
+          <span>RAM {product.ram || 'Tiêu chuẩn'}</span>
           <span className="font-medium">{product.color}</span>
         </div>
 
@@ -99,9 +98,9 @@ const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p
         </Link>
 
         <div className="flex items-baseline gap-2">
-          <span className="text-lg font-bold tracking-tight text-neutral-900 xl:text-xl">{formatCurrency(product.sale || product.price)}</span>
+          <span className="text-lg font-bold tracking-tight text-price xl:text-xl">{formatCurrency(product.price)}</span>
 
-          {product.sale !== 0 && <del className="text-xs font-medium text-gray-400 decoration-1">{formatCurrency(product.price)}</del>}
+          {product.sale !== 0 && <del className="text-xs font-medium text-gray-400 decoration-1">{formatCurrency(product.sale || 0)}</del>}
         </div>
 
         {/* Thông tin bổ trợ niềm tin (Trust signals) */}
@@ -167,14 +166,10 @@ export default function ClientProductFC({ products, category, loading: externalL
   return (
     <section className="w-full bg-white px-2 py-4 xl:px-desktop-padding">
       {/* Header Section: Minimalist & Clean */}
-      <div className="mb-10 flex flex-col items-start justify-between gap-8 border-b border-neutral-100 pb-5 md:flex-row md:items-end">
-        <div className="max-w-2xl space-y-3">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.4em] text-primary">
-            <span className="h-px w-6 bg-primary" />
-            Collection
-          </div>
-          <h2 className="text-3xl font-light tracking-tight text-neutral-900 xl:text-4xl">{category.title}</h2>
-          <p className="text-sm font-light leading-relaxed text-neutral-500 xl:text-base">
+      <div className="mb-5 flex flex-col items-start justify-between gap-4 border-b border-neutral-100 pb-2 md:flex-row md:items-end">
+        <div className="max-w-2xl space-y-2">
+          <h2 className="text-xl font-light tracking-tight text-neutral-900 xl:text-2xl">{category.title}</h2>
+          <p className="text-xs font-light leading-relaxed text-neutral-500 xl:text-base">
             Tuyển chọn những giải pháp công nghệ tối ưu, mang lại hiệu quả vượt trội cho công việc và giải trí của bạn.
           </p>
         </div>
@@ -182,12 +177,10 @@ export default function ClientProductFC({ products, category, loading: externalL
         <Link
           href={category.url}
           aria-label={category.ariaLabel}
-          className="group flex items-center gap-4 text-xs font-bold uppercase tracking-[0.2em] text-neutral-900 transition-colors hover:text-primary"
+          className="group ml-auto flex items-center text-xs font-bold uppercase tracking-[0.2em] text-neutral-900 transition-colors hover:text-primary"
         >
           Khám phá tất cả
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-neutral-200 transition-all duration-500 group-hover:border-primary group-hover:bg-primary group-hover:text-white">
-            <MdArrowForwardIos className="text-xs" />
-          </div>
+          <MdArrowForwardIos size={18} />
         </Link>
       </div>
 
