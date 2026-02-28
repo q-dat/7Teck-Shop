@@ -166,11 +166,11 @@ export default function ClientProductFC({ products, category, loading: externalL
   return (
     <section className="w-full bg-white p-2 xl:px-desktop-padding">
       {/* Header Section: Minimalist & Clean */}
-      <div className="mb-5 flex flex-col items-start justify-between gap-2 border-b border-primary pb-2 md:flex-row md:items-center">
+      <div className="mb-2 flex flex-col items-start justify-between gap-2 border-b border-primary pb-2 md:flex-row md:items-center">
         <h2 className="text-xl font-light tracking-tight text-neutral-900 xl:text-2xl">{category.title}</h2>
         <Link
           href={category.url}
-          aria-label={category.ariaLabel}
+        aria-label={category.ariaLabel}
           className="group ml-auto flex items-center text-xs font-bold uppercase tracking-[0.2em] text-neutral-900 transition-colors hover:text-primary"
         >
           Khám phá tất cả

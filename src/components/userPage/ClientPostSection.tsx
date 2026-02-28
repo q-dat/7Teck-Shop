@@ -1,13 +1,11 @@
 'use client';
-
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from 'react-daisyui';
 import { IoIosArrowForward } from 'react-icons/io';
 import { FaRegNewspaper } from 'react-icons/fa';
-
 import { slugify } from '@/utils/slugify';
 import { IPost } from '@/types/type/products/post/post';
 import { images } from '../../../public/images';

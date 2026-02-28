@@ -50,7 +50,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
               <span className="uppercase">Ưu Đãi Trao Đổi</span>
             </div>
             {/* Headline */}
-            <h1 className="text-5xl font-extrabold leading-tight text-white drop-shadow-md 2xl:text-6xl">
+            <h1 className="text-4xl font-extrabold leading-tight text-white drop-shadow-md 2xl:text-5xl">
               <span className="inline-flex items-center justify-center gap-2">
                 Thu Cũ Đổi Mới
                 <IoShieldCheckmarkOutline className="text-green-400" />
@@ -59,18 +59,18 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
               Nhận Ngay Giá Tốt Nhất!
             </h1>
             {/* Subtitle / Extended content */}
-            <p className="text-lg text-slate-200/95 2xl:text-xl">
+            <p className="text-base text-slate-200/95">
               Đổi điện thoại cũ lấy siêu phẩm mới với mức giá hấp dẫn.
               <br />
               Giải pháp thông minh để bạn nâng cấp thiết bị yêu thích ngay hôm nay.
               <br />
-              Lên đến <i className="text-4xl font-bold text-yellow-300">90%</i> giá trị sản phẩm - uy tín, nhanh chóng, minh bạch, tiện lợi.
+              Lên đến <i className="text-xl font-bold text-yellow-300">90%</i> giá trị sản phẩm - uy tín, nhanh chóng, minh bạch, tiện lợi.
             </p>
             {/* CTA */}
             <div className="mt-2 flex flex-wrap gap-4 uppercase">
               <Link
                 href="/bang-gia-thu-mua"
-                className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-md ring-1 ring-white/30 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 hover:scale-[1.05]"
+                className="inline-flex items-center justify-center rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-md ring-1 ring-white/30 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 hover:scale-[1.05]"
                 aria-label="Mua ngay"
               >
                 Điều Kiện Áp Dụng
@@ -78,7 +78,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
 
               <Link
                 href="/dien-thoai"
-                className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm text-white/90 ring-1 ring-white/10 transition-colors hover:bg-white/5"
+                className="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm text-white/90 ring-1 ring-white/10 transition-colors hover:bg-white/5"
               >
                 Điện Thoại New Seal - Chính Hãng
               </Link>
@@ -130,10 +130,14 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                       className="group relative flex h-full w-[240px] flex-col justify-between rounded-md border border-primary-lighter text-white"
                     >
                       {/* Product Image */}
-                      <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" target="_blank" href={`/${phoneUrl}/${encodeObjectId(phone?._id)}`}>
-                        <div className="h-[240px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
+                      <Link
+                        aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh"
+                        target="_blank"
+                        href={`/${phoneUrl}/${encodeObjectId(phone?._id)}`}
+                      >
+                        <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                           <Image
-                            height={240}
+                            height={200}
                             width={240}
                             alt="Hình ảnh"
                             loading="lazy"
@@ -170,7 +174,6 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                                 {item.value ? (
                                   <>
                                     <span className="font-semibold">{item.label ? `${item.label}: ` : ''}</span>
-
                                     <span className="font-light">{item.value}</span>
                                   </>
                                 ) : null}
@@ -182,7 +185,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                         {/* Price and Buy Button */}
                         <div className="w-full">
                           <p className="text-lg">
-                            <span className="font-semibold text-white group-hover:text-white">{formatCurrency(phone?.price)}</span> &nbsp;
+                            <span className="font-semibold text-price">{formatCurrency(phone?.price)}</span> &nbsp;
                             {phone?.sale && <del className="text-xs font-light text-white">{formatCurrency(phone?.sale)}</del>}
                           </p>
                         </div>
@@ -262,7 +265,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
           }}
           className="flex items-center justify-center"
         >
-          <RiScrollToBottomLine className="text-5xl text-white opacity-100 drop-shadow-lg transition-transform duration-300 hover:scale-125" />
+          <RiScrollToBottomLine size={40} className="text-white opacity-100 drop-shadow-lg transition-transform duration-300 hover:scale-125" />
         </motion.div>
       </div>
     </header>
