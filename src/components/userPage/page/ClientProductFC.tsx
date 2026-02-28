@@ -164,16 +164,10 @@ export default function ClientProductFC({ products, category, loading: externalL
   if (sortedProducts.length === 0) return null;
 
   return (
-    <section className="w-full bg-white px-2 py-4 xl:px-desktop-padding">
+    <section className="w-full bg-white p-2 xl:px-desktop-padding">
       {/* Header Section: Minimalist & Clean */}
-      <div className="mb-5 flex flex-col items-start justify-between gap-4 border-b border-neutral-100 pb-2 md:flex-row md:items-end">
-        <div className="max-w-2xl space-y-2">
-          <h2 className="text-xl font-light tracking-tight text-neutral-900 xl:text-2xl">{category.title}</h2>
-          <p className="text-xs font-light leading-relaxed text-neutral-500 xl:text-base">
-            Tuyển chọn những giải pháp công nghệ tối ưu, mang lại hiệu quả vượt trội cho công việc và giải trí của bạn.
-          </p>
-        </div>
-
+      <div className="mb-5 flex flex-col items-start justify-between gap-2 border-b border-primary pb-2 md:flex-row md:items-center">
+        <h2 className="text-xl font-light tracking-tight text-neutral-900 xl:text-2xl">{category.title}</h2>
         <Link
           href={category.url}
           aria-label={category.ariaLabel}
