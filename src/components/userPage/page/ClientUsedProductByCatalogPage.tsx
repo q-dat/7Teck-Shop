@@ -15,7 +15,7 @@ import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { IconType } from 'react-icons';
 import { FaFrown } from 'react-icons/fa';
 import { FaDesktop, FaMicrochip } from 'react-icons/fa';
-import { MdMemory, MdMonitor, MdOutlineInvertColors } from 'react-icons/md';
+import { MdMemory, MdMonitor } from 'react-icons/md';
 import { ProductBase } from './ClientProductPage';
 
 interface SpecConfig {
@@ -27,15 +27,21 @@ type ProductPageProps = {
   products: ProductBase[];
   basePath: string;
 };
-// Danh sách trạng thái hết hàng
+
+type SpecKey = Extract<keyof ProductBase, 'ram' | 'cpu' | 'storage' | 'lcd' | 'gpu'>;
+
+const specsToShow: ReadonlyArray<{
+  key: SpecKey;
+  icon: IconType;
+}> = [
+  { key: 'ram', icon: MdMemory },
+  { key: 'cpu', icon: FaMicrochip },
+  // { key: 'storage', icon: MdSdStorage },
+  { key: 'lcd', icon: MdMonitor },
+  { key: 'gpu', icon: FaDesktop },
+];
+
 const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
-const specConfigMap: Record<string, SpecConfig> = {
-  color: { icon: MdOutlineInvertColors, label: 'Màu sắc' },
-  ram: { icon: MdMemory, label: 'RAM' },
-  cpu: { icon: FaMicrochip, label: 'CPU' },
-  lcd: { icon: MdMonitor, label: 'LCD' },
-  gpu: { icon: FaDesktop, label: 'GPU' },
-};
 
 export default function ClientUsedProductByCatalogPage({ products, title }: ProductPageProps) {
   const [loading, setLoading] = useState(true);
@@ -43,7 +49,6 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
   const fallbackSrc = imageRepresent.Fallback;
   const { handleImageError, isImageErrored } = useImageErrorHandler();
   const { name } = useParams();
-  const specsToShow = ['color', 'ram', 'cpu', 'lcd', 'gpu'];
   const filtered = products.filter((product) => slugify(product.name) === name);
 
   useEffect(() => {
@@ -108,17 +113,12 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
                             </p>
                             {/* Product Specifications */}
                             <div className="">
-                              {specsToShow.map((field) => {
-                                const value = product[field as keyof ProductBase];
+                              {specsToShow.map(({ key, icon: Icon }) => {
+                                const value = product[key];
                                 if (!value) return null;
 
-                                const config = specConfigMap[field];
-                                if (!config) return null;
-
-                                const Icon = config.icon;
-
                                 return (
-                                  <div key={field} className="flex items-center">
+                                  <div key={key} className="flex items-center">
                                     <Icon size={16} className="text-gray-600" />
                                     <span className="text-xs font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
                                   </div>

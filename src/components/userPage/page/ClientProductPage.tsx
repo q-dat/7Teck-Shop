@@ -49,15 +49,20 @@ interface ClientProductPageProps {
   onBrandSelect?: (brand: string | null) => void;
 }
 
+type SpecKey = Extract<keyof ProductBase, 'ram' | 'cpu' | 'storage' | 'lcd' | 'gpu'>;
+
+const specsToShow: ReadonlyArray<{
+  key: SpecKey;
+  icon: IconType;
+}> = [
+  { key: 'ram', icon: MdMemory },
+  { key: 'cpu', icon: FaMicrochip },
+  { key: 'storage', icon: MdSdStorage },
+  { key: 'lcd', icon: MdMonitor },
+  { key: 'gpu', icon: FaDesktop },
+];
+
 const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
-const specConfigMap: Record<string, SpecConfig> = {
-  color: { icon: MdOutlineInvertColors, label: 'Màu sắc' },
-  ram: { icon: MdMemory, label: 'RAM' },
-  storage: { icon: MdSdStorage, label: 'Dung lượng' },
-  cpu: { icon: FaMicrochip, label: 'CPU' },
-  lcd: { icon: MdMonitor, label: 'LCD' },
-  gpu: { icon: FaDesktop, label: 'GPU' },
-};
 
 export default function ClientProductPage({ products, title, basePath, brands = [], filterNode, onBrandSelect }: ClientProductPageProps) {
   const [loading, setLoading] = useState(true);
@@ -71,7 +76,6 @@ export default function ClientProductPage({ products, title, basePath, brands = 
 
   // Variants
   const [selectedVariants, setSelectedVariants] = useState<Record<string, ProductBase>>({});
-  const specsToShow = ['ram', 'cpu', 'storage', 'lcd', 'gpu'];
 
   // State lưu brand đang chọn
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
@@ -237,17 +241,12 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                           <div className="w-full px-1 pt-1">
                             {/* Product Specifications */}
                             <div className="flex w-full flex-wrap items-center gap-2">
-                              {specsToShow.map((field) => {
-                                const value = variant[field as keyof ProductBase];
+                              {specsToShow.map(({ key, icon: Icon }) => {
+                                const value = variant[key];
                                 if (!value) return null;
 
-                                const config = specConfigMap[field];
-                                if (!config) return null;
-
-                                const Icon = config.icon;
-
                                 return (
-                                  <div key={field} className="flex items-center">
+                                  <div key={key} className="flex items-center">
                                     <Icon size={16} className="text-gray-600" />
                                     <span className="text-xs font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
                                   </div>
