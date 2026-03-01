@@ -82,18 +82,14 @@ export default function ClientPostSection({ news, tricks }: ClientPostSectionPro
 
       <div className="relative z-10 py-10">
         {/* MAIN HEADER */}
-        <header className="mb-5 flex flex-col items-center px-2 text-center">
+        <header className="flex flex-col items-center px-2 text-cen">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
-            className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-white/30 text-white backdrop-blur-md"
+            className="flex h-16 w-16 items-center justify-center rounded-full border border-white/30 text-white backdrop-blur-md"
           >
             <FaRegNewspaper size={24} />
           </motion.div>
-          <h2 className="text-4xl font-light tracking-tighter text-white xl:text-6xl">Insight & Update</h2>
-          <p className="mt-4 max-w-xl text-sm font-light leading-relaxed text-neutral-300 xl:text-base">
-            Cập nhật những xu hướng công nghệ mới nhất và những thủ thuật hữu ích giúp bạn làm chủ thiết bị của mình.
-          </p>
         </header>
 
         <div className="w-full space-y-10 px-2 xl:px-desktop-padding">
