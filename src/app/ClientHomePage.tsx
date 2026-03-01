@@ -107,7 +107,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
       category: {
         name: 'Máy Tính Bảng',
         url: '/may-tinh-bang',
-        title: 'Máy Tính Bảng - Giảm giá mạnh',
+        title: 'Danh mục - Máy Tính Bảng',
         ariaLabel: 'Xem thêm sản phẩm máy tính bảng',
       },
     },
@@ -116,7 +116,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
       category: {
         name: 'Laptop Macbook',
         url: '/macbook',
-        title: 'Macbook - Giảm giá mạnh',
+        title: 'Danh mục - Macbook',
         ariaLabel: 'Xem thêm sản phẩm laptop Macbook',
       },
     },
@@ -125,7 +125,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
       category: {
         name: 'Laptop Windows',
         url: '/windows',
-        title: 'Laptop Windows - Giảm giá mạnh',
+        title: 'Danh mục - Laptop Windows',
         ariaLabel: 'Xem thêm sản phẩm laptop Windows',
       },
     },
