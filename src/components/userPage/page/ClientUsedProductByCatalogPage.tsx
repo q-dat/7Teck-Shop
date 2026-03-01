@@ -18,10 +18,6 @@ import { FaDesktop, FaMicrochip } from 'react-icons/fa';
 import { MdMemory, MdMonitor } from 'react-icons/md';
 import { ProductBase } from './ClientProductPage';
 
-interface SpecConfig {
-  icon: IconType;
-  label: string;
-}
 type ProductPageProps = {
   title: string;
   products: ProductBase[];

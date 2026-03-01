@@ -21,8 +21,6 @@ import { TfiRulerPencil } from 'react-icons/tfi';
 export interface ProductCatalogGroup {
   [field: string]: string | number | string[] | null;
 }
-// Định nghĩa interface sản phẩm chung
-
 interface Product {
   _id: string;
   name: string;
@@ -38,14 +36,12 @@ interface Product {
   catalogContent: string;
 }
 
-// Định nghĩa interface ánh xạ trường cho thông số kỹ thuật
 interface FieldMap {
   group: string;
   name: string;
   fields: { field: string; name: string }[];
 }
 
-// Thuộc tính cho component cha
 interface ClientProductDetailPageProps {
   product: Product;
   fieldMap: FieldMap[];
@@ -182,9 +178,6 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
 
                   {isExcluded && (
                     <div className="absolute inset-0 z-20 flex items-center justify-center rounded-md bg-default/40">
-                      {/* <span className="-rotate-45 rounded-md bg-primary px-3 py-2 text-2xl font-bold uppercase text-white xl:text-4xl">
-                        {product?.status || 'HẾT HÀNG'}!
-                      </span> */}
                       <Image
                         src={imageRepresent.soldOut}
                         alt="Hết Hàng"
