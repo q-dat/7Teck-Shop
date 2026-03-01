@@ -6,7 +6,7 @@ import { IoShieldCheckmarkOutline } from 'react-icons/io5';
 import { slugify } from '@/utils/slugify';
 import { FaCartPlus, FaRegEye } from 'react-icons/fa';
 import { formatCurrency } from '@/utils/formatCurrency';
-import { MdArrowBackIosNew, MdArrowForwardIos, MdNavigateNext } from 'react-icons/md';
+import { MdArrowBackIosNew, MdArrowForwardIos, MdMemory, MdNavigateNext, MdOutlineInvertColors } from 'react-icons/md';
 import { images } from '../../../public/images';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { useScroll } from '@/hooks/useScroll';
@@ -160,26 +160,24 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                               <FaRegEye />
                               <p>{phone?.view}</p>
                             </div>
-                            <p className="text-prod-name-desktop font-medium">
-                              Điện Thoại&nbsp;
-                              {phone?.name}
-                            </p>
+                            <p className="text-prod-name-desktop font-medium">{phone?.name}</p>
                           </Link>
                         </div>
                         {/* Product Specifications */}
                         <div className="flex flex-wrap items-center justify-start gap-2 text-xs">
-                          {[{ value: phone?.color }, { label: 'RAM', value: phone?.phone_catalog_id?.configuration_and_memory?.ram }].map(
-                            (item, index) => (
-                              <p key={index} className="y-1 rounded-xl bg-primary-lighter px-2 text-default">
-                                {item.value ? (
-                                  <>
-                                    <span className="font-semibold">{item.label ? `${item.label}: ` : ''}</span>
-                                    <span className="font-light">{item.value}</span>
-                                  </>
-                                ) : null}
-                              </p>
-                            )
-                          )}
+                          {[
+                            { label: 'RAM', icon: MdMemory, value: phone?.phone_catalog_id?.configuration_and_memory?.ram },
+                            { label: 'Màu sắc', icon: MdOutlineInvertColors, value: phone?.color },
+                          ].map((item, index) => (
+                            <p key={index} className="flex flex-row items-center rounded-xl bg-primary-lighter px-2 py-px text-default">
+                              {item.value ? (
+                                <>
+                                  {item.icon && <item.icon className="text-sm" />}
+                                  <span className="font-semibold">{item.value}</span>
+                                </>
+                              ) : null}
+                            </p>
+                          ))}
                         </div>
 
                         {/* Price and Buy Button */}

@@ -13,7 +13,7 @@ import imageRepresent from '../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { IconType } from 'react-icons';
 import { FaBoxOpen, FaDesktop, FaMicrochip, FaThLarge } from 'react-icons/fa';
-import { MdMemory, MdMonitor, MdOutlineInvertColors, MdSdStorage } from 'react-icons/md';
+import { MdMemory, MdMonitor, MdSdStorage } from 'react-icons/md';
 
 export interface ProductBase {
   _id: string;
@@ -33,11 +33,6 @@ export interface ProductBase {
 interface BrandItem {
   name: string;
   icon?: React.ReactNode;
-}
-
-interface SpecConfig {
-  icon: IconType;
-  label: string;
 }
 
 interface ClientProductPageProps {
