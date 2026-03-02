@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -33,24 +33,14 @@ interface ClientProductFCProps {
   };
   loading?: boolean;
 }
-
-/**
- * Component nội bộ hiển thị từng thẻ sản phẩm
- * Tối ưu hóa việc render và quản lý trạng thái hover cục bộ
- */
 const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p: Product, url: string) => void }) => {
   const productUrl = `/${slugify(product.name)}/${product._id}`;
-  const discountPercentage = useMemo(() => {
-    if (!product.sale || product.price <= product.sale) return 0;
-    return Math.round(((product.price - product.sale) / product.price) * 100);
-  }, [product.price, product.sale]);
 
   return (
     <motion.div
       whileHover={{ y: -5 }}
       className="group relative flex h-full min-w-[240px] max-w-[240px] snap-start flex-col border border-neutral-200 bg-white xl:min-w-[280px] xl:max-w-[280px]"
     >
-      {/* Khối Media - Tỉ lệ vàng 1:1 cho E-commerce */}
       <div className="relative aspect-square w-full overflow-hidden bg-neutral-50 p-6 transition-colors duration-300 group-hover:bg-neutral-100/50">
         <Link href={productUrl} className="relative block h-full w-full">
           <Image
@@ -63,17 +53,13 @@ const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p
           />
         </Link>
 
-        {/* Badges tối giản */}
+        {/* Badges */}
         <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">
-          {discountPercentage > 0 && (
-            <span className="bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">-{discountPercentage}%</span>
-          )}
           {product.status && (
             <span className="bg-neutral-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white">{product.status}</span>
           )}
         </div>
 
-        {/* Nút hành động nhanh - Xuất hiện khi hover trên Desktop */}
         <div className="absolute inset-x-4 bottom-4 hidden translate-y-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 xl:block">
           <Button
             onClick={() => onQuickBuy(product, productUrl)}
@@ -84,7 +70,7 @@ const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p
         </div>
       </div>
 
-      {/* Thông tin chi tiết */}
+      {/* Info */}
       <div className="flex flex-col px-1 py-2">
         <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-neutral-400">
           <span>RAM {product.ram || 'Tiêu chuẩn'}</span>
@@ -103,7 +89,7 @@ const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p
           {product.sale !== 0 && <del className="text-xs font-medium text-gray-400 decoration-1">{formatCurrency(product.sale || 0)}</del>}
         </div>
 
-        {/* Thông tin bổ trợ niềm tin (Trust signals) */}
+        {/* Trust signals */}
         <div className="mt-2 grid grid-cols-2 gap-2 border-t border-neutral-100 pt-4 text-[9px] font-semibold uppercase tracking-tighter text-neutral-500">
           <div className="flex flex-col">
             <span className="text-neutral-900">Hỗ trợ trả góp</span>
@@ -132,10 +118,6 @@ export default function ClientProductFC({ products, category, loading: externalL
     }
   }, [products, externalLoading]);
 
-  const sortedProducts = useMemo(() => {
-    return [...products].sort((a, b) => (b.sale ? -1 : 1));
-  }, [products]);
-
   const handleQuickBuy = (product: Product, productUrl: string) => {
     const productToBuy = {
       _id: product._id,
@@ -161,11 +143,11 @@ export default function ClientProductFC({ products, category, loading: externalL
     );
   }
 
-  if (sortedProducts.length === 0) return null;
+  if (products.length === 0) return null;
 
   return (
     <section className="w-full bg-white p-2 xl:px-desktop-padding">
-      {/* Header Section: Minimalist & Clean */}
+      {/* Header Section */}
       <div className="mb-2 flex flex-col items-start justify-between gap-2 border-b border-primary pb-2 md:flex-row md:items-center">
         <h2 className="text-xl font-light tracking-tight text-neutral-900 xl:text-2xl">{category.title}</h2>
         <Link
@@ -204,11 +186,11 @@ export default function ClientProductFC({ products, category, loading: externalL
           </div>
         )}
         <div ref={scrollRef} className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-10 pt-2 scrollbar-hide">
-          {sortedProducts.map((product) => (
+          {products.map((product) => (
             <ProductItem key={product._id} product={product} onQuickBuy={handleQuickBuy} />
           ))}
 
-          {/* End Card: View All */}
+          {/* View All */}
           <Link
             href={category.url}
             className="group flex min-w-[200px] snap-start items-center justify-center bg-neutral-50 transition-all duration-500 hover:bg-neutral-900 xl:min-w-[240px]"
