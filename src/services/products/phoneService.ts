@@ -153,7 +153,24 @@ export async function getAllNewPhones(): Promise<IPhone[]> {
 export async function getAllUsedPhones(): Promise<IPhone[]> {
   return getPhonesByStatus(1);
 }
+export async function getAllPhonesCached(): Promise<IPhone[]> {
+  try {
+    const apiUrl = getServerApiUrl('/api/phones/full');
 
+    const res = await fetch(apiUrl, {
+      cache: 'force-cache',
+      next: { revalidate: 3600 }, // cache 1h
+    });
+
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+
+    return data?.phones ?? [];
+  } catch {
+    return [];
+  }
+}
 export async function getPhoneById(id: string): Promise<IPhone | null> {
   const apiUrl = getServerApiUrl(`/api/phone/${id}`);
 
@@ -170,5 +187,5 @@ export async function getPhoneById(id: string): Promise<IPhone | null> {
 }
 
 export async function getPhoneWithFallback(id: string): Promise<IPhone | null> {
-  return getWithFallback<IPhone>(id, getAllPhones, getPhoneById);
+  return getWithFallback<IPhone>(id, getAllPhonesCached, getPhoneById);
 }
