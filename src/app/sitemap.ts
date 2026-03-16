@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next';
 import axios, { AxiosResponse } from 'axios';
 import { log } from 'console';
 import { encodeObjectId } from '@/utils/DetailPage/objectIdCodec';
+import { slugify } from '@/utils/slugify';
 
 // Interface cho các mục trong phản hồi API
 interface Item {
@@ -27,15 +28,7 @@ interface ApiResponse {
   [key: string]: Item[] | boolean | string | number | undefined; // Index signature cho ApiResponse
 }
 
-// Hàm slugify để tạo URL thân thiện
-const slugify = (text: string): string =>
-  text
-    .toString()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+
 const domain = 'https://www.7teck.vn';
 
 // Hàm lấy dữ liệu từ API

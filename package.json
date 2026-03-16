@@ -39,6 +39,7 @@
     "react-spinners": "^0.17.0",
     "react-toastify": "^11.0.5",
     "semantic-ui-react": "^2.1.5",
+    "slugify": "^1.6.8",
     "tailwind-scrollbar": "^3.0.0",
     "tailwind-scrollbar-hide": "^2.0.0",
     "three": "^0.180.0"
