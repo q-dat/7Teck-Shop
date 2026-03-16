@@ -6,6 +6,7 @@ export default function ClientUsedWindowsPage({ windowsCatalogs }: { windowsCata
   const data: UsedProductCatalog[] = windowsCatalogs.map((p) => ({
     _id: p._id,
     name: p.w_cat_name,
+    slug: p.w_cat_slug,
     img: p.w_cat_img,
     price: p.w_cat_price,
     productCount: p.w_cat_windowsCount,

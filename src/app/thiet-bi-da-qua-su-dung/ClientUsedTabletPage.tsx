@@ -6,6 +6,7 @@ export default function ClientUsedTabletPage({ tabletCatalogs }: { tabletCatalog
   const data: UsedProductCatalog[] = tabletCatalogs.map((p) => ({
     _id: p._id,
     name: p.t_cat_name,
+    slug: p.t_cat_slug,
     img: p.t_cat_img,
     price: p.t_cat_price,
     productCount: p.t_cat_tabletCount,

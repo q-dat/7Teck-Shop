@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
-import { slugify } from '@/utils/slugify';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from 'react-daisyui';
@@ -44,8 +43,8 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
   // Image error
   const fallbackSrc = imageRepresent.Fallback;
   const { handleImageError, isImageErrored } = useImageErrorHandler();
-  const { name } = useParams();
-  const filtered = products.filter((product) => slugify(product.name) === name);
+  const { slug } = useParams();
+  const filtered = products.filter((product) => product.slug === slug);
 
   useEffect(() => {
     scrollToTopInstantly();
@@ -74,7 +73,7 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
                 <ProductPlaceholders count={12} />
               ) : filtered.length > 0 ? (
                 filtered.map((product) => {
-                  const slug = slugify(product.name);
+                  const slug = product.slug;
                   const url = `/${slug}/${product._id}`;
                   // handleImageError
                   const isErrored = isImageErrored(product._id);
@@ -164,7 +163,7 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
                               price: product?.price,
                               ram: product?.ram,
                               color: product?.color,
-                              link: `/${slugify(product.name)}/${product._id}`,
+                              link: `/${product.slug}/${product._id}`,
                             };
                             localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                             window.location.href = '/thanh-toan';

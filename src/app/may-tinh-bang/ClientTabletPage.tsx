@@ -20,6 +20,7 @@ export default function ClientTabletPage({ groupedTablets }: { groupedTablets: G
       return {
         _id: defaultVariant._id,
         name: defaultVariant.tablet_name,
+        slug: defaultVariant.tablet_slug,
         img: defaultVariant.tablet_img,
         price: defaultVariant.tablet_price,
         color: defaultVariant.tablet_color,
@@ -30,6 +31,7 @@ export default function ClientTabletPage({ groupedTablets }: { groupedTablets: G
         variants: group.variants.map((v) => ({
           _id: v._id,
           name: v.tablet_name,
+          slug: v.tablet_slug,
           img: v.tablet_img,
           price: v.tablet_price,
           color: v.tablet_color,

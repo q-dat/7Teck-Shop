@@ -13,6 +13,7 @@ export interface ITablet {
   tablet_status: string;
   tablet_des?: string;
   tablet_note?: string;
+  tablet_slug: string;
   createdAt: string;
   updatedAt: string;
 }

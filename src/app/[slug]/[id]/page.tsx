@@ -16,7 +16,7 @@ import { Metadata } from 'next';
 import { JsonLdProduct } from '@/types/types/seo/jsonld';
 
 type RouteParams = {
-  slug: string;
+  slug?: string;
   id: string;
 };
 

@@ -22,6 +22,7 @@ export default function ClientMacbookPage({ groupedMacbook }: { groupedMacbook: 
       return {
         _id: defaultVariant._id,
         name: defaultVariant.macbook_name,
+        slug: defaultVariant.macbook_slug,
         img: defaultVariant.macbook_img,
         price: defaultVariant.macbook_price,
         color: defaultVariant.macbook_color,
@@ -34,6 +35,7 @@ export default function ClientMacbookPage({ groupedMacbook }: { groupedMacbook: 
         variants: group.variants.map((v) => ({
           _id: v._id,
           name: v.macbook_name,
+          slug: v.macbook_slug,
           img: v.macbook_img,
           price: v.macbook_price,
           color: v.macbook_color,

@@ -1,6 +1,5 @@
 export const revalidate = 18000;
 
-import { slugify } from '@/utils/slugify';
 import ClientWindowsDetailPage from './ClientWindowsDetailPage';
 import { IWindows } from '@/types/type/products/windows/windows';
 import { getWindowsWithFallback } from '@/services/products/windowsService';
@@ -52,7 +51,7 @@ export default async function WindowsDetailPage({ params }: { params: Promise<Ro
     },
     offers: {
       '@type': 'Offer',
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/windows/${slugify(win.windows_name)}/${win._id}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/windows/${(win.windows_slug)}/${win._id}`,
       priceCurrency: 'VND',
       price: win.windows_price.toString(),
       availability: 'https://schema.org/InStock',

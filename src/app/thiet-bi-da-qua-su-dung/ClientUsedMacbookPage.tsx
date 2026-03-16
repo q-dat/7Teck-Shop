@@ -6,6 +6,7 @@ export default function ClientUsedMacbookPage({ macbookCatalogs }: { macbookCata
   const data: UsedProductCatalog[] = macbookCatalogs.map((p) => ({
     _id: p._id,
     name: p.m_cat_name,
+    slug: p.m_cat_slug,
     img: p.m_cat_img,
     price: p.m_cat_price,
     productCount: p.m_cat_macbookCount,

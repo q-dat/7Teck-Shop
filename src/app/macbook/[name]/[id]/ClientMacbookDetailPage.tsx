@@ -18,6 +18,7 @@ export default function ClientMacbookDetailPage({ mac }: { mac: IMacbook }) {
   const mappedProduct = {
     _id: mac._id,
     name: mac.macbook_name,
+    slug: mac.macbook_slug,
     img: mac.macbook_img,
     price: mac.macbook_price,
     sale: mac.macbook_sale,
@@ -33,6 +34,7 @@ export default function ClientMacbookDetailPage({ mac }: { mac: IMacbook }) {
   const mappedRelated = relatedMacbook.map((mac) => ({
     _id: mac._id,
     name: mac.macbook_name,
+    slug: mac.macbook_slug,
     img: mac.macbook_img,
     price: mac.macbook_price,
     sale: mac.macbook_sale,

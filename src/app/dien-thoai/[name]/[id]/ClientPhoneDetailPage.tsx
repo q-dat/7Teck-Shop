@@ -18,6 +18,7 @@ export default function ClientPhoneDetailPage({ phone }: { phone: IPhone }) {
   const mappedProduct = {
     _id: phone._id,
     name: phone.name,
+    slug: phone.slug,
     img: phone.img,
     price: phone.price,
     sale: phone.sale,
@@ -33,6 +34,7 @@ export default function ClientPhoneDetailPage({ phone }: { phone: IPhone }) {
   const mappedRelated = relatedPhones.map((phone) => ({
     _id: phone._id,
     name: phone.name,
+    slug: phone.slug,
     img: phone.img,
     price: phone.price,
     sale: phone.sale,

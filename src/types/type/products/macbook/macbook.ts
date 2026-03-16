@@ -13,6 +13,7 @@ export interface IMacbook {
   macbook_status: string;
   macbook_des?: string;
   macbook_note?: string;
+  macbook_slug: string;
   createdAt: string;
   updatedAt: string;
 }

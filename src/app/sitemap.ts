@@ -2,15 +2,14 @@ import { MetadataRoute } from 'next';
 import axios, { AxiosResponse } from 'axios';
 import { log } from 'console';
 import { encodeObjectId } from '@/utils/DetailPage/objectIdCodec';
-import { slugify } from '@/utils/slugify';
 
 // Interface cho các mục trong phản hồi API
 interface Item {
   _id: string;
   name?: string;
-  tablet_name?: string;
-  macbook_name?: string;
-  windows_name?: string;
+  tablet_slug?: string;
+  macbook_slug?: string;
+  windows_slug?: string;
   updatedAt?: string;
   [key: string]: string | undefined; // Index signature để cho phép truy cập động
 }
@@ -28,7 +27,6 @@ interface ApiResponse {
   [key: string]: Item[] | boolean | string | number | undefined; // Index signature cho ApiResponse
 }
 
-
 const domain = 'https://www.7teck.vn';
 
 // Hàm lấy dữ liệu từ API
@@ -38,16 +36,16 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
   // console.log('API Base URL:', baseUrl); // Debug
 
   const endpoints = [
-    { path: 'dien-thoai', url: '/api/phones', nameField: 'name', dataField: 'phones', includeIdInUrl: true },
-    { path: 'may-tinh-bang', url: '/api/tablets', nameField: 'tablet_name', dataField: 'tablets', includeIdInUrl: true },
-    { path: 'macbook', url: '/api/laptop-macbook', nameField: 'macbook_name', dataField: 'macbook', includeIdInUrl: true },
-    { path: 'windows', url: '/api/laptop-windows', nameField: 'windows_name', dataField: 'windows', includeIdInUrl: true },
-    { path: 'tin-tuc', url: '/api/posts', nameField: 'title', dataField: 'posts', includeIdInUrl: true },
+    { path: 'dien-thoai', url: '/api/phones', slugField: 'name', dataField: 'phones', includeIdInUrl: true },
+    { path: 'may-tinh-bang', url: '/api/tablets', slugField: 'tablet_slug', dataField: 'tablets', includeIdInUrl: true },
+    { path: 'macbook', url: '/api/laptop-macbook', slugField: 'macbook_slug', dataField: 'macbook', includeIdInUrl: true },
+    { path: 'windows', url: '/api/laptop-windows', slugField: 'windows_slug', dataField: 'windows', includeIdInUrl: true },
+    { path: 'tin-tuc', url: '/api/posts', slugField: 'title', dataField: 'posts', includeIdInUrl: true },
     //
-    { path: 'dien-thoai', url: '/api/phone-catalogs', nameField: 'name', dataField: 'phoneCatalogs', includeIdInUrl: false },
-    { path: 'may-tinh-bang', url: '/api/tablet-catalogs', nameField: 't_cat_name', dataField: 'tabletCatalogs', includeIdInUrl: false },
-    { path: 'macbook', url: '/api/macbook-catalogs', nameField: 'm_cat_name', dataField: 'macbookCatalogs', includeIdInUrl: false },
-    { path: 'windows', url: '/api/windows-catalogs', nameField: 'w_cat_name', dataField: 'windowsCatalogs', includeIdInUrl: false },
+    { path: 'dien-thoai', url: '/api/phone-catalogs', slugField: 'name', dataField: 'phoneCatalogs', includeIdInUrl: false },
+    { path: 'may-tinh-bang', url: '/api/tablet-catalogs', slugField: 't_cat_slug', dataField: 'tabletCatalogs', includeIdInUrl: false },
+    { path: 'macbook', url: '/api/macbook-catalogs', slugField: 'm_cat_slug', dataField: 'macbookCatalogs', includeIdInUrl: false },
+    { path: 'windows', url: '/api/windows-catalogs', slugField: 'w_cat_slug', dataField: 'windowsCatalogs', includeIdInUrl: false },
   ];
 
   for (const endpoint of endpoints) {
@@ -65,7 +63,7 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
 
       if (data.length > 0) {
         const segmentPaths = data.flatMap((item: Item) => {
-          const slug = slugify(item[endpoint.nameField] || '');
+          const slug = item[endpoint.slugField] || '';
           const lastModified = item.updatedAt ? new Date(item.updatedAt) : new Date();
 
           const baseEntry = (url: string): MetadataRoute.Sitemap[number] => ({

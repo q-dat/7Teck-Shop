@@ -6,6 +6,7 @@ export default function ClientUsedPhonePage({ phoneCatalogs }: { phoneCatalogs: 
   const data: UsedProductCatalog[] = phoneCatalogs.map((p) => ({
     _id: p._id,
     name: p.name,
+    slug: p.slug,
     img: p.img,
     price: p.price,
     productCount: p.phoneCount,

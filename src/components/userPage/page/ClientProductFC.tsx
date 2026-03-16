@@ -8,7 +8,6 @@ import { Button } from 'react-daisyui';
 import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
 import { FaArrowRight } from 'react-icons/fa';
 import { useScroll } from '@/hooks/useScroll';
-import { slugify } from '@/utils/slugify';
 import { formatCurrency } from '@/utils/formatCurrency';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 
@@ -21,6 +20,7 @@ export interface Product {
   status?: string;
   color: string;
   ram: string;
+  slug: string;
 }
 
 interface ClientProductFCProps {
@@ -34,7 +34,7 @@ interface ClientProductFCProps {
   loading?: boolean;
 }
 const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p: Product, url: string) => void }) => {
-  const productUrl = `/${slugify(product.name)}/${product._id}`;
+  const productUrl = `/${product.slug}/${product._id}`;
 
   return (
     <motion.div

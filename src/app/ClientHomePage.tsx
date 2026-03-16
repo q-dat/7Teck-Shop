@@ -62,6 +62,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
   const transformTablets: Product[] = tablets.map((item) => ({
     _id: item._id,
     name: item.tablet_name || '',
+    slug: item.tablet_slug,
     price: item.tablet_price || 0,
     sale: item.tablet_sale || 0,
     image: item.tablet_img || '',
@@ -73,6 +74,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
   const transformMacbook: Product[] = macbook.map((item) => ({
     _id: item._id,
     name: item.macbook_name || '',
+    slug: item.macbook_slug,
     price: item.macbook_price || 0,
     sale: item.macbook_sale || 0,
     image: item.macbook_img || '',
@@ -84,6 +86,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
   const transformWindows: Product[] = windows.map((item) => ({
     _id: item._id,
     name: item.windows_name || '',
+    slug: item.windows_slug,
     price: item.windows_price || 0,
     sale: item.windows_sale || 0,
     image: item.windows_img || '',

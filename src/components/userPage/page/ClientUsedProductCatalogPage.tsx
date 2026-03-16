@@ -2,7 +2,6 @@
 'use client';
 import Pagination from '@/components/userPage/Pagination';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
-import { slugify } from '@/utils/slugify';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
@@ -17,6 +16,7 @@ export interface UsedProductCatalog {
   price: number;
   productCount: number;
   status: number;
+  slug: string;
 }
 
 interface ClientUsedProductCatalogPageProps {
@@ -62,7 +62,7 @@ export default function ClientUsedProductCatalogPage({ data, title, namePrefix, 
           </p>
         ) : (
           currentItems.map((product) => {
-            const slug = slugify(product.name);
+            const slug = product.slug;
             return (
               <div
                 key={product?._id}

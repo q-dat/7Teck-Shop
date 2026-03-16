@@ -13,6 +13,7 @@ export interface IWindows {
   windows_status: string;
   windows_des?: string;
   windows_note?: string;
+  windows_slug: string;
   createdAt: string;
   updatedAt: string;
 }

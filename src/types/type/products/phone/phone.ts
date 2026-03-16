@@ -13,6 +13,7 @@ export interface IPhone {
   status: string;
   des?: string;
   note?: string;
+  slug: string;
   createdAt: string;
   updatedAt: string;
 }

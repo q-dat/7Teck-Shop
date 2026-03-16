@@ -18,6 +18,7 @@ export default function ClientTabletDetailPage({ tablet }: { tablet: ITablet }) 
   const mappedProduct = {
     _id: tablet._id,
     name: tablet.tablet_name,
+    slug: tablet.tablet_slug,
     img: tablet.tablet_img,
     price: tablet.tablet_price,
     sale: tablet.tablet_sale,
@@ -33,6 +34,7 @@ export default function ClientTabletDetailPage({ tablet }: { tablet: ITablet }) 
   const mappedRelated = relatedTablets.map((tablet) => ({
     _id: tablet._id,
     name: tablet.tablet_name,
+    slug: tablet.tablet_slug,
     img: tablet.tablet_img,
     price: tablet.tablet_price,
     sale: tablet.tablet_sale,

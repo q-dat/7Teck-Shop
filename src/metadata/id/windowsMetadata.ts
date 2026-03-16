@@ -1,9 +1,8 @@
 import { Metadata } from 'next';
 import { IWindows } from '@/types/type/products/windows/windows';
-import { slugify } from '@/utils/slugify';
 
 export function generateWindowsMetadata(win: IWindows): Metadata {
-  const slug = slugify(win.windows_name);
+  const slug = win.windows_slug;
   const url = `${process.env.NEXT_PUBLIC_SITE_URL}/windows/${slug}/${win._id}`;
 
   const title = `${win.windows_name} - Laptop Windows Chính Hãng, Giá Tốt tại 7Teck.vn`;

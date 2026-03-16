@@ -1,9 +1,8 @@
 import { Metadata } from 'next';
 import { IPhone } from '@/types/type/products/phone/phone';
-import { slugify } from '@/utils/slugify';
 
 export function generatePhoneMetadata(phone: IPhone): Metadata {
-  const slug = slugify(phone.name);
+  const slug = phone.slug;
   const url = `${process.env.NEXT_PUBLIC_SITE_URL}/dien-thoai/${slug}/${phone._id}`;
 
   const title = `${phone.name} chính hãng, giá tốt | 7Teck.vn`;

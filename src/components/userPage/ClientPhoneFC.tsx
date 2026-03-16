@@ -1,5 +1,4 @@
 'use client';
-import { slugify } from '@/utils/slugify';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Button } from 'react-daisyui';
@@ -103,7 +102,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
               <ProductPlaceholders count={12} />
             ) : (
               mostViewedPhones.map((phone) => {
-                const phoneUrl = slugify(phone?.name);
+                const phoneUrl = phone?.slug;
                 const isErrored = isImageErrored(phone?._id);
                 const src = isErrored || !phone?.img ? fallbackSrc : phone?.img;
 
@@ -177,7 +176,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                               price: phone?.price,
                               ram: phone?.phone_catalog_id?.configuration_and_memory?.ram,
                               color: phone?.color,
-                              link: `${basePath}/${slugify(phone?.name)}/${phone?._id}`,
+                              link: `${basePath}/${phone?.slug}/${phone?._id}`,
                             };
                             localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                             window.location.href = '/thanh-toan';

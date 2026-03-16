@@ -1,7 +1,6 @@
 export const revalidate = 18000;
 
 import ClientMacbookDetailPage from './ClientMacbookDetailPage';
-import { slugify } from '@/utils/slugify';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
 import { getMacbookWithFallback } from '@/services/products/macbookService';
 import { generateMacbookMetadata } from '@/metadata/id/macbookMetadata';
@@ -51,7 +50,7 @@ export default async function MacbookDetailPage({ params }: { params: Promise<Ro
     },
     offers: {
       '@type': 'Offer',
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/macbook/${slugify(mac.macbook_name)}/${mac._id}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/macbook/${mac.macbook_slug}/${mac._id}`,
       priceCurrency: 'VND',
       price: mac.macbook_price.toString(),
       availability: 'https://schema.org/InStock',

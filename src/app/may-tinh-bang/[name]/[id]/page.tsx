@@ -1,6 +1,5 @@
 export const revalidate = 18000;
 
-import { slugify } from '@/utils/slugify';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 import { getTabletWithFallback } from '@/services/products/tabletService';
 import ClientTabletDetailPage from './ClientTabletDetailPage';
@@ -51,7 +50,7 @@ export default async function TabletDetailPage({ params }: { params: Promise<Rou
     },
     offers: {
       '@type': 'Offer',
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/may-tinh-bang/${slugify(tablet.tablet_name)}/${tablet._id}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/may-tinh-bang/${tablet.tablet_slug}/${tablet._id}`,
       priceCurrency: 'VND',
       price: tablet.tablet_price.toString(),
       availability: 'https://schema.org/InStock',

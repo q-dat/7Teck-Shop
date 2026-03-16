@@ -6,6 +6,7 @@ export interface IMacbookCatalog {
   m_cat_status: number; // 0 NEW - 1 OLD
   m_cat_content?: string; // Thông tin sản phẩm
   m_cat_macbookCount: number;
+  m_cat_slug:string
   createdAt: string;
   updatedAt: string;
 

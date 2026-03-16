@@ -1,9 +1,8 @@
 import { Metadata } from 'next';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
-import { slugify } from '@/utils/slugify';
 
 export function generateMacbookMetadata(mac: IMacbook): Metadata {
-  const slug = slugify(mac.macbook_name);
+  const slug = mac.macbook_slug;
   const url = `${process.env.NEXT_PUBLIC_SITE_URL}/macbook/${slug}/${mac._id}`;
 
   const title = `${mac.macbook_name} - Giá Tốt, Chính Hãng - Mua Ngay tại 7Teck.vn`;

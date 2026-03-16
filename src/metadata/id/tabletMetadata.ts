@@ -1,9 +1,8 @@
 import { Metadata } from 'next';
 import { ITablet } from '@/types/type/products/tablet/tablet';
-import { slugify } from '@/utils/slugify';
 
 export function generateTabletMetadata(tablet: ITablet): Metadata {
-  const slug = slugify(tablet.tablet_name);
+  const slug = tablet.tablet_slug;
   const url = `${process.env.NEXT_PUBLIC_SITE_URL}/may-tinh-bang/${slug}/${tablet._id}`;
 
   const title = `${tablet.tablet_name} - Máy Tính Bảng Chính Hãng, Giá Tốt tại 7Teck.vn`;

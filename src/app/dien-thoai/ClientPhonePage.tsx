@@ -30,6 +30,7 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
       return {
         _id: defaultVariant._id,
         name: defaultVariant.name,
+        slug: defaultVariant.slug,
         img: defaultVariant.img,
         price: defaultVariant.price,
         color: defaultVariant.color,

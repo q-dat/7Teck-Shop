@@ -5,7 +5,6 @@ import Zoom from '@/lib/Zoom';
 import { scrollBy, updateScrollButtons, handleScrollButtons, handleThumbnailClick } from '@/utils/DetailPage/scrollUtils';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
-import { slugify } from '@/utils/slugify';
 import { contact, hotlineUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -32,6 +31,7 @@ interface Product {
   status?: string;
   des?: string;
   thumbnail?: string[];
+  slug: string;
   catalog: Record<string, ProductCatalogGroup>;
   catalogContent: string;
 }
@@ -289,7 +289,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                           .map((item) => (
                             <Link
                               key={item._id}
-                              href={`/${slugify(item.name)}/${item._id}`}
+                              href={`/${item.slug}/${item._id}`}
                               className="flex flex-row items-center justify-center gap-2 rounded-md border border-primary/50 bg-white px-2 py-1 shadow transition-all hover:scale-105 hover:border-dashed hover:shadow-md"
                             >
                               <Image src={item.img} alt={item.name} width={40} height={40} className="h-[40px] w-[40px] object-contain" />
@@ -332,7 +332,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                         price: product?.price,
                         ram: product?.ram,
                         color: product?.color,
-                        link: `${slugify(product?.name)}/${product?._id}`,
+                        link: `${product?.slug}/${product?._id}`,
                       };
                       localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                       window.location.href = '/thanh-toan';

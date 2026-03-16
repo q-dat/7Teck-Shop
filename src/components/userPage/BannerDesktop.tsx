@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { RiScrollToBottomLine } from 'react-icons/ri';
 import Link from 'next/link';
 import { IoShieldCheckmarkOutline } from 'react-icons/io5';
-import { slugify } from '@/utils/slugify';
 import { FaCartPlus, FaRegEye } from 'react-icons/fa';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { MdArrowBackIosNew, MdArrowForwardIos, MdMemory, MdNavigateNext, MdOutlineInvertColors } from 'react-icons/md';
@@ -120,7 +119,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                 <ProductPlaceholders count={12} />
               ) : (
                 mostViewedPhones.map((phone) => {
-                  const phoneUrl = slugify(phone?.name);
+                  const phoneUrl = phone?.slug;
                   const isErrored = isImageErrored(phone?._id);
                   const src = isErrored || !phone?.img ? fallbackSrc : phone?.img;
 
@@ -208,7 +207,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                                 price: phone?.price,
                                 ram: phone?.phone_catalog_id?.configuration_and_memory?.ram,
                                 color: phone?.color,
-                                link: `/${slugify(phone?.name)}/${phone?._id}`,
+                                link: `/${phone?.slug}/${phone?._id}`,
                               };
                               localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                               window.location.href = '/thanh-toan';

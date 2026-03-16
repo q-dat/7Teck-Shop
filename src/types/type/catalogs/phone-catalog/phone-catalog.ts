@@ -6,6 +6,7 @@ export interface IPhoneCatalog {
   status: number; //0 NEW - 1 OLD
   content?: string; //Thông tin sản phẩm
   phoneCount: number;
+  slug: string;
   createdAt: string;
   updatedAt: string;
 

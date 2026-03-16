@@ -20,6 +20,7 @@ export default function ClientWindowsPage({ groupedWindows }: { groupedWindows: 
       return {
         _id: defaultVariant._id,
         name: defaultVariant.windows_name,
+        slug: defaultVariant.windows_slug,
         img: defaultVariant.windows_img,
         price: defaultVariant.windows_price,
         color: defaultVariant.windows_color,
@@ -32,6 +33,7 @@ export default function ClientWindowsPage({ groupedWindows }: { groupedWindows: 
         variants: group.variants.map((v) => ({
           _id: v._id,
           name: v.windows_name,
+          slug: v.windows_slug,
           img: v.windows_img,
           price: v.windows_price,
           color: v.windows_color,

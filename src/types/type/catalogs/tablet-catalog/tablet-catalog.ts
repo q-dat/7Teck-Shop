@@ -6,6 +6,7 @@ export interface ITabletCatalog {
   t_cat_status: number; // 0 NEW - 1 OLD
   t_cat_content?: string; // Thông tin sản phẩm
   t_cat_tabletCount: number;
+  t_cat_slug: string;
   createdAt: string;
   updatedAt: string;
 

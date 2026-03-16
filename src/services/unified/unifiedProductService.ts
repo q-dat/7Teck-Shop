@@ -8,8 +8,6 @@ import { generateMacbookMetadata } from '@/metadata/id/macbookMetadata';
 import { generateTabletMetadata } from '@/metadata/id/tabletMetadata';
 import { generateWindowsMetadata } from '@/metadata/id/windowsMetadata';
 
-import { slugify } from '@/utils/slugify';
-
 export async function detectProductType(id: string) {
   const phone = await getPhoneWithFallback(id);
   if (phone) {
@@ -30,7 +28,7 @@ export async function detectProductType(id: string) {
         },
         offers: {
           '@type': 'Offer',
-          url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slugify(phone.name)}/${phone._id}`,
+          url: `${process.env.NEXT_PUBLIC_SITE_URL}/${phone.slug}/${phone._id}`,
           priceCurrency: 'VND',
           price: phone.price.toString(),
           availability: 'https://schema.org/InStock',
@@ -58,7 +56,7 @@ export async function detectProductType(id: string) {
         },
         offers: {
           '@type': 'Offer',
-          url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slugify(mac.macbook_name)}/${mac._id}`,
+          url: `${process.env.NEXT_PUBLIC_SITE_URL}/${mac.macbook_slug}/${mac._id}`,
           priceCurrency: 'VND',
           price: mac.macbook_price.toString(),
           availability: 'https://schema.org/InStock',
@@ -86,7 +84,7 @@ export async function detectProductType(id: string) {
         },
         offers: {
           '@type': 'Offer',
-          url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slugify(tablet.tablet_name)}/${tablet._id}`,
+          url: `${process.env.NEXT_PUBLIC_SITE_URL}/${tablet.tablet_slug}/${tablet._id}`,
           priceCurrency: 'VND',
           price: tablet.tablet_price.toString(),
           availability: 'https://schema.org/InStock',
@@ -114,7 +112,7 @@ export async function detectProductType(id: string) {
         },
         offers: {
           '@type': 'Offer',
-          url: `${process.env.NEXT_PUBLIC_SITE_URL}/windows/${slugify(win.windows_name)}/${win._id}`,
+          url: `${process.env.NEXT_PUBLIC_SITE_URL}/windows/${win.windows_slug}/${win._id}`,
           priceCurrency: 'VND',
           price: win.windows_price.toString(),
           availability: 'https://schema.org/InStock',

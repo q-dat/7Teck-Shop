@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { slugify } from '@/utils/slugify';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { formatCurrency } from '@/utils/formatCurrency';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
@@ -29,6 +28,7 @@ export interface ProductBase {
   sale?: number;
   status?: string;
   variants?: ProductBase[];
+  slug: string;
 }
 interface BrandItem {
   name: string;
@@ -201,7 +201,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                 currentProducts.map((product) => {
                   const variant = selectedVariants[product._id] ? selectedVariants[product._id] : product;
                   // Navigate
-                  const productUrl = slugify(variant.name);
+                  const productUrl = variant.slug;
                   const subUrl = variant?._id;
                   // handleImageError
                   const isErrored = isImageErrored(variant._id);

@@ -3,13 +3,12 @@ export const revalidate = 18000;
 import { getPhoneWithFallback } from '@/services/products/phoneService';
 import { IPhone } from '@/types/type/products/phone/phone';
 import ClientPhoneDetailPage from './ClientPhoneDetailPage';
-import { slugify } from '@/utils/slugify';
 import { generatePhoneMetadata } from '@/metadata/id/phoneMetadata';
 import { StructuredData } from '@/metadata/structuredData';
 import { Metadata } from 'next';
 
 type RouteParams = {
-  slug: string;
+  slug?: string;
   id: string;
 };
 
@@ -52,7 +51,7 @@ export default async function PhoneDetailPage({ params }: { params: Promise<Rout
     },
     offers: {
       '@type': 'Offer',
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/dien-thoai/${slugify(phone.name)}/${phone._id}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/dien-thoai/${phone.slug}/${phone._id}`,
       priceCurrency: 'VND',
       price: phone.price.toString(),
       availability: 'https://schema.org/InStock',
