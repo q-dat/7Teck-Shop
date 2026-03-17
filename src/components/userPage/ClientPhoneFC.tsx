@@ -2,9 +2,9 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Button } from 'react-daisyui';
-import { FaRegEye } from 'react-icons/fa';
+import { FaMicrochip, FaRegEye } from 'react-icons/fa';
 import { IoIosArrowForward } from 'react-icons/io';
-import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
+import { MdArrowBackIosNew, MdArrowForwardIos, MdMemory, MdMonitor, MdSdStorage } from 'react-icons/md';
 import imageRepresent from '../../../public/image-represent';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import Image from 'next/image';
@@ -14,11 +14,26 @@ import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { images } from '../../../public/images';
 import Tilt from 'react-parallax-tilt';
 import { useScroll } from '@/hooks/useScroll';
+import { IconType } from 'react-icons';
 
 interface ClientPhoneProps {
   mostViewedPhones: IPhone[];
   loading: boolean;
 }
+type SpecKey = 'ram' | 'storage_capacity';
+
+const specsToShow: ReadonlyArray<{
+  key: SpecKey;
+  icon: IconType;
+}> = [
+  { key: 'ram', icon: MdMemory },
+  { key: 'storage_capacity', icon: MdSdStorage },
+];
+
+const specGetters: Record<SpecKey, (phone: IPhone) => string | undefined> = {
+  ram: (p) => p.phone_catalog_id?.configuration_and_memory?.ram,
+  storage_capacity: (p) => p.phone_catalog_id?.configuration_and_memory?.storage_capacity,
+};
 
 export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhoneProps) {
   const basePath = 'dien-thoai';
@@ -129,33 +144,32 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                     <div className="flex h-full w-full flex-col items-start justify-between p-1">
                       {/* Product Name and View Count */}
                       <div className="w-full">
-                        <Link
-                          aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
-                          className="w-full cursor-pointer"
-                          href={`/${phoneUrl}/${phone?._id}`}
-                        >
-                          <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] text-black">
-                            <FaRegEye />
-                            <p>{phone?.view}</p>
+                        <Link aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm" className="w-full" href={`/${phoneUrl}/${phone?._id}`}>
+                          <div className="flex w-full flex-wrap items-center gap-1 font-light text-gray-300">
+                            {/* Product Specifications */}
+                            <>
+                              {specsToShow.map(({ key, icon: Icon }) => {
+                                const value = specGetters[key](phone);
+                                if (!value) return null;
+
+                                return (
+                                  <div key={key} className="flex items-center">
+                                    <Icon size={16} />
+                                    <span className="text-[10px]">{value}</span>
+                                  </div>
+                                );
+                              })}
+                            </>
+                            {/* View */}
+                            <div className="ml-auto flex w-fit items-center gap-px">
+                              <FaRegEye size={12} />
+                              <p className="text-[10px]">{phone?.view}</p>
+                            </div>
                           </div>
                           <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-primary">
                             Điện Thoại {phone?.name}
                           </p>
                         </Link>
-                        {/* Product Specifications */}
-                        <div className="py-1 text-prod-name-mobile xl:text-prod-name-desktop">
-                          {[
-                            { label: 'Màu', value: phone?.color },
-                            { label: 'RAM', value: phone?.phone_catalog_id?.configuration_and_memory?.ram },
-                          ]
-                            .filter((item) => item.value?.toString().trim())
-                            .map((item, index) => (
-                              <p key={index}>
-                                <span className="rounded-sm bg-primary-lighter px-1 font-semibold">{item.label}:</span>
-                                &nbsp;<span className="font-light">{item.value}</span>
-                              </p>
-                            ))}
-                        </div>
                       </div>
                       {/* Price and Buy Button */}
                       <div className="w-full">
