@@ -24,6 +24,9 @@ interface ProductData {
   link: string;
 }
 
+type TransactionMode = 'order' | 'schedule';
+type ScheduleType = 'store' | 'home';
+
 export default function PurchasePage() {
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
   const [result, setResult] = React.useState<string>('');
@@ -33,6 +36,10 @@ export default function PurchasePage() {
   const [imgZaloQRSrc, setImgZaloQRSrc] = useState(`${imageRepresent.ZaloQR}`);
   const [imgMessageQRSrc, setImgMessageQRSrc] = useState(`${imageRepresent.Message}`);
   const [activeTab, setActiveTab] = useState<'zalo' | 'messenger'>('zalo');
+
+  // State cho luồng nghiệp vụ mới
+  const [transactionMode, setTransactionMode] = useState<TransactionMode>('order');
+  const [scheduleType, setScheduleType] = useState<ScheduleType>('store');
 
   useEffect(() => {
     scrollToTopInstantly();
@@ -45,10 +52,14 @@ export default function PurchasePage() {
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     setResult('Hệ thống đang xử lý...');
-    const formData = new FormData(event.currentTarget);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
     const phone = formData.get('Số điện thoại:') as string;
     const name = formData.get('Tên khách hàng:') as string;
 
+    // 1. Kiểm tra tính toàn vẹn dữ liệu
     if (!phone?.trim() || !name?.trim()) {
       Toastify('Yêu cầu điền đầy đủ thông tin định danh.', 400);
       setResult('');
@@ -64,17 +75,27 @@ export default function PurchasePage() {
 
     formData.append('access_key', process.env.NEXT_PUBLIC_WEB3FORMS_KEY!);
 
+    // 2. Chuyển đổi cấu trúc dữ liệu sang Object để parse thành JSON (Đảm bảo chuẩn UTF-8)
+    const objectData = Object.fromEntries(formData.entries());
+    const payload = JSON.stringify(objectData);
+
+    // 3. Thực thi gọi API với Header định dạng JSON
     try {
       const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: payload,
       });
+
       const data: { success: boolean; message: string } = await response.json();
 
       if (data.success) {
         setResult('');
         Toastify('Xác nhận thành công. Chuyên viên sẽ liên hệ trong 15 phút.', 200);
-        formRef.current?.reset();
+        form.reset();
       } else {
         setResult(data.message);
       }
@@ -122,16 +143,16 @@ export default function PurchasePage() {
             </Link>
           </li>
           <li>
-            <span className="font-semibold text-black">Đặt Hàng</span>
+            <span className="font-semibold text-black">Giao dịch</span>
           </li>
         </ul>
       </div>
 
       <main className="px-2 py-5 xl:px-desktop-padding">
         <header className="mb-8 border-b border-neutral-200">
-          <h1 className="text-3xl font-black uppercase tracking-tighter text-neutral-900 xl:text-4xl">Thông tin đặt hàng</h1>
+          <h1 className="text-3xl font-black uppercase tracking-tighter text-neutral-900 xl:text-4xl">Thông tin giao dịch</h1>
           <p className="mt-2 text-sm text-neutral-500 xl:text-base">
-            Giao dịch được mã hóa an toàn. Vui lòng cung cấp thông tin chính xác để đảm bảo tiến độ giao hàng.
+            Giao dịch được mã hóa an toàn. Vui lòng cung cấp thông tin chính xác để đảm bảo tiến độ phục vụ.
           </p>
         </header>
 
@@ -139,11 +160,44 @@ export default function PurchasePage() {
           {/* CỘT TRÁI: FORM & CAM KẾT */}
           <div className="flex w-full flex-col gap-6 xl:w-7/12">
             <section className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-              <div className="mb-2">
-                <h2 className="text-lg font-bold uppercase tracking-wide text-neutral-900">1. Thông tin người nhận</h2>
+              {/* TAB CHUYỂN ĐỔI LUỒNG NGHIỆP VỤ */}
+              <div className="mb-6 flex gap-2 rounded-lg bg-neutral-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => setTransactionMode('order')}
+                  className={`flex-1 rounded-md py-2.5 text-sm font-bold uppercase tracking-wider transition-all ${
+                    transactionMode === 'order' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-900'
+                  }`}
+                >
+                  Giao hàng tận nơi
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTransactionMode('schedule')}
+                  className={`flex-1 rounded-md py-2.5 text-sm font-bold uppercase tracking-wider transition-all ${
+                    transactionMode === 'schedule' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-900'
+                  }`}
+                >
+                  Đặt lịch xem máy
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <h2 className="text-lg font-bold uppercase tracking-wide text-neutral-900">1. Thông tin liên hệ</h2>
               </div>
 
               <form ref={formRef} onSubmit={onSubmit} className="space-y-6">
+                {/* Ẩn input để Web3Forms nhận diện loại yêu cầu */}
+                <input
+                  type="hidden"
+                  name="Loại dịch vụ:"
+                  value={
+                    transactionMode === 'order'
+                      ? 'Mua hàng giao tận nơi'
+                      : `Đặt lịch xem máy (${scheduleType === 'store' ? 'Tại cửa hàng' : 'Tại nhà'})`
+                  }
+                />
+
                 <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
                   <InputForm
                     name="Tên khách hàng:"
@@ -161,20 +215,80 @@ export default function PurchasePage() {
                   />
                 </div>
 
-                <InputForm
-                  name="Địa chỉ:"
-                  type="text"
-                  placeholder="Nhập địa chỉ nhận hàng"
-                  className="border border-gray-300 bg-white text-sm text-black focus:border-black"
-                  classNameLabel="bg-white peer-placeholder-shown:text-gray-500 peer-focus:text-black text-sm"
-                />
+                {/* Luồng: Giao hàng tận nơi */}
+                {transactionMode === 'order' && (
+                  <InputForm
+                    name="Địa chỉ:"
+                    type="text"
+                    placeholder="Nhập địa chỉ nhận hàng"
+                    className="border border-gray-300 bg-white text-sm text-black focus:border-black"
+                    classNameLabel="bg-white peer-placeholder-shown:text-gray-500 peer-focus:text-black text-sm"
+                  />
+                )}
+
+                {/* Luồng: Đặt lịch xem máy */}
+                {transactionMode === 'schedule' && (
+                  <div className="space-y-6 rounded-xl border border-neutral-100 bg-neutral-50 p-2">
+                    <div className="flex flex-col gap-3 xl:flex-row xl:gap-6">
+                      <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-neutral-900">
+                        <input
+                          type="radio"
+                          name="Địa điểm xem máy (Phân loại):"
+                          value="Tại cửa hàng"
+                          checked={scheduleType === 'store'}
+                          onChange={() => setScheduleType('store')}
+                          className="radio-primary radio h-5 w-5 border-neutral-300"
+                        />
+                        Đến cửa hàng xem máy
+                      </label>
+                      <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-neutral-900">
+                        <input
+                          type="radio"
+                          name="Địa điểm xem máy (Phân loại):"
+                          value="Yêu cầu mang đến nhà"
+                          checked={scheduleType === 'home'}
+                          onChange={() => setScheduleType('home')}
+                          className="radio-primary radio h-5 w-5 border-neutral-300"
+                        />
+                        Yêu cầu mang máy đến nhà
+                      </label>
+                    </div>
+
+                    {scheduleType === 'home' && (
+                      <InputForm
+                        name="Địa chỉ nhà:"
+                        type="text"
+                        placeholder="Nhập địa chỉ bạn muốn nhân viên mang máy đến"
+                        className="border border-gray-300 bg-white text-sm text-black focus:border-black"
+                        classNameLabel="bg-neutral-50 peer-placeholder-shown:text-gray-500 peer-focus:text-black text-sm"
+                      />
+                    )}
+
+                    <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+                      <InputForm
+                        name="Ngày hẹn:"
+                        placeholder="Ngày hẹn:"
+                        type="date"
+                        className="border border-gray-300 bg-white text-sm text-black focus:border-black"
+                        classNameLabel="bg-neutral-50 peer-placeholder-shown:text-gray-500 peer-focus:text-black text-sm"
+                      />
+                      <InputForm
+                        name="Giờ hẹn:"
+                        placeholder="Giờ hẹn:"
+                        type="time"
+                        className="border border-gray-300 bg-white text-sm text-black focus:border-black"
+                        classNameLabel="bg-neutral-50 peer-placeholder-shown:text-gray-500 peer-focus:text-black text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-2">
-                  <LabelForm title="Ghi chú đơn hàng (Tùy chọn):" />
+                  <LabelForm title="Ghi chú thêm (Tùy chọn):" />
                   <Textarea
                     name="Lời nhắn:"
                     className="min-h-[100px] w-full rounded-lg border-neutral-300 bg-neutral-50 p-3 text-sm transition-colors focus:border-neutral-900 focus:bg-white focus:outline-none"
-                    placeholder="Yêu cầu riêng về thời gian hoặc cách thức giao hàng..."
+                    placeholder="Yêu cầu riêng về thời gian, màu sắc hoặc cách thức hỗ trợ..."
                   />
                 </div>
 
@@ -191,7 +305,7 @@ export default function PurchasePage() {
                     type="submit"
                     className="h-14 w-full rounded-xl border-none bg-neutral-900 text-base font-bold text-white transition-all hover:bg-neutral-800"
                   >
-                    HOÀN TẤT ĐẶT HÀNG
+                    {transactionMode === 'order' ? 'HOÀN TẤT ĐẶT HÀNG' : 'XÁC NHẬN ĐẶT LỊCH'}
                   </Button>
                   <p className="mt-3 text-center text-[11px] font-medium uppercase tracking-widest text-neutral-400">
                     Thông tin được bảo mật tuyệt đối theo tiêu chuẩn SSL
@@ -226,7 +340,7 @@ export default function PurchasePage() {
                 <div className="flex flex-col gap-6">
                   <ProductCard product={selectedProduct} />
                   <div className="flex items-center justify-between border-t border-neutral-100 pt-4">
-                    <span className="text-sm font-medium text-neutral-500">Tổng thanh toán</span>
+                    <span className="text-sm font-medium text-neutral-500">{transactionMode === 'order' ? 'Tổng thanh toán' : 'Giá dự kiến'}</span>
                     <span className="text-xl font-black text-price">{formatCurrency(selectedProduct.price)}</span>
                   </div>
                 </div>
