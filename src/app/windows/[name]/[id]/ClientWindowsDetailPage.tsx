@@ -18,6 +18,7 @@ export default function ClientWindowsDetailPage({ win }: { win: IWindows }) {
   const mappedProduct = {
     _id: win._id,
     name: win.windows_name,
+    slug: win.windows_slug,
     img: win.windows_img,
     price: win.windows_price,
     sale: win.windows_sale,
@@ -33,6 +34,7 @@ export default function ClientWindowsDetailPage({ win }: { win: IWindows }) {
   const mappedRelated = relatedWindows.map((win) => ({
     _id: win._id,
     name: win.windows_name,
+    slug: win.windows_slug,
     img: win.windows_img,
     price: win.windows_price,
     sale: win.windows_sale,
