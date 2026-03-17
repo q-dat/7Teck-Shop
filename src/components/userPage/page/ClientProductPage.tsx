@@ -25,7 +25,7 @@ export interface ProductBase {
   cpu?: string;
   lcd?: string;
   gpu?: string;
-  sale?: number;
+  sale: number;
   status?: string;
   variants?: ProductBase[];
   slug: string;
@@ -302,7 +302,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                         {/* Price and Buy Now Button */}
                         <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
                           <span className="font-semibold text-price">{formatCurrency(variant?.price)}</span> &nbsp;
-                          {variant?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(variant?.sale)}</del>}
+                          {variant?.sale !== 0 && <del className="text-xs font-light text-gray-500">{formatCurrency(variant?.sale)}</del>}
                         </p>
                         <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
                         <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>

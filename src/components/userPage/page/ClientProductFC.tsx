@@ -15,7 +15,7 @@ export interface Product {
   _id: string;
   name: string;
   price: number;
-  sale: number | null;
+  sale: number;
   image: string;
   status?: string;
   color: string;
@@ -86,7 +86,7 @@ const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p
         <div className="flex items-baseline gap-2">
           <span className="text-lg font-bold tracking-tight text-price xl:text-xl">{formatCurrency(product.price)}</span>
 
-          {product.sale !== 0 && <del className="text-xs font-medium text-gray-400 decoration-1">{formatCurrency(product.sale || 0)}</del>}
+          {product.sale !== 0 && <del className="text-xs font-medium text-gray-400 decoration-1">{formatCurrency(product.sale)}</del>}
         </div>
 
         {/* Trust signals */}
@@ -123,7 +123,7 @@ export default function ClientProductFC({ products, category, loading: externalL
       _id: product._id,
       name: product.name,
       img: product.image,
-      price: product.sale || product.price,
+      price: product.sale,
       ram: product.ram,
       color: product.color,
       link: productUrl,

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { IoShieldCheckmarkOutline } from 'react-icons/io5';
 import { FaCartPlus, FaRegEye } from 'react-icons/fa';
 import { formatCurrency } from '@/utils/formatCurrency';
-import { MdArrowBackIosNew, MdArrowForwardIos, MdMemory, MdNavigateNext, MdOutlineInvertColors } from 'react-icons/md';
+import { MdArrowBackIosNew, MdArrowForwardIos, MdMemory, MdNavigateNext, MdOutlineInvertColors, MdSdStorage } from 'react-icons/md';
 import { images } from '../../../public/images';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { useScroll } from '@/hooks/useScroll';
@@ -147,7 +147,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                         </div>
                       </Link>
                       {/* Product Info */}
-                      <div className="flex h-full w-full flex-col items-start justify-between rounded-b-md bg-white/10 p-1 group-hover:bg-default/50">
+                      <div className="flex h-full w-full flex-col items-start justify-between rounded-b-md bg-default/10 p-1 group-hover:bg-default/50">
                         {/* Product Name and View Count */}
                         <div className="w-full text-white">
                           <Link
@@ -155,17 +155,22 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                             className="w-full cursor-pointer"
                             href={`/${phoneUrl}/${encodeObjectId(phone?._id)}`}
                           >
-                            <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px]">
+                            <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] font-light">
                               <FaRegEye />
                               <p>{phone?.view}</p>
                             </div>
-                            <p className="text-prod-name-desktop font-medium">{phone?.name}</p>
+                            <p className="break-all text-prod-name-desktop font-medium">{phone?.name}</p>
                           </Link>
                         </div>
                         {/* Product Specifications */}
-                        <div className="flex flex-wrap items-center justify-start gap-2 text-xs">
+                        {/* <div className="flex flex-wrap items-center justify-start gap-2 text-xs">
                           {[
                             { label: 'RAM', icon: MdMemory, value: phone?.phone_catalog_id?.configuration_and_memory?.ram },
+                            {
+                              label: 'Dung lượng bộ nhớ',
+                              icon: MdSdStorage,
+                              value: phone?.phone_catalog_id?.configuration_and_memory?.storage_capacity,
+                            },
                             { label: 'Màu sắc', icon: MdOutlineInvertColors, value: phone?.color },
                           ].map((item, index) => (
                             <p key={index} className="flex flex-row items-center rounded-xl bg-primary-lighter px-2 py-px text-default">
@@ -177,13 +182,13 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                               ) : null}
                             </p>
                           ))}
-                        </div>
+                        </div> */}
 
                         {/* Price and Buy Button */}
                         <div className="w-full">
-                          <p className="text-lg">
-                            <span className="font-semibold text-price">{formatCurrency(phone?.price)}</span> &nbsp;
-                            {phone?.sale && <del className="text-xs font-light text-white">{formatCurrency(phone?.sale)}</del>}
+                          <p className="text-xl">
+                            <span className="font-bold text-price">{formatCurrency(phone?.price)}</span> &nbsp;
+                            {phone?.sale !== 0 && <del className="text-xs font-light text-white">{formatCurrency(phone?.sale)}</del>}
                           </p>
                         </div>
                       </div>

@@ -144,7 +144,7 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
                         {/* Price and Buy Now Button */}
                         <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
                           <span className="font-semibold text-price">{formatCurrency(product?.price)}</span> &nbsp;
-                          {product?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
+                          {product?.sale !== 0 && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
                         </p>
                         <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
                         <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
