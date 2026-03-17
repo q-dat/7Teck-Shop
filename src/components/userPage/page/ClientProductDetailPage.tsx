@@ -328,6 +328,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       const productToBuy = {
                         _id: product?._id,
                         name: product?.name,
+                        slug: product?.slug,
                         img: product?.img,
                         price: product?.price,
                         ram: product?.ram,

@@ -159,6 +159,7 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
                             const productToBuy = {
                               _id: product?._id,
                               name: product?.name,
+                              slug: product?.slug,
                               img: product?.img,
                               price: product?.price,
                               ram: product?.ram,

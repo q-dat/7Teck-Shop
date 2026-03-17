@@ -317,6 +317,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                             const productToBuy = {
                               _id: variant?._id,
                               name: variant?.name,
+                              slug: variant?.slug,
                               img: variant?.img,
                               price: variant?.price,
                               ram: variant?.ram,

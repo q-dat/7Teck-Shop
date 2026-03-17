@@ -122,6 +122,7 @@ export default function ClientProductFC({ products, category, loading: externalL
     const productToBuy = {
       _id: product._id,
       name: product.name,
+      slug: product.slug,
       img: product.image,
       price: product.sale,
       ram: product.ram,

@@ -208,6 +208,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                               const productToBuy = {
                                 _id: phone?._id,
                                 name: phone?.name,
+                                slug: phone?.slug,
                                 img: phone?.img,
                                 price: phone?.price,
                                 ram: phone?.phone_catalog_id?.configuration_and_memory?.ram,
