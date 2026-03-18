@@ -70,7 +70,7 @@ const BADGE_CONFIG: Record<string, BadgeConfig> = {
   new: {
     src: imageRepresent.badgeNew,
     showText: false,
-    containerClass: 'absolute -left-2 -top-2 z-20',
+    containerClass: 'absolute -left-[10px] -top-[10px] z-20',
     textClass: '',
   },
   default: {

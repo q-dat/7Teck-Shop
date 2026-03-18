@@ -25,7 +25,7 @@ interface Product {
   name: string;
   img: string;
   price: number;
-  sale?: number;
+  sale: number;
   color?: string;
   ram?: string;
   status?: string;
@@ -254,7 +254,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   {/* Price */}
                   <p className="text-3xl font-semibold text-price">
                     {formatCurrency(product?.price)}
-                    {product?.sale && <del className="ml-2 text-base text-gray-400">{formatCurrency(product?.sale)}</del>}
+                    {product?.sale !== 0 && <del className="ml-2 text-base text-gray-400">{formatCurrency(product?.sale)}</del>}
                   </p>
                   {/* Product details */}
                   <div className="w-full">
