@@ -1,7 +1,11 @@
-interface SearchResult {
+export interface SearchResult {
   name: string;
   link: string;
   image: string;
+  color?: string;
+  price?: number;
+  sale: number;
+  status?: string;
 }
 
 const cache = new Map<string, { results: SearchResult[]; expires: number }>();

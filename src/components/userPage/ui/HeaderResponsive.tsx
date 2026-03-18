@@ -11,20 +11,9 @@ import { images } from '../../../../public/images';
 import Image from 'next/image';
 import menuItems from '@/utils/menuItems';
 import { debounce } from 'lodash';
-import { searchProducts } from '@/services/searchService';
+import { searchProducts, SearchResult } from '@/services/searchService';
 import { suggestions } from '@/utils/suggestions';
 import { formatCurrency } from '@/utils/formatCurrency';
-
-interface SearchResult {
-  name: string;
-  link: string;
-  image: string;
-  color?: string;
-  price?: number;
-  sale?: number;
-  status?: string;
-  catalogId?: string;
-}
 
 const EXCLUDED_STATUSES = [
   'hết hàng',
@@ -239,7 +228,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                       {item.price !== undefined && (
                         <p className="">
                           <span className="text-sm font-semibold text-price group-hover:text-white">{formatCurrency(item?.price)}</span>
-                          {item?.sale && (
+                          {item?.sale !== 0 && (
                             <del className="ml-2 text-xs font-light text-gray-400 group-hover:text-white">{formatCurrency(item?.sale)}</del>
                           )}
                         </p>

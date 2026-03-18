@@ -17,22 +17,12 @@ import Image from 'next/image';
 import { hotlineUrl } from '@/utils/socialLinks';
 import { useRouter } from 'next/navigation';
 import { debounce } from 'lodash';
-import { searchProducts } from '@/services/searchService';
+import { searchProducts, SearchResult } from '@/services/searchService';
 import { suggestions } from '@/utils/suggestions';
 import { createPortal } from 'react-dom';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { IoIosContacts } from 'react-icons/io';
 import { LiaShippingFastSolid } from 'react-icons/lia';
-
-interface SearchResult {
-  name: string;
-  link: string;
-  image: string;
-  color?: string;
-  price?: number;
-  sale?: number;
-  status?: string;
-}
 
 const EXCLUDED_STATUSES = [
   'hết hàng',
@@ -305,7 +295,7 @@ const Header: React.FC = () => {
                     {item.price !== undefined && (
                       <p className="">
                         <span className="text-sm font-semibold text-price group-hover:text-white">{formatCurrency(item?.price)}</span>
-                        {item?.sale && (
+                        {item?.sale !== 0 && (
                           <del className="ml-2 text-xs font-light text-gray-400 group-hover:text-white">{formatCurrency(item?.sale)}</del>
                         )}
                       </p>
