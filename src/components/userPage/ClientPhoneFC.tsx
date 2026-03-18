@@ -175,7 +175,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                       <div className="w-full">
                         <p className="text-prod-price-mobile xl:text-prod-price-desktop">
                           <span className="font-semibold text-price">{formatCurrency(phone?.price)}</span> &nbsp;
-                          {phone?.sale && <del className="text-xs font-light text-gray-500">{formatCurrency(phone?.sale)}</del>}
+                          {phone?.sale !== 0 && <del className="text-xs font-light text-gray-500">{formatCurrency(phone?.sale)}</del>}
                         </p>
                         <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
                         <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
