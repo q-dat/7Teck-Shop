@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { IoShieldCheckmarkOutline } from 'react-icons/io5';
 import { FaCartPlus, FaRegEye } from 'react-icons/fa';
 import { formatCurrency } from '@/utils/formatCurrency';
-import { MdArrowBackIosNew, MdArrowForwardIos, MdMemory, MdNavigateNext, MdOutlineInvertColors, MdSdStorage } from 'react-icons/md';
+import { MdArrowBackIosNew, MdArrowForwardIos, MdNavigateNext } from 'react-icons/md';
 import { images } from '../../../public/images';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { useScroll } from '@/hooks/useScroll';
