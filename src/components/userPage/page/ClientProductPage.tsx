@@ -169,7 +169,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
         {/* Product grid */}
         <div className="mt-4 space-y-10 px-2 xl:px-desktop-padding">
           <div className="w-full">
-            <div className="grid w-full grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6">
+            <div className="grid w-full grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
               {loading ? (
                 <ProductPlaceholders count={12} />
               ) : currentProducts.length === 0 ? (
