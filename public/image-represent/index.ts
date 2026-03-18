@@ -1,5 +1,6 @@
 const imageRepresent = {
   NotFounds: '/image-represent/404.webp',
+  badgeNew: '/image-represent/badgeNew.png',
   Status: '/image-represent/status.svg',
   Fallback: '/image-represent/fallback.jpg',
   ZaloQR: '/image-represent/ZaloQR.jpg',

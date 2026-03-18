@@ -59,6 +59,52 @@ const specsToShow: ReadonlyArray<{
 
 const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
 
+type BadgeConfig = {
+  src: string;
+  showText: boolean;
+  containerClass: string;
+  textClass: string;
+};
+
+const BADGE_CONFIG: Record<string, BadgeConfig> = {
+  new: {
+    src: imageRepresent.badgeNew,
+    showText: false,
+    containerClass: 'absolute -left-2 -top-2 z-20',
+    textClass: '',
+  },
+  default: {
+    src: imageRepresent.Status,
+    showText: true,
+    containerClass: 'absolute -left-[3px] top-0 z-20',
+    textClass: 'absolute top-[1px] w-full pl-1 text-xs font-medium text-white',
+  },
+};
+
+const getBadgeConfig = (status?: string): BadgeConfig => {
+  if (!status) return BADGE_CONFIG.default;
+
+  return BADGE_CONFIG[status.toLowerCase()] ?? BADGE_CONFIG.default;
+};
+
+type Props = {
+  status?: string;
+};
+
+const ProductBadge = ({ status }: Props) => {
+  if (!status) return null;
+
+  const { src, showText, containerClass, textClass } = getBadgeConfig(status);
+
+  return (
+    <div className={containerClass}>
+      <Image height={100} width={60} alt={status} loading="lazy" className="h-full w-[60px] select-none" src={src} />
+
+      {showText && <p className={textClass}>{status}</p>}
+    </div>
+  );
+};
+
 export default function ClientProductPage({ products, title, basePath, brands = [], filterNode, onBrandSelect }: ClientProductPageProps) {
   const [loading, setLoading] = useState(true);
 
@@ -228,7 +274,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                               height={200}
                               width={200}
                               loading="lazy"
-                              className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out group-hover:scale-110"
+                              className="h-full w-full select-none rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out group-hover:scale-110"
                               onError={() => handleImageError(variant._id)}
                             />
                           </div>
@@ -272,7 +318,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                                 height={80}
                                 width={80}
                                 loading="lazy"
-                                className="absolute -left-[5px] -top-[5px] z-50 h-[80px] w-[80px] object-contain"
+                                className="absolute -left-[5px] -top-[5px] z-50 h-[80px] w-[80px] select-none object-contain"
                               />
                             </div>
                           )}
@@ -332,12 +378,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                         </Button>
                       </div>
                       {/*  */}
-                      {!isExcluded && variant?.status && (
-                        <div className="absolute -left-[3px] top-0 z-20">
-                          <Image height={100} width={60} alt="" loading="lazy" className="h-full w-[60px]" src={imageRepresent.Status} />
-                          <p className="absolute top-[1px] w-full pl-1 text-xs font-medium text-white">{variant?.status}</p>
-                        </div>
-                      )}
+                      <ProductBadge status={variant?.status} />
                     </section>
                   );
                 })
