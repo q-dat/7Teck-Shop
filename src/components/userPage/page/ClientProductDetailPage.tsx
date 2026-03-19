@@ -351,7 +351,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                     {/* Bên phải */}
                     <div className="flex flex-row items-center gap-1 text-blue-900">
                       <span className="text-sm font-medium">Chia sẽ sản phẩm này:</span>
-                      <button aria-label="Chia sẻ sản phẩm" onClick={() => handleProductShare(product.name, product._id)}>
+                      <button aria-label="Chia sẻ sản phẩm" onClick={() => handleProductShare(product.slug)}>
                         <FaFacebookSquare className="text-xl" />
                       </button>
                     </div>
