@@ -14,6 +14,7 @@ import { ITablet } from '@/types/type/products/tablet/tablet';
 import { IWindows } from '@/types/type/products/windows/windows';
 import { Metadata } from 'next';
 import { JsonLdProduct } from '@/types/types/seo/jsonld';
+import { getPhoneBySlug } from '@/services/products/phoneService';
 
 export type ProductUnion =
   | { type: 'phone'; product: IPhone; metadata: Metadata; jsonLd: JsonLdProduct }
@@ -27,11 +28,24 @@ export default async function ProductDetailFromSlug({ params }: { params: Promis
   const rawId = extractIdFromSlug(slug);
   const realId = rawId ? resolveProductId(rawId) : null;
 
-  if (!realId) {
-    return <div className="mt-10 text-center">Không tìm thấy sản phẩm.</div>;
+  let data: ProductUnion | null = null;
+
+  if (realId) {
+    data = (await detectProductType(realId)) as ProductUnion | null;
   }
 
-  const data = (await detectProductType(realId)) as ProductUnion | null;
+  if (!data) {
+    const phone = await getPhoneBySlug(slug);
+
+    if (phone) {
+      data = {
+        type: 'phone',
+        product: phone,
+        metadata: {} as Metadata,
+        jsonLd: {} as JsonLdProduct,
+      };
+    }
+  }
 
   if (!data) {
     return <div className="mt-10 text-center">Không tìm thấy sản phẩm.</div>;

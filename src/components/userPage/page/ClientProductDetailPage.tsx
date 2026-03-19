@@ -289,7 +289,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                           .map((item) => (
                             <Link
                               key={item._id}
-                              href={`/${item.slug}/${item._id}`}
+                              href={`/${item.slug}`}
                               className="flex flex-row items-center justify-center gap-2 rounded-md border border-primary/50 bg-white px-2 py-1 shadow transition-all hover:scale-105 hover:border-dashed hover:shadow-md"
                             >
                               <Image src={item.img} alt={item.name} width={40} height={40} className="h-[40px] w-[40px] object-contain" />

@@ -1,219 +1,127 @@
 import { MetadataRoute } from 'next';
 import axios, { AxiosResponse } from 'axios';
-import { log } from 'console';
 import { encodeObjectId } from '@/utils/DetailPage/objectIdCodec';
 
-// Interface cho các mục trong phản hồi API
 interface Item {
   _id: string;
-  name?: string;
+  slug?: string;
   tablet_slug?: string;
   macbook_slug?: string;
   windows_slug?: string;
   updatedAt?: string;
-  [key: string]: string | undefined; // Index signature để cho phép truy cập động
+  [key: string]: string | undefined;
 }
 
-// Interface cho phản hồi API
 interface ApiResponse {
-  success?: boolean;
-  message?: string;
-  count?: number;
   data?: Item[];
   phones?: Item[];
   tablets?: Item[];
   macbook?: Item[];
   windows?: Item[];
-  [key: string]: Item[] | boolean | string | number | undefined; // Index signature cho ApiResponse
+  [key: string]: any;
 }
 
 const domain = 'https://www.7teck.vn';
 
-// Hàm lấy dữ liệu từ API
+const buildEntry = (url: string, lastModified: Date): MetadataRoute.Sitemap[number] => ({
+  url,
+  lastModified,
+  changeFrequency: 'daily',
+  priority: 0.7,
+});
+
 async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
-  const paths: MetadataRoute.Sitemap = [];
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.7teck.vn';
-  // console.log('API Base URL:', baseUrl); // Debug
+  const paths: MetadataRoute.Sitemap = [];
 
   const endpoints = [
-    { path: 'dien-thoai', url: '/api/phones', slugField: 'name', dataField: 'phones', includeIdInUrl: true },
-    { path: 'may-tinh-bang', url: '/api/tablets', slugField: 'tablet_slug', dataField: 'tablets', includeIdInUrl: true },
-    { path: 'macbook', url: '/api/laptop-macbook', slugField: 'macbook_slug', dataField: 'macbook', includeIdInUrl: true },
-    { path: 'windows', url: '/api/laptop-windows', slugField: 'windows_slug', dataField: 'windows', includeIdInUrl: true },
-    { path: 'tin-tuc', url: '/api/posts', slugField: 'title', dataField: 'posts', includeIdInUrl: true },
-    //
-    { path: 'dien-thoai', url: '/api/phone-catalogs', slugField: 'name', dataField: 'phoneCatalogs', includeIdInUrl: false },
-    { path: 'may-tinh-bang', url: '/api/tablet-catalogs', slugField: 't_cat_slug', dataField: 'tabletCatalogs', includeIdInUrl: false },
-    { path: 'macbook', url: '/api/macbook-catalogs', slugField: 'm_cat_slug', dataField: 'macbookCatalogs', includeIdInUrl: false },
-    { path: 'windows', url: '/api/windows-catalogs', slugField: 'w_cat_slug', dataField: 'windowsCatalogs', includeIdInUrl: false },
+    { path: 'dien-thoai', url: '/api/phones', slugField: 'slug', dataField: 'phones', includeId: true },
+    { path: 'may-tinh-bang', url: '/api/tablets', slugField: 'tablet_slug', dataField: 'tablets', includeId: true },
+    { path: 'macbook', url: '/api/laptop-macbook', slugField: 'macbook_slug', dataField: 'macbook', includeId: true },
+    { path: 'windows', url: '/api/laptop-windows', slugField: 'windows_slug', dataField: 'windows', includeId: true },
+    { path: 'tin-tuc', url: '/api/posts', slugField: 'title', dataField: 'posts', includeId: true },
+
+    { path: 'dien-thoai', url: '/api/phone-catalogs', slugField: 'slug', dataField: 'phoneCatalogs', includeId: false },
+    { path: 'may-tinh-bang', url: '/api/tablet-catalogs', slugField: 't_cat_slug', dataField: 'tabletCatalogs', includeId: false },
+    { path: 'macbook', url: '/api/macbook-catalogs', slugField: 'm_cat_slug', dataField: 'macbookCatalogs', includeId: false },
+    { path: 'windows', url: '/api/windows-catalogs', slugField: 'w_cat_slug', dataField: 'windowsCatalogs', includeId: false },
   ];
 
-  for (const endpoint of endpoints) {
+  for (const ep of endpoints) {
     try {
-      // console.log(`Fetching API: ${baseUrl}${endpoint.url} ✓`); // Debug
-      const res: AxiosResponse<ApiResponse> = await axios.get<ApiResponse>(`${baseUrl}${endpoint.url}`);
-      // console.log(`API Response for ${endpoint.path}:`, res.data); // Debug
+      const res: AxiosResponse<ApiResponse> = await axios.get(`${baseUrl}${ep.url}`);
 
-      let data: Item[] = [];
-      if ('success' in res.data && Array.isArray(res.data.data)) {
-        data = res.data.data;
-      } else if (endpoint.dataField in res.data && Array.isArray(res.data[endpoint.dataField])) {
-        data = res.data[endpoint.dataField] as Item[];
-      }
+      const data: Item[] = Array.isArray(res.data.data)
+        ? res.data.data
+        : Array.isArray(res.data[ep.dataField])
+          ? (res.data[ep.dataField] as Item[])
+          : [];
 
-      if (data.length > 0) {
-        const segmentPaths = data.flatMap((item: Item) => {
-          const slug = item[endpoint.slugField] || '';
-          const lastModified = item.updatedAt ? new Date(item.updatedAt) : new Date();
+      if (!data.length) continue;
 
-          const baseEntry = (url: string): MetadataRoute.Sitemap[number] => ({
-            url,
-            lastModified,
-            changeFrequency: 'daily',
-            priority: 0.7,
-          });
+      const segmentPaths = data.flatMap((item) => {
+        const slug = item[ep.slugField] || '';
+        if (!slug) return [];
 
-          // raw & encoded id
-          const rawId = item._id;
-          const encodedId = encodeObjectId(rawId);
+        const lastModified = item.updatedAt ? new Date(item.updatedAt) : new Date();
+        const rawId = item._id;
+        const encodedId = encodeObjectId(rawId);
 
-          // URL chính: /path/slug/id (CANONICAL)
-          const mainUrl = `${domain}/${endpoint.path}/${slug}/${rawId}`;
+        // ===== URLS =====
+        const canonical = `${domain}/${ep.path}/${slug}/${rawId}`;
+        const slugOnly = `${domain}/${ep.path}/${slug}`;
 
-          // URL base/name: /path/slug
-          const nameOnlyUrl = `${domain}/${endpoint.path}/${slug}`;
+        if (!ep.includeId) {
+          return [buildEntry(slugOnly, lastModified)];
+        }
 
-          // URL name/id: /slug/id
-          const nameIdUrl = `${domain}/${slug}/${rawId}`;
+        const slugIdPath = `${domain}/${slug}/${rawId}`;
+        const slugIdInline = `${domain}/${slug}-${rawId}`;
+        const slugEncodedPath = `${domain}/${slug}/${encodedId}`;
+        const slugEncodedInline = `${domain}/${slug}-${encodedId}`;
 
-          // ====== MỞ RỘNG BIẾN THỂ SEO ======
+        return [
+          buildEntry(canonical, lastModified),
+          buildEntry(slugOnly, lastModified),
+          buildEntry(slugIdPath, lastModified),
+          buildEntry(slugIdInline, lastModified),
+          buildEntry(slugEncodedPath, lastModified),
+          buildEntry(slugEncodedInline, lastModified),
+        ];
+      });
 
-          // /slug/encodedId
-          const nameEncodedIdUrl = `${domain}/${slug}/${encodedId}`;
-
-          // /slug-id
-          const slugRawIdUrl = `${domain}/${slug}-${rawId}`;
-
-          // /slug-encodedId
-          const slugEncodedIdUrl = `${domain}/${slug}-${encodedId}`;
-
-          return [
-            baseEntry(mainUrl), // canonical
-            baseEntry(nameOnlyUrl), // slug
-            baseEntry(nameIdUrl), // slug/id (raw)
-            baseEntry(nameEncodedIdUrl), // slug/encodedId
-            baseEntry(slugRawIdUrl), // slug-id
-            baseEntry(slugEncodedIdUrl), // slug-encodedId
-          ];
-        });
-
-        paths.push(...segmentPaths);
-      } else {
-        console.log(`No valid data for ${endpoint.path}`); // Debug
-      }
+      paths.push(...segmentPaths);
     } catch (err) {
-      console.error(`Error fetching ${endpoint.path}:`, (err as Error).message); // Debug
+      console.error(`Error fetching ${ep.path}:`, (err as Error).message);
     }
   }
 
-  // console.log('Dynamic Paths:', paths); // Debug
   return paths;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const now = new Date();
+
   const staticPages: MetadataRoute.Sitemap = [
-    {
-      url: `${domain}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/dien-thoai`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/may-tinh-bang`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/macbook`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/windows`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/bang-gia-thu-mua`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/thanh-toan`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/thu-thuat-va-meo-hay`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/tin-tuc-moi-nhat`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/thiet-bi-da-qua-su-dung`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/chinh-sach-quyen-rieng-tu`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/dieu-khoan-dich-vu`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/chinh-sach-bao-hanh`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${domain}/hanh-trinh-khach-hang`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-  ];
+    '',
+    '/dien-thoai',
+    '/may-tinh-bang',
+    '/macbook',
+    '/windows',
+    '/bang-gia-thu-mua',
+    '/thanh-toan',
+    '/thu-thuat-va-meo-hay',
+    '/tin-tuc-moi-nhat',
+    '/thiet-bi-da-qua-su-dung',
+    '/chinh-sach-quyen-rieng-tu',
+    '/dieu-khoan-dich-vu',
+    '/chinh-sach-bao-hanh',
+    '/hanh-trinh-khach-hang',
+  ].map((path) => buildEntry(`${domain}${path}`, now));
 
   const dynamicPages = await getDynamicPaths();
-  log('____Static Pages Count:', staticPages.length); // Debug
-  log('____Dynamic Pages Count:', dynamicPages.length); // Debug
-  console.log('____Total Pages:', [...staticPages, ...dynamicPages].length); // Debug
 
-  const allPages = [...staticPages, ...dynamicPages].filter((page) => !page.url.includes('/cms/'));
+  const allPages = [...staticPages, ...dynamicPages].filter((p) => !p.url.includes('/cms/'));
 
   return allPages.slice(0, 5000);
 }

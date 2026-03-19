@@ -146,6 +146,7 @@ export async function getPhonesByStatus(status?: number): Promise<IPhone[]> {
 export async function getAllPhones(): Promise<IPhone[]> {
   return getPhonesByStatus();
 }
+
 export async function getAllNewPhones(): Promise<IPhone[]> {
   return getPhonesByStatus(0);
 }
@@ -153,6 +154,7 @@ export async function getAllNewPhones(): Promise<IPhone[]> {
 export async function getAllUsedPhones(): Promise<IPhone[]> {
   return getPhonesByStatus(1);
 }
+
 export async function getAllPhonesCached(): Promise<IPhone[]> {
   try {
     const apiUrl = getServerApiUrl('/api/phones/full');
@@ -171,6 +173,7 @@ export async function getAllPhonesCached(): Promise<IPhone[]> {
     return [];
   }
 }
+
 export async function getPhoneById(id: string): Promise<IPhone | null> {
   const apiUrl = getServerApiUrl(`/api/phone/${id}`);
 
@@ -186,6 +189,40 @@ export async function getPhoneById(id: string): Promise<IPhone | null> {
   return data?.phone ?? null;
 }
 
+export async function getPhoneBySlug(slug: string): Promise<IPhone | null> {
+  try {
+    if (!slug) return null;
+
+    const normalizedSlug = slug.trim().toLowerCase();
+
+    const apiUrl = getServerApiUrl(`/api/phone/slug/${normalizedSlug}`);
+
+    const res = await fetch(apiUrl, {
+      // next: { revalidate: 300 },
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+
+    if (!data || typeof data !== 'object' || !data.phone) {
+      console.warn('Dữ liệu API Phone slug không hợp lệ:', data);
+      return null;
+    }
+
+    return data.phone;
+  } catch (error) {
+    console.error('Lỗi khi lấy phone theo slug:', error);
+    return null;
+  }
+}
+
 export async function getPhoneWithFallback(id: string): Promise<IPhone | null> {
   return getWithFallback<IPhone>(id, getAllPhonesCached, getPhoneById);
+}
+
+export async function getPhoneBySlugWithFallback(slug: string): Promise<IPhone | null> {
+  return getWithFallback<IPhone>(slug, getAllPhonesCached, async (s) => {
+    return getPhoneBySlug(s);
+  });
 }
