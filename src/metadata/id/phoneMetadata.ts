@@ -3,7 +3,8 @@ import { IPhone } from '@/types/type/products/phone/phone';
 
 export function generatePhoneMetadata(phone: IPhone): Metadata {
   const slug = phone.slug;
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/dien-thoai/${slug}/${phone._id}`;
+  const domain = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '');
+  const url = `${domain}/${slug}`;
 
   const title = `${phone.name} chính hãng, giá tốt | 7Teck.vn`;
 
