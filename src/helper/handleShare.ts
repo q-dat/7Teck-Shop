@@ -5,6 +5,5 @@ export const handleProductShare = (slug: string) => {
   const url = `${domain}/${slug}`;
   const shareUrl = `${fbShareUrl}${url}`;
 
-  alert(shareUrl);
   window.open(shareUrl, '_blank', 'width=700,height=500');
 };
