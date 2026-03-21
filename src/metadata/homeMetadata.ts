@@ -61,25 +61,4 @@ export const homeMetadata: Metadata = {
   ],
   robots: 'index, follow',
   metadataBase: new URL('https://www.7teck.vn'),
-  openGraph: {
-    title: tit,
-    description: des,
-    url: 'https://www.7teck.vn',
-    siteName: 'www.7teck.vn',
-    images: [
-      {
-        url: '/favicon.png',
-        width: 1200,
-        height: 630,
-        alt: 'Thiết bị công nghệ chính hãng tại 7teck.vn',
-      },
-    ],
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: tit,
-    description: des,
-    images: ['/favicon.png'],
-  },
 };

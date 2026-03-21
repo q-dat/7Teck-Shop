@@ -13,15 +13,15 @@ type RouteParams = {
 };
 
 // SEO metadata generation for phone detail page
-export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
-  const { id } = await params;
+export async function generateMetadata({ params }: { params: RouteParams }): Promise<Metadata> {
+  const { id } = params;
 
-  const phone: IPhone | null = await getPhoneWithFallback(id);
+  const phone = await getPhoneWithFallback(id);
 
   if (!phone) {
     return {
       title: 'Không tìm thấy sản phẩm - 7Teck.vn',
-      description: 'Sản phẩm không tồn tại hoặc đã bị xóa. Khám phá thêm sản phẩm khác tại 7Teck.vn.',
+      description: 'Sản phẩm không tồn tại hoặc đã bị xóa.',
       robots: 'noindex, nofollow',
     };
   }
@@ -38,6 +38,10 @@ export default async function PhoneDetailPage({ params }: { params: Promise<Rout
     return <div className="mt-10 text-center">Không có dữ liệu.</div>;
   }
 
+  const slug = phone.slug;
+  const domain = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '');
+  const url = `${domain}/${slug}`;
+
   const jsonLd = {
     '@context': 'https://schema.org/',
     '@type': 'Product',
@@ -51,7 +55,7 @@ export default async function PhoneDetailPage({ params }: { params: Promise<Rout
     },
     offers: {
       '@type': 'Offer',
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/dien-thoai/${phone.slug}/${phone._id}`,
+      url: `${url}`,
       priceCurrency: 'VND',
       price: phone.price.toString(),
       availability: 'https://schema.org/InStock',
