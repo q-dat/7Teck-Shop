@@ -1,6 +1,3 @@
-import { resolveProductId } from '@/utils/DetailPage/resolveProductId';
-import { detectProductType } from '@/services/unified/unifiedProductService';
-import { extractIdFromSlug } from '@/utils/DetailPage/extractIdFromSlug';
 import { StructuredData } from '@/metadata/structuredData';
 
 import ClientMacbookDetailPage from '@/app/macbook/[name]/[id]/ClientMacbookDetailPage';
@@ -14,6 +11,7 @@ import { ITablet } from '@/types/type/products/tablet/tablet';
 import { IWindows } from '@/types/type/products/windows/windows';
 import { Metadata } from 'next';
 import { JsonLdProduct } from '@/types/types/seo/jsonld';
+
 import { getPhoneBySlug } from '@/services/products/phoneService';
 
 export type ProductUnion =
@@ -25,26 +23,20 @@ export type ProductUnion =
 export default async function ProductDetailFromSlug({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const rawId = extractIdFromSlug(slug);
-  const realId = rawId ? resolveProductId(rawId) : null;
+  const normalizedSlug = slug.trim().toLowerCase();
 
   let data: ProductUnion | null = null;
+  
+  // phone
+  const phone = await getPhoneBySlug(normalizedSlug);
 
-  if (realId) {
-    data = (await detectProductType(realId)) as ProductUnion | null;
-  }
-
-  if (!data) {
-    const phone = await getPhoneBySlug(slug);
-
-    if (phone) {
-      data = {
-        type: 'phone',
-        product: phone,
-        metadata: {} as Metadata,
-        jsonLd: {} as JsonLdProduct,
-      };
-    }
+  if (phone) {
+    data = {
+      type: 'phone',
+      product: phone,
+      metadata: {} as Metadata,
+      jsonLd: {} as JsonLdProduct,
+    };
   }
 
   if (!data) {
@@ -56,9 +48,9 @@ export default async function ProductDetailFromSlug({ params }: { params: Promis
       <StructuredData data={data.jsonLd} />
 
       {data.type === 'phone' && <ClientPhoneDetailPage phone={data.product} />}
-      {data.type === 'macbook' && <ClientMacbookDetailPage mac={data.product} />}
+      {/* {data.type === 'macbook' && <ClientMacbookDetailPage mac={data.product} />}
       {data.type === 'tablet' && <ClientTabletDetailPage tablet={data.product} />}
-      {data.type === 'windows' && <ClientWindowsDetailPage win={data.product} />}
+      {data.type === 'windows' && <ClientWindowsDetailPage win={data.product} />} */}
     </>
   );
 }

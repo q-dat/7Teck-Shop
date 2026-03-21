@@ -12,7 +12,6 @@ import { useScroll } from '@/hooks/useScroll';
 import imageRepresent from '../../../public/image-represent';
 import ProductPlaceholders from './ProductPlaceholders';
 import { IPhone } from '@/types/type/products/phone/phone';
-import { encodeObjectId } from '@/utils/DetailPage/objectIdCodec';
 
 interface Props {
   mostViewedPhones: IPhone[];
@@ -132,7 +131,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                       <Link
                         aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh"
                         target="_blank"
-                        href={`/${phoneUrl}/${encodeObjectId(phone?._id)}`}
+                        href={`/${phoneUrl}/${(phone?._id)}`}
                       >
                         <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                           <Image
@@ -153,7 +152,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                           <Link
                             aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
                             className="w-full cursor-pointer"
-                            href={`/${phoneUrl}/${encodeObjectId(phone?._id)}`}
+                            href={`/${phoneUrl}/${(phone?._id)}`}
                           >
                             <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] font-light">
                               <FaRegEye />

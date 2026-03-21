@@ -1,6 +1,5 @@
 import { MetadataRoute } from 'next';
 import axios, { AxiosResponse } from 'axios';
-import { encodeObjectId } from '@/utils/DetailPage/objectIdCodec';
 
 interface Item {
   _id: string;
@@ -65,7 +64,6 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
 
         const lastModified = item.updatedAt ? new Date(item.updatedAt) : new Date();
         const rawId = item._id;
-        const encodedId = encodeObjectId(rawId);
 
         // ===== URLS =====
         const canonical = `${domain}/${ep.path}/${slug}/${rawId}`;
@@ -77,16 +75,12 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
 
         const slugIdPath = `${domain}/${slug}/${rawId}`;
         const slugIdInline = `${domain}/${slug}-${rawId}`;
-        const slugEncodedPath = `${domain}/${slug}/${encodedId}`;
-        const slugEncodedInline = `${domain}/${slug}-${encodedId}`;
 
         return [
           buildEntry(canonical, lastModified),
           buildEntry(slugOnly, lastModified),
           buildEntry(slugIdPath, lastModified),
           buildEntry(slugIdInline, lastModified),
-          buildEntry(slugEncodedPath, lastModified),
-          buildEntry(slugEncodedInline, lastModified),
         ];
       });
 
