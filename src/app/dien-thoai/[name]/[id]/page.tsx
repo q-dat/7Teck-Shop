@@ -13,15 +13,15 @@ type RouteParams = {
 };
 
 // SEO metadata generation for phone detail page
-export async function generateMetadata({ params }: { params: RouteParams }): Promise<Metadata> {
-  const { id } = params;
+export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
+  const { id } = await params;
 
-  const phone = await getPhoneWithFallback(id);
+  const phone: IPhone | null = await getPhoneWithFallback(id);
 
   if (!phone) {
     return {
       title: 'Không tìm thấy sản phẩm - 7Teck.vn',
-      description: 'Sản phẩm không tồn tại hoặc đã bị xóa.',
+      description: 'Sản phẩm không tồn tại hoặc đã bị xóa. Khám phá thêm sản phẩm khác tại 7Teck.vn.',
       robots: 'noindex, nofollow',
     };
   }
