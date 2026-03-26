@@ -124,7 +124,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
             </li>
           </ul>
         </div>
-        <div className="mt-2 px-2 xl:px-[150px]">
+        <div className="mt-2 px-2 xl:px-desktop-padding">
           {/*  */}
           <div className="my-4 flex w-full flex-row items-center justify-between xl:justify-start xl:gap-10">
             {/* Tên sản phẩm – chỉ hiện ở desktop */}
@@ -305,7 +305,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   {/* Des */}
                   {product?.des ? (
                     <>
-                      <p className="whitespace-pre-line text-sm font-medium text-black">{product?.des}</p>
+                      <p className="whitespace-pre-line text-sm font-light text-secondary">{product?.des}</p>
                     </>
                   ) : (
                     <div className="mt-2 flex flex-col">
