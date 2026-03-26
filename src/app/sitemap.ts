@@ -30,20 +30,15 @@ const buildEntry = (url: string, lastModified: Date): MetadataRoute.Sitemap[numb
 });
 
 async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.7teck.vn';
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL as string;
   const paths: MetadataRoute.Sitemap = [];
 
   const endpoints = [
-    { path: 'dien-thoai', url: '/api/phones', slugField: 'slug', dataField: 'phones', includeId: true },
-    { path: 'may-tinh-bang', url: '/api/tablets', slugField: 'tablet_slug', dataField: 'tablets', includeId: true },
-    { path: 'macbook', url: '/api/laptop-macbook', slugField: 'macbook_slug', dataField: 'macbook', includeId: true },
-    { path: 'windows', url: '/api/laptop-windows', slugField: 'windows_slug', dataField: 'windows', includeId: true },
-    { path: 'tin-tuc', url: '/api/posts', slugField: 'title', dataField: 'posts', includeId: true },
-
-    { path: 'dien-thoai', url: '/api/phone-catalogs', slugField: 'slug', dataField: 'phoneCatalogs', includeId: false },
-    { path: 'may-tinh-bang', url: '/api/tablet-catalogs', slugField: 't_cat_slug', dataField: 'tabletCatalogs', includeId: false },
-    { path: 'macbook', url: '/api/macbook-catalogs', slugField: 'm_cat_slug', dataField: 'macbookCatalogs', includeId: false },
-    { path: 'windows', url: '/api/windows-catalogs', slugField: 'w_cat_slug', dataField: 'windowsCatalogs', includeId: false },
+    { url: '/api/phones', slugField: 'slug', dataField: 'phones' },
+    { url: '/api/tablets', slugField: 'tablet_slug', dataField: 'tablets' },
+    { url: '/api/laptop-macbook', slugField: 'macbook_slug', dataField: 'macbook' },
+    { url: '/api/laptop-windows', slugField: 'windows_slug', dataField: 'windows' },
+    { url: '/api/posts', slugField: 'title', dataField: 'posts', prefix: 'tin-tuc' },
   ];
 
   for (const ep of endpoints) {
@@ -58,35 +53,22 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
 
       if (!data.length) continue;
 
-      const segmentPaths = data.flatMap((item) => {
-        const slug = item[ep.slugField] || '';
-        if (!slug) return [];
+      const segmentPaths = data
+        .map((item) => {
+          const slug = item[ep.slugField];
+          if (!slug) return null;
 
-        const lastModified = item.updatedAt ? new Date(item.updatedAt) : new Date();
-        const rawId = item._id;
+          const lastModified = item.updatedAt ? new Date(item.updatedAt) : new Date();
 
-        // ===== URLS =====
-        const canonical = `${domain}/${ep.path}/${slug}/${rawId}`;
-        const slugOnly = `${domain}/${ep.path}/${slug}`;
+          const url = ep.prefix ? `${domain}/${ep.prefix}/${slug}` : `${domain}/${slug}`;
 
-        if (!ep.includeId) {
-          return [buildEntry(slugOnly, lastModified)];
-        }
-
-        const slugIdPath = `${domain}/${slug}/${rawId}`;
-        const slugIdInline = `${domain}/${slug}-${rawId}`;
-
-        return [
-          buildEntry(canonical, lastModified),
-          buildEntry(slugOnly, lastModified),
-          buildEntry(slugIdPath, lastModified),
-          buildEntry(slugIdInline, lastModified),
-        ];
-      });
+          return buildEntry(url, lastModified);
+        })
+        .filter(Boolean) as MetadataRoute.Sitemap;
 
       paths.push(...segmentPaths);
     } catch (err) {
-      console.error(`Error fetching ${ep.path}:`, (err as Error).message);
+      console.error(`Error fetching ${ep.url}:`, (err as Error).message);
     }
   }
 
