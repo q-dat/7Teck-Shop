@@ -119,7 +119,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
             </li>
             <li>
               <Link role="navigation" aria-label={namePrefix} href="">
-                {namePrefix}
+                {product.name}
               </Link>
             </li>
           </ul>
@@ -128,7 +128,10 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
           {/*  */}
           <div className="my-4 flex w-full flex-row items-center justify-between xl:justify-start xl:gap-10">
             {/* Tên sản phẩm – chỉ hiện ở desktop */}
-            <p className="hidden xl:block xl:text-xl xl:font-semibold xl:text-gray-900">{product?.name}</p>
+            <p className="hidden xl:block xl:text-xl xl:font-semibold xl:text-gray-900">
+              {' '}
+              {namePrefix} {product?.name}
+            </p>
             {/*  */}
             <div className="flex flex-row gap-5">
               {[
@@ -151,7 +154,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
           {/* Sản Phẩm */}
           <div className="flex flex-col items-start justify-start gap-5 xl:flex-row">
             {/* IMG */}
-            <div className="flex w-full flex-col gap-5">
+            <div className="flex w-full flex-col gap-5 xl:w-3/5">
               <h1 className="block text-2xl font-bold text-gray-800 md:text-3xl xl:hidden">
                 <span>
                   {namePrefix} {product?.name}
@@ -162,8 +165,8 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   </sup>
                 )}
               </h1>
-              <div className="relative w-full">
-                <div className="relative h-[200px] w-full overflow-hidden rounded-md bg-white object-cover xl:h-[480px]">
+              <div className="w-full">
+                <div className="relative h-[35vh] w-full overflow-hidden rounded-md bg-white xl:h-[55vh]">
                   <Zoom>
                     <Image
                       priority
@@ -171,7 +174,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       height={500}
                       src={selectedImage || src}
                       alt={product?.name || 'Hình ảnh'}
-                      className="absolute left-0 top-0 z-10 h-[200px] w-full rounded-md object-contain xl:h-[480px] xl:w-full"
+                      className="absolute left-0 top-0 z-10 h-[35vh] w-full rounded-md object-cover xl:h-[55vh] xl:w-full xl:object-contain"
                       onError={() => handleImageError(product._id)}
                     />
                   </Zoom>
@@ -205,8 +208,8 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                         key={index}
                         src={thumb}
                         alt="Ảnh thu nhỏ"
-                        className={`h-[70px] w-[70px] cursor-pointer rounded-md border object-contain ${
-                          selectedImage === thumb ? 'border-2 border-dashed border-primary' : ''
+                        className={`h-auto w-[20vw] cursor-pointer rounded-md border object-cover xl:h-[8vh] xl:w-[8vw] xl:object-contain ${
+                          selectedImage === thumb ? 'border-1 border-dashed border-primary' : ''
                         }`}
                         onClick={() => handleThumbnailClick(scrollRef, thumb, index, setSelectedImage)}
                         onLoad={() => updateScrollButtons(scrollRef, setIsLeftButtonVisible, setIsRightButtonVisible)}
@@ -217,19 +220,19 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   )}
                 </div>
                 {/* Navigation Button  */}
-                <div role="button" className="absolute left-0 top-4 flex w-full items-center justify-between">
+                <div role="button" className="absolute left-0 top-4 flex w-full items-center justify-between xl:top-6">
                   <div className="relative w-full">
                     <button
                       aria-label="Cuộn sang trái"
                       onClick={() => scrollBy(scrollRef, -70)}
-                      className={`absolute -left-1 z-[100] rounded-full bg-primary p-2 text-white xl:-left-2 ${isLeftButtonVisible ? '' : 'hidden'}`}
+                      className={`absolute -left-1 z-[100] rounded-full border border-primary bg-white p-1 text-primary xl:-left-2 ${isLeftButtonVisible ? '' : 'hidden'}`}
                     >
                       <MdArrowBackIosNew className="text-2xl" />
                     </button>
                     <button
                       aria-label="Cuộn sang phải"
                       onClick={() => scrollBy(scrollRef, 70)}
-                      className={`absolute -right-1 z-[100] rounded-full bg-primary p-2 text-white xl:-right-2 ${isRightButtonVisible ? '' : 'hidden'}`}
+                      className={`absolute -right-1 z-[100] rounded-full border border-primary bg-white p-1 text-primary xl:-right-2 ${isRightButtonVisible ? '' : 'hidden'}`}
                     >
                       <MdArrowForwardIos className="text-2xl" />
                     </button>
@@ -238,33 +241,31 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
               </div>
             </div>
             {/* Description */}
-            <div className="w-full select-none">
+            <div className="w-full select-none xl:w-2/5 xl:select-text">
               <div className="flex flex-col items-start justify-between rounded-lg bg-white p-3 shadow-md xl:min-h-[480px]">
                 <div className="flex flex-col gap-2">
-                  <h1 className="hidden text-2xl font-bold text-gray-800 md:text-3xl xl:block">
-                    <span>
-                      {namePrefix} {product?.name}
-                    </span>
+                  <h1 className="hidden break-all text-2xl font-bold text-gray-800 xl:block">
+                    <span>{product?.name}</span>
                     {product?.status && (
                       <sup className="mx-2 rounded-md border border-primary bg-primary-lighter p-1 text-sm font-semibold text-primary">
                         {product?.status}
                       </sup>
                     )}
                   </h1>
+
                   {/* Price */}
                   <p className="text-3xl font-semibold text-price">
                     {formatCurrency(product?.price)}
                     {product?.sale !== 0 && <del className="ml-2 text-base text-gray-400">{formatCurrency(product?.sale)}</del>}
                   </p>
+
                   {/* Product details */}
                   <div className="w-full">
-                    <p className="text-sm font-semibold text-black">
-                      Đặc điểm: <span className="text-xs text-secondary">({product?.ram && 'Dung lượng RAM & '}Màu Sắc)</span>
-                    </p>
+                    <p className="text-sm font-semibold text-black">Đặc điểm:</p>
                     <div className="flex flex-wrap items-center justify-start gap-2">
                       {[
-                        { key: 'ram', label: product?.ram, icon: <MdMemory size={18} /> },
                         { key: 'color', label: product?.color, icon: <MdOutlineInvertColors size={18} /> },
+                        { key: 'ram', label: product?.ram, icon: <MdMemory size={18} /> },
                       ]
                         .filter((item) => item.label)
                         .map((item) => (
@@ -278,9 +279,22 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                         ))}
                     </div>
                   </div>
+
+                  {/* Des */}
+                  {product?.des ? (
+                    <>
+                      <p className="whitespace-pre-line text-xs font-normal leading-normal text-gray-600">{product?.des}</p>
+                    </>
+                  ) : (
+                    <div className="mt-2 flex flex-col">
+                      <p className="text-base font-medium italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
+                      <p className="text-sm font-light text-secondary">Khám phá hiệu năng vượt trội với thiết kế tối ưu và bền bỉ.</p>
+                      <p className="text-sm font-light text-secondary">Trải nghiệm sự khác biệt ngay hôm nay với sản phẩm chính hãng.</p>
+                    </div>
+                  )}
+
                   {/* Related Products */}
                   <div className="w-full">
-                    <p className="text-sm font-semibold text-black">Lựa chọn liên quan:</p>
                     {relatedProducts && relatedProducts.length > 1 && (
                       <div className="flex flex-wrap items-center justify-start gap-2">
                         {/* Map through related products */}
@@ -290,11 +304,11 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                             <Link
                               key={item._id}
                               href={`/${item.slug}`}
-                              className="flex flex-row items-center justify-center gap-2 rounded-md border border-primary/50 bg-white px-2 py-1 shadow transition-all hover:scale-105 hover:border-dashed hover:shadow-md"
+                              className="flex flex-row items-center justify-between gap-1 rounded-md border border-primary/50 bg-white shadow transition-all hover:scale-105 hover:border-dashed hover:shadow-md"
                             >
-                              <Image src={item.img} alt={item.name} width={40} height={40} className="h-[40px] w-[40px] object-contain" />
-                              <div className="font-semibold">
-                                <p>{item.color}</p>
+                              <Image src={item.img} alt={item.name} width={60} height={50} className="h-[60px] w-full rounded-md object-cover" />
+                              <div className="px-2 font-semibold">
+                                <p className="text-xs xl:text-lg">{item.color}</p>
                                 <p className="text-price">{formatCurrency(item.price)}</p>
                               </div>
                             </Link>
@@ -302,18 +316,6 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                       </div>
                     )}
                   </div>
-                  {/* Des */}
-                  {product?.des ? (
-                    <>
-                      <p className="whitespace-pre-line text-sm font-light text-secondary">{product?.des}</p>
-                    </>
-                  ) : (
-                    <div className="mt-2 flex flex-col">
-                      <p className="text-base font-medium italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
-                      <p className="text-sm font-light text-secondary">Khám phá hiệu năng vượt trội với thiết kế tối ưu và bền bỉ.</p>
-                      <p className="text-sm font-light text-secondary">Trải nghiệm sự khác biệt ngay hôm nay với sản phẩm chính hãng.</p>
-                    </div>
-                  )}
                 </div>
 
                 {/* Btn */}
