@@ -248,7 +248,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                   const variant = selectedVariants[product._id] ? selectedVariants[product._id] : product;
                   // Navigate
                   const productUrl = variant.slug;
-                  const subUrl = variant?._id;
+                  // const subUrl = variant?._id;
                   // handleImageError
                   const isErrored = isImageErrored(variant._id);
                   const src = isErrored || !variant.img ? fallbackSrc : variant?.img;
@@ -264,7 +264,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                           className="relative"
                           aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh"
                           target="_blank"
-                          href={`${basePath}/${productUrl}/${subUrl}`}
+                          href={`${basePath}/${productUrl}`}
                         >
                           {/* Product Image */}
                           <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
@@ -368,7 +368,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                               price: variant?.price,
                               ram: variant?.ram,
                               color: variant?.color,
-                              link: `${basePath}/${productUrl}/${subUrl}`,
+                              link: `${basePath}/${productUrl}`,
                             };
                             localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                             window.location.href = '/thanh-toan';

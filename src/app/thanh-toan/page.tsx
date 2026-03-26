@@ -118,7 +118,7 @@ export default function PurchasePage() {
           {product.color} | {product.ram}
         </p>
         <span className="mt-1 text-lg font-black text-neutral-900">{formatCurrency(product.price)}</span>
-        <Link target="_blank" href={`${product.slug}/${product._id}`} className="text-xs font-light text-blue-700 underline">
+        <Link target="_blank" href={`${product.slug}`} className="text-xs font-light text-blue-700 underline">
           Chi tiết sản phẩm
         </Link>
       </div>
