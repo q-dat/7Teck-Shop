@@ -1,5 +1,4 @@
 export const revalidate = 18000;
-
 import { getPhoneWithFallback } from '@/services/products/phoneService';
 import { IPhone } from '@/types/type/products/phone/phone';
 import ClientPhoneDetailPage from './ClientPhoneDetailPage';
