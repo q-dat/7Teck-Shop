@@ -306,9 +306,9 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                               href={`/${item.slug}`}
                               className="flex flex-row items-center justify-between gap-1 rounded-md border border-primary/50 bg-white shadow transition-all hover:scale-105 hover:border-dashed hover:shadow-md"
                             >
-                              <Image src={item.img} alt={item.name} width={60} height={50} className="h-[60px] w-full rounded-md object-cover" />
+                              <Image src={item.img} alt={item.name} width={60} height={50} className="h-[60px] w-full rounded-md object-contain" />
                               <div className="px-2 font-semibold">
-                                <p className="text-xs xl:text-lg">{item.color}</p>
+                                <p className="whitespace-nowrap text-xs xl:text-base">{item.color}</p>
                                 <p className="text-price">{formatCurrency(item.price)}</p>
                               </div>
                             </Link>
@@ -403,13 +403,13 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                 className={`w-full cursor-pointer rounded-l-md py-2 text-center font-light transition-all duration-500 ease-in-out ${activeTab === 'specs' ? 'bg-secondary font-semibold text-white' : 'bg-white text-black'}`}
                 onClick={() => setActiveTab('specs')}
               >
-                <p className="text-base">Thông số kĩ thuật</p>
+                <p className="text-sm xl:text-base">Thông số kĩ thuật</p>
               </div>
               <div
                 className={`w-full cursor-pointer rounded-r-md py-2 text-center font-light transition-all duration-500 ease-in-out ${activeTab === 'details' ? 'bg-secondary font-semibold text-white' : 'bg-white text-black'}`}
                 onClick={() => setActiveTab('details')}
               >
-                <p className="text-base">Bài viết sản phẩm</p>
+                <p className="text-sm xl:text-base">Bài viết sản phẩm</p>
               </div>
             </div>
             {/*  */}
@@ -417,7 +417,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
               {/* Details */}
               {activeTab === 'specs' && (
                 <div className="mt-5 divide-y-[1px] divide-secondary divide-opacity-20 rounded-md border border-secondary bg-white leading-10 text-black">
-                  <h1 className="rounded-sm rounded-b-none bg-secondary p-2 text-center text-base font-light uppercase text-white">
+                  <h1 className="rounded-sm rounded-b-none bg-secondary p-2 text-center text-sm font-light uppercase text-white xl:text-base">
                     Các thông số chi tiết
                   </h1>
                   {fieldMap.map((group, index) => (
