@@ -110,7 +110,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
     <div>
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
       <div className="py-[60px] xl:pt-0">
-        <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
+        <div className="breadcrumbs px-[10px] py-2 text-xs text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
             <li>
               <Link role="navigation" aria-label="Trang chủ" href="/">
@@ -145,7 +145,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   className="flex flex-row items-center gap-px text-blue-600"
                 >
                   {link.icon}
-                  <span className="text-sm font-medium">{link.label}</span>
+                  <span className="text-xs font-medium">{link.label}</span>
                 </Link>
               ))}
             </div>
@@ -160,7 +160,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   {namePrefix} {product?.name}
                 </span>
                 {product?.status && (
-                  <sup className="mx-2 rounded-md border border-primary bg-primary-lighter p-1 text-sm font-semibold text-primary">
+                  <sup className="mx-2 rounded-md border border-primary bg-primary-lighter p-1 text-xs font-semibold text-primary">
                     {product?.status}
                   </sup>
                 )}
@@ -247,7 +247,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   <h1 className="hidden break-all text-2xl font-bold text-gray-800 xl:block">
                     <span>{product?.name}</span>
                     {product?.status && (
-                      <sup className="mx-2 rounded-md border border-primary bg-primary-lighter p-1 text-sm font-semibold text-primary">
+                      <sup className="mx-2 rounded-md border border-primary bg-primary-lighter p-1 text-xs font-semibold text-primary">
                         {product?.status}
                       </sup>
                     )}
@@ -261,7 +261,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
 
                   {/* Product details */}
                   <div className="w-full">
-                    <p className="text-sm font-semibold text-black">Đặc điểm:</p>
+                    <p className="text-xs font-semibold text-black">Đặc điểm:</p>
                     <div className="flex flex-wrap items-center justify-start gap-2">
                       {[
                         { key: 'color', label: product?.color, icon: <MdOutlineInvertColors size={18} /> },
@@ -274,7 +274,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                             className="flex items-center justify-center gap-1 rounded-md border border-dashed border-black bg-primary-lighter px-2 py-0.5 font-semibold text-black shadow-sm transition-all hover:shadow-md"
                           >
                             {item.icon}
-                            <span className="text-sm">{item.label}</span>
+                            <span className="text-xs">{item.label}</span>
                           </div>
                         ))}
                     </div>
@@ -288,8 +288,8 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   ) : (
                     <div className="mt-2 flex flex-col">
                       <p className="text-base font-medium italic text-gray-600">{`"Sở hữu công nghệ, nâng tầm trải nghiệm"`}</p>
-                      <p className="text-sm font-light text-secondary">Khám phá hiệu năng vượt trội với thiết kế tối ưu và bền bỉ.</p>
-                      <p className="text-sm font-light text-secondary">Trải nghiệm sự khác biệt ngay hôm nay với sản phẩm chính hãng.</p>
+                      <p className="text-xs font-light text-secondary">Khám phá hiệu năng vượt trội với thiết kế tối ưu và bền bỉ.</p>
+                      <p className="text-xs font-light text-secondary">Trải nghiệm sự khác biệt ngay hôm nay với sản phẩm chính hãng.</p>
                     </div>
                   )}
 
@@ -348,11 +348,11 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   <div className="mt-2 flex w-full flex-col justify-between gap-1 text-blue-800 xl:flex-row">
                     {/* Bên trái */}
                     <div>
-                      <span className="text-sm text-gray-700">{`*Nhấn "Mua ngay" để xác nhận sản phẩm!`}</span>
+                      <span className="text-xs text-gray-700">{`*Nhấn "Mua ngay" để xác nhận sản phẩm!`}</span>
                     </div>
                     {/* Bên phải */}
                     <div className="flex flex-row items-center gap-1 text-blue-900">
-                      <span className="text-sm font-medium">Chia sẽ sản phẩm này:</span>
+                      <span className="text-xs font-medium">Chia sẽ sản phẩm này:</span>
                       <button aria-label="Chia sẻ sản phẩm" onClick={() => handleProductShare(product.slug)}>
                         <FaFacebookSquare className="text-xl" />
                       </button>
@@ -364,7 +364,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
               <Link href={hotlineUrl}>
                 <div className="mt-5 w-full rounded-lg bg-primary-lighter p-2 text-center text-primary shadow-md transition-colors">
                   <p className="text-xl font-bold">Gọi ngay {contact}</p>
-                  <p className="text-sm">Để nhận ưu đãi tốt nhất!</p>
+                  <p className="text-xs">Để nhận ưu đãi tốt nhất!</p>
                 </div>
               </Link>
             </div>
@@ -375,7 +375,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
             <div className="flex flex-col gap-3 rounded-lg border border-secondary/20 bg-white p-2 shadow-sm xl:p-6">
               <h2 className="text-center text-lg font-bold uppercase text-secondary">7teck cam kết</h2>
 
-              <ul className="mt-2 flex flex-col gap-2 text-sm text-gray-700">
+              <ul className="mt-2 flex flex-col gap-2 text-xs text-gray-700">
                 {/* Cam kết */}
                 <li className="rounded-md bg-secondary/5 p-2 leading-relaxed">• Máy nguyên zin đúng phiên bản quý khách chọn.</li>
 
@@ -403,13 +403,13 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                 className={`w-full cursor-pointer rounded-l-md py-2 text-center font-light transition-all duration-500 ease-in-out ${activeTab === 'specs' ? 'bg-secondary font-semibold text-white' : 'bg-white text-black'}`}
                 onClick={() => setActiveTab('specs')}
               >
-                <p>Thông số kĩ thuật</p>
+                <p className="text-base">Thông số kĩ thuật</p>
               </div>
               <div
                 className={`w-full cursor-pointer rounded-r-md py-2 text-center font-light transition-all duration-500 ease-in-out ${activeTab === 'details' ? 'bg-secondary font-semibold text-white' : 'bg-white text-black'}`}
                 onClick={() => setActiveTab('details')}
               >
-                <p>Bài viết sản phẩm</p>
+                <p className="text-base">Bài viết sản phẩm</p>
               </div>
             </div>
             {/*  */}
@@ -417,14 +417,14 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
               {/* Details */}
               {activeTab === 'specs' && (
                 <div className="mt-5 divide-y-[1px] divide-secondary divide-opacity-20 rounded-md border border-secondary bg-white leading-10 text-black">
-                  <h1 className="rounded-sm rounded-b-none bg-secondary p-2 text-center text-lg font-light uppercase text-white">
+                  <h1 className="rounded-sm rounded-b-none bg-secondary p-2 text-center text-base font-light uppercase text-white">
                     Các thông số chi tiết
                   </h1>
                   {fieldMap.map((group, index) => (
                     <div key={group?.group}>
                       <details open={index < 2} className="group transform divide-y-[1px] bg-secondary/5">
                         <summary className="flex cursor-pointer items-center justify-between p-2">
-                          <span className="font-semibold text-secondary">{group?.name}</span>
+                          <span className="text-xs font-semibold text-secondary xl:text-sm">{group?.name}</span>
                           <span className="transform text-secondary transition-transform duration-300 ease-in-out group-open:rotate-180">
                             <IoIosArrowDropdownCircle className="text-2xl" />
                           </span>
@@ -443,7 +443,10 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                             const fieldValue = groupValue?.[fieldKey];
 
                             return (
-                              <div className="flex w-full flex-row items-start justify-between rounded-md bg-white p-2" key={field?.field}>
+                              <div
+                                className="flex w-full flex-row items-start justify-between rounded-md bg-white p-2 text-xs xl:text-sm"
+                                key={field?.field}
+                              >
                                 <p>{field?.name}</p>
                                 <p className="font-light italic text-gray-700">
                                   {Array.isArray(fieldValue) ? <span>{fieldValue.join(',')}</span> : fieldValue}
