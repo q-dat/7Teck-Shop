@@ -246,9 +246,6 @@ export default function ClientProductPage({ products, title, basePath, brands = 
               ) : (
                 currentProducts.map((product) => {
                   const variant = selectedVariants[product._id] ? selectedVariants[product._id] : product;
-                  // Navigate
-                  const productUrl = variant.slug;
-                  // const subUrl = variant?._id;
                   // handleImageError
                   const isErrored = isImageErrored(variant._id);
                   const src = isErrored || !variant.img ? fallbackSrc : variant?.img;
@@ -260,12 +257,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                       className="group relative flex h-full w-full flex-col justify-between rounded-md border border-primary-lighter text-black"
                     >
                       <div className="w-full">
-                        <Link
-                          className="relative"
-                          aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh"
-                          target="_blank"
-                          href={`${basePath}/${productUrl}`}
-                        >
+                        <Link className="relative" aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/${variant.slug}`}>
                           {/* Product Image */}
                           <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                             <Image
@@ -368,7 +360,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                               price: variant?.price,
                               ram: variant?.ram,
                               color: variant?.color,
-                              link: `${basePath}/${productUrl}`,
+                              link: `/${variant.slug}`,
                             };
                             localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                             window.location.href = '/thanh-toan';

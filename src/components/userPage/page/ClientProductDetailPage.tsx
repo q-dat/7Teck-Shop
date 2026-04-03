@@ -335,7 +335,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                         price: product?.price,
                         ram: product?.ram,
                         color: product?.color,
-                        link: `${product?.slug}/${product?._id}`,
+                        link: `${product?.slug}`,
                       };
                       localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                       window.location.href = '/thanh-toan';

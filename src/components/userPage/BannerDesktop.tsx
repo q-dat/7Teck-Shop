@@ -128,11 +128,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                       className="group relative flex h-full w-[240px] flex-col justify-between rounded-md border border-primary-lighter text-white"
                     >
                       {/* Product Image */}
-                      <Link
-                        aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh"
-                        target="_blank"
-                        href={`/${phoneUrl}/${(phone?._id)}`}
-                      >
+                      <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/${phoneUrl}/${phone?._id}`}>
                         <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                           <Image
                             height={200}
@@ -152,7 +148,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                           <Link
                             aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
                             className="w-full cursor-pointer"
-                            href={`/${phoneUrl}/${(phone?._id)}`}
+                            href={`/${phoneUrl}/${phone?._id}`}
                           >
                             <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] font-light">
                               <FaRegEye />
@@ -212,7 +208,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                                 price: phone?.price,
                                 ram: phone?.phone_catalog_id?.configuration_and_memory?.ram,
                                 color: phone?.color,
-                                link: `/${phone?.slug}/${phone?._id}`,
+                                link: `/${phone?.slug}`,
                               };
                               localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                               window.location.href = '/thanh-toan';

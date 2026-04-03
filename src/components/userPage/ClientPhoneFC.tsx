@@ -36,7 +36,6 @@ const specGetters: Record<SpecKey, (phone: IPhone) => string | undefined> = {
 };
 
 export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhoneProps) {
-  const basePath = 'dien-thoai';
   const { scrollRef, isLeftVisible, isRightVisible, hasOverflow, scrollBy } = useScroll();
   //  handleImageError
   const fallbackSrc = imageRepresent.Fallback;
@@ -126,7 +125,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                     key={phone?._id}
                     className="group relative flex h-full w-[185px] flex-col justify-between rounded-md border border-primary-lighter text-black xl:w-[195px]"
                   >
-                    <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/${phoneUrl}/${phone?._id}`}>
+                    <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/${phoneUrl}`}>
                       <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                         <Image
                           height={200}
@@ -191,7 +190,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                               price: phone?.price,
                               ram: phone?.phone_catalog_id?.configuration_and_memory?.ram,
                               color: phone?.color,
-                              link: `${basePath}/${phone?.slug}/${phone?._id}`,
+                              link: `/${phone?.slug}`,
                             };
                             localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                             window.location.href = '/thanh-toan';
