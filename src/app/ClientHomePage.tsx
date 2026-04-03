@@ -100,7 +100,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
     products: Product[];
     category: {
       name: string;
-      url: string;
+      baseUrl: string;
       title: string;
       ariaLabel: string;
     };
@@ -109,7 +109,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
       products: transformTablets,
       category: {
         name: 'Máy Tính Bảng',
-        url: '/may-tinh-bang',
+        baseUrl: 'may-tinh-bang',
         title: 'Danh mục - Máy Tính Bảng',
         ariaLabel: 'Xem thêm sản phẩm máy tính bảng',
       },
@@ -118,7 +118,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
       products: transformMacbook,
       category: {
         name: 'Laptop Macbook',
-        url: '/macbook',
+        baseUrl: 'macbook',
         title: 'Danh mục - Macbook',
         ariaLabel: 'Xem thêm sản phẩm laptop Macbook',
       },
@@ -127,7 +127,7 @@ export default function ClientHomePage({ mostViewedPhones, tablets, macbook, win
       products: transformWindows,
       category: {
         name: 'Laptop Windows',
-        url: '/windows',
+        baseUrl: 'windows',
         title: 'Danh mục - Laptop Windows',
         ariaLabel: 'Xem thêm sản phẩm laptop Windows',
       },

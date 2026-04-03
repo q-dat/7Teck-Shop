@@ -38,7 +38,7 @@ const specsToShow: ReadonlyArray<{
 
 const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
 
-export default function ClientUsedProductByCatalogPage({ products, title }: ProductPageProps) {
+export default function ClientUsedProductByCatalogPage({ products, title, basePath }: ProductPageProps) {
   const [loading, setLoading] = useState(true);
   // Image error
   const fallbackSrc = imageRepresent.Fallback;
@@ -86,7 +86,7 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
                       className="group relative flex h-full w-full flex-col justify-between rounded-md border border-primary-lighter text-black"
                     >
                       <div className="w-full">
-                        <Link className="relative" target="_blank" aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={url}>
+                        <Link className="relative" aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/${basePath}${url}`}>
                           {/* Product Image */}
                           <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                             <Image
@@ -143,8 +143,17 @@ export default function ClientUsedProductByCatalogPage({ products, title }: Prod
                       <div className="w-full px-1 pb-1">
                         {/* Price and Buy Now Button */}
                         <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
-                          <span className="font-semibold text-price">{formatCurrency(product?.price)}</span> &nbsp;
-                          {product?.sale !== 0 && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
+                          {product.price === 0 ? (
+                            <Link href={'/lien-he'} className="w-full text-lg font-bold text-price hover:underline">
+                              Liên hệ
+                            </Link>
+                          ) : (
+                            <p>
+                              <span className="font-semibold text-price">{formatCurrency(product?.price)}</span>
+                              &nbsp;
+                              {product?.sale !== 0 && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
+                            </p>
+                          )}
                         </p>
                         <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
                         <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>

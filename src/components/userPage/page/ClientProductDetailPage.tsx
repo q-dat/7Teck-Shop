@@ -254,9 +254,17 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   </h1>
 
                   {/* Price */}
-                  <p className="text-3xl font-semibold text-price">
-                    {formatCurrency(product?.price)}
-                    {product?.sale !== 0 && <del className="ml-2 text-base text-gray-400">{formatCurrency(product?.sale)}</del>}
+                  <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
+                    {product.price === 0 ? (
+                      <Link href={'/lien-he'} className="w-full text-3xl font-bold text-price hover:underline">
+                        Liên hệ
+                      </Link>
+                    ) : (
+                      <p>
+                        <span className="text-3xl font-semibold text-price">{formatCurrency(product?.price)}</span>
+                        {product?.sale !== 0 && <del className="ml-2 text-base text-gray-400">{formatCurrency(product?.sale)}</del>}
+                      </p>
+                    )}
                   </p>
 
                   {/* Product details */}

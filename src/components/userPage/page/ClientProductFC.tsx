@@ -27,14 +27,15 @@ interface ClientProductFCProps {
   products: Product[];
   category: {
     name: string;
-    url: string;
+    baseUrl: string;
     title: string;
     ariaLabel: string;
   };
   loading?: boolean;
 }
-const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p: Product, url: string) => void }) => {
-  const productUrl = `/${product.slug}/${product._id}`;
+
+const ProductItem = ({ product, baseUrl, onQuickBuy }: { product: Product; baseUrl: string; onQuickBuy: (p: Product, url: string) => void }) => {
+  const productUrl = `/${baseUrl}/${product.slug}`;
 
   return (
     <motion.div
@@ -152,8 +153,7 @@ export default function ClientProductFC({ products, category, loading: externalL
       <div className="mb-2 flex flex-col items-start justify-between gap-2 border-b border-primary pb-2 md:flex-row md:items-center">
         <h2 className="text-xl font-light tracking-tight text-neutral-900 xl:text-2xl">{category.title}</h2>
         <Link
-          target="_blank"
-          href={category.url}
+          href={category.baseUrl}
           aria-label={category.ariaLabel}
           className="group ml-auto flex items-center text-xs font-bold uppercase tracking-[0.2em] text-neutral-900 transition-colors hover:text-primary"
         >
@@ -188,12 +188,12 @@ export default function ClientProductFC({ products, category, loading: externalL
         )}
         <div ref={scrollRef} className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-10 pt-2 scrollbar-hide">
           {products.map((product) => (
-            <ProductItem key={product._id} product={product} onQuickBuy={handleQuickBuy} />
+            <ProductItem key={product._id} product={product} baseUrl={category.baseUrl} onQuickBuy={handleQuickBuy} />
           ))}
 
           {/* View All */}
           <Link
-            href={category.url}
+            href={category.baseUrl}
             className="group flex min-w-[200px] snap-start items-center justify-center bg-neutral-50 transition-all duration-500 hover:bg-neutral-900 xl:min-w-[240px]"
           >
             <div className="mt-[50px] flex flex-col items-center gap-1 text-center">
