@@ -1,12 +1,10 @@
 import { cache } from 'react';
-import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { StructuredData } from '@/metadata/structuredData';
 import ClientPhoneDetailPage from '@/app/dien-thoai/[slug]/[id]/ClientPhoneDetailPage';
 import { IPhone } from '@/types/type/products/phone/phone';
 import { JsonLdProduct } from '@/types/types/seo/jsonld';
 import { getPhoneById } from '@/services/products/phoneService';
-import { generatePhoneMetadata } from '@/metadata/id/phoneMetadata';
 
 type RouteParams = {
   slug: string;
@@ -43,23 +41,6 @@ function buildJsonLd(phone: IPhone): JsonLdProduct {
       availability: 'https://schema.org/InStock',
     },
   };
-}
-
-// SEO
-export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
-  const { id } = await params;
-
-  const phone = await getCachedPhone(id);
-
-  if (!phone) {
-    return {
-      title: 'Không tìm thấy sản phẩm - 7Teck.vn',
-      description: 'Sản phẩm không tồn tại hoặc đã bị xóa.',
-      robots: 'noindex, nofollow',
-    };
-  }
-
-  return generatePhoneMetadata(phone);
 }
 
 // PAGE

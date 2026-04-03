@@ -2,31 +2,11 @@ export const revalidate = 18000;
 import { getPhoneWithFallback } from '@/services/products/phoneService';
 import { IPhone } from '@/types/type/products/phone/phone';
 import ClientPhoneDetailPage from './ClientPhoneDetailPage';
-import { generatePhoneMetadata } from '@/metadata/id/phoneMetadata';
-import { StructuredData } from '@/metadata/structuredData';
-import { Metadata } from 'next';
 
 type RouteParams = {
   slug?: string;
   id: string;
 };
-
-// SEO metadata generation for phone detail page
-export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
-  const { id } = await params;
-
-  const phone: IPhone | null = await getPhoneWithFallback(id);
-
-  if (!phone) {
-    return {
-      title: 'Không tìm thấy sản phẩm - 7Teck.vn',
-      description: 'Sản phẩm không tồn tại hoặc đã bị xóa. Khám phá thêm sản phẩm khác tại 7Teck.vn.',
-      robots: 'noindex, nofollow',
-    };
-  }
-
-  return generatePhoneMetadata(phone);
-}
 
 export default async function PhoneDetailPage({ params }: { params: Promise<RouteParams> }) {
   const { id } = await params;
@@ -37,36 +17,8 @@ export default async function PhoneDetailPage({ params }: { params: Promise<Rout
     return <div className="mt-10 text-center">Không có dữ liệu.</div>;
   }
 
-  const slug = phone.slug;
-  const domain = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '');
-  const url = `${domain}/${slug}`;
-
-  const jsonLd = {
-    '@context': 'https://schema.org/',
-    '@type': 'Product',
-    name: phone.name,
-    image: phone.img,
-    description: phone.des || `Apple - ${phone.name} tại 7Teck`,
-    sku: phone._id,
-    brand: {
-      '@type': 'Brand',
-      name: 'Apple',
-    },
-    offers: {
-      '@type': 'Offer',
-      url: `${url}`,
-      priceCurrency: 'VND',
-      price: phone.price.toString(),
-      availability: 'https://schema.org/InStock',
-    },
-  };
-
   return (
     <>
-      {/* <Head>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      </Head> */}
-      <StructuredData data={jsonLd} />
       <ClientPhoneDetailPage phone={phone} />
     </>
   );

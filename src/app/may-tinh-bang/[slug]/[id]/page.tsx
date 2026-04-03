@@ -3,30 +3,11 @@ export const revalidate = 18000;
 import { ITablet } from '@/types/type/products/tablet/tablet';
 import { getTabletWithFallback } from '@/services/products/tabletService';
 import ClientTabletDetailPage from './ClientTabletDetailPage';
-import { generateTabletMetadata } from '@/metadata/id/tabletMetadata';
-import { StructuredData } from '@/metadata/structuredData';
-import { Metadata } from 'next';
 
 type RouteParams = {
   slug: string;
   id: string;
 };
-// SEO metadata generation for tablet detail page
-export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
-  const { id } = await params;
-
-  const tablet: ITablet | null = await getTabletWithFallback(id);
-
-  if (!tablet) {
-    return {
-      title: 'Không tìm thấy sản phẩm - 7Teck.vn',
-      description: 'Sản phẩm không tồn tại hoặc đã bị xóa. Khám phá thêm sản phẩm khác tại 7Teck.vn.',
-      robots: 'noindex, nofollow',
-    };
-  }
-
-  return generateTabletMetadata(tablet);
-}
 
 export default async function TabletDetailPage({ params }: { params: Promise<RouteParams> }) {
   const { id } = await params;
@@ -36,30 +17,9 @@ export default async function TabletDetailPage({ params }: { params: Promise<Rou
   if (!tablet) {
     return <div className="mt-10 text-center">Không có dữ liệu.</div>;
   }
-  //
-  const jsonLd = {
-    '@context': 'https://schema.org/',
-    '@type': 'Product',
-    name: tablet.tablet_name,
-    image: tablet.tablet_img,
-    description: tablet.tablet_des || `Apple - ${tablet.tablet_name} tại 7Teck`,
-    sku: tablet._id,
-    brand: {
-      '@type': 'Brand',
-      name: 'Apple',
-    },
-    offers: {
-      '@type': 'Offer',
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/may-tinh-bang/${tablet.tablet_slug}/${tablet._id}`,
-      priceCurrency: 'VND',
-      price: tablet.tablet_price.toString(),
-      availability: 'https://schema.org/InStock',
-    },
-  };
 
   return (
     <>
-      <StructuredData data={jsonLd} />
       <ClientTabletDetailPage tablet={tablet} />
     </>
   );
