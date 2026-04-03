@@ -1,9 +1,8 @@
 'use client';
-import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
-import { images } from '../../../public/images';
+import { images } from '../../../../public/images';
 import { address, contact, hotlineUrl, mail, mailUrl } from '@/utils/socialLinks';
 
 export default function TermsPage() {

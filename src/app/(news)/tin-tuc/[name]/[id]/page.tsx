@@ -4,7 +4,7 @@ import { getAllCatalogs, getPostsByCatalog, getPostWithFallback } from '@/servic
 import ClientPostDetailPage from './ClientPostDetailPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 import { IPost } from '@/types/type/products/post/post';
-import { buildPostDetailMetadata } from '@/metadata/id/postDetailMetadata';
+import { buildPostDetailMetadata } from '@/app/(SEO)/metadata/id/postDetailMetadata';
 import { Metadata } from 'next';
 
 type RouteParams = {

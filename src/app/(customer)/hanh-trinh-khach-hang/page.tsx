@@ -1,4 +1,3 @@
-import React from 'react';
 import ClientGalleryPage from './ClientGalleryPage';
 import { getAllGallerys } from '@/services/galleryService';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';

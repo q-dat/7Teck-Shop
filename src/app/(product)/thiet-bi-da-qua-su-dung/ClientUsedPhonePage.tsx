@@ -1,5 +1,5 @@
 'use client';
-import ClientUsedProductCatalogPage, { UsedProductCatalog } from '../../components/userPage/page/ClientUsedProductCatalogPage';
+import ClientUsedProductCatalogPage, { UsedProductCatalog } from '@/components/userPage/page/ClientUsedProductCatalogPage';
 import { IPhoneCatalog } from '@/types/type/catalogs/phone-catalog/phone-catalog';
 
 export default function ClientUsedPhonePage({ phoneCatalogs }: { phoneCatalogs: IPhoneCatalog[] }) {

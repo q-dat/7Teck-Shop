@@ -1,7 +1,7 @@
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
-import { StructuredData } from '@/metadata/structuredData';
-import ClientPhoneDetailPage from '@/app/dien-thoai/[slug]/[id]/ClientPhoneDetailPage';
+import { StructuredData } from '@/app/(SEO)/metadata/structuredData';
+import ClientPhoneDetailPage from '@/app/(product)/dien-thoai/[slug]/[id]/ClientPhoneDetailPage';
 import { IPhone } from '@/types/type/products/phone/phone';
 import { JsonLdProduct } from '@/types/types/seo/jsonld';
 import { getPhoneById } from '@/services/products/phoneService';

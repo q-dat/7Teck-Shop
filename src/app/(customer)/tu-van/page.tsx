@@ -2,7 +2,7 @@
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import Link from 'next/link';
 import Image from 'next/image';
-import { imagePages } from '../../../public/pages';
+import { imagePages } from '../../../../public/pages';
 
 export default function ConsultationPage() {
   return (

@@ -4,7 +4,7 @@ import { hotlineUrl, mailUrl, ggMapShareUrl, address, messengerUrl, zaloUrl, fan
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaFacebook, FaFacebookMessenger } from 'react-icons/fa';
-import { imagePages } from '../../../public/pages';
+import { imagePages } from '../../../../public/pages';
 import { Toastify } from '@/helper/Toastify';
 import { useRef, useState } from 'react';
 import InputForm from '@/components/userPage/InputForm';

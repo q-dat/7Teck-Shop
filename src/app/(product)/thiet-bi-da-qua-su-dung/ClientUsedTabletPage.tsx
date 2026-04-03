@@ -1,5 +1,5 @@
 'use client';
-import ClientUsedProductCatalogPage, { UsedProductCatalog } from '../../components/userPage/page/ClientUsedProductCatalogPage';
+import ClientUsedProductCatalogPage, { UsedProductCatalog } from '@/components/userPage/page/ClientUsedProductCatalogPage';
 import { ITabletCatalog } from '@/types/type/catalogs/tablet-catalog/tablet-catalog';
 
 export default function ClientUsedTabletPage({ tabletCatalogs }: { tabletCatalogs: ITabletCatalog[] }) {

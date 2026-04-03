@@ -6,7 +6,7 @@ import ContactForm from '@/components/userPage/ContactForm';
 import NavBottom from '@/components/userPage/NavBottom';
 import FooterFC from '@/components/userPage/ui/Footer';
 import Header from '@/components/userPage/ui/Header';
-import { homeMetadata } from '@/metadata/homeMetadata';
+import { homeMetadata } from '@/app/(SEO)/metadata/homeMetadata';
 // import NotificationPopup from '@/components/userPage/NotificationPopup';
 import { Inter, Roboto_Mono } from 'next/font/google';
 import { PreloadSearch } from '@/components/userPage/PreloadSearch';

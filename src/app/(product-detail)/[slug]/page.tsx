@@ -1,20 +1,15 @@
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { StructuredData } from '@/metadata/structuredData';
-import ClientPhoneDetailPage from '../dien-thoai/[slug]/[id]/ClientPhoneDetailPage';
-// import ClientMacbookDetailPage from '@/components/product/macbook/ClientMacbookDetailPage';
-// import ClientTabletDetailPage from '@/components/product/tablet/ClientTabletDetailPage';
-// import ClientWindowsDetailPage from '@/components/product/windows/ClientWindowsDetailPage';
+import { StructuredData } from '@/app/(SEO)/metadata/structuredData';
+import ClientPhoneDetailPage from '@/app/(product)/dien-thoai/[slug]/[id]/ClientPhoneDetailPage';
+
 import { IPhone } from '@/types/type/products/phone/phone';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 import { IWindows } from '@/types/type/products/windows/windows';
 import { JsonLdProduct } from '@/types/types/seo/jsonld';
-import { generatePhoneMetadata } from '@/metadata/id/phoneMetadata';
+import { generatePhoneMetadata } from '@/app/(SEO)/metadata/id/phoneMetadata';
 import { getPhoneBySlug } from '@/services/products/phoneService';
-// import { getMacbookBySlug } from '@/services/products/macbookService';
-// import { getTabletBySlug } from '@/services/products/tabletService';
-// import { getWindowsBySlug } from '@/services/products/windowsService';
 
 // TYPES
 type RouteParams = {

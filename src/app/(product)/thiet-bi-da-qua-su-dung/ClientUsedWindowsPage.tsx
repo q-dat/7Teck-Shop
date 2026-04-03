@@ -1,5 +1,5 @@
 'use client';
-import ClientUsedProductCatalogPage, { UsedProductCatalog } from '../../components/userPage/page/ClientUsedProductCatalogPage';
+import ClientUsedProductCatalogPage, { UsedProductCatalog } from '@/components/userPage/page/ClientUsedProductCatalogPage';
 import { IWindowsCatalog } from '@/types/type/catalogs/windows-catalog/windows-catalog';
 
 export default function ClientUsedWindowsPage({ windowsCatalogs }: { windowsCatalogs: IWindowsCatalog[] }) {

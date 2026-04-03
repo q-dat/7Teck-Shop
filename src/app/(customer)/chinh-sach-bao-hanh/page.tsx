@@ -2,9 +2,9 @@
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import Link from 'next/link';
 import Image from 'next/image';
-import { images } from '../../../public/images';
+import { images } from '../../../../public/images';
 import { hotlineUrl, mailUrl, ggMapShareUrl, address, messengerUrl, zaloUrl, fanpageUrl } from '@/utils/socialLinks';
-import { imagePages } from '../../../public/pages';
+import { imagePages } from '../../../../public/pages';
 
 export default function WarrantyPage() {
   // Định nghĩa màu sắc trung tính cho style nhất quán

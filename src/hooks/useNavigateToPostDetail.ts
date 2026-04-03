@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { NEWS_BASE_PATH } from '@/app/tin-tuc';
+import { NEWS_BASE_PATH } from '@/app/(news)/tin-tuc';
 import { IPost } from '@/types/type/products/post/post';
 import { slugify } from '@/utils/slugify';
 
