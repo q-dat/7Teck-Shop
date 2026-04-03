@@ -128,7 +128,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                       className="group relative flex h-full w-[240px] flex-col justify-between rounded-md border border-primary-lighter text-white"
                     >
                       {/* Product Image */}
-                      <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/${phoneUrl}/${phone?._id}`}>
+                      <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/${phoneUrl}`}>
                         <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                           <Image
                             height={200}
@@ -145,11 +145,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                       <div className="flex h-full w-full flex-col items-start justify-between rounded-b-md bg-default/10 p-1 group-hover:bg-default/50">
                         {/* Product Name and View Count */}
                         <div className="w-full text-white">
-                          <Link
-                            aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm"
-                            className="w-full cursor-pointer"
-                            href={`/${phoneUrl}/${phone?._id}`}
-                          >
+                          <Link aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm" className="w-full cursor-pointer" href={`/${phoneUrl}`}>
                             <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] font-light">
                               <FaRegEye />
                               <p>{phone?.view}</p>
