@@ -142,7 +142,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
 
                       <div className="w-full px-1 pb-1">
                         {/* Price and Buy Now Button */}
-                        <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
+                        <div className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
                           {product.price === 0 ? (
                             <Link href={'/lien-he'} className="w-full text-lg font-bold text-price hover:underline">
                               Liên hệ
@@ -154,7 +154,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                               {product?.sale !== 0 && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
                             </p>
                           )}
-                        </p>
+                        </div>
                         <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
                         <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
                         <Button

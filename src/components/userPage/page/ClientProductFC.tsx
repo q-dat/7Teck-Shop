@@ -85,9 +85,17 @@ const ProductItem = ({ product, baseUrl, onQuickBuy }: { product: Product; baseU
         </Link>
 
         <div className="flex items-baseline gap-2">
-          <span className="text-lg font-bold tracking-tight text-price xl:text-xl">{formatCurrency(product.price)}</span>
+          {product.price === 0 ? (
+            <Link href={'/lien-he'} className="w-full text-lg font-bold text-price hover:underline">
+              Liên hệ
+            </Link>
+          ) : (
+            <p>
+              <span className="text-lg font-bold tracking-tight text-price xl:text-xl">{formatCurrency(product.price)}</span>
 
-          {product.sale !== 0 && <del className="text-xs font-medium text-gray-400 decoration-1">{formatCurrency(product.sale)}</del>}
+              {product.sale !== 0 && <del className="text-xs font-medium text-gray-400 decoration-1">{formatCurrency(product.sale)}</del>}
+            </p>
+          )}
         </div>
 
         {/* Trust signals */}

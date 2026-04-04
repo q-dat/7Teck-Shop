@@ -254,7 +254,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                   </h1>
 
                   {/* Price */}
-                  <p className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
+                  <div className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
                     {product.price === 0 ? (
                       <Link href={'/lien-he'} className="w-full text-3xl font-bold text-price hover:underline">
                         Liên hệ
@@ -265,7 +265,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                         {product?.sale !== 0 && <del className="ml-2 text-base text-gray-400">{formatCurrency(product?.sale)}</del>}
                       </p>
                     )}
-                  </p>
+                  </div>
 
                   {/* Product details */}
                   <div className="w-full">
