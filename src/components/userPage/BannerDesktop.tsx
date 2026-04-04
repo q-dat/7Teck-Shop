@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { RiScrollToBottomLine } from 'react-icons/ri';
 import Link from 'next/link';
 import { IoShieldCheckmarkOutline } from 'react-icons/io5';
@@ -17,75 +18,116 @@ interface Props {
   mostViewedPhones: IPhone[];
   loading: boolean;
 }
+//
+const BANNER_SLIDES = [images.MacProM4, images.Ip17PM || images.MacProM4, images.OppoReno14 || images.MacProM4];
+
 export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
   const { scrollRef, isLeftVisible, isRightVisible, hasOverflow, scrollBy } = useScroll();
-  //  handleImageError
   const fallbackSrc = imageRepresent.Fallback;
   const { handleImageError, isImageErrored } = useImageErrorHandler();
+
+  // Logic Auto-play Slider
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const slideInterval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % BANNER_SLIDES.length);
+    }, 5000); // Đổi slide sau mỗi 5 giây
+    return () => clearInterval(slideInterval);
+  }, []);
+
+  const handleAddToCart = (phone: IPhone) => {
+    const productToBuy = {
+      _id: phone?._id,
+      name: phone?.name,
+      slug: phone?.slug,
+      img: phone?.img,
+      price: phone?.price,
+      ram: phone?.phone_catalog_id?.configuration_and_memory?.ram,
+      color: phone?.color,
+      link: `/${phone?.slug}`,
+    };
+    localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
+    window.location.href = '/thanh-toan';
+  };
+
   return (
-    <header className="relative h-[85vh] w-full overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      {/* Background image */}
+    <header className="relative h-[85vh] w-full overflow-hidden bg-slate-900">
+      {/* Background Slider */}
       <div className="pointer-events-none absolute inset-0">
-        <Image
-          src={images.MacProM4}
-          alt="Hero background"
-          fill
-          sizes="(max-width: 640px) 100vw, 50vw"
-          className="scale-105 transform-gpu object-cover object-center opacity-60 will-change-transform"
-          priority
-        />
-        <div className="via-defrom-default/20 absolute inset-0 bg-gradient-to-t from-default/70 to-transparent" />
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: 'easeInOut' }}
+            className="absolute inset-0"
+          >
+            <Image
+              src={BANNER_SLIDES[currentSlide]}
+              alt={`Hero background slide ${currentSlide + 1}`}
+              fill
+              sizes="100vw"
+              className="scale-105 transform-gpu object-cover object-center will-change-transform"
+              priority={currentSlide === 0}
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Lớp phủ mỏng hơn để màu sắc và chi tiết nền nổi bật */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/30 to-transparent" />
       </div>
+
       {/* Content */}
-      {/* <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, ease: 'easeOut' }}> */}
       <motion.div initial={{ opacity: 1, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0 }}>
-        <div className="relative mt-20 flex h-full w-full flex-row items-start justify-start gap-1 px-desktop-padding">
+        <div className="relative mt-20 flex h-full w-full flex-row items-start justify-start gap-8 px-desktop-padding">
           {/* Text Content */}
-          <div className="flex w-full flex-col items-start gap-6">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1 text-xs font-medium ring-1 ring-white/10 backdrop-blur-sm">
-              <span className="flex-shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold">www.7Teck.vn</span>
-              <span className="uppercase">Ưu Đãi Trao Đổi</span>
+          <div className="flex w-1/2 flex-col items-start gap-5 pt-10">
+            <div className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1 text-xs font-medium ring-1 ring-white/20 backdrop-blur-md">
+              <span className="flex-shrink-0 rounded-sm bg-primary px-2 py-0.5 text-[10px] font-bold tracking-wide text-white shadow-sm">
+                www.7Teck.vn
+              </span>
+              <span className="font-semibold uppercase text-cyan-50">Ưu Đãi Đặc Quyền</span>
             </div>
-            {/* Headline */}
-            <h1 className="text-4xl font-extrabold leading-tight text-white drop-shadow-md 2xl:text-5xl">
-              <span className="inline-flex items-center justify-center gap-2">
+
+            <h1 className="text-4xl font-extrabold leading-tight text-white drop-shadow-lg 2xl:text-5xl">
+              <span className="inline-flex items-center justify-center gap-3 text-cyan-400">
                 Thu Cũ Đổi Mới
-                <IoShieldCheckmarkOutline className="text-green-400" />
+                <IoShieldCheckmarkOutline className="text-emerald-400" />
               </span>
               <br />
               Nhận Ngay Giá Tốt Nhất!
             </h1>
-            {/* Subtitle / Extended content */}
-            <p className="text-base text-slate-200/95">
+
+            <p className="text-base leading-relaxed text-slate-100 drop-shadow-md">
               Đổi điện thoại cũ lấy siêu phẩm mới với mức giá hấp dẫn.
               <br />
-              Giải pháp thông minh để bạn nâng cấp thiết bị yêu thích ngay hôm nay.
+              Giải pháp thông minh để nâng cấp thiết bị ngay hôm nay.
               <br />
-              Lên đến <i className="text-xl font-bold text-yellow-300">90%</i> giá trị sản phẩm - uy tín, nhanh chóng, minh bạch, tiện lợi.
+              Lên đến <i className="text-xl font-extrabold text-yellow-400">90%</i> giá trị sản phẩm - minh bạch, nhanh chóng.
             </p>
-            {/* CTA */}
+
             <div className="mt-2 flex flex-wrap gap-4 uppercase">
               <Link
                 href="/bang-gia-thu-mua"
-                className="inline-flex items-center justify-center rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-md ring-1 ring-white/30 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 hover:scale-[1.05]"
-                aria-label="Mua ngay"
+                className="inline-flex items-center justify-center rounded-md bg-white px-5 py-2.5 text-sm font-bold text-slate-900 shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all focus:outline-none hover:-translate-y-0.5 hover:bg-slate-100"
               >
                 Điều Kiện Áp Dụng
               </Link>
 
               <Link
                 href="/dien-thoai"
-                className="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm text-white/90 ring-1 ring-white/10 transition-colors hover:bg-white/5"
+                className="inline-flex items-center justify-center rounded-md border border-white/30 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:border-white/50 hover:bg-white/20"
               >
-                Điện Thoại New Seal - Chính Hãng
+                Điện Thoại New Seal
               </Link>
             </div>
-            {/* Extra info */}
-            <div className="w-full">
-              <span className="text-sm text-slate-200/80">
-                Được tin dùng bởi hơn hàng trăm khách hàng công nghệ. Xem thêm
-                <Link className="italic underline" href="/hanh-trinh-khach-hang">
+
+            <div className="w-full pt-2">
+              <span className="text-sm text-slate-300">
+                Được tin dùng bởi hàng ngàn khách hàng. Xem hành trình{' '}
+                <Link className="font-medium text-cyan-400 hover:underline" href="/hanh-trinh-khach-hang">
                   tại đây.
                 </Link>
               </span>
@@ -93,26 +135,26 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
           </div>
 
           {/* Outstanding product */}
-          <div className="relative w-1/2">
-            {/* Featured phones carousel */}
-            <div className="flex flex-row items-center justify-between">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1 text-xs font-medium ring-1 ring-white/10 backdrop-blur-sm">
-                <span className="flex-shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold">Điện thoại</span>
-                <span className="uppercase">Sản Phẩm Nổi Bật</span>
+          <div className="relative w-1/2 pt-10">
+            {/* Header Section */}
+            <div className="flex flex-row items-center justify-between pb-4">
+              <div className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1 text-xs font-medium ring-1 ring-white/20 backdrop-blur-md">
+                <span className="flex-shrink-0 rounded-sm bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white">Điện thoại</span>
+                <span className="font-bold uppercase text-yellow-400">Sản Phẩm Nổi Bật</span>
               </div>
-              {/* View More */}
-              <div className="inline-flex items-center justify-center rounded-full bg-white/10 px-4 py-1 font-medium ring-1 ring-white/10 backdrop-blur-sm">
-                <Link className="text-xs" href="/dien-thoai">
-                  Xem Thêm
-                </Link>
-                <MdNavigateNext className="text-xl" />
-              </div>
+              <Link
+                href="/dien-thoai"
+                className="group inline-flex items-center justify-center rounded-md bg-white/10 px-3 py-1 font-medium ring-1 ring-white/20 backdrop-blur-md transition-colors hover:bg-white/20"
+              >
+                <span className="text-xs text-white">Xem Thêm</span>
+                <MdNavigateNext className="text-lg text-white transition-transform group-hover:translate-x-1" />
+              </Link>
             </div>
+
             {/* Product List */}
             <section
               ref={scrollRef}
-              className="mt-6 grid w-full grid-flow-col grid-rows-1 items-center justify-start gap-[10px] overflow-x-auto scroll-smooth rounded-md pt-0 scrollbar-hide"
+              className="flex w-full snap-x snap-mandatory flex-row gap-4 overflow-x-auto scroll-smooth pb-6 pt-2 scrollbar-hide"
             >
               {loading ? (
                 <ProductPlaceholders count={12} />
@@ -125,95 +167,64 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                   return (
                     <div
                       key={phone?._id}
-                      className="group relative flex h-full w-[240px] flex-col justify-between rounded-md border border-primary-lighter text-white"
+                      className="group relative flex w-[240px] shrink-0 snap-start flex-col justify-between rounded-md border border-white/20 bg-slate-800/60 shadow-lg backdrop-blur-lg transition-all duration-300 hover:-translate-y-1.5 hover:border-primary-lighter hover:bg-slate-800/80 hover:shadow-[0_10px_20px_rgba(0,180,216,0.2)]"
                     >
-                      {/* Product Image */}
-                      <Link aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/${phoneUrl}`}>
-                        <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
-                          <Image
-                            height={200}
-                            width={240}
-                            alt="Hình ảnh"
-                            loading="lazy"
-                            className="h-full w-full rounded-[5px] rounded-b-none object-contain transition-transform duration-1000 ease-in-out group-hover:scale-110"
-                            src={src}
-                            onError={() => handleImageError(phone?._id)}
-                          />
-                        </div>
-                      </Link>
-                      {/* Product Info */}
-                      <div className="flex h-full w-full flex-col items-start justify-between rounded-b-md bg-default/10 p-1 group-hover:bg-default/50">
-                        {/* Product Name and View Count */}
-                        <div className="w-full text-white">
-                          <Link aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm" className="w-full cursor-pointer" href={`/${phoneUrl}`}>
-                            <div className="flex w-[50px] items-center justify-start gap-1 rounded-sm p-[2px] text-center text-[12px] font-light">
-                              <FaRegEye />
-                              <p>{phone?.view}</p>
-                            </div>
-                            <p className="break-all text-prod-name-desktop font-medium">{phone?.name}</p>
-                          </Link>
-                        </div>
-                        {/* Product Specifications */}
-                        {/* <div className="flex flex-wrap items-center justify-start gap-2 text-xs">
-                          {[
-                            { label: 'RAM', icon: MdMemory, value: phone?.phone_catalog_id?.configuration_and_memory?.ram },
-                            {
-                              label: 'Dung lượng bộ nhớ',
-                              icon: MdSdStorage,
-                              value: phone?.phone_catalog_id?.configuration_and_memory?.storage_capacity,
-                            },
-                            { label: 'Màu sắc', icon: MdOutlineInvertColors, value: phone?.color },
-                          ].map((item, index) => (
-                            <p key={index} className="flex flex-row items-center rounded-xl bg-primary-lighter px-2 py-px text-default">
-                              {item.value ? (
-                                <>
-                                  {item.icon && <item.icon className="text-sm" />}
-                                  <span className="font-semibold">{item.value}</span>
-                                </>
-                              ) : null}
-                            </p>
-                          ))}
-                        </div> */}
-
-                        {/* Price and Buy Button */}
-                        <div className="w-full">
-                          <p className="text-xl">
-                            <span className="font-bold text-price">{formatCurrency(phone?.price)}</span> &nbsp;
-                            {phone?.sale !== 0 && <del className="text-xs font-light text-white">{formatCurrency(phone?.sale)}</del>}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Status Tag */}
+                      {/* Status Badge */}
                       {phone?.status && (
-                        <div className="absolute left-0 top-0 z-20 flex w-full flex-row items-center justify-between px-0.5 py-px">
-                          {/* Status */}
-                          {/* <div className="relative">
-                                  <Image height={100} width={60} alt="" loading="lazy" className="h-full w-[60px]" src={imageRepresent.Status} />
-                                  <p className="absolute top-0 w-full pl-2 text-sm font-medium text-white">{phone?.status}</p>
-                                </div> */}
-                          <span className="rounded-lg bg-primary px-1 text-xs text-white">{phone?.status}</span>
-                          {/* Add To Cart */}
-                          <button
-                            onClick={() => {
-                              const productToBuy = {
-                                _id: phone?._id,
-                                name: phone?.name,
-                                slug: phone?.slug,
-                                img: phone?.img,
-                                price: phone?.price,
-                                ram: phone?.phone_catalog_id?.configuration_and_memory?.ram,
-                                color: phone?.color,
-                                link: `/${phone?.slug}`,
-                              };
-                              localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
-                              window.location.href = '/thanh-toan';
-                            }}
-                          >
-                            <FaCartPlus className="text-xl text-primary" />
-                          </button>
+                        <div className="absolute left-2 top-2 z-10 rounded-sm bg-gradient-to-r from-emerald-500 to-green-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                          {phone.status}
                         </div>
                       )}
+
+                      {/* Product Image */}
+                      <Link
+                        aria-label="Xem chi tiết sản phẩm"
+                        href={`/${phoneUrl}`}
+                        className="relative h-[200px] w-full overflow-hidden rounded-t-md p-2"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent" />
+                        <Image
+                          height={200}
+                          width={240}
+                          alt={phone?.name || 'Điện thoại'}
+                          loading="lazy"
+                          className="relative z-0 h-full w-full object-contain drop-shadow-xl transition-transform duration-500 ease-out group-hover:scale-105"
+                          src={src}
+                          onError={() => handleImageError(phone?._id)}
+                        />
+                      </Link>
+
+                      {/* Product Info */}
+                      <div className="flex flex-col gap-2 p-3 pt-1">
+                        {/* View Count & Name */}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-cyan-300">
+                            <FaRegEye />
+                            <span>{phone?.view || 0} lượt xem</span>
+                          </div>
+                          <Link aria-label="Chi tiết" href={`/${phoneUrl}`}>
+                            <h3 className="line-clamp-2 min-h-[36px] text-sm font-bold leading-snug text-white transition-colors group-hover:text-cyan-200">
+                              {phone?.name}
+                            </h3>
+                          </Link>
+                        </div>
+
+                        {/* Price & Buy Action */}
+                        <div className="mt-1 flex items-end justify-between border-t border-white/10 pt-2">
+                          <div className="flex flex-col">
+                            {phone?.sale !== 0 && <del className="text-xs font-medium text-slate-400">{formatCurrency(phone?.sale)}</del>}
+                            <span className="text-[17px] font-extrabold text-yellow-400 drop-shadow-sm">{formatCurrency(phone?.price)}</span>
+                          </div>
+
+                          <button
+                            onClick={() => handleAddToCart(phone)}
+                            className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary text-white shadow-md transition-all duration-300 hover:scale-110 hover:bg-primary-lighter hover:text-primary hover:shadow-[0_0_10px_rgba(0,180,216,0.6)]"
+                            aria-label="Thêm vào giỏ hàng"
+                          >
+                            <FaCartPlus className="text-sm" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   );
                 })
@@ -222,44 +233,39 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
 
             {/* Navigation Button */}
             {!loading && mostViewedPhones.length > 0 && (hasOverflow || mostViewedPhones.length > 12) && (
-              <div className="absolute top-1/2 flex w-full items-center justify-between">
-                <div className="relative w-full">
-                  <button
-                    aria-label="Cuộn sang trái"
-                    onClick={() => scrollBy(-450)}
-                    className={`absolute left-0 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
-                      isLeftVisible ? '' : 'hidden'
-                    }`}
-                  >
-                    <MdArrowBackIosNew className="text-2xl" />
-                  </button>
-                  <button
-                    aria-label="Cuộn sang phải"
-                    onClick={() => scrollBy(450)}
-                    className={`absolute right-0 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
-                      isRightVisible ? '' : 'hidden'
-                    }`}
-                  >
-                    <MdArrowForwardIos className="text-2xl" />
-                  </button>
-                </div>
+              <div className="pointer-events-none absolute inset-y-0 -left-3 -right-3 flex items-center justify-between">
+                <button
+                  aria-label="Cuộn sang trái"
+                  onClick={() => scrollBy(-450)}
+                  className={`pointer-events-auto z-10 flex h-8 w-8 items-center justify-center rounded-sm border border-white/20 bg-slate-900/80 text-white shadow-lg backdrop-blur-md transition-all duration-200 hover:scale-110 hover:border-cyan-400 hover:bg-slate-800 ${
+                    isLeftVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+                  }`}
+                >
+                  <MdArrowBackIosNew className="text-sm" />
+                </button>
+                <button
+                  aria-label="Cuộn sang phải"
+                  onClick={() => scrollBy(450)}
+                  className={`pointer-events-auto z-10 flex h-8 w-8 items-center justify-center rounded-sm border border-white/20 bg-slate-900/80 text-white shadow-lg backdrop-blur-md transition-all duration-200 hover:scale-110 hover:border-cyan-400 hover:bg-slate-800 ${
+                    isRightVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+                  }`}
+                >
+                  <MdArrowForwardIos className="text-sm" />
+                </button>
               </div>
             )}
           </div>
         </div>
       </motion.div>
+
       {/* Scroll Indicator */}
-      <div className="absolute bottom-24 left-1/2 -translate-x-1/2">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
         <motion.div
-          animate={{ y: [0, 12, 0] }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          className="flex items-center justify-center"
+          animate={{ y: [0, 6, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          className="flex items-center justify-center rounded-md border border-white/10 bg-white/10 p-2 backdrop-blur-md"
         >
-          <RiScrollToBottomLine size={40} className="text-white opacity-100 drop-shadow-lg transition-transform duration-300 hover:scale-125" />
+          <RiScrollToBottomLine size={20} className="text-cyan-200 opacity-90 transition-transform duration-300 hover:scale-110" />
         </motion.div>
       </div>
     </header>
