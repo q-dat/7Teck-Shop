@@ -189,7 +189,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                               transition={{ duration: 0.35, delay: index * 0.025 }}
                               className="hover:bg-primary-lighter"
                             >
-                              <td className="text-start font-bold text-gray-700 pl-5">{product.name}</td>
+                              <td className="pl-5 text-start font-bold text-gray-700">{product.name}</td>
                               <td>{product.price_new !== null ? formatCurrency(product.price_new) : 'Liên Hệ'}</td>
                               <td>{product.price_used !== null ? formatCurrency(product.price_used) : 'Liên Hệ'}</td>
                             </motion.tr>
@@ -201,7 +201,15 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
 
                   {/* CONDITIONS */}
                   {conditionsMap[active] ? (
-                    <div className="prose mt-5 max-w-full" dangerouslySetInnerHTML={{ __html: conditionsMap[active] }} />
+                    <div
+                      className="prose mt-5 max-w-full break-words text-start text-base leading-[2.2rem] [&_h3>span]:rounded [&_h3>span]:bg-primary [&_h3>span]:p-1 [&_h3>span]:text-xl [&_h3>span]:font-semibold [&_h3>span]:text-white [&_h3>span]:backdrop-blur-sm [&_li>span]:rounded [&_li>span]:bg-white/50 [&_li>span]:p-1 [&_li>span]:text-default [&_li>span]:backdrop-blur-sm [&_p>span]:rounded [&_p>span]:bg-white/50 [&_p>span]:p-1 [&_p>span]:backdrop-blur-sm"
+                      dangerouslySetInnerHTML={{
+                        __html: conditionsMap[active]
+                          .replace(/<li>(.*?)<\/li>/g, '<li><span>$1</span></li>')
+                          .replace(/<p>(.*?)<\/p>/g, '<p><span>$1</span></p>')
+                          .replace(/<h3>(.*?)<\/h3>/g, '<h3><span>$1</span></h3>'),
+                      }}
+                    />
                   ) : (
                     <div className="boder-white mt-5 border bg-white p-3 text-primary">Không có điều kiện thu mua cho danh mục này.</div>
                   )}
