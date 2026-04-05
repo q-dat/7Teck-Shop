@@ -190,8 +190,29 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                               className="hover:bg-primary-lighter"
                             >
                               <td className="pl-5 text-start font-bold text-gray-700">{product.name}</td>
-                              <td>{product.price_new !== null ? formatCurrency(product.price_new) : 'Liên Hệ'}</td>
-                              <td>{product.price_used !== null ? formatCurrency(product.price_used) : 'Liên Hệ'}</td>
+
+                              <td>
+                                {product.price_new == 0 || product.price_new === null ? (
+                                  <>
+                                    <Link href="/lien-he" className="text-primary hover:underline">
+                                      Liên Hệ
+                                    </Link>
+                                  </>
+                                ) : (
+                                  formatCurrency(product.price_new || 0)
+                                )}
+                              </td>
+                              <td>
+                                {product.price_used == 0 ? (
+                                  <>
+                                    <Link href="/lien-he" className="text-primary hover:underline">
+                                      Liên Hệ
+                                    </Link>
+                                  </>
+                                ) : (
+                                  formatCurrency(product.price_used || 0)
+                                )}
+                              </td>
                             </motion.tr>
                           ))}
                         </Table.Body>
@@ -211,7 +232,9 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                       }}
                     />
                   ) : (
-                    <div className="boder-white mt-5 border bg-white p-3 text-primary">Không có điều kiện thu mua cho danh mục này.</div>
+                    <div className="boder-white mt-5 border bg-white p-3 text-primary">
+                      Không có điều kiện thu mua cho danh mục này. Liên hệ với chúng tôi để biết thêm thông tin.
+                    </div>
                   )}
                 </section>
               );
