@@ -179,7 +179,9 @@ export default function ClientProductPage({ products, title, basePath, brands = 
         {/* Filter Btn */}
         <div className="my-2 px-2 xl:px-desktop-padding">
           {/* Brand */}
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap items-center gap-1">
+            {/* Sort */}
+            {filterNode}
             <Button
               size="sm"
               className={`rounded-sm border border-primary-lighter text-xs font-medium hover:border-primary ${selectedBrand === null ? 'bg-primary text-white hover:bg-primary xl:hover:bg-primary/80' : 'bg-white text-black'}`}
@@ -191,7 +193,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
               <Button
                 key={brand.name}
                 size="sm"
-                className={`rounded-sm border border-primary-lighter text-xs font-medium hover:border-primary ${selectedBrand === brand.name ? 'bg-primary text-white hover:bg-primary xl:hover:bg-primary/80' : 'bg-white text-black'}`}
+                className={`flex items-center gap-1 rounded-sm border border-transparent bg-white p-1 text-xs font-medium shadow-headerMenu hover:border-primary ${selectedBrand === brand.name ? 'bg-primary text-white hover:bg-primary xl:hover:bg-primary/80' : 'bg-white text-black'}`}
                 onClick={() => handleBrandClick(brand.name)}
               >
                 {brand.icon && <span className="text-base">{brand.icon}</span>}
@@ -208,8 +210,6 @@ export default function ClientProductPage({ products, title, basePath, brands = 
               </p>
             </div>
           </div>
-          {/* Sort */}
-          {filterNode}
         </div>
 
         {/* Product grid */}

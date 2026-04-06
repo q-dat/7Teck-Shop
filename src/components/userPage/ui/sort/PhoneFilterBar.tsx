@@ -1,41 +1,30 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { FaSortAmountDown, FaMemory, FaHdd, FaPalette, FaFilter, FaUndo } from 'react-icons/fa';
-import { PhoneFilterParams } from '@/types/type/products/phone/phone';
-import { Button, Input, Select } from 'react-daisyui';
 
-interface PhoneFilterBarProps {
-  activeFilters: PhoneFilterParams;
-  onChange: (filters: PhoneFilterParams) => void;
-}
+import { useEffect, useState } from 'react';
+import { FaSortAmountDown, FaMemory, FaHdd, FaPalette, FaFilter, FaUndo, FaMoneyBill } from 'react-icons/fa';
+import { PhoneFilterParams } from '@/types/type/products/phone/phone';
+import { Button, Input } from 'react-daisyui';
 
 const PRICE_MAX_QUERY = 50_000;
 
-const COLOR_OPTIONS: readonly string[] = ['Đen', 'Trắng', 'Xanh', 'Đỏ', 'Vàng', 'Tím'];
+const COLOR_OPTIONS = ['Đen', 'Trắng', 'Xanh', 'Đỏ', 'Vàng', 'Tím'];
 
-interface LocalFilters {
-  minPrice: string;
-  maxPrice: string;
-  color: string;
-  ram: string;
-  storage: string;
-}
+export default function PhoneFilterBar({
+  activeFilters,
+  onChange,
+}: {
+  activeFilters: PhoneFilterParams;
+  onChange: (filters: PhoneFilterParams) => void;
+}) {
+  const [open, setOpen] = useState(false);
 
-export default function PhoneFilterBar({ activeFilters, onChange }: PhoneFilterBarProps) {
-  const [filters, setFilters] = useState<LocalFilters>({
+  const [filters, setFilters] = useState({
     minPrice: '',
     maxPrice: '',
     color: '',
     ram: '',
     storage: '',
   });
-
-  const min = Number(filters.minPrice || 0);
-  const max = Number(filters.maxPrice || PRICE_MAX_QUERY);
-
-  const selectStyle =
-    'w-full rounded-sm border border-primary-lighter bg-white pl-8 font-medium text-black focus:outline-none xl:hover:border-primary placeholder:text-black';
-  const iconStyle = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black';
 
   useEffect(() => {
     setFilters({
@@ -45,202 +34,177 @@ export default function PhoneFilterBar({ activeFilters, onChange }: PhoneFilterB
       ram: activeFilters.ram ?? '',
       storage: activeFilters.storage ?? '',
     });
-  }, [activeFilters.minPrice, activeFilters.maxPrice, activeFilters.color, activeFilters.ram, activeFilters.storage]);
+  }, [activeFilters]);
 
-  const applyFilters = () => {
-    onChange({
-      ...activeFilters,
-      ...filters,
-    });
-  };
-
-  const resetFilters = () => {
-    const empty: LocalFilters = {
-      minPrice: '',
-      maxPrice: '',
-      color: '',
-      ram: '',
-      storage: '',
-    };
-
-    setFilters(empty);
-
-    onChange({
-      ...activeFilters,
-      ...empty,
-    });
-  };
+  const min = Number(filters.minPrice || 0);
+  const max = Number(filters.maxPrice || PRICE_MAX_QUERY);
 
   return (
-    <div className="my-2 grid grid-cols-2 items-end gap-1 text-xs md:grid-cols-4 xl:grid-cols-7">
+    <div className="flex items-center gap-1">
       {/* Sort */}
-      <div className="relative">
-        <FaSortAmountDown className={iconStyle} />
-        <Select
+      <div className="flex items-center gap-1">
+        <Button
           size="sm"
-          className={selectStyle}
-          value={activeFilters.sort ?? 'newest'}
-          onChange={(e) =>
+          className="flex items-center gap-1 rounded-sm border border-transparent bg-primary-lighter p-1 text-xs font-medium shadow-headerMenu hover:border-primary"
+          onClick={() =>
             onChange({
               ...activeFilters,
-              sort: e.target.value as 'price_asc' | 'price_desc' | 'newest',
+              sort: activeFilters.sort === 'newest' ? 'price_asc' : activeFilters.sort === 'price_asc' ? 'price_desc' : 'newest',
             })
           }
         >
-          <option value="newest">Mới nhất</option>
-          <option value="price_asc">Giá tăng dần</option>
-          <option value="price_desc">Giá giảm dần</option>
-        </Select>
+          <FaSortAmountDown />
+          {activeFilters.sort === 'price_asc' ? 'Giá tăng dần' : activeFilters.sort === 'price_desc' ? 'Giá giảm dần' : 'Mới nhất'}
+        </Button>
       </div>
 
-      {/* Color */}
+      {/* Filter Button */}
       <div className="relative">
-        <FaPalette className={iconStyle} />
-        <Input
-          className={selectStyle}
+        <Button
           size="sm"
-          list="color-options"
-          type="text"
-          placeholder="Màu sắc"
-          value={filters.color}
-          onChange={(e) =>
-            setFilters((prev) => ({
-              ...prev,
-              color: e.target.value,
-            }))
-          }
-        />
-        <datalist id="color-options">
-          {COLOR_OPTIONS.map((color) => (
-            <option key={color} value={color} />
-          ))}
-        </datalist>
-      </div>
-
-      {/* RAM */}
-      <div className="relative">
-        <FaMemory className={iconStyle} />
-        <Select
-          size="sm"
-          className={selectStyle}
-          value={filters.ram}
-          onChange={(e) =>
-            setFilters((prev) => ({
-              ...prev,
-              ram: e.target.value,
-            }))
-          }
+          className="flex items-center gap-1 rounded-sm border border-transparent bg-primary-lighter p-1 text-xs font-medium shadow-headerMenu hover:border-primary"
+          onClick={() => setOpen((v) => !v)}
         >
-          <option value="">RAM</option>
-          <option value="4GB">4GB</option>
-          <option value="6GB">6GB</option>
-          <option value="8GB">8GB</option>
-          <option value="12GB">12GB</option>
-        </Select>
-      </div>
+          <FaFilter />
+          Bộ lọc
+        </Button>
 
-      {/* Storage */}
-      <div className="relative">
-        <FaHdd className={iconStyle} />
-        <Select
-          size="sm"
-          className={selectStyle}
-          value={filters.storage}
-          onChange={(e) =>
-            setFilters((prev) => ({
-              ...prev,
-              storage: e.target.value,
-            }))
-          }
-        >
-          <option value="">Bộ nhớ</option>
-          <option value="64GB">64GB</option>
-          <option value="128GB">128GB</option>
-          <option value="256GB">256GB</option>
-          <option value="512GB">512GB</option>
-        </Select>
-      </div>
-
-      {/* Price */}
-      <div className="relative col-span-2 w-full md:col-span-3 xl:col-span-2">
-        <div className="flex h-8 items-center rounded-sm border border-primary-lighter bg-white shadow-sm transition-all xl:hover:border-primary">
-          {/* Value */}
-          <div className="flex w-full items-center justify-between px-1 font-medium text-black">
-            <span className="pointer-events-none z-40">
-              Từ <b>{min / 1000}tr</b>
-            </span>
-            <b className="pointer-events-none z-40">{max / 1000}tr</b>
-          </div>
-
-          {/* Sliders overlay */}
-          <div className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 pl-14 pr-10">
-            <div className="relative h-1 w-full rounded-full bg-primary-lighter">
-              {/* Selected range */}
-              <div
-                className="absolute h-1 rounded-full bg-primary"
-                style={{
-                  left: `${(min / PRICE_MAX_QUERY) * 100}%`,
-                  right: `${100 - (max / PRICE_MAX_QUERY) * 100}%`,
-                }}
+        {/* Popup */}
+        {open && (
+          <div className="absolute left-0 z-50 mt-1 w-72 space-y-3 rounded-lg border border-primary bg-white p-3">
+            {/* Color */}
+            <div>
+              <div className="flex items-center gap-1 text-sm font-semibold text-primary">
+                <FaPalette />
+                <span>Màu sắc</span>
+              </div>
+              <Input
+                placeholder="Nhập màu cần tìm"
+                size="xs"
+                className="w-full rounded-full border border-primary text-xs text-primary placeholder:text-black focus:outline-none"
+                list="color-options"
+                value={filters.color}
+                onChange={(e) => setFilters((p) => ({ ...p, color: e.target.value }))}
               />
+              <datalist id="color-options">
+                {COLOR_OPTIONS.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </div>
 
-              {/* Min */}
+            {/* RAM */}
+            <div>
+              <div className="flex items-center gap-1 text-sm font-semibold text-primary">
+                <FaMemory />
+                <span>RAM</span>
+              </div>
+              <div className="flex flex-wrap gap-1 text-xs">
+                {['4GB', '6GB', '8GB', '12GB'].map((ram) => (
+                  <button
+                    key={ram}
+                    onClick={() => setFilters((p) => ({ ...p, ram }))}
+                    className={`rounded border p-0.5 ${filters.ram === ram ? 'bg-primary text-white' : ''} `}
+                  >
+                    {ram}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Storage */}
+            <div>
+              <div className="flex items-center gap-1 text-sm font-semibold text-primary">
+                <FaHdd />
+                <span>Bộ nhớ</span>
+              </div>
+              <div className="flex flex-wrap gap-1 text-xs">
+                {['64GB', '128GB', '256GB', '512GB'].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setFilters((p) => ({ ...p, storage: s }))}
+                    className={`rounded border p-0.5 ${filters.storage === s ? 'bg-primary text-white' : ''} `}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Price */}
+            <div>
+              <div className="flex items-center gap-1 text-sm font-semibold text-primary">
+                <FaMoneyBill />
+                <span>Giá</span>
+              </div>
+              <div className="text-xs">
+                {min / 1000}tr - {max / 1000}tr
+              </div>
+
               <input
                 type="range"
                 min={0}
                 max={PRICE_MAX_QUERY}
                 step={500}
                 value={min}
-                onChange={(e) => {
-                  const val = Math.min(Number(e.target.value), max - 500);
-                  setFilters((prev) => ({
-                    ...prev,
-                    minPrice: String(val),
-                  }));
-                }}
-                className="pointer-events-none absolute z-20 h-1 w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-primary-lighter/30 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:transition [&::-webkit-slider-thumb]:hover:scale-110"
+                onChange={(e) =>
+                  setFilters((p) => ({
+                    ...p,
+                    minPrice: e.target.value,
+                  }))
+                }
+                className="w-full"
               />
 
-              {/* Max */}
               <input
                 type="range"
                 min={0}
                 max={PRICE_MAX_QUERY}
                 step={500}
                 value={max}
-                onChange={(e) => {
-                  const val = Math.max(Number(e.target.value), min + 500);
-                  setFilters((prev) => ({
-                    ...prev,
-                    maxPrice: String(val),
-                  }));
-                }}
-                className="pointer-events-none absolute z-30 h-1 w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-primary-lighter/30 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:transition [&::-webkit-slider-thumb]:hover:scale-110"
+                onChange={(e) =>
+                  setFilters((p) => ({
+                    ...p,
+                    maxPrice: e.target.value,
+                  }))
+                }
+                className="w-full"
               />
             </div>
+
+            {/* Actions */}
+            <div className="flex justify-between">
+              <Button
+                color="secondary"
+                className="text-white"
+                size="xs"
+                onClick={() => {
+                  onChange({ ...activeFilters, ...filters });
+                  setOpen(false);
+                }}
+              >
+                Áp dụng
+              </Button>
+
+              <Button
+                size="xs"
+                onClick={() => {
+                  const empty = {
+                    minPrice: '',
+                    maxPrice: '',
+                    color: '',
+                    ram: '',
+                    storage: '',
+                  };
+                  setFilters(empty);
+                  onChange({ ...activeFilters, ...empty });
+                }}
+              >
+                <FaUndo />
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="col-span-2 flex justify-end gap-1 md:col-span-1">
-        <Button
-          size="xs"
-          className="flex items-center gap-1 rounded-full border border-black bg-success font-medium text-white transition-all xl:hover:bg-primary/90"
-          onClick={applyFilters}
-        >
-          <FaFilter className="" />
-          Áp dụng
-        </Button>
-
-        <Button
-          size="xs"
-          className="flex items-center gap-1 rounded-full bg-white font-medium text-black transition-all xl:hover:bg-primary/5"
-          onClick={resetFilters}
-        >
-          <FaUndo className="" />
-          Đặt lại
-        </Button>
+        )}
       </div>
     </div>
   );
