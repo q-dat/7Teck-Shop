@@ -2,13 +2,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPhoneCall, FiZap, FiShield, FiArrowRight, FiCheckCircle } from 'react-icons/fi';
+import { FiPhoneCall, FiZap, FiShield, FiArrowRight, FiCheckCircle, FiTrendingUp, FiRepeat, FiMonitor, FiSmartphone, FiTablet } from 'react-icons/fi';
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import { LoadingLocal } from '@/components/orther/loading';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { IPriceListApi, IProductVariant } from '@/types/type/price-list/price-list';
-import { hotlineUrl } from '@/utils/socialLinks';
+import { hotlineUrl, zaloUrl } from '@/utils/socialLinks';
 
 interface CatalogsType {
   [catalog: string]: IProductVariant[];
@@ -46,6 +46,12 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
     setActiveTabs(defaultTabs);
   }, [priceLists]);
 
+  const getIcon = (type: string) => {
+    if (type.includes('phone')) return <FiSmartphone />;
+    if (type.includes('tablet')) return <FiTablet />;
+    return <FiMonitor />;
+  };
+
   return (
     <div className="min-h-screen bg-[#f1f2f6] pb-20 font-sans">
       <HeaderResponsive Title_NavbarMobile="7teck.vn" />
@@ -68,14 +74,13 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
             <motion.h1
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="text-4xl font-black tracking-tight text-white md:text-6xl"
+              className="mt-2 text-4xl font-black tracking-tight text-white md:text-6xl"
             >
               THU CŨ ĐỔI MỚI <br /> <span className="text-primary underline decoration-white/20 underline-offset-8">GIÁ CAO NHẤT</span>
             </motion.h1>
             <p className="mt-6 max-w-2xl text-lg text-gray-400">
               7teck hỗ trợ thu mua mọi tình trạng máy. Thủ tục nhanh gọn trong 15 phút, thanh toán tiền mặt hoặc chuyển khoản ngay lập tức.
             </p>
-
             {/* Trust Badges */}
             <div className="mt-10 flex flex-wrap justify-center gap-6">
               {[
@@ -85,6 +90,20 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
               ].map((b, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm font-bold text-white/80">
                   <span className="text-primary">{b.icon}</span> {b.label}
+                </div>
+              ))}
+            </div>
+            {/* Promotional Features  */}
+            <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
+              {[
+                { icon: <FiTrendingUp />, title: 'Trợ giá lên đời', desc: 'Thêm đến 2.000.000đ' },
+                { icon: <FiRepeat />, title: 'Đổi máy cũ', desc: 'Lấy máy mới ngay' },
+                { icon: <FiShield />, title: 'Bảo mật 100%', desc: 'Hỗ trợ xóa dữ liệu' },
+              ].map((item, i) => (
+                <div key={i} className="flex flex-col items-center rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+                  <span className="mb-3 text-2xl text-primary">{item.icon}</span>
+                  <p className="text-sm font-bold uppercase tracking-wider text-white">{item.title}</p>
+                  <p className="mt-1 text-xs text-gray-500">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -113,27 +132,32 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
 
               return (
                 <section key={categoryType}>
+                  <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-200 pb-6">
                   {/* Category Title */}
-                  <div className="mb-6 flex items-center gap-4">
-                    <div className="h-1 w-12 bg-primary"></div>
-                    <h2 className="text-2xl font-black uppercase italic tracking-tighter text-neutral-900">Bảng giá {label}</h2>
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-2xl text-white shadow-xl">
+                      {getIcon(categoryType)}
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-black uppercase tracking-tighter">{label}</h2>
+                      <p className="mt-1 text-xs font-bold uppercase tracking-widest text-slate-400">Chọn dòng máy bạn đang sở hữu</p>
+                    </div>
                   </div>
 
-                  {/* TAB NAVIGATION - Mobile friendly slider */}
-                  <div className="mb-4 flex flex-row xl:flex-wrap gap-2 overflow-x-auto pb-4 scrollbar-hide">
+                  {/* TABS - Custom Pill Design */}
+                  <div className="flex flex-wrap gap-2">
                     {tabs.map((catalog) => (
                       <button
                         key={catalog}
                         onClick={() => setActiveTabs({ ...activeTabs, [categoryType]: catalog })}
-                        className={`relative min-w-fit rounded-lg border-2 px-6 py-3 text-xs font-black uppercase tracking-widest transition-all ${
-                          active === catalog
-                            ? 'border-primary bg-primary text-white shadow-lg shadow-primary/30'
-                            : 'border-white bg-white text-gray-500 hover:border-primary/50'
+                        className={`rounded-full px-6 py-2 text-[11px] font-bold uppercase tracking-widest transition-all ${
+                          active === catalog ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                         }`}
                       >
                         {catalog}
                       </button>
                     ))}
+                  </div>
                   </div>
 
                   {/* PRICE TABLE - Commercial Style */}
@@ -180,7 +204,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                                 <td className="px-6 py-4 text-center">
                                   <Link
                                     href="/lien-he"
-                                    className="items-center gap-2 inline-flex whitespace-nowrap rounded-full bg-neutral-900 px-2 py-2 text-[10px] font-bold uppercase tracking-widest text-white transition-all hover:bg-primary hover:shadow-lg"
+                                    className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-neutral-900 px-2 py-2 text-[10px] font-bold uppercase tracking-widest text-white transition-all hover:bg-primary hover:shadow-lg"
                                   >
                                     Đổi máy <FiArrowRight />
                                   </Link>
@@ -201,12 +225,20 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                         Bảng giá trên chỉ là tham khảo? Liên hệ ngay để nhận giá chính xác 100%
                       </span>
                     </div>
-                    <Link
-                      href={hotlineUrl}
-                      className="rounded-lg bg-white px-6 py-2 text-xs font-black uppercase text-primary shadow-lg transition-transform active:scale-95"
-                    >
-                      Gọi tư vấn ngay
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={hotlineUrl}
+                        className="rounded-lg bg-white px-6 py-2 text-xs font-black uppercase text-primary shadow-lg transition-transform active:scale-95"
+                      >
+                        Gọi tư vấn ngay
+                      </Link>
+                      <Link
+                        href={zaloUrl}
+                        className="flex items-center justify-center gap-2 rounded-2xl border-2 border-white/30 px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-colors hover:bg-white/10"
+                      >
+                        Nhắn Zalo
+                      </Link>
+                    </div>
                   </div>
                   {/* CONDITIONS */}
                   {conditionsMap[active] ? (
