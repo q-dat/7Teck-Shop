@@ -250,7 +250,7 @@ export default function ClientProductDetailPage({ product, fieldMap, namePrefix,
                 {/* Price Box */}
                 <div className="flex flex-col gap-1">
                   {product.price === 0 ? (
-                    <Link href="/lien-he" className="text-3xl font-black tracking-tight text-price hover:underline">
+                    <Link href="/thong-tin-lien-he" className="text-3xl font-black tracking-tight text-price hover:underline">
                       Liên hệ báo giá
                     </Link>
                   ) : (

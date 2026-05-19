@@ -46,7 +46,7 @@ const programs = [
     desc: 'Cài đặt miễn phí, tối ưu hiệu suất và hỗ trợ kỹ thuật online 24/7.',
     badge: 'Support',
     cta: 'Liên Hệ',
-    link: '/lien-he',
+    link: '/thong-tin-lien-he',
     bg: images.LaptopDell,
   },
 ];

@@ -56,7 +56,7 @@ export default function ConsultationPage() {
 
             {/* CTA */}
             <Link
-              href="/lien-he"
+              href="/thong-tin-lien-he"
               target="_blank"
               className="inline-block rounded-xl bg-primary px-8 py-3 font-semibold text-white shadow-md transition hover:bg-secondary"
             >

@@ -144,7 +144,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                         {/* Price and Buy Now Button */}
                         <div className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
                           {product.price === 0 ? (
-                            <Link href={'/lien-he'} className="w-full text-lg font-bold text-price hover:underline">
+                            <Link href={'/thong-tin-lien-he'} className="w-full text-lg font-bold text-price hover:underline">
                               Liên hệ
                             </Link>
                           ) : (
@@ -205,7 +205,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                       Về Trang Chủ
                     </Link>
                     <Link
-                      href="/lien-he"
+                      href="/thong-tin-lien-he"
                       className="rounded-2xl border border-black px-5 py-2 font-medium text-black shadow-sm transition hover:bg-primary-lighter"
                     >
                       Trang Liên Hệ

@@ -86,7 +86,7 @@ const ProductItem = ({ product, baseUrl, onQuickBuy }: { product: Product; baseU
 
         <div className="flex items-baseline gap-2">
           {product.price === 0 ? (
-            <Link href={'/lien-he'} className="w-full text-lg font-bold text-price hover:underline">
+            <Link href={'/thong-tin-lien-he'} className="w-full text-lg font-bold text-price hover:underline">
               Liên hệ
             </Link>
           ) : (

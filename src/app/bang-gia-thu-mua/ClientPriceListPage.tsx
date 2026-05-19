@@ -203,7 +203,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                                 </td>
                                 <td className="px-6 py-4 text-center">
                                   <Link
-                                    href="/lien-he"
+                                    href="/thong-tin-lien-he"
                                     className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-neutral-900 px-2 py-2 text-[10px] font-bold uppercase tracking-widest text-white transition-all hover:bg-primary hover:shadow-lg"
                                   >
                                     Đổi máy <FiArrowRight />

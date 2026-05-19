@@ -37,7 +37,7 @@ export default function ClientGalleryPage({ galleries }: { galleries: IGallery[]
               công nghệ hiện đại và dịch vụ xuất sắc.
             </p>
             <Link
-              href="/lien-he"
+              href="/thong-tin-lien-he"
               className="inline-block rounded-md border border-black bg-black px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition-all duration-300 xl:hover:bg-white xl:hover:text-black"
             >
               Tham Gia Ngay
