@@ -1,5 +1,5 @@
 'use client';
-import ClientUsedProductPage from '@/components/userPage/page/ClientUsedProductByCatalogPage';
+import ClientUsedProductPage from '@/components/userPage/page/(thiet-bi-da-qua-su-dung)/ClientUsedProductByCatalogPage';
 import { IPhone } from '@/types/type/products/phone/phone';
 
 export default function ClientUsedPhoneByCatalogPage({ phones }: { phones: IPhone[] }) {

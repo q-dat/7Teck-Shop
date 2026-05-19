@@ -1,5 +1,5 @@
 'use client';
-import ClientUsedProductPage from '@/components/userPage/page/ClientUsedProductByCatalogPage';
+import ClientUsedProductPage from '@/components/userPage/page/(thiet-bi-da-qua-su-dung)/ClientUsedProductByCatalogPage';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
 
 export default function ClientUsedMacbookByCatalogPage({ macbook }: { macbook: IMacbook[] }) {

@@ -1,7 +1,7 @@
 'use client';
 import { macbookFieldMap } from '@/types/type/optionsData/macbookFieldMap';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
-import ClientProductDetailPage, { ProductCatalogGroup } from '@/components/userPage/page/ClientProductDetailPage';
+import ClientProductDetailPage, { ProductCatalogGroup } from '@/components/userPage/page/(chi-tiet-bai-dang)/ClientProductDetailPage';
 import { useEffect, useState } from 'react';
 import { getMacbookByCatalogId } from '@/services/products/macbookService';
 

@@ -1,5 +1,5 @@
 'use client';
-import ClientProductPage from '@/components/userPage/page/ClientProductPage';
+import ClientProductPage from '@/components/userPage/page/(san-pham)/ClientProductPage';
 import { getNewGroupedMacbook } from '@/services/products/macbookService';
 import { GroupedMacbook } from '@/types/type/products/macbook/macbook';
 import { useState } from 'react';

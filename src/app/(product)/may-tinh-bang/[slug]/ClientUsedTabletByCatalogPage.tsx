@@ -1,5 +1,5 @@
 'use client';
-import ClientUsedProductPage from '@/components/userPage/page/ClientUsedProductByCatalogPage';
+import ClientUsedProductPage from '@/components/userPage/page/(thiet-bi-da-qua-su-dung)/ClientUsedProductByCatalogPage';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 
 export default function ClientUsedTabletByCatalogPage({ tablets }: { tablets: ITablet[] }) {

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { phoneFieldMap } from '@/types/type/optionsData/phoneFieldMap';
 import { IPhone } from '@/types/type/products/phone/phone';
-import ClientProductDetailPage, { ProductCatalogGroup } from '@/components/userPage/page/ClientProductDetailPage';
+import ClientProductDetailPage, { ProductCatalogGroup } from '@/components/userPage/page/(chi-tiet-bai-dang)/ClientProductDetailPage';
 import { getPhonesByCatalogId } from '@/services/products/phoneService';
 
 export default function ClientPhoneDetailPage({ phone }: { phone: IPhone }) {

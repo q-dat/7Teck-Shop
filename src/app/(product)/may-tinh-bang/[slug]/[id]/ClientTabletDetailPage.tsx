@@ -1,6 +1,6 @@
 'use client';
 import { tabletFieldMap } from '@/types/type/optionsData/tabletFieldMap';
-import ClientProductDetailPage, { ProductCatalogGroup } from '@/components/userPage/page/ClientProductDetailPage';
+import ClientProductDetailPage, { ProductCatalogGroup } from '@/components/userPage/page/(chi-tiet-bai-dang)/ClientProductDetailPage';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 import { useEffect, useState } from 'react';
 import { getTabletsByCatalogId } from '@/services/products/tabletService';

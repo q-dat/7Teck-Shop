@@ -1,5 +1,5 @@
 'use client';
-import ClientProductPage from '@/components/userPage/page/ClientProductPage';
+import ClientProductPage from '@/components/userPage/page/(san-pham)/ClientProductPage';
 import { getNewGroupedWindows } from '@/services/products/windowsService';
 import { GroupedWindows } from '@/types/type/products/windows/windows';
 import { useState } from 'react';

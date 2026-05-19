@@ -8,7 +8,7 @@ import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from 'react-daisyui';
-import imageRepresent from '../../../../public/image-represent';
+import imageRepresent from '../../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { IconType } from 'react-icons';
 import { FaBoxOpen, FaDesktop, FaMicrochip, FaThLarge } from 'react-icons/fa';

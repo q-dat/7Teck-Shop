@@ -1,5 +1,5 @@
 'use client';
-import ClientUsedProductPage from '@/components/userPage/page/ClientUsedProductByCatalogPage';
+import ClientUsedProductPage from '@/components/userPage/page/(thiet-bi-da-qua-su-dung)/ClientUsedProductByCatalogPage';
 import { IWindows } from '@/types/type/products/windows/windows';
 
 export default function ClientUsedWindowsByCatalogPage({ windows }: { windows: IWindows[] }) {

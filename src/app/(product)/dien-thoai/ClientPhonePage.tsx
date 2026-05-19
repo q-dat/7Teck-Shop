@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import ClientProductPage from '@/components/userPage/page/ClientProductPage';
+import ClientProductPage from '@/components/userPage/page/(san-pham)/ClientProductPage';
 import { GroupedPhone, PhoneFilterParams } from '@/types/type/products/phone/phone';
 import { getNewGroupedPhones } from '@/services/products/phoneService';
 import { SiSamsung, SiApple, SiOppo, SiXiaomi, SiVivo } from 'react-icons/si';

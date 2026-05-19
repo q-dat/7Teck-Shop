@@ -1,7 +1,7 @@
 'use client';
 import { windowsFieldMap } from '@/types/type/optionsData/windowsFieldMap';
 import { IWindows } from '@/types/type/products/windows/windows';
-import ClientProductDetailPage, { ProductCatalogGroup } from '@/components/userPage/page/ClientProductDetailPage';
+import ClientProductDetailPage, { ProductCatalogGroup } from '@/components/userPage/page/(chi-tiet-bai-dang)/ClientProductDetailPage';
 import { useEffect, useState } from 'react';
 import { getWindowsByCatalogId } from '@/services/products/windowsService';
 

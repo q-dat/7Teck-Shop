@@ -7,7 +7,7 @@ import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from 'react-daisyui';
-import imageRepresent from '../../../../public/image-represent';
+import imageRepresent from '../../../../../public/image-represent';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
@@ -15,7 +15,7 @@ import { IconType } from 'react-icons';
 import { FaFrown } from 'react-icons/fa';
 import { FaDesktop, FaMicrochip } from 'react-icons/fa';
 import { MdMemory, MdMonitor } from 'react-icons/md';
-import { ProductBase } from './ClientProductPage';
+import { ProductBase } from '../(san-pham)/ClientProductPage';
 
 type ProductPageProps = {
   title: string;

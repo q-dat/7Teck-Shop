@@ -11,13 +11,13 @@ import Link from 'next/link';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { IoIosArrowDropdownCircle, IoMdCheckmarkCircleOutline } from 'react-icons/io';
 import { MdArrowBackIosNew, MdArrowForwardIos, MdMemory, MdOutlineInvertColors } from 'react-icons/md';
-import imageRepresent from '../../../../public/image-represent';
+import imageRepresent from '../../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { FaFacebookSquare } from 'react-icons/fa';
 import { handleProductShare } from '@/helper/handleShare';
 import { TfiRulerPencil } from 'react-icons/tfi';
 import { motion, AnimatePresence } from 'framer-motion';
-import AdvancedContactSection from '../AdvancedContactSection';
+import AdvancedContactSection from '../../AdvancedContactSection';
 
 export interface ProductCatalogGroup {
   [field: string]: string | number | string[] | null;
