@@ -1,43 +1,48 @@
 'use client';
-
 import Pagination from '@/components/userPage/Pagination';
-import { scrollToTopInstantly } from '@/utils/scrollToTop';
-import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import { formatCurrency } from '@/utils/formatCurrency';
-import Link from 'next/link';
+import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { contact, hotlineUrl } from '@/utils/socialLinks';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
-export interface UsedProductCatalog {
+// Giữ lại type catalog để sau này cần dùng lại
+// export interface UsedProductCatalog {
+//   _id: string;
+//   name: string;
+//   img: string;
+//   price: number;
+//   productCount: number;
+//   status: number;
+//   slug: string;
+// }
+
+export interface UsedProduct {
   _id: string;
   name: string;
   img: string;
   price: number;
-  productCount: number;
-  status: number;
+  status: string;
   slug: string;
-}
-
-interface ClientUsedProductCatalogPageProps {
-  data: UsedProductCatalog[];
-  title: string;
   basePath: string;
   namePrefix: string;
 }
 
-export default function ClientUsedProductCatalogPage({
-  data,
-  title,
-  namePrefix,
-  basePath,
-}: ClientUsedProductCatalogPageProps) {
+interface ClientUsedProductCatalogPageProps {
+  data: UsedProduct[];
+  title: string;
+}
+
+export default function ClientUsedProductCatalogPage({ data, title }: ClientUsedProductCatalogPageProps) {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     scrollToTopInstantly();
     setLoading(false);
+    setCurrentPage(1);
   }, [data]);
 
   const itemsPerPage = 12;
@@ -58,18 +63,18 @@ export default function ClientUsedProductCatalogPage({
 
   return (
     <div className="my-5 rounded-md bg-white p-2">
-      <h1 className="bg-white/50 text-start text-xl font-bold uppercase text-primary backdrop-blur-md md:text-2xl xl:text-3xl">
-        {title}
-      </h1>
+      {title && (
+        <h1 className="bg-white/50 text-start text-xl font-bold uppercase text-primary backdrop-blur-md md:text-2xl 2xl:text-3xl">
+          {title}
+        </h1>
 
+      )}
       <p className="flex w-full flex-col items-start gap-1 rounded-md bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-2 text-xs text-gray-700 xl:flex-row xl:gap-3">
         <span className="font-medium">Hàng chuẩn, giá mềm - An tâm mua sắm.</span>
         <Link href={hotlineUrl}>
           <span className="rounded-xl bg-primary px-2 py-[2px] text-white xl:py-1">Gọi/Zalo: {contact}</span>
         </Link>
       </p>
-
-      <hr />
 
       <div className="grid grid-flow-row grid-cols-2 items-start gap-[10px] py-2 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
         {loading ? (
@@ -80,7 +85,7 @@ export default function ClientUsedProductCatalogPage({
           </p>
         ) : (
           currentItems.map((product) => {
-            const catalogHref = `/${basePath}/${product._id}`;
+            const productHref = `/${product.basePath}/${product.slug}/${product._id}`;
 
             return (
               <div
@@ -89,7 +94,7 @@ export default function ClientUsedProductCatalogPage({
               >
                 <div className="w-full">
                   <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
-                    <Link href={catalogHref}>
+                    <Link href={productHref}>
                       <Image
                         height={200}
                         width={200}
@@ -102,13 +107,9 @@ export default function ClientUsedProductCatalogPage({
                   </div>
 
                   <div className="w-full cursor-pointer p-1">
-                    <p className="w-[75px] rounded-sm bg-gray-100 text-center text-[10px] text-white">
-                      {product.productCount > 99 ? '99+' : product.productCount} Sản phẩm
-                    </p>
-
-                    <Link href={catalogHref}>
+                    <Link href={productHref}>
                       <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-primary">
-                        {namePrefix} {product.name}
+                        {product.namePrefix} {product.name}
                       </p>
                     </Link>
                   </div>
@@ -116,9 +117,10 @@ export default function ClientUsedProductCatalogPage({
 
                 <div className="flex w-full flex-col items-start justify-between gap-1 p-1">
                   <p className="text-prod-price-mobile text-gray-700 xl:text-prod-price-desktop">
-                    Từ:&nbsp;
+                    Giá:&nbsp;
                     <span className="font-semibold text-price">{formatCurrency(product.price)}</span>
                   </p>
+
                   <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
                   <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
                 </div>
