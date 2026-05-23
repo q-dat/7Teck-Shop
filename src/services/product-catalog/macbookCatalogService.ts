@@ -3,7 +3,7 @@ import { getServerApiUrl } from '../../../hooks/useApiUrl';
 
 export async function getAllUsedMacbookCatalogs(): Promise<IMacbookCatalog[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/macbook-catalogs?status=1&hasProduct=true')}`;
+    const apiUrl = `${getServerApiUrl('/api/macbook-catalogs?m_cat_status=1&hasProduct=true')}`;
     const res = await fetch(apiUrl, {
       cache: 'force-cache',
       next: { revalidate: 60 },
