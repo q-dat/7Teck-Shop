@@ -1,19 +1,16 @@
-// TRANG THIẾT BỊ ĐÃ QUA SỬ DỤNG
 'use client';
 import { useEffect, useState } from 'react';
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { Button } from 'react-daisyui';
 import imageRepresent from '../../../../../public/image-represent';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { IconType } from 'react-icons';
-import { FaFrown } from 'react-icons/fa';
-import { FaDesktop, FaMicrochip } from 'react-icons/fa';
+import { FaDesktop, FaFrown, FaMicrochip } from 'react-icons/fa';
 import { MdMemory, MdMonitor } from 'react-icons/md';
 import { ProductBase } from '../(san-pham)/ClientProductPage';
 
@@ -29,22 +26,19 @@ const specsToShow: ReadonlyArray<{
   key: SpecKey;
   icon: IconType;
 }> = [
-  { key: 'ram', icon: MdMemory },
-  { key: 'cpu', icon: FaMicrochip },
-  // { key: 'storage', icon: MdSdStorage },
-  { key: 'lcd', icon: MdMonitor },
-  { key: 'gpu', icon: FaDesktop },
-];
+    { key: 'ram', icon: MdMemory },
+    { key: 'cpu', icon: FaMicrochip },
+    { key: 'lcd', icon: MdMonitor },
+    { key: 'gpu', icon: FaDesktop },
+  ];
 
 const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
 
 export default function ClientUsedProductByCatalogPage({ products, title, basePath }: ProductPageProps) {
   const [loading, setLoading] = useState(true);
-  // Image error
+
   const fallbackSrc = imageRepresent.Fallback;
   const { handleImageError, isImageErrored } = useImageErrorHandler();
-  const { slug } = useParams();
-  const filtered = products.filter((product) => product.slug === slug);
 
   useEffect(() => {
     scrollToTopInstantly();
@@ -53,12 +47,16 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
 
   return (
     <div>
-      <HeaderResponsive Title_NavbarMobile={'7teck.vn'} />
+      <HeaderResponsive Title_NavbarMobile="7teck.vn" />
+
       <div className="py-[60px] xl:pt-0">
         <div className="breadcrumbs px-[10px] py-2 text-sm text-black shadow xl:px-desktop-padding">
           <ul className="font-light">
             <li>
               <Link href="/">Trang Chủ</Link>
+            </li>
+            <li>
+              <Link href="/thiet-bi-da-qua-su-dung">Thiết bị đã qua sử dụng</Link>
             </li>
             <li>
               <Link href="">{title}</Link>
@@ -71,27 +69,24 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
             <div className="grid grid-flow-row grid-cols-2 items-start gap-[10px] md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7">
               {loading ? (
                 <ProductPlaceholders count={12} />
-              ) : filtered.length > 0 ? (
-                filtered.map((product) => {
-                  const slug = product.slug;
-                  const url = `/${slug}/${product._id}`;
-                  // handleImageError
+              ) : products.length > 0 ? (
+                products.map((product) => {
+                  const productHref = `/${basePath}/${product.slug}/${product._id}`;
                   const isErrored = isImageErrored(product._id);
-                  const src = isErrored || !product.img ? fallbackSrc : product?.img;
-                  const isExcluded = product.status && EXCLUDED_STATUSES.includes(product.status.toLowerCase());
+                  const src = isErrored || !product.img ? fallbackSrc : product.img;
+                  const isExcluded = product.status ? EXCLUDED_STATUSES.includes(product.status.toLowerCase()) : false;
 
                   return (
                     <section
-                      key={product?._id}
+                      key={product._id}
                       className="group relative flex h-full w-full flex-col justify-between rounded-md border border-primary-lighter text-black"
                     >
                       <div className="w-full">
-                        <Link className="relative" aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={`/${basePath}${url}`}>
-                          {/* Product Image */}
+                        <Link className="relative" aria-label="Xem chi tiết sản phẩm khi ấn vào hình ảnh" href={productHref}>
                           <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">
                             <Image
                               src={src}
-                              alt="Hình ảnh"
+                              alt={product.name}
                               height={200}
                               width={200}
                               loading="lazy"
@@ -99,34 +94,37 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                               onError={() => handleImageError(product._id)}
                             />
                           </div>
-                          {/* Product Title & Specifications */}
+
                           <div className="w-full px-1 pt-1">
                             <p className="text-prod-name-mobile font-medium xl:text-prod-name-desktop xl:group-hover:text-primary">
                               <span>{title}</span>
                               &nbsp;
                               <span>{product.name}</span>
                             </p>
-                            {/* Product Specifications */}
-                            <div className="">
+
+                            <div>
                               {specsToShow.map(({ key, icon: Icon }) => {
                                 const value = product[key];
-                                if (!value) return null;
+
+                                if (!value) {
+                                  return null;
+                                }
 
                                 return (
                                   <div key={key} className="flex items-center">
                                     <Icon size={16} className="text-gray-600" />
-                                    <span className="text-xs font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
+                                    <span className="text-xs font-light">
+                                      {typeof value === 'string' || typeof value === 'number' ? value : ''}
+                                    </span>
                                   </div>
                                 );
                               })}
                             </div>
                           </div>
-                          {/* Overlay for Sold Out products */}
+
                           {isExcluded && (
                             <div className="pointer-events-none absolute inset-0 z-50 rounded-md">
-                              {/* Glass/blur background */}
-                              <div className="absolute inset-0 rounded-md backdrop-blur-[1px]"></div>
-                              {/* Sold out image at top-left corner */}
+                              <div className="absolute inset-0 rounded-md backdrop-blur-[1px]" />
                               <Image
                                 src={imageRepresent.soldOut2}
                                 alt="Hết hàng"
@@ -141,40 +139,46 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                       </div>
 
                       <div className="w-full px-1 pb-1">
-                        {/* Price and Buy Now Button */}
                         <div className="w-full text-prod-price-mobile xl:text-prod-price-desktop">
                           {product.price === 0 ? (
-                            <Link href={'/thong-tin-lien-he'} className="w-full text-lg font-bold text-price hover:underline">
+                            <Link href="/thong-tin-lien-he" className="w-full text-lg font-bold text-price hover:underline">
                               Liên hệ
                             </Link>
                           ) : (
                             <p>
-                              <span className="font-semibold text-price">{formatCurrency(product?.price)}</span>
+                              <span className="font-semibold text-price">{formatCurrency(product.price)}</span>
                               &nbsp;
-                              {product?.sale !== 0 && <del className="text-xs font-light text-gray-500">{formatCurrency(product?.sale)}</del>}
+                              {product.sale !== 0 && <del className="text-xs font-light text-gray-500">{formatCurrency(product.sale)}</del>}
                             </p>
                           )}
                         </div>
+
                         <p className="text-xs text-gray-500">Hỗ trợ trả góp.</p>
                         <p className="text-xs text-gray-500">Miễn phí ship nội thành HCM.</p>
+
                         <Button
-                          disabled={isExcluded ? true : false}
+                          disabled={isExcluded}
                           size="xs"
-                          className={`mt-1 w-full rounded-md border border-primary/20 ${
-                            isExcluded ? 'cursor-not-allowed' : 'bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20'
-                          }`}
+                          className={`mt-1 w-full rounded-md border border-primary/20 ${isExcluded
+                              ? 'cursor-not-allowed'
+                              : 'bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20'
+                            }`}
                           onClick={() => {
-                            if (isExcluded) return;
+                            if (isExcluded) {
+                              return;
+                            }
+
                             const productToBuy = {
-                              _id: product?._id,
-                              name: product?.name,
-                              slug: product?.slug,
-                              img: product?.img,
-                              price: product?.price,
-                              ram: product?.ram,
-                              color: product?.color,
-                              link: `/${product.slug}`,
+                              _id: product._id,
+                              name: product.name,
+                              slug: product.slug,
+                              img: product.img,
+                              price: product.price,
+                              ram: product.ram,
+                              color: product.color,
+                              link: `/${basePath}/${product.slug}/${product._id}`,
                             };
+
                             localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
                             window.location.href = '/thanh-toan';
                           }}
@@ -182,11 +186,11 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                           {isExcluded ? 'Không khả dụng' : 'Mua Ngay'}
                         </Button>
                       </div>
-                      {/*  */}
-                      {!isExcluded && product?.status && (
+
+                      {!isExcluded && product.status && (
                         <div className="absolute -left-[3px] top-0 z-20">
                           <Image height={100} width={60} alt="" loading="lazy" className="h-full w-[60px]" src={imageRepresent.Status} />
-                          <p className="absolute top-[1px] w-full pl-1 text-xs font-medium text-white">{product?.status}</p>
+                          <p className="absolute top-[1px] w-full pl-1 text-xs font-medium text-white">{product.status}</p>
                         </div>
                       )}
                     </section>
@@ -196,7 +200,8 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                 <div className="col-span-full flex flex-col items-center justify-center py-10 text-center">
                   <FaFrown className="mb-4 h-16 w-16 text-gray-400" />
                   <h2 className="text-xl font-semibold text-gray-800 xl:text-3xl">Rất tiếc, không tìm thấy sản phẩm nào!</h2>
-                  <p className="mb-6 mt-2 text-gray-500">Có thể sản phẩm đã hết hàng hoặc đường dẫn không chính xác.</p>
+                  <p className="mb-6 mt-2 text-gray-500">Có thể danh mục này chưa có sản phẩm hoặc đường dẫn không chính xác.</p>
+
                   <div className="flex gap-4">
                     <Link
                       href="/"
@@ -204,6 +209,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                     >
                       Về Trang Chủ
                     </Link>
+
                     <Link
                       href="/thong-tin-lien-he"
                       className="rounded-2xl border border-black px-5 py-2 font-medium text-black shadow-sm transition hover:bg-primary-lighter"

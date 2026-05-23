@@ -13,5 +13,5 @@ export default function ClientUsedWindowsPage({ windowsCatalogs }: { windowsCata
     status: p.w_cat_status,
   }));
 
-  return <ClientUsedProductCatalogPage data={data} title="Laptop Windows" basePath="windows" namePrefix={'Laptop'} />;
+  return <ClientUsedProductCatalogPage data={data} title="Laptop Windows" basePath="thiet-bi-da-qua-su-dung/windows" namePrefix={'Laptop'} />;
 }
