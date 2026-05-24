@@ -23,6 +23,7 @@ export default {
       //p-desktop-padding
       spacing: {
         'desktop-padding': '2vw',
+        'mobile-padding': '60px',
       },
       fontSize: {
         // mobile-font-size

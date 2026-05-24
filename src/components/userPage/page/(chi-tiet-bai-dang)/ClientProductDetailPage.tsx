@@ -1,27 +1,35 @@
 'use client';
+
 import { LoadingLocal } from '@/components/orther/loading';
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
-import Zoom from '@/lib/Zoom';
-import { scrollBy, updateScrollButtons, handleScrollButtons, handleThumbnailClick } from '@/utils/DetailPage/scrollUtils';
+import { handleProductShare } from '@/helper/handleShare';
+import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { contact, hotlineUrl } from '@/utils/socialLinks';
-import Image from 'next/image';
+import { AnimatePresence, motion } from 'framer-motion';
+import Image, { type StaticImageData } from 'next/image';
 import Link from 'next/link';
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { IoIosArrowDropdownCircle, IoMdCheckmarkCircleOutline } from 'react-icons/io';
-import { MdArrowBackIosNew, MdArrowForwardIos, MdMemory, MdOutlineInvertColors } from 'react-icons/md';
-import imageRepresent from '../../../../../public/image-represent';
-import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
-import { FaFacebookSquare } from 'react-icons/fa';
-import { handleProductShare } from '@/helper/handleShare';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { FaFacebookSquare, FaHeadset, FaShieldAlt, FaTools, FaTruck } from 'react-icons/fa';
+import { IoIosArrowDropdownCircle } from 'react-icons/io';
+import {
+  MdClose,
+  MdKeyboardArrowLeft,
+  MdKeyboardArrowRight,
+  MdMemory,
+  MdOutlineInvertColors,
+  MdOutlinePhotoLibrary,
+  MdVerified,
+} from 'react-icons/md';
 import { TfiRulerPencil } from 'react-icons/tfi';
-import { motion, AnimatePresence } from 'framer-motion';
 import AdvancedContactSection from '../../AdvancedContactSection';
+import imageRepresent from '../../../../../public/image-represent';
 
 export interface ProductCatalogGroup {
   [field: string]: string | number | string[] | null;
 }
+
 interface Product {
   _id: string;
   name: string;
@@ -50,468 +58,1107 @@ interface ClientProductDetailPageProps {
   namePrefix: string;
   relatedProducts?: Product[];
 }
+
+type CatalogFieldValue = string | number | string[] | null | undefined;
+
+type ImageSource = string | StaticImageData;
+
+interface VisibleSpecGroup extends FieldMap {
+  fields: { field: string; name: string }[];
+}
+
+interface StatusStyle {
+  label: string;
+  className: string;
+  note: string;
+}
+
+interface ServicePolicy {
+  title: string;
+  desc: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}
+
 const EXCLUDED_STATUSES = ['Ngừng kinh doanh', 'Hết hàng', 'Ngưng bán'];
 
-export default function ClientProductDetailPage({ product, fieldMap, namePrefix, relatedProducts }: ClientProductDetailPageProps) {
-  const [selectedImage, setSelectedImage] = useState<string | null | undefined>(null);
-  const isExcluded = product?.status && EXCLUDED_STATUSES.includes(product.status);
+const BUY_BOX_POLICIES = [
+  'Bao test rõ ràng trước khi nhận máy',
+  'Tư vấn đúng nhu cầu, báo đúng tình trạng máy',
+  'Hỗ trợ giao nhanh trong nội thành TP.HCM',
+];
 
-  const [activeTab, setActiveTab] = useState<string>('specs');
-  const [isLeftButtonVisible, setIsLeftButtonVisible] = useState(true);
-  const [isRightButtonVisible, setIsRightButtonVisible] = useState(true);
-  const scrollRef = useRef<HTMLDivElement>(null!);
+const SERVICE_POLICIES: ServicePolicy[] = [
+  {
+    title: 'Kiểm tra rõ tình trạng',
+    desc: 'Thông tin sản phẩm, hình ảnh và cấu hình được trình bày rõ để khách dễ kiểm tra trước khi mua.',
+    icon: FaShieldAlt,
+  },
+  {
+    title: 'Tư vấn đúng nhu cầu',
+    desc: 'Hỗ trợ chọn máy theo nhu cầu sử dụng, ngân sách và tình trạng thực tế của từng sản phẩm.',
+    icon: FaHeadset,
+  },
+  {
+    title: 'Hỗ trợ phần mềm',
+    desc: 'Hỗ trợ cài đặt, kiểm tra và tư vấn sử dụng trong quá trình dùng máy.',
+    icon: FaTools,
+  },
+  {
+    title: 'Giao máy linh hoạt',
+    desc: 'Hỗ trợ giao máy trong nội thành TP.HCM theo tình trạng sẵn có.',
+    icon: FaTruck,
+  },
+];
+
+export default function ClientProductDetailPage({
+  product,
+  fieldMap,
+  namePrefix,
+  relatedProducts = [],
+}: ClientProductDetailPageProps) {
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isAlbumOpen, setIsAlbumOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const thumbnails = [product?.img, ...(product?.thumbnail || [])];
 
   const fallbackSrc = imageRepresent.Fallback;
   const { handleImageError, isImageErrored } = useImageErrorHandler();
-  const isErrored = isImageErrored(product._id);
-  const src = isErrored || !product.img ? fallbackSrc : product?.img;
+
+  const isErrored = isImageErrored(product?._id);
+  const isExcluded = Boolean(product?.status && EXCLUDED_STATUSES.includes(product.status));
+  const productTitle = `${namePrefix} ${product?.name || ''}`.trim();
+
+  const galleryImages = useMemo(() => {
+    const images = [product?.img, ...(product?.thumbnail || [])].filter((image): image is string => Boolean(image));
+
+    return Array.from(new Set(images));
+  }, [product?.img, product?.thumbnail]);
+
+  const selectedImageSrc: ImageSource = useMemo(() => {
+    if (isErrored) return fallbackSrc;
+
+    return galleryImages[selectedImageIndex] || product?.img || fallbackSrc;
+  }, [fallbackSrc, galleryImages, isErrored, product?.img, selectedImageIndex]);
+
+  const visibleSpecGroups = useMemo<VisibleSpecGroup[]>(() => {
+    return fieldMap
+      .map((group) => {
+        const groupValue = product.catalog?.[group.group];
+
+        const fields = group.fields.filter((field) => {
+          const fieldValue = groupValue?.[field.field];
+
+          if (Array.isArray(fieldValue)) return fieldValue.length > 0;
+
+          return fieldValue !== null && fieldValue !== undefined && String(fieldValue).trim() !== '';
+        });
+
+        return {
+          ...group,
+          fields,
+        };
+      })
+      .filter((group) => group.fields.length > 0);
+  }, [fieldMap, product.catalog]);
+
+  const primarySpecs = useMemo(() => {
+    const values: { label: string; value: CatalogFieldValue }[] = [];
+
+    visibleSpecGroups.forEach((group) => {
+      const groupValue = product.catalog?.[group.group];
+
+      group.fields.forEach((field) => {
+        if (values.length >= 6) return;
+
+        values.push({
+          label: field.name,
+          value: groupValue?.[field.field],
+        });
+      });
+    });
+
+    return values;
+  }, [product.catalog, visibleSpecGroups]);
+
+  const availableRelatedProducts = useMemo(() => {
+    return relatedProducts.filter((item) => item._id !== product._id).slice(0, 6);
+  }, [product._id, relatedProducts]);
+
+  const handleScrollTo = useCallback((targetId: string) => (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
+    event.preventDefault();
+
+    const target = document.getElementById(targetId);
+
+    if (!target) return;
+
+    const offset = window.innerWidth >= 1280 ? 88 : 68;
+    const y = target.getBoundingClientRect().top + window.scrollY - offset;
+
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }, []);
+
+  const handleBuyNow = useCallback(() => {
+    if (isExcluded) return;
+
+    const productToBuy = {
+      _id: product._id,
+      name: product.name,
+      slug: product.slug,
+      img: product.img,
+      price: product.price,
+      ram: product.ram,
+      color: product.color,
+      link: product.slug,
+    };
+
+    localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
+    window.location.href = '/thanh-toan';
+  }, [isExcluded, product]);
 
   useLayoutEffect(() => {
-    if (product && product?.catalog) {
+    if (product && product.catalog) {
       setLoading(false);
     }
-    const timeout = setTimeout(() => {
-      updateScrollButtons(scrollRef, setIsLeftButtonVisible, setIsRightButtonVisible);
-    }, 100);
-    return () => clearTimeout(timeout);
-  }, [product, product?.thumbnail]);
+  }, [product]);
 
   useEffect(() => {
     scrollToTopInstantly();
-    const cleanup = handleScrollButtons(scrollRef, Object.keys(product?.catalog || {}).length, () =>
-      updateScrollButtons(scrollRef, setIsLeftButtonVisible, setIsRightButtonVisible)
-    );
-    return cleanup;
   }, [product]);
 
-  if (loading || !product || !product?.catalog) {
+  if (loading || !product || !product.catalog) {
     return <LoadingLocal />;
   }
 
-  const handleScrollTo = (targetId: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    const target = document.getElementById(targetId);
-    if (!target) return;
-    const offset = window.innerWidth >= 1280 ? 120 : 70;
-    const y = target.getBoundingClientRect().top + window.scrollY - offset;
-    window.scrollTo({ top: y, behavior: 'smooth' });
-  };
+  return (
+    <div className="min-h-screen bg-[#f5f5f7] text-slate-950">
+      <HeaderResponsive Title_NavbarMobile="7teck.vn" />
+
+      <main className="pb-20 pt-[60px] xl:pt-0">
+        <ProductBreadcrumb productTitle={productTitle} />
+
+        <section className="px-2 py-2 xl:px-desktop-padding xl:py-4">
+          <ProductHeader productTitle={productTitle} status={product.status} isExcluded={isExcluded} />
+
+          <div className="mt-2 grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,7fr)_minmax(380px,5fr)] xl:gap-4">
+            <ProductGallery
+              productId={product._id}
+              productTitle={productTitle}
+              images={galleryImages}
+              selectedImageIndex={selectedImageIndex}
+              selectedImageSrc={selectedImageSrc}
+              fallbackSrc={fallbackSrc}
+              isExcluded={isExcluded}
+              setSelectedImageIndex={setSelectedImageIndex}
+              setIsAlbumOpen={setIsAlbumOpen}
+              handleImageError={handleImageError}
+            />
+
+            <ProductBuyBox
+              product={product}
+              fallbackSrc={fallbackSrc}
+              isExcluded={isExcluded}
+              availableRelatedProducts={availableRelatedProducts}
+              handleBuyNow={handleBuyNow}
+              handleScrollTo={handleScrollTo}
+            />
+          </div>
+        </section>
+
+        <section id="cam-ket" className="px-2 xl:px-desktop-padding">
+          <div className="grid grid-cols-1 gap-2 xl:grid-cols-4">
+            {SERVICE_POLICIES.map((policy) => (
+              <ServicePolicyCard key={policy.title} title={policy.title} desc={policy.desc} icon={policy.icon} />
+            ))}
+          </div>
+        </section>
+
+        <section id="noi-dung-san-pham" className="mt-2 px-2 xl:px-desktop-padding">
+          <div className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,8fr)_minmax(320px,4fr)] xl:gap-4">
+            <div className="flex min-w-0 flex-col gap-2">
+              <ProductDescriptionSection des={product.des} />
+              {primarySpecs.length > 0 && (
+                <div className="mt-2 grid grid-cols-2 gap-2 xl:grid-cols-6">
+                  {primarySpecs.map((item) => (
+                    <SpecHighlight key={item.label} label={item.label} value={item.value} />
+                  ))}
+                </div>
+              )}
+              <ProductArticleSection catalogContent={product.catalogContent} />
+            </div>
+
+            <ProductSpecificationSidebar visibleSpecGroups={visibleSpecGroups} catalog={product.catalog} />
+          </div>
+        </section>
+
+        <section className="mt-2 px-2 xl:px-desktop-padding">
+          <AdvancedContactSection />
+        </section>
+
+        <MobileBottomCTA isExcluded={isExcluded} handleBuyNow={handleBuyNow} />
+      </main>
+
+      <ProductAlbumModal
+        isOpen={isAlbumOpen}
+        images={galleryImages}
+        productTitle={productTitle}
+        selectedImageIndex={selectedImageIndex}
+        selectedImageSrc={selectedImageSrc}
+        fallbackSrc={fallbackSrc}
+        setSelectedImageIndex={setSelectedImageIndex}
+        setIsOpen={setIsAlbumOpen}
+      />
+    </div>
+  );
+}
+
+function ProductBreadcrumb({ productTitle }: { productTitle: string }) {
+  return (
+    <section className="border-b border-slate-200 bg-white">
+      <div className="px-2 py-2 xl:px-desktop-padding">
+        <ul className="flex items-center gap-2 overflow-hidden text-xs font-bold uppercase tracking-wide text-slate-400">
+          <li className="shrink-0">
+            <Link href="/" className="transition-colors hover:text-secondary">
+              Trang chủ
+            </Link>
+          </li>
+          <li className="shrink-0">/</li>
+          <li className="line-clamp-1 text-slate-700">{productTitle}</li>
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function ProductHeader({ productTitle, status, isExcluded }: { productTitle: string; status?: string; isExcluded: boolean }) {
+  const statusStyle = getProductStatusStyle(status);
 
   return (
-    <div className="min-h-screen bg-white">
-      <HeaderResponsive Title_NavbarMobile="7teck.vn" />
-      <div className="pb-16 pt-[60px] xl:pt-0">
-        {/* Breadcrumbs High-Contrast */}
-        <div className="border-b border-black/5 bg-white px-3 py-2.5 xl:px-desktop-padding">
-          <ul className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-black/40">
-            <li>
-              <Link className="transition-colors hover:text-primary" href="/">
-                Trang Chủ
-              </Link>
-            </li>
-            <li>/</li>
-            <li className="line-clamp-1 text-black/80">
-              {namePrefix} {product.name}
-            </li>
-          </ul>
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="h-1 bg-gradient-to-r from-secondary via-[#111827] to-price" />
+
+      <div className="flex flex-col gap-2 p-2 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wide text-secondary">Chi Tiết Sản Phẩm</p>
+          <h1 className="mt-1 text-xl font-bold leading-tight tracking-tight text-slate-950 xl:text-3xl">{productTitle}</h1>
         </div>
 
-        <div className="mt-6 px-3 xl:px-desktop-padding">
-          {/* Action Links Desktop */}
-          <div className="mb-6 hidden items-center justify-between xl:flex">
-            <h1 className="text-2xl font-bold tracking-tight text-black/90">
-              {namePrefix} {product?.name}
-            </h1>
-            <div className="flex gap-4">
-              {[
-                { id: 'cam-ket', label: 'Cam Kết', icon: <IoMdCheckmarkCircleOutline size={16} /> },
-                { id: 'thong-so', label: 'Thông Số', icon: <TfiRulerPencil size={16} /> },
-              ].map((link) => (
-                <Link
-                  key={link.id}
-                  href={`#${link.id}`}
-                  onClick={handleScrollTo(link.id)}
-                  className="flex items-center gap-1.5 rounded-[4px] bg-primary/5 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-primary transition-all hover:bg-primary hover:text-white"
-                >
-                  {link.icon}
-                  {link.label}
-                </Link>
-              ))}
+        {status && (
+          <div
+            className={`flex w-fit shrink-0 items-center gap-2 rounded-md border px-2 py-2 shadow-sm ${isExcluded ? 'border-slate-200 bg-slate-100 text-slate-500' : statusStyle.className
+              }`}
+          >
+            <MdVerified size={18} />
+            <div>
+              <p className="text-xs font-black uppercase leading-none tracking-wide">{isExcluded ? status : statusStyle.label}</p>
+              <p className="mt-1 text-xs font-semibold leading-none opacity-75">{isExcluded ? 'Sản phẩm chưa sẵn hàng' : statusStyle.note}</p>
             </div>
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
-          {/* Main Layout Grid */}
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10">
-            {/* Cột Trái: Hình Ảnh (7 Cột) */}
-            <div className="flex flex-col gap-4 lg:col-span-7">
-              {/* Mobile Title */}
-              <div className="block lg:hidden">
-                <h1 className="text-xl font-bold leading-snug tracking-tight text-black/90">
-                  {namePrefix} {product?.name}
-                </h1>
-                {product?.status && (
-                  <span className="mt-2 inline-block rounded-[3px] bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
-                    {product?.status}
-                  </span>
-                )}
-              </div>
+function ProductGallery({
+  productId,
+  productTitle,
+  images,
+  selectedImageIndex,
+  selectedImageSrc,
+  fallbackSrc,
+  isExcluded,
+  setSelectedImageIndex,
+  setIsAlbumOpen,
+  handleImageError,
+}: {
+  productId: string;
+  productTitle: string;
+  images: string[];
+  selectedImageIndex: number;
+  selectedImageSrc: ImageSource;
+  fallbackSrc: ImageSource;
+  isExcluded: boolean;
+  setSelectedImageIndex: React.Dispatch<React.SetStateAction<number>>;
+  setIsAlbumOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  handleImageError: (id: string) => void;
+}) {
+  const thumbnailRef = useRef<HTMLDivElement>(null);
 
-              {/* Box Image Chính */}
-              <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-md border border-black/10 bg-white sm:aspect-[4/3] xl:aspect-[16/11]">
-                <Zoom>
-                  <Image
-                    priority
-                    width={800}
-                    height={800}
-                    src={selectedImage || src}
-                    alt={product?.name || 'Hình ảnh'}
-                    className="max-h-full max-w-full object-contain p-4 mix-blend-multiply"
-                    onError={() => handleImageError(product._id)}
-                  />
-                </Zoom>
-                {isExcluded && (
-                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-[2px]">
-                    <Image
-                      src={imageRepresent.soldOut}
-                      alt="Hết Hàng"
-                      height={160}
-                      width={160}
-                      loading="lazy"
-                      className="h-[120px] w-[120px] object-contain drop-shadow-md sm:h-[160px] sm:w-[160px]"
-                    />
-                  </div>
-                )}
-              </div>
+  const imageCount = images.length;
+  const hasMultipleImages = imageCount > 1;
 
-              {/* Thumbnails Bento */}
-              <div className="relative">
-                <div ref={scrollRef} className="flex w-full gap-2 overflow-x-auto scroll-smooth py-1 scrollbar-hide">
-                  {thumbnails.length > 0 ? (
-                    thumbnails.map((thumb: string, index: number) => (
-                      <motion.div
-                        whileHover={{ y: -2 }}
-                        key={index}
-                        onClick={() => handleThumbnailClick(scrollRef, thumb, index, setSelectedImage)}
-                        className={`relative flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-[4px] border bg-white transition-all xl:h-20 xl:w-20 ${
-                          selectedImage === thumb || (!selectedImage && index === 0)
-                            ? 'border-primary shadow-sm'
-                            : 'border-black/10 hover:border-primary/40'
-                        }`}
-                      >
-                        <Image
-                          width={80}
-                          height={80}
-                          loading="lazy"
-                          src={thumb}
-                          alt="Thumbnail"
-                          className="max-h-full max-w-full object-contain p-1"
-                          onLoad={() => updateScrollButtons(scrollRef, setIsLeftButtonVisible, setIsRightButtonVisible)}
-                        />
-                      </motion.div>
-                    ))
-                  ) : (
-                    <span className="text-sm text-black/40">Không có ảnh thu nhỏ</span>
-                  )}
-                </div>
+  const goPrev = useCallback(() => {
+    if (!hasMultipleImages) return;
 
-                {/* Scroll Nav Buttons */}
-                <AnimatePresence>
-                  {isLeftButtonVisible && (
-                    <motion.button
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 10 }}
-                      onClick={() => scrollBy(scrollRef, -100)}
-                      className="absolute -left-3 top-1/2 -translate-y-1/2 rounded-full border border-black/10 bg-white p-1.5 text-black/60 shadow-sm transition-colors hover:text-primary"
-                    >
-                      <MdArrowBackIosNew size={14} />
-                    </motion.button>
-                  )}
-                  {isRightButtonVisible && (
-                    <motion.button
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      onClick={() => scrollBy(scrollRef, 100)}
-                      className="absolute -right-3 top-1/2 -translate-y-1/2 rounded-full border border-black/10 bg-white p-1.5 text-black/60 shadow-sm transition-colors hover:text-primary"
-                    >
-                      <MdArrowForwardIos size={14} />
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+    setSelectedImageIndex((current) => (current <= 0 ? imageCount - 1 : current - 1));
+  }, [hasMultipleImages, imageCount, setSelectedImageIndex]);
 
-            {/* Cột Phải: Thông tin & Mua hàng (5 Cột - Sticky) */}
-            <div className="lg:col-span-5">
-              <div className="flex flex-col gap-6 rounded-md border border-black/5 bg-white p-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] lg:sticky lg:top-24 lg:p-6">
-                {/* Price Box */}
-                <div className="flex flex-col gap-1">
-                  {product.price === 0 ? (
-                    <Link href="/thong-tin-lien-he" className="text-3xl font-black tracking-tight text-price hover:underline">
-                      Liên hệ báo giá
-                    </Link>
-                  ) : (
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-3xl font-black tracking-tight text-price xl:text-4xl">{formatCurrency(product?.price)}</span>
-                      {product?.sale !== 0 && <del className="text-sm font-semibold text-black/30 xl:text-base">{formatCurrency(product?.sale)}</del>}
-                    </div>
-                  )}
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-green-600">Sản phẩm có sẵn - Miễn phí vận chuyển HCM</span>
-                </div>
+  const goNext = useCallback(() => {
+    if (!hasMultipleImages) return;
 
-                {/* Specs inline chips */}
-                <div className="flex flex-col gap-2">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-black/40">Phiên bản đang chọn</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { key: 'color', label: product?.color, icon: <MdOutlineInvertColors size={14} /> },
-                      { key: 'ram', label: product?.ram, icon: <MdMemory size={14} /> },
-                    ]
-                      .filter((item) => item.label)
-                      .map((item) => (
-                        <div
-                          key={item.key}
-                          className="flex items-center gap-1.5 rounded-[4px] border border-primary/20 bg-primary/5 px-2.5 py-1.5 text-xs font-semibold text-primary"
-                        >
-                          {item.icon}
-                          <span>{item.label}</span>
-                        </div>
-                      ))}
-                  </div>
-                </div>
+    setSelectedImageIndex((current) => (current >= imageCount - 1 ? 0 : current + 1));
+  }, [hasMultipleImages, imageCount, setSelectedImageIndex]);
 
-                {/* Phân cách */}
-                <div className="h-[1px] w-full bg-black/5"></div>
+  const scrollThumbnails = useCallback((direction: 'left' | 'right') => {
+    const container = thumbnailRef.current;
 
-                {/* Description Text */}
-                <div className="flex flex-col gap-2">
-                  {product?.des ? (
-                    <p className="whitespace-pre-line text-[13px] leading-relaxed text-black/70">{product?.des}</p>
-                  ) : (
-                    <div className="flex flex-col gap-1 rounded-[4px] bg-black/5 p-3">
-                      <p className="text-sm font-semibold text-black/80">Thiết kế chuẩn mực, hiệu năng vượt trội</p>
-                      <p className="text-[12px] leading-relaxed text-black/60">
-                        Sản phẩm mang đến trải nghiệm tối ưu, đáp ứng hoàn hảo nhu cầu khắt khe của giới công nghệ chuyên nghiệp.
-                      </p>
-                    </div>
-                  )}
-                </div>
+    if (!container) return;
 
-                {/* Related Products Mini-Bento */}
-                {relatedProducts && relatedProducts.length > 1 && (
-                  <div className="flex flex-col gap-2">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-black/40">Tùy chọn khác</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {relatedProducts
-                        .filter((item) => item._id !== product._id)
-                        .slice(0, 4) // Giới hạn hiển thị để không làm vỡ layout
-                        .map((item) => (
-                          <Link
-                            key={item._id}
-                            href={`/${item.slug}`}
-                            className="group flex items-center gap-2 rounded-[4px] border border-black/10 bg-white p-1.5 transition-all hover:border-primary/40 hover:shadow-sm"
-                          >
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[2px] bg-black/5">
-                              <Image
-                                src={item.img}
-                                alt={item.name}
-                                width={40}
-                                height={40}
-                                className="max-h-full max-w-full object-contain mix-blend-multiply transition-transform group-hover:scale-110"
-                              />
-                            </div>
-                            <div className="flex flex-col overflow-hidden">
-                              <p className="truncate text-[10px] font-bold uppercase text-black/70 group-hover:text-primary">{item.color}</p>
-                              <p className="truncate text-[11px] font-bold text-price">{formatCurrency(item.price)}</p>
-                            </div>
-                          </Link>
-                        ))}
-                    </div>
-                  </div>
-                )}
+    container.scrollBy({
+      left: direction === 'left' ? -240 : 240,
+      top: direction === 'left' ? -240 : 240,
+      behavior: 'smooth',
+    });
+  }, []);
 
-                {/* Actions Box */}
-                <div className="flex flex-col gap-3 pt-2">
-                  <motion.button
-                    whileTap={{ scale: isExcluded ? 1 : 0.98 }}
-                    disabled={!!isExcluded}
-                    className={`h-12 w-full rounded-md font-bold uppercase tracking-wide transition-all ${
-                      isExcluded
-                        ? 'cursor-not-allowed bg-black/5 text-black/40'
-                        : 'bg-primary text-white shadow-[0_4px_14px_0_rgba(var(--primary-rgb),0.39)] hover:bg-primary/90 hover:shadow-[0_6px_20px_rgba(var(--primary-rgb),0.23)]'
-                    }`}
-                    onClick={() => {
-                      if (isExcluded) return;
-                      const productToBuy = {
-                        _id: product?._id,
-                        name: product?.name,
-                        slug: product?.slug,
-                        img: product?.img,
-                        price: product?.price,
-                        ram: product?.ram,
-                        color: product?.color,
-                        link: `${product?.slug}`,
-                      };
-                      localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));
-                      window.location.href = '/thanh-toan';
-                    }}
-                  >
-                    {isExcluded ? 'Tạm Hết Hàng' : 'Mua Ngay'}
-                  </motion.button>
+  return (
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="grid grid-cols-1 gap-2 p-2 xl:grid-cols-[86px_minmax(0,1fr)]">
+        <div className="order-2 xl:order-1">
+          <div className="relative">
+            <div
+              ref={thumbnailRef}
+              className="flex gap-2 overflow-x-auto scroll-smooth py-1 scrollbar-hide xl:max-h-[590px] xl:flex-col xl:overflow-y-auto xl:overflow-x-hidden"
+            >
+              {images.length > 0 ? (
+                images.map((image, index) => {
+                  const isActive = selectedImageIndex === index;
 
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-[10px] font-medium text-black/40">*Cam kết chính hãng 100%</span>
+                  return (
                     <button
-                      onClick={() => handleProductShare(product.slug)}
-                      className="flex items-center gap-1.5 text-[11px] font-bold text-[#1877F2] transition-opacity hover:opacity-80"
+                      type="button"
+                      key={`${image}-${index}`}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`group relative flex h-[62px] w-[62px] shrink-0 items-center justify-center overflow-hidden rounded-md border bg-white transition-all xl:h-20 xl:w-20 ${isActive ? 'border-secondary ring-2 ring-secondary/25' : 'border-slate-200 hover:border-secondary/60'
+                        }`}
                     >
-                      <FaFacebookSquare size={14} /> Chia sẻ
+                      <Image
+                        width={96}
+                        height={96}
+                        loading="lazy"
+                        src={image || fallbackSrc}
+                        alt={`${productTitle} ảnh ${index + 1}`}
+                        className="max-h-full max-w-full object-contain p-1 mix-blend-multiply transition-transform group-hover:scale-105"
+                      />
+
+                      {isActive && <span className="absolute inset-x-2 bottom-1 h-[2px] rounded-full bg-secondary" />}
                     </button>
-                  </div>
+                  );
+                })
+              ) : (
+                <div className="flex h-[62px] items-center justify-center rounded-md border border-dashed border-slate-200 px-2 text-xs text-slate-400">
+                  Không có ảnh
                 </div>
-
-                {/* Hotline Banner */}
-                <Link
-                  href={hotlineUrl}
-                  className="group relative mt-2 overflow-hidden rounded-md border border-primary/10 bg-primary/5 p-3 text-center transition-colors hover:bg-primary/10"
-                >
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-primary/60">Tư vấn trực tiếp</p>
-                  <p className="mt-0.5 text-lg font-black tracking-tight text-primary transition-transform group-hover:scale-105">{contact}</p>
-                </Link>
-              </div>
+              )}
             </div>
-          </div>
 
-          {/* Section: Cam Kết 7Teck (Trust Signals) */}
-          <div id="cam-ket" className="mt-10 lg:mt-16">
-            <h2 className="mb-4 text-lg font-bold uppercase tracking-tight text-black/90">Đặc quyền tại 7teck</h2>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {[
-                { title: 'Nguyên Zin', desc: 'Máy nguyên bản đúng phiên bản quý khách chọn' },
-                { title: 'Bảo Hành', desc: 'Bao test 7 ngày, bảo hành 3-12 tháng theo hãng' },
-                { title: 'Trả Góp 0%', desc: 'Hỗ trợ thẻ tín dụng nhanh chóng, thủ tục đơn giản' },
-                { title: 'Quà Tặng', desc: 'Tặng kèm cường lực và ốp lưng cao cấp miễn phí' },
-              ].map((policy, idx) => (
-                <div
-                  key={idx}
-                  className="flex flex-col gap-1.5 rounded-md border border-black/5 bg-black/[0.02] p-4 transition-colors hover:border-primary/20 hover:bg-white hover:shadow-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    <IoMdCheckmarkCircleOutline className="text-primary" size={18} />
-                    <h3 className="text-sm font-bold text-black/90">{policy.title}</h3>
-                  </div>
-                  <p className="text-[12px] leading-relaxed text-black/60">{policy.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Section: Thông Số & Bài Viết */}
-          <div id="thong-so" className="mt-10 lg:mt-16">
-            {/* Floating Tabs */}
-            <div className="relative mx-auto flex w-full max-w-sm rounded-[6px] border border-black/10 bg-black/5 p-1">
-              {['specs', 'details'].map((tab) => (
+            {hasMultipleImages && (
+              <div className="mt-2 hidden grid-cols-2 gap-1 xl:grid">
                 <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`relative z-10 w-1/2 py-2 text-xs font-bold uppercase tracking-wide transition-colors ${
-                    activeTab === tab ? 'text-primary' : 'text-black/50 hover:text-black/80'
-                  }`}
+                  type="button"
+                  onClick={() => scrollThumbnails('left')}
+                  className="flex h-8 items-center justify-center rounded-md border border-slate-200 bg-[#f5f5f7] text-slate-700 transition-colors hover:border-secondary/50 hover:text-secondary"
                 >
-                  {activeTab === tab && (
-                    <motion.div
-                      layoutId="active-tab"
-                      className="absolute inset-0 -z-10 rounded-[4px] bg-white shadow-sm"
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                    />
-                  )}
-                  {tab === 'specs' ? 'Thông Số' : 'Bài Viết'}
+                  <MdKeyboardArrowLeft size={20} />
                 </button>
-              ))}
-            </div>
 
-            {/* Tab Content */}
-            <div className="mt-6 min-h-[400px]">
-              <AnimatePresence mode="wait">
-                {activeTab === 'specs' ? (
-                  <motion.div
-                    key="specs"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="overflow-hidden rounded-md border border-black/10 bg-white"
-                  >
-                    {fieldMap.map((group, index) => {
-                      const hasData = group?.fields.some((field) => {
-                        const groupKey = group.group as keyof Product['catalog'];
-                        const groupValue = product?.catalog?.[groupKey] as Record<string, string>;
-                        return groupValue?.[field.field];
-                      });
-                      if (!hasData) return null;
-
-                      return (
-                        <details key={group?.group} open={index < 2} className="group border-b border-black/5 last:border-none">
-                          <summary className="flex cursor-pointer items-center justify-between bg-black/[0.02] px-4 py-3 transition-colors hover:bg-black/5">
-                            <span className="text-xs font-bold uppercase tracking-wider text-black/80">{group?.name}</span>
-                            <span className="transform text-black/40 transition-transform duration-300 group-open:rotate-180">
-                              <IoIosArrowDropdownCircle size={18} />
-                            </span>
-                          </summary>
-                          <div className="flex flex-col bg-white">
-                            {group?.fields.map((field) => {
-                              const groupKey = group.group as keyof Product['catalog'];
-                              const groupValue = product?.catalog?.[groupKey] as Record<string, string>;
-                              const fieldValue = groupValue?.[field.field];
-                              if (!fieldValue) return null;
-
-                              return (
-                                <div
-                                  key={field.field}
-                                  className="flex flex-col justify-between gap-1 border-t border-black/5 px-4 py-2.5 sm:flex-row sm:items-center"
-                                >
-                                  <p className="w-1/3 text-[12px] font-medium text-black/50">{field?.name}</p>
-                                  <p className="w-full text-[13px] font-semibold text-black/90 sm:w-2/3 sm:text-right">
-                                    {Array.isArray(fieldValue) ? fieldValue.join(', ') : fieldValue}
-                                  </p>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </details>
-                      );
-                    })}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="details"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="prose-sm prose-primary prose max-w-none rounded-md bg-white p-2 xl:p-6"
-                  >
-                    {product?.catalogContent?.trim() ? (
-                      <div dangerouslySetInnerHTML={{ __html: product.catalogContent }} />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-black/10 bg-black/5 py-12 text-center">
-                        <p className="text-sm font-bold text-black/70">Chưa có bài viết đánh giá</p>
-                        <p className="mt-1 text-[12px] text-black/40">Nội dung chi tiết cho sản phẩm này đang được cập nhật.</p>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => scrollThumbnails('right')}
+                  className="flex h-8 items-center justify-center rounded-md border border-slate-200 bg-[#f5f5f7] text-slate-700 transition-colors hover:border-secondary/50 hover:text-secondary"
+                >
+                  <MdKeyboardArrowRight size={20} />
+                </button>
+              </div>
+            )}
           </div>
+        </div>
 
-          {/* AdvancedContactSection */}
-          <div className="mt-10 lg:mt-16">
-            <AdvancedContactSection />
+        <div className="order-1 min-w-0 xl:order-2">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setIsAlbumOpen(true)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setIsAlbumOpen(true);
+              }
+            }}
+            className="relative flex aspect-square w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-lg bg-[radial-gradient(circle_at_top,#ffffff_0%,#f5f5f7_45%,#eef1f6_100%)] outline-none transition-colors hover:bg-[#f7f8fb] xl:aspect-[16/11]"
+          >
+            <Image
+              priority
+              width={1100}
+              height={1100}
+              src={selectedImageSrc}
+              alt={productTitle || 'Hình ảnh sản phẩm'}
+              className="max-h-full max-w-full object-contain p-2 mix-blend-multiply xl:p-6"
+              onError={() => handleImageError(productId)}
+            />
+
+            <div className="absolute left-2 top-2 flex items-center gap-2">
+              <span className="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white/95 px-2 text-xs font-bold text-slate-800 shadow-sm backdrop-blur transition-colors hover:border-secondary/50 hover:text-secondary">
+                <MdOutlinePhotoLibrary size={16} />
+                Album
+              </span>
+
+              {imageCount > 0 && (
+                <span className="rounded-md border border-slate-200 bg-white/95 px-2 py-2 text-xs font-bold text-slate-600 shadow-sm backdrop-blur">
+                  {selectedImageIndex + 1}/{imageCount}
+                </span>
+              )}
+            </div>
+
+            {hasMultipleImages && (
+              <>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    goPrev();
+                  }}
+                  className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-white/95 text-slate-800 shadow-sm backdrop-blur transition-colors hover:border-secondary/50 hover:text-secondary"
+                >
+                  <MdKeyboardArrowLeft size={24} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    goNext();
+                  }}
+                  className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-white/95 text-slate-800 shadow-sm backdrop-blur transition-colors hover:border-secondary/50 hover:text-secondary"
+                >
+                  <MdKeyboardArrowRight size={24} />
+                </button>
+              </>
+            )}
+
+            <span className="absolute bottom-2 left-2 rounded-md border border-slate-200 bg-white/95 px-2 py-2 text-xs font-bold text-slate-700 shadow-sm backdrop-blur">
+              Nhấn vào ảnh để xem lớn
+            </span>
+
+            {isExcluded && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
+                <Image
+                  src={imageRepresent.soldOut}
+                  alt="Tạm hết hàng"
+                  height={170}
+                  width={170}
+                  loading="lazy"
+                  className="h-[120px] w-[120px] object-contain drop-shadow-md xl:h-[170px] xl:w-[170px]"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+function ProductAlbumModal({
+  isOpen,
+  images,
+  productTitle,
+  selectedImageIndex,
+  selectedImageSrc,
+  fallbackSrc,
+  setSelectedImageIndex,
+  setIsOpen,
+}: {
+  isOpen: boolean;
+  images: string[];
+  productTitle: string;
+  selectedImageIndex: number;
+  selectedImageSrc: ImageSource;
+  fallbackSrc: ImageSource;
+  setSelectedImageIndex: React.Dispatch<React.SetStateAction<number>>;
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const imageCount = images.length;
+  const hasMultipleImages = imageCount > 1;
+
+  const [rotateDeg, setRotateDeg] = useState(0);
+
+  const closeAlbum = useCallback(() => {
+    setIsOpen(false);
+  }, [setIsOpen]);
+
+  const goPrev = useCallback(() => {
+    if (!hasMultipleImages) return;
+
+    setSelectedImageIndex((current) => (current <= 0 ? imageCount - 1 : current - 1));
+  }, [hasMultipleImages, imageCount, setSelectedImageIndex]);
+
+  const goNext = useCallback(() => {
+    if (!hasMultipleImages) return;
+
+    setSelectedImageIndex((current) => (current >= imageCount - 1 ? 0 : current + 1));
+  }, [hasMultipleImages, imageCount, setSelectedImageIndex]);
+
+  const rotateLeft = useCallback(() => {
+    setRotateDeg((current) => current - 90);
+  }, []);
+
+  const rotateRight = useCallback(() => {
+    setRotateDeg((current) => current + 90);
+  }, []);
+
+  const resetRotate = useCallback(() => {
+    setRotateDeg(0);
+  }, []);
+
+  useEffect(() => {
+    resetRotate();
+  }, [selectedImageIndex, resetRotate]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      resetRotate();
+    }
+  }, [isOpen, resetRotate]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeAlbum();
+      if (event.key === 'ArrowLeft') goPrev();
+      if (event.key === 'ArrowRight') goNext();
+      if (event.key.toLowerCase() === 'q') rotateLeft();
+      if (event.key.toLowerCase() === 'e') rotateRight();
+      if (event.key.toLowerCase() === 'r') resetRotate();
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeydown);
+    };
+  }, [closeAlbum, goNext, goPrev, isOpen, resetRotate, rotateLeft, rotateRight]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 z-[99999] bg-[#000000]/95 text-white"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <div className="flex h-full flex-col  gap-2 py-[60px] xl:py-0">
+            <header className="border-b border-white/10 bg-black/40 p-2  backdrop-blur-xl ">
+              <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-secondary">Album Sản Phẩm</p>
+                  <h2 className="line-clamp-1 text-sm font-bold leading-6 text-white xl:text-xl">{productTitle}</h2>
+                </div>
+
+                <div className="flex min-w-0 items-center gap-2 overflow-x-auto pb-1 scrollbar-hide xl:pb-0">
+                  <span className="flex h-9 shrink-0 items-center rounded-md border border-white/10 bg-white/5 px-3 text-xs font-bold text-white/80">
+                    {imageCount > 0 ? selectedImageIndex + 1 : 0}/{imageCount}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={rotateLeft}
+                    className="flex h-9 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 px-3 text-xs font-bold text-white transition-colors hover:bg-white/10"
+                  >
+                    Xoay trái
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={rotateRight}
+                    className="flex h-9 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 px-3 text-xs font-bold text-white transition-colors hover:bg-white/10"
+                  >
+                    Xoay phải
+                  </button>
+
+                  {rotateDeg !== 0 && (
+                    <button
+                      type="button"
+                      onClick={resetRotate}
+                      className="flex h-9 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 px-3 text-xs font-bold text-white/80 transition-colors hover:bg-white/10"
+                    >
+                      Reset
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={closeAlbum}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 text-white transition-colors hover:bg-white/10"
+                  >
+                    <MdClose size={22} />
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+              <Image
+                priority
+                width={1500}
+                height={1500}
+                src={selectedImageSrc || fallbackSrc}
+                alt={`${productTitle} album`}
+                className="max-h-full max-w-full object-contain transition-transform duration-300 ease-out"
+                style={{
+                  transform: `rotate(${rotateDeg}deg)`,
+                }}
+              />
+
+              {hasMultipleImages && (
+                <>
+                  <button
+                    type="button"
+                    onClick={goPrev}
+                    className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-md border border-white/10 bg-white text-primary hover:text-white backdrop-blur transition-colors hover:bg-primary xl:left-4"
+                  >
+                    <MdKeyboardArrowLeft size={30} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-md border border-white/10 bg-white text-primary hover:text-white backdrop-blur transition-colors hover:bg-primary xl:right-4"
+                  >
+                    <MdKeyboardArrowRight size={30} />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {images.length > 0 && (
+              <div className="border-t border-white/10 bg-black/20 p-2 xl:p-2">
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                  {images.map((image, index) => {
+                    const isActive = selectedImageIndex === index;
+
+                    return (
+                      <button
+                        type="button"
+                        key={`${image}-${index}`}
+                        onClick={() => setSelectedImageIndex(index)}
+                        className={`flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-transparent transition-colors xl:h-20 xl:w-20 ${isActive ? 'border-2 border-white border-dashed ' : 'border-white/10 opacity-30 hover:opacity-100'
+                          }`}
+                      >
+                        <Image
+                          src={image || fallbackSrc}
+                          alt={`${productTitle} album ${index + 1}`}
+                          width={96}
+                          height={96}
+                          className="max-h-full max-w-full object-cover rounded-md p-1"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function ProductBuyBox({
+  product,
+  fallbackSrc,
+  isExcluded,
+  availableRelatedProducts,
+  handleBuyNow,
+  handleScrollTo,
+}: {
+  product: Product;
+  fallbackSrc: ImageSource;
+  isExcluded: boolean;
+  availableRelatedProducts: Product[];
+  handleBuyNow: () => void;
+  handleScrollTo: (targetId: string) => (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void;
+}) {
+  return (
+    <aside className="xl:sticky xl:top-[130px] xl:self-start ">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 bg-white p-2">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Giá bán tại 7Teck</p>
+
+          <div className="mt-1">
+            {product.price === 0 ? (
+              <Link href="/thong-tin-lien-he" className="text-3xl font-black tracking-tight text-price hover:underline xl:text-4xl">
+                Liên hệ báo giá
+              </Link>
+            ) : (
+              <div className="flex flex-wrap items-end gap-2">
+                <span className="text-3xl font-black tracking-tight text-price xl:text-4xl">{formatCurrency(product.price)}</span>
+
+                {hasValidSalePrice(product.price, product.sale) && (
+                  <del className="pb-1 text-sm font-semibold text-slate-400">{formatCurrency(product.sale)}</del>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-2 flex flex-wrap gap-2">
+            {product.status && <ProductStatusBadge status={product.status} isExcluded={isExcluded} />}
+
+            {product.color && (
+              <span className="inline-flex items-center gap-1 rounded bg-secondary/10 px-2 py-1 text-xs font-bold text-secondary">
+                <MdOutlineInvertColors size={14} />
+                {product.color}
+              </span>
+            )}
+
+            {product.ram && (
+              <span className="inline-flex items-center gap-1 rounded bg-secondary/10 px-2 py-1 text-xs font-bold text-secondary">
+                <MdMemory size={14} />
+                {product.ram}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2 p-2">
+          <div className="rounded-md bg-[#f5f5f7] p-2">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Thông tin nhanh</p>
+
+            {product?.des ? (
+              <div className="mt-1">
+                <p className="whitespace-pre-line text-xs leading-relaxed text-slate-700 line-clamp-6">{product?.des.trim()}</p>
+
+                <Link href="#noi-dung-san-pham" onClick={handleScrollTo('noi-dung-san-pham')} className="mt-1 inline-block text-xs font-bold text-secondary hover:underline">
+                  Xem nội dung chi tiết
+                </Link>
+              </div>
+            ) : (
+              <p className="mt-1 text-sm leading-6 text-slate-600">Thông tin chi tiết của sản phẩm đang được cập nhật.</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-2">
+            <button
+              type="button"
+              disabled={isExcluded}
+              onClick={handleBuyNow}
+              className={`h-11 rounded-md text-sm font-bold uppercase tracking-wide transition-colors ${isExcluded ? 'cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-primary text-white hover:bg-primary/90'
+                }`}
+            >
+              {isExcluded ? 'Tạm hết hàng' : 'Mua ngay'}
+            </button>
+
+            <Link
+              href={hotlineUrl}
+              className="flex h-11 items-center justify-center rounded-md border border-secondary/30 bg-secondary/5 text-sm font-bold uppercase tracking-wide text-secondary transition-colors hover:bg-secondary/10"
+            >
+              Gọi/Zalo: {contact}
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 gap-1 border-t border-slate-200 pt-2">
+            {BUY_BOX_POLICIES.map((policy) => (
+              <div key={policy} className="text-sm leading-6 text-slate-700">
+                + {policy}
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleProductShare(product.slug)}
+            className="flex items-center gap-1.5 text-xs font-bold text-secondary transition-opacity hover:opacity-80"
+          >
+            <FaFacebookSquare size={15} />
+            Chia sẻ sản phẩm
+          </button>
+        </div>
+      </div>
+
+      {availableRelatedProducts.length > 0 && (
+        <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Tùy chọn khác</p>
+            <span className="text-xs text-slate-400">{availableRelatedProducts.length} mẫu</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {availableRelatedProducts.map((item) => (
+              <Link
+                key={item._id}
+                href={`/${item.slug}`}
+                className="group rounded-md border border-slate-200 p-2 transition-colors hover:border-secondary/50"
+              >
+                <div className="flex h-16 items-center justify-center rounded-md bg-[#f5f5f7]">
+                  <Image
+                    src={item.img || fallbackSrc}
+                    alt={item.name}
+                    width={80}
+                    height={80}
+                    className="max-h-full max-w-full object-contain p-1 mix-blend-multiply transition-transform group-hover:scale-105"
+                  />
+                </div>
+
+                <div className="mt-1">
+                  <p className="line-clamp-1 text-xs font-bold text-slate-700 group-hover:text-secondary">{item.color || item.ram || item.name}</p>
+                  <p className="mt-0.5 text-sm xl:text-2xl font-semibold leading-5 text-price">{item.price === 0 ? 'Liên hệ' : formatCurrency(item.price)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </aside>
+  );
+}
+
+function ProductStatusBadge({ status, isExcluded }: { status: string; isExcluded: boolean }) {
+  const statusStyle = getProductStatusStyle(status);
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-black uppercase tracking-wide ${isExcluded ? 'border-slate-200 bg-slate-100 text-slate-500' : statusStyle.className
+        }`}
+    >
+      <MdVerified size={15} />
+      {isExcluded ? status : statusStyle.label}
+    </span>
+  );
+}
+
+function SpecHighlight({ label, value }: { label: string; value: CatalogFieldValue }) {
+  if (!isValidFieldValue(value)) return null;
+
+  return (
+    <div className="rounded-md border border-slate-200 bg-white p-2 transition-colors hover:border-secondary/30 hover:bg-primary-white">
+      <p className="line-clamp-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
+
+      <p className="mt-0.5 line-clamp-2 text-xs font-bold leading-5 text-black">
+        {renderCatalogValue(value)}
+      </p>
+    </div>
+  );
+}
+
+function ServicePolicyCard({
+  title,
+  desc,
+  icon: Icon,
+}: {
+  title: string;
+  desc: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}) {
+  return (
+    <div className="group rounded-lg border border-slate-200 bg-white p-2 shadow-sm transition-colors hover:border-secondary/30">
+      <div className="flex items-center gap-2">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-secondary/10 text-secondary transition-colors group-hover:bg-secondary group-hover:text-white">
+          <Icon size={16} />
+        </span>
+        <h2 className="text-sm font-bold text-slate-900">{title}</h2>
+      </div>
+
+      <p className="mt-2 text-sm leading-6 text-slate-600">{desc}</p>
+    </div>
+  );
+}
+
+function ProductDescriptionSection({ des }: { des?: string }) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
+      <SectionHeader title="Mô tả sản phẩm" desc="Thông tin tổng quan được tách riêng để dễ đọc, không làm rối khu vực mua hàng." />
+
+      {des?.trim() ? (
+        <div className="mt-3 rounded-md bg-[#f5f5f7] p-2">
+          <p className="whitespace-pre-line text-sm font-sem leading-relaxed  text-slate-700">{des}</p>
+        </div>
+      ) : (
+        <EmptyState title="Chưa có mô tả sản phẩm" desc="Nội dung mô tả cho sản phẩm này đang được cập nhật." />
+      )}
+    </section>
+  );
+}
+
+function ProductArticleSection({ catalogContent }: { catalogContent?: string }) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
+      <SectionHeader title="Bài viết chi tiết" desc="Khu vực đọc nội dung dài với bố cục rõ ràng, phù hợp mô tả sản phẩm công nghệ." />
+
+      {catalogContent?.trim() ? (
+        <article
+          className="prose prose-slate mt-3 max-w-none prose-headings:font-bold prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2 prose-p:text-[15px] prose-p:leading-8 prose-p:text-slate-700 prose-li:text-[15px] prose-li:leading-8 prose-img:rounded-md prose-img:border prose-img:border-slate-200 prose-table:overflow-hidden prose-th:bg-[#f5f5f7] prose-th:p-2 prose-td:p-2"
+          dangerouslySetInnerHTML={{ __html: catalogContent }}
+        />
+      ) : (
+        <EmptyState title="Chưa có bài viết đánh giá" desc="Nội dung chi tiết cho sản phẩm này đang được cập nhật." />
+      )}
+    </section>
+  );
+}
+
+function ProductSpecificationSidebar({
+  visibleSpecGroups,
+  catalog,
+}: {
+  visibleSpecGroups: VisibleSpecGroup[];
+  catalog: Record<string, ProductCatalogGroup>;
+}) {
+  return (
+    <aside className="xl:sticky xl:top-[130px] xl:self-start">
+      <div className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-slate-950">Thông số kỹ thuật</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">Tổng hợp cấu hình và thông tin sản phẩm.</p>
+          </div>
+
+          <TfiRulerPencil className="shrink-0 text-secondary" size={20} />
+        </div>
+
+        {visibleSpecGroups.length > 0 ? (
+          <div className="overflow-hidden rounded-md border border-slate-200">
+            {visibleSpecGroups.map((group, index) => {
+              const groupValue = catalog?.[group.group];
+
+              return (
+                <details key={group.group} open={index < 2} className="group border-b border-slate-200 last:border-b-0">
+                  <summary className="flex cursor-pointer items-center justify-between bg-[#f5f5f7] px-2 py-3 transition-colors hover:bg-slate-100">
+                    <span className="text-sm font-bold uppercase tracking-wide text-slate-900">{group.name}</span>
+                    <span className="text-slate-400 transition-transform duration-300 group-open:rotate-180">
+                      <IoIosArrowDropdownCircle size={18} />
+                    </span>
+                  </summary>
+
+                  <div className="bg-white">
+                    {group.fields.map((field) => {
+                      const fieldValue = groupValue?.[field.field];
+
+                      if (!isValidFieldValue(fieldValue)) return null;
+
+                      return (
+                        <div key={field.field} className="grid grid-cols-1 gap-1 border-t border-slate-100 px-2 py-2.5">
+                          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{field.name}</p>
+                          <p className="text-sm font-semibold leading-6 text-slate-950">{renderCatalogValue(fieldValue)}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </details>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState title="Chưa có thông số" desc="Thông số kỹ thuật cho sản phẩm này đang được cập nhật." />
+        )}
+      </div>
+    </aside>
+  );
+}
+
+function MobileBottomCTA({ isExcluded, handleBuyNow }: { isExcluded: boolean; handleBuyNow: () => void }) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white p-2 shadow-[0_-6px_20px_rgba(15,23,42,0.08)] xl:hidden">
+      <div className="grid grid-cols-[1fr_1fr] gap-2">
+        <Link
+          href={hotlineUrl}
+          className="flex h-11 items-center justify-center rounded-md border border-secondary/30 bg-secondary/5 text-sm font-bold text-secondary"
+        >
+          Gọi/Zalo
+        </Link>
+
+        <button
+          type="button"
+          disabled={isExcluded}
+          onClick={handleBuyNow}
+          className={`h-11 rounded-md text-sm font-bold uppercase ${isExcluded ? 'cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-secondary text-white'
+            }`}
+        >
+          {isExcluded ? 'Tạm hết hàng' : 'Mua ngay'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div>
+      <h2 className="text-lg font-bold tracking-tight text-slate-950 xl:text-2xl">{title}</h2>
+      <p className="mt-1 text-sm leading-6 text-slate-500">{desc}</p>
+    </div>
+  );
+}
+
+function EmptyState({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="mt-3 flex min-h-[180px] flex-col items-center justify-center rounded-md border border-dashed border-slate-200 bg-[#f5f5f7] p-4 text-center">
+      <p className="text-sm font-bold text-slate-700">{title}</p>
+      <p className="mt-1 max-w-md text-sm leading-6 text-slate-500">{desc}</p>
+    </div>
+  );
+}
+
+function hasValidSalePrice(price: number, sale: number): boolean {
+  return Number.isFinite(sale) && sale > 0 && sale > price;
+}
+
+function getProductStatusStyle(status?: string): StatusStyle {
+  const normalizedStatus = status?.trim().toLowerCase();
+
+  if (!normalizedStatus) {
+    return {
+      label: '',
+      className: 'border-slate-200 bg-slate-100 text-slate-600',
+      note: '',
+    };
+  }
+
+  if (normalizedStatus === 'newseal' || normalizedStatus === 'new seal') {
+    return {
+      label: 'New Seal',
+      className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+      note: 'Máy mới nguyên seal',
+    };
+  }
+
+  if (normalizedStatus === 'likenew' || normalizedStatus === 'like new') {
+    return {
+      label: 'Like New',
+      className: 'border-secondary/20 bg-secondary/10 text-secondary',
+      note: 'Ngoại hình đẹp, tình trạng tốt',
+    };
+  }
+
+  if (normalizedStatus === 'used') {
+    return {
+      label: 'Used',
+      className: 'border-amber-200 bg-amber-100 text-amber-700',
+      note: 'Máy đã qua sử dụng',
+    };
+  }
+
+  return {
+    label: status || '',
+    className: 'border-slate-200 bg-slate-100 text-slate-700',
+    note: 'Tình trạng sản phẩm',
+  };
+}
+
+function isValidFieldValue(value: CatalogFieldValue): boolean {
+  if (Array.isArray(value)) return value.length > 0;
+
+  return value !== null && value !== undefined && String(value).trim() !== '';
+}
+
+function renderCatalogValue(value: CatalogFieldValue): string {
+  if (Array.isArray(value)) return value.join(', ');
+  if (value === null || value === undefined) return '';
+
+  return String(value);
 }

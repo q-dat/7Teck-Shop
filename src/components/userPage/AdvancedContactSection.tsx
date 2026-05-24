@@ -1,126 +1,300 @@
 'use client';
+
+import {
+  fanpageUrl,
+  messengerUrl,
+  zaloUrl,
+  hotlineUrl,
+  mailUrl,
+  mail,
+  address,
+  contact,
+  ggMapEmbedUrl,
+  instagramUrl,
+} from '@/utils/socialLinks';
 import { motion } from 'framer-motion';
-import { FaFacebookMessenger, FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaFacebook, FaInstagram, FaClock } from 'react-icons/fa';
-import { fanpageUrl, messengerUrl, zaloUrl, hotlineUrl, mailUrl, mail, address, contact, ggMapEmbedUrl } from '@/utils/socialLinks';
+import Link from 'next/link';
+import {
+  FaCheckCircle,
+  FaClock,
+  FaComments,
+  FaEnvelope,
+  FaFacebook,
+  FaFacebookMessenger,
+  FaInstagram,
+  FaLaptop,
+  FaMapMarkerAlt,
+  FaPhoneAlt,
+  FaShippingFast,
+} from 'react-icons/fa';
+
+interface ContactChannel {
+  label: string;
+  title: string;
+  desc: string;
+  url: string;
+  className: string;
+  icon: React.ReactNode;
+}
+
+interface SupportItem {
+  title: string;
+  desc: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}
+
+const contactChannels: ContactChannel[] = [
+  {
+    label: 'Messenger',
+    title: 'Facebook',
+    desc: 'Tư vấn qua Messenger',
+    url: messengerUrl,
+    className:
+      'border-secondary/20 bg-secondary-lighter text-secondary hover:border-secondary/40 hover:bg-secondary-lighter/80',
+    icon: <FaFacebookMessenger size={18} />,
+  },
+  {
+    label: 'Zalo',
+    title: 'Zalo',
+    desc: 'Chat nhanh với 7Teck',
+    url: zaloUrl,
+    className:
+      'border-secondary/20 bg-secondary-lighter text-secondary hover:border-secondary/40 hover:bg-secondary-lighter/80',
+    icon: <span className="text-sm font-black leading-none">Zalo</span>,
+  },
+  {
+    label: 'Fanpage',
+    title: 'Fanpage',
+    desc: 'Theo dõi sản phẩm mới',
+    url: fanpageUrl,
+    className:
+      'border-info/20 bg-info/5 text-info hover:border-info/40 hover:bg-info/10',
+    icon: <FaFacebook size={18} />,
+  },
+  {
+    label: 'Instagram',
+    title: 'Instagram',
+    desc: 'Hình ảnh và cập nhật',
+    url: instagramUrl,
+    className:
+      'border-primary/20 bg-primary-lighter text-primary hover:border-primary/40 hover:bg-primary-lighter/80',
+    icon: <FaInstagram size={18} />,
+  },
+];
+
+const supportItems: SupportItem[] = [
+  {
+    title: 'Tư vấn cấu hình',
+    desc: 'Chọn máy theo nhu cầu',
+    icon: FaLaptop,
+  },
+  {
+    title: 'Đúng tình trạng',
+    desc: 'Báo rõ trước khi mua',
+    icon: FaCheckCircle,
+  },
+  {
+    title: 'Giao máy linh hoạt',
+    desc: 'Hỗ trợ giao trong ngày',
+    icon: FaShippingFast,
+  },
+  {
+    title: 'Hỗ trợ nhanh',
+    desc: 'Zalo, Messenger, Hotline',
+    icon: FaComments,
+  },
+];
+
+const containerVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.35,
+      staggerChildren: 0.06,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0 },
+};
 
 export default function AdvancedContactSection() {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 },
-  };
-
   return (
-    <section className="overflow-hidden bg-white">
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        className="grid grid-cols-1 gap-6 lg:grid-cols-12"
-      >
-        {/* LEFT COLUMN: CONTACT BENTO (5 columns) */}
-        <div className="grid grid-cols-2 gap-4 lg:col-span-5">
-          {/* Main Contact Card - Featured */}
-          <motion.div variants={itemVariants} className="group relative col-span-2 overflow-hidden rounded-2xl bg-primary p-6 text-white shadow-xl">
-            <div className="relative z-10">
-              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-primary-lighter/80">Hotline 24/7</p>
-              <h2 className="mb-4 text-3xl font-black tracking-tighter">{contact}</h2>
-              <a
-                href={hotlineUrl}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-primary transition-transform hover:scale-105"
-              >
-                <FaPhoneAlt size={14} /> Gọi ngay cho chúng tôi
-              </a>
-            </div>
-            <FaPhoneAlt className="absolute -bottom-4 -right-4 rotate-12 text-9xl text-white/10 transition-transform group-hover:rotate-0 group-hover:scale-110" />
-          </motion.div>
+    <section className="overflow-hidden rounded-lg border border-btn-section-border bg-primary-white shadow-sm">
+      <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }}>
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(340px,4fr)_minmax(0,8fr)]">
+          <motion.div variants={itemVariants} className="relative overflow-hidden bg-default p-2 text-white xl:p-4">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/35 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 left-8 h-56 w-56 rounded-full bg-secondary/25 blur-3xl" />
 
-          {/* Social Channels - Bento Items */}
-          {[
-            { label: 'Messenger', icon: <FaFacebookMessenger />, url: messengerUrl, color: 'bg-blue-500', text: 'Tư vấn FB' },
-            { label: 'Zalo', icon: <span className="text-lg font-bold italic">Z</span>, url: zaloUrl, color: 'bg-blue-400', text: 'Chat Zalo' },
-            { label: 'Facebook', icon: <FaFacebook />, url: fanpageUrl, color: 'bg-indigo-600', text: 'Fanpage' },
-            { label: 'Instagram', icon: <FaInstagram />, url: 'https://instagram.com', color: 'bg-pink-500', text: 'Instagram' },
-          ].map((item, idx) => (
-            <motion.a
-              key={idx}
-              variants={itemVariants}
-              href={item.url}
-              target="_blank"
-              className={`flex flex-col items-center justify-center rounded-2xl p-4 ${item.color} text-white shadow-lg transition-all hover:-translate-y-1 hover:shadow-2xl`}
-            >
-              <span className="mb-1 text-2xl">{item.icon}</span>
-              <span className="text-[10px] font-bold uppercase tracking-wide opacity-90">{item.text}</span>
-            </motion.a>
-          ))}
+            <div className="relative z-10 flex h-full flex-col justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/10 px-2 py-1 backdrop-blur">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-white/75">Hỗ trợ</span>
+                </div>
 
-          {/* Business Hours Section - Lấp đầy khoảng trống lề dưới */}
-          <motion.div variants={itemVariants} className="col-span-2 flex items-center gap-4 rounded-2xl border border-primary/10 bg-primary/5 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <FaClock size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-black/40">Giờ làm việc</p>
-              <p className="text-sm font-bold text-black/80">08:00 - 21:00 (Thứ 2 - Chủ Nhật)</p>
-            </div>
-          </motion.div>
-        </div>
+                <h2 className="mt-3 text-2xl font-black leading-tight tracking-tight xl:text-4xl">
+                  Cần tư vấn thêm trước khi mua?
+                </h2>
 
-        {/* RIGHT COLUMN: GOOGLE MAP & INFO (7 columns) */}
-        <div className="space-y-6 lg:col-span-7">
-          {/* Address Card */}
-          <motion.div
-            variants={itemVariants}
-            className="flex flex-col justify-between gap-4 rounded-2xl border border-black/5 bg-white p-5 shadow-sm md:flex-row md:items-center"
-          >
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/5 text-primary">
-                <FaMapMarkerAlt size={22} />
+                <p className="mt-2 text-sm leading-6 text-white/70">
+                  7Teck hỗ trợ kiểm tra thông tin sản phẩm, tình trạng máy, cấu hình phù hợp và hình thức nhận hàng.
+                </p>
               </div>
-              <div className="space-y-1">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-black/40">Trụ sở chính</p>
-                <p className="text-sm font-bold leading-relaxed text-black/80">{address}</p>
-                <p className="text-xs text-black/50">{mail}</p>
+
+              <div className="rounded-lg border border-white/10 bg-white/10 p-2 shadow-2xl shadow-default/20 backdrop-blur">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-white/50">Hotline tư vấn</p>
+
+                <Link href={hotlineUrl} className="mt-1 block text-3xl font-black tracking-tight text-white transition-colors hover:text-primary-lighter">
+                  {contact}
+                </Link>
+
+                <div className="mt-3 grid grid-cols-1 gap-2">
+                  <Link
+                    href={hotlineUrl}
+                    className="flex h-11 items-center justify-center gap-2 rounded-md bg-primary text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-primary/90"
+                  >
+                    <FaPhoneAlt size={14} />
+                    Gọi ngay
+                  </Link>
+
+                  <Link
+                    href={zaloUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex h-11 items-center justify-center gap-2 rounded-md border border-white/15 bg-white/10 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-white/15"
+                  >
+                    Chat Zalo
+                  </Link>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {supportItems.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <div key={item.title} className="rounded-lg border border-white/10 bg-white/[0.06] p-2 backdrop-blur">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/20 text-primary-lighter">
+                        <Icon size={14} />
+                      </span>
+                      <p className="mt-2 text-sm font-bold leading-5 text-white">{item.title}</p>
+                      <p className="mt-0.5 text-xs leading-5 text-white/55">{item.desc}</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <a
-              href={mailUrl}
-              className="flex h-10 items-center justify-center gap-2 rounded-xl border border-primary/20 px-6 text-xs font-bold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-white"
-            >
-              <FaEnvelope /> Gửi Email
-            </a>
           </motion.div>
 
-          {/* Google Maps Embed - High End UI */}
-          <motion.div
-            variants={itemVariants}
-            className="group relative h-[300px] w-full overflow-hidden rounded-2xl border border-black/5 shadow-inner lg:h-full lg:min-h-[380px]"
-          >
-            <iframe
-              src={ggMapEmbedUrl}
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="7teck Google Map"
-              className="contrast-[1.1] grayscale-[0.2] transition-all duration-700 group-hover:scale-[1.02] group-hover:grayscale-0"
-            ></iframe>
+          <motion.div variants={itemVariants} className="grid min-w-0 grid-cols-1 gap-2 bg-primary-white p-2 xl:grid-cols-[minmax(0,7fr)_minmax(320px,5fr)] xl:p-2">
+            <div className="relative min-h-[340px] overflow-hidden rounded-lg border border-btn-section-border bg-white shadow-sm xl:min-h-[500px]">
+              <iframe
+                src={ggMapEmbedUrl}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="7Teck Google Map"
+                className="absolute inset-0 h-full w-full grayscale-[0.06] transition-all duration-500 hover:grayscale-0"
+              />
 
-            {/* Overlay Map UI */}
-            <div className="pointer-events-none absolute left-4 right-4 top-4">
-              <div className="inline-flex items-center gap-2 rounded-lg border border-black/5 bg-white/90 px-3 py-1.5 shadow-md backdrop-blur-md">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-green-500"></div>
-                <span className="text-[10px] font-bold text-black/70">7TECK ĐANG MỞ CỬA</span>
+              <div className="pointer-events-none absolute left-2 top-2">
+                <div className="inline-flex items-center gap-2 rounded-md border border-btn-section-border bg-white/95 px-3 py-2 shadow-sm backdrop-blur">
+                  <span className="h-2 w-2 rounded-full bg-success" />
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-black">Đang hỗ trợ khách hàng</span>
+                </div>
+              </div>
+
+              <div className="pointer-events-none absolute inset-x-2 bottom-2">
+                <div className="rounded-lg border border-btn-section-border bg-white/95 p-2 shadow-sm backdrop-blur">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-gray-300">Địa chỉ 7Teck</p>
+                  <p className="mt-1 line-clamp-2 text-sm font-bold leading-6 text-black">{address}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid min-w-0 grid-cols-1 gap-2">
+              <div className="rounded-lg border border-btn-section-border bg-white p-2 shadow-sm">
+                <div className="flex items-start gap-2">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-lighter text-primary">
+                    <FaMapMarkerAlt size={18} />
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-gray-300">Thông tin cửa hàng</p>
+                    <p className="mt-1 text-sm font-bold leading-6 text-black">{address}</p>
+                    <p className="mt-1 break-all text-sm leading-6 text-gray-300">{mail}</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 gap-2">
+                  <Link
+                    href={mailUrl}
+                    className="flex h-10 items-center justify-center gap-2 rounded-md border border-btn-section-border bg-primary-white text-sm font-bold text-black transition-colors hover:border-primary/40 hover:bg-primary-lighter hover:text-primary"
+                  >
+                    <FaEnvelope size={14} />
+                    Gửi Email
+                  </Link>
+
+                  <Link
+                    href={hotlineUrl}
+                    className="flex h-10 items-center justify-center gap-2 rounded-md border border-btn-section-border bg-primary-white text-sm font-bold text-black transition-colors hover:border-primary/40 hover:bg-primary-lighter hover:text-primary"
+                  >
+                    <FaPhoneAlt size={14} />
+                    Liên hệ trực tiếp
+                  </Link>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {contactChannels.map((item) => (
+                  <motion.a
+                    key={item.label}
+                    variants={itemVariants}
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`group rounded-lg border p-2 shadow-sm transition-colors ${item.className}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-md bg-white shadow-sm">{item.icon}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wide opacity-70">{item.label}</span>
+                    </div>
+
+                    <p className="mt-3 text-sm font-bold leading-5 text-black group-hover:text-current">{item.title}</p>
+                    <p className="mt-0.5 line-clamp-1 text-xs font-medium leading-5 text-gray-300 group-hover:text-current">{item.desc}</p>
+                  </motion.a>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+                <div className="rounded-lg border border-btn-section-border bg-white p-2 shadow-sm">
+                  <div className="flex items-start gap-2">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary-lighter text-secondary">
+                      <FaClock size={18} />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-gray-300">Giờ làm việc</p>
+                      <p className="mt-1 text-sm font-bold leading-6 text-black">24/7</p>
+                      <p className="text-sm leading-6 text-gray-300">Thứ 2 - Chủ Nhật</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-primary/20 bg-primary p-2 text-white shadow-sm">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-white/60">Ưu tiên hỗ trợ</p>
+                  <p className="mt-1 text-sm font-bold leading-6 text-white">Zalo hoặc gọi trực tiếp</p>
+                  <p className="text-sm leading-6 text-white/70">Phản hồi nhanh hơn khi cần xem máy.</p>
+                </div>
               </div>
             </div>
           </motion.div>

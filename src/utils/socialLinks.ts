@@ -1,4 +1,5 @@
 export const fanpageUrl = 'https://www.facebook.com/7teck.vn';
+export const instagramUrl = 'https://www.instagram.com/7teck.vn';
 export const messengerUrl = 'https://www.messenger.com/t/quocdatstore.vn';
 export const zaloUrl = 'https://zalo.me/0333133050';
 export const hotlineUrl = 'tel:0333133050';
