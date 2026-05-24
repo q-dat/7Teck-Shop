@@ -36,7 +36,7 @@ interface ClientProductFCProps {
 }
 
 const ProductItem = ({ product, baseUrl, onQuickBuy }: { product: Product; baseUrl: string; onQuickBuy: (p: Product, url: string) => void }) => {
-  const productUrl = `/${baseUrl}/${product.catalog_id}`;
+  const productUrl = `/${baseUrl}/${product.slug}/${product._id}`;
 
   return (
     <motion.div
