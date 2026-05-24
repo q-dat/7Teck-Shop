@@ -17,7 +17,7 @@ export interface Product {
   name: string;
   price: number;
   sale: number;
-  image: string;
+  img: string;
   status?: string;
   color: string;
   ram: string;
@@ -46,7 +46,7 @@ const ProductItem = ({ product, baseUrl, onQuickBuy }: { product: Product; baseU
       <div className="relative aspect-square w-full overflow-hidden bg-neutral-50 p-6 transition-colors duration-300 group-hover:bg-neutral-100/50">
         <Link href={productUrl} className="relative block h-full w-full">
           <Image
-            src={product.image}
+            src={product.img}
             alt={product.name}
             fill
             sizes="(max-width: 1280px) 240px, 280px"
@@ -133,7 +133,7 @@ export default function ClientProductFC({ products, category, loading: externalL
       _id: product._id,
       name: product.name,
       slug: product.slug,
-      img: product.image,
+      img: product.img,
       price: product.sale,
       ram: product.ram,
       color: product.color,
