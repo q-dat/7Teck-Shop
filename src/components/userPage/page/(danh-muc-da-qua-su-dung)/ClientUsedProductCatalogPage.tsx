@@ -64,7 +64,7 @@ export default function ClientUsedProductCatalogPage({ data, title }: ClientUsed
   return (
     <div className="my-5 rounded-md bg-white p-2">
       {title && (
-        <h1 className="bg-white/50 text-start text-xl font-bold uppercase text-primary backdrop-blur-md md:text-2xl 2xl:text-3xl">
+        <h1 className="bg-white/50 text-start text-xl font-bold uppercase text-primary backdrop-blur-md md:text-xl py-2">
           {title}
         </h1>
 
@@ -76,13 +76,9 @@ export default function ClientUsedProductCatalogPage({ data, title }: ClientUsed
         </Link>
       </p>
 
-      <div className="grid grid-flow-row grid-cols-2 items-start gap-[10px] py-2 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
+      <div className="grid grid-flow-row grid-cols-2 items-start gap-0 py-2 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
         {loading ? (
           <ProductPlaceholders count={12} />
-        ) : currentItems.length === 0 ? (
-          <p className="col-span-full text-red-500">
-            <i>Hiện chưa có sản phẩm nào trong mục này!</i>
-          </p>
         ) : (
           currentItems.map((product) => {
             const productHref = `/${product.basePath}/${product.slug}/${product._id}`;
@@ -90,7 +86,7 @@ export default function ClientUsedProductCatalogPage({ data, title }: ClientUsed
             return (
               <div
                 key={product._id}
-                className="group flex h-full w-full flex-col justify-between rounded-md border border-primary-lighter bg-white text-black"
+                className="group flex h-full w-full flex-col justify-between rounded-none border border-primary-lighter bg-white text-black"
               >
                 <div className="w-full">
                   <div className="h-[200px] w-full cursor-pointer overflow-hidden rounded-md rounded-b-none bg-white">

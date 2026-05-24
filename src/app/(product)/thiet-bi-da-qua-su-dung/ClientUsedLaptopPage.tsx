@@ -19,7 +19,7 @@ export default function ClientUsedLaptopPage({ macbooks, windows }: ClientUsedLa
         price: macbook.macbook_price,
         status: macbook.macbook_status,
         basePath: 'macbook',
-        namePrefix: 'Macbook',
+        namePrefix: 'Laptop Macbook',
     }));
 
     const windowsData: UsedProduct[] = windows.map((windowProduct) => ({
@@ -30,8 +30,8 @@ export default function ClientUsedLaptopPage({ macbooks, windows }: ClientUsedLa
         price: windowProduct.windows_price,
         status: windowProduct.windows_status,
         basePath: 'windows',
-        namePrefix: 'Laptop',
+        namePrefix: 'Laptop Windows',
     }));
 
-    return <ClientUsedProductCatalogPage data={[...windowsData, ...macbookData]} title="Laptop Windows/Macbook" />;
+    return <ClientUsedProductCatalogPage data={[...windowsData, ...macbookData]} title="Laptop Windows/Macbook - Cũ" />;
 }

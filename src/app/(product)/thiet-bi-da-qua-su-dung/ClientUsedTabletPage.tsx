@@ -34,5 +34,5 @@ export default function ClientUsedTabletPage({ tablets }: { tablets: ITablet[] }
     namePrefix: '',
   }));
 
-  return <ClientUsedProductCatalogPage data={data} title="Máy Tính Bảng - Đã Sử Dụng" />;
+  return <ClientUsedProductCatalogPage data={data} title="Máy Tính Bảng - Cũ" />;
 }

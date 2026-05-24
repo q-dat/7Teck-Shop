@@ -34,5 +34,5 @@ export default function ClientUsedMacbookPage({ macbooks }: { macbooks: IMacbook
     namePrefix: '',
   }));
 
-  return <ClientUsedProductCatalogPage data={data} title="Laptop Macbook - Đã Sử Dụng" />;
+  return <ClientUsedProductCatalogPage data={data} title="Laptop Macbook - Cũ" />;
 }

@@ -34,5 +34,5 @@ export default function ClientUsedWindowsPage({ windows }: { windows: IWindows[]
     namePrefix: '',
   }));
 
-  return <ClientUsedProductCatalogPage data={data} title="Laptop Windows - Đã Sử Dụng" />;
+  return <ClientUsedProductCatalogPage data={data} title="Laptop Windows - Cũ" />;
 }

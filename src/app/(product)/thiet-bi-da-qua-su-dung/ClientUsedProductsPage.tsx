@@ -75,13 +75,18 @@ interface CategorySectionProps {
 const CategorySectionComponent = ({ isOpen, shouldMergeLaptop, phones, tablets, macbooks, windows }: CategorySectionProps) => {
   return (
     <div className={`px-2 transition-all duration-300 xl:px-desktop-padding ${isOpen ? 'ml-20 xl:ml-5' : 'ml-0'}`}>
-      <div id="used-phone">
-        <ClientUsedPhonePage phones={phones} />
-      </div>
-
-      <div id="used-tablet">
-        <ClientUsedTabletPage tablets={tablets} />
-      </div>
+      {
+        phones.length > 0 &&
+        <div id="used-phone">
+          <ClientUsedPhonePage phones={phones} />
+        </div>
+      }
+      {
+        tablets.length > 0 &&
+        <div id="used-tablet">
+          <ClientUsedTabletPage tablets={tablets} />
+        </div>
+      }
 
       {shouldMergeLaptop ? (
         <div id="used-laptop">

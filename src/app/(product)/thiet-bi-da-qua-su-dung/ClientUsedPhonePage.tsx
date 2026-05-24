@@ -34,5 +34,5 @@ export default function ClientUsedPhonePage({ phones }: { phones: IPhone[] }) {
     namePrefix: '',
   }));
 
-  return <ClientUsedProductCatalogPage data={data} title="Điện Thoại - Đã Sử Dụng" />;
+  return <ClientUsedProductCatalogPage data={data} title="Điện Thoại - Cũ" />;
 }
