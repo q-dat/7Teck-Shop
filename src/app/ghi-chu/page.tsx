@@ -111,7 +111,13 @@ type PostedRecord = {
   postedAt: string;
 };
 
-type ModalName = "product" | "schedule" | "global" | "importExport" | "slotDetail" | "";
+type AlbumSource = {
+  title: string;
+  images: ProductImage[];
+  filenamePrefix: string;
+};
+
+type ModalName = "product" | "schedule" | "global" | "importExport" | "slotDetail" | "imageAlbum" | "";
 
 type SlotTimeStatus = "posted" | "next" | "future" | "overdue";
 
@@ -834,6 +840,8 @@ export default function LocalProductsPage() {
   const [isSettingsReady, setIsSettingsReady] = useState<boolean>(false);
   const [activeModal, setActiveModal] = useState<ModalName>("");
   const [selectedSlotId, setSelectedSlotId] = useState<string>("");
+  const [selectedAlbumImageId, setSelectedAlbumImageId] = useState<string>("");
+  const [albumSource, setAlbumSource] = useState<AlbumSource | null>(null);
   const [copiedKey, setCopiedKey] = useState<string>("");
   const [postedRecords, setPostedRecords] = useState<PostedRecord[]>([]);
   const [nowTick, setNowTick] = useState<Date>(new Date());
@@ -892,6 +900,12 @@ export default function LocalProductsPage() {
   const selectedSlot = useMemo(() => {
     return scheduleResult.slots.find((slot) => slot.id === selectedSlotId);
   }, [scheduleResult.slots, selectedSlotId]);
+
+  const selectedAlbumImage = useMemo(() => {
+    if (!albumSource || albumSource.images.length === 0) return null;
+
+    return albumSource.images.find((image) => image.id === selectedAlbumImageId) ?? albumSource.images[0] ?? null;
+  }, [albumSource, selectedAlbumImageId]);
 
   const postedTodayCount = useMemo(() => {
     return todaySlots.filter((slot) => postedIds.has(slot.id)).length;
@@ -978,6 +992,8 @@ export default function LocalProductsPage() {
   const closeModal = (): void => {
     setActiveModal("");
     setSelectedSlotId("");
+    setSelectedAlbumImageId("");
+    setAlbumSource(null);
   };
 
   const appendImagesToDraft = async (files: File[]): Promise<void> => {
@@ -1268,6 +1284,49 @@ export default function LocalProductsPage() {
     Toastify(`Đang tải ${slot.images.length} ảnh`, 200);
   };
 
+  const openImageAlbum = (source: AlbumSource): void => {
+    if (source.images.length === 0) {
+      Toastify("Chưa có ảnh để xem", 300);
+      return;
+    }
+
+    setAlbumSource(source);
+    setSelectedAlbumImageId(source.images[0]?.id ?? "");
+    setActiveModal("imageAlbum");
+  };
+
+  const handleDownloadSelectedAlbumImage = (): void => {
+    if (!albumSource || !selectedAlbumImage) {
+      Toastify("Chưa chọn ảnh để tải", 300);
+      return;
+    }
+
+    const selectedIndex = albumSource.images.findIndex((image) => image.id === selectedAlbumImage.id);
+    const filename = `${safeFilename(albumSource.filenamePrefix)}-${String(selectedIndex + 1).padStart(2, "0")}.webp`;
+
+    downloadDataUrl(selectedAlbumImage.dataUrl, filename);
+    Toastify("Đã tải ảnh đang chọn", 200);
+  };
+
+  const handleDownloadAlbumImages = (): void => {
+    if (!albumSource || albumSource.images.length === 0) {
+      Toastify("Album chưa có ảnh để tải", 300);
+      return;
+    }
+
+    const filenamePrefix = safeFilename(albumSource.filenamePrefix);
+
+    albumSource.images.forEach((image, index) => {
+      const filename = `${filenamePrefix}-${String(index + 1).padStart(2, "0")}.webp`;
+
+      window.setTimeout(() => {
+        downloadDataUrl(image.dataUrl, filename);
+      }, index * 180);
+    });
+
+    Toastify(`Đang tải ${albumSource.images.length} ảnh`, 200);
+  };
+
   const handleDownloadAllImages = (): void => {
     const allImages = products.flatMap((product) =>
       product.images.map((image, index) => ({
@@ -1314,12 +1373,12 @@ export default function LocalProductsPage() {
       const nextRecords = exists
         ? current.filter((record) => record.slotId !== slot.id)
         : [
-            ...current,
-            {
-              slotId: slot.id,
-              postedAt: new Date().toISOString()
-            }
-          ];
+          ...current,
+          {
+            slotId: slot.id,
+            postedAt: new Date().toISOString()
+          }
+        ];
 
       savePostedRecords(nextRecords);
       Toastify(exists ? "Đã hoàn tác trạng thái đăng" : "Đã đánh dấu bài vừa đăng", 200);
@@ -1352,14 +1411,14 @@ export default function LocalProductsPage() {
 
   return (
     <main
-      className="min-h-screen w-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,#1e293b_0,#020617_34%,#020617_100%)] p-2 text-slate-100 xl:p-0"
+      className="min-h-screen w-full overflow-x-hidden bg-[radial-gradient(circle_at_top_left,#1e293b_0,#020617_34%,#020617_100%)] p-2 text-slate-100 xl:p-0"
       onPaste={(event) => {
         void handlePaste(event);
       }}
     >
       <ToastContainer />
 
-      <section className="flex w-screen flex-col gap-2 xl:min-h-screen xl:p-2">
+      <section className="mx-auto flex w-full max-w-[100vw] flex-col gap-2 xl:min-h-screen xl:p-2">
         <header className="rounded-2xl border border-cyan-400/20 bg-slate-950/80 p-2 shadow-2xl shadow-cyan-950/30 backdrop-blur">
           <div className="grid grid-cols-1 gap-2 xl:grid-cols-[1fr_auto] xl:items-center">
             <div className="flex min-w-0 items-center gap-2">
@@ -1424,8 +1483,8 @@ export default function LocalProductsPage() {
           </div>
         </header>
 
-        <section className="grid grid-cols-1 gap-2 xl:grid-cols-[420px_1fr]">
-          <aside className="flex flex-col gap-2">
+        <section className="grid min-w-0 grid-cols-1 gap-2 xl:grid-cols-[420px_minmax(0,1fr)]">
+          <aside className="min-w-0 flex flex-col gap-2">
             <section className="rounded-2xl border border-emerald-400/20 bg-slate-950/70 p-2 shadow-2xl shadow-emerald-950/20 backdrop-blur">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="min-w-0">
@@ -1508,7 +1567,7 @@ export default function LocalProductsPage() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/10 bg-slate-950/50 p-2 shadow-2xl shadow-black/30 backdrop-blur">
+            <section className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/50 p-2 shadow-2xl shadow-black/30 backdrop-blur">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <h2 className="text-sm font-black text-white">Lịch hôm nay</h2>
@@ -1535,24 +1594,22 @@ export default function LocalProductsPage() {
                     return (
                       <article
                         key={slot.id}
-                        className={`relative overflow-hidden rounded-2xl border p-2 transition ${
-                          isPosted
+                        className={`relative overflow-hidden rounded-2xl border p-2 transition ${isPosted
                             ? "border-emerald-400/30 bg-emerald-400/10"
                             : isNext
                               ? "border-cyan-300/50 bg-cyan-300/10"
                               : "border-white/10 bg-slate-950/80"
-                        }`}
+                          }`}
                       >
                         {isOverdue ? <div className="absolute inset-0 z-10 bg-slate-950/55 backdrop-blur-[1px]" /> : null}
 
                         <div className="relative z-20 flex gap-2">
                           <button
                             type="button"
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-sm transition ${
-                              isPosted
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-sm transition ${isPosted
                                 ? "border-emerald-300 bg-emerald-300 text-slate-950"
                                 : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                            }`}
+                              }`}
                             onClick={() => togglePostedSlot(slot)}
                             title="Đánh dấu đã đăng"
                           >
@@ -1627,7 +1684,17 @@ export default function LocalProductsPage() {
                       key={product.id}
                       className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 shadow-xl shadow-black/20 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-slate-900"
                     >
-                      <div className="relative flex aspect-[4/3] items-center justify-center bg-slate-900">
+                      <button
+                        type="button"
+                        className="relative flex aspect-[4/3] w-full items-center justify-center bg-slate-900"
+                        onClick={() =>
+                          openImageAlbum({
+                            title: product.name,
+                            images: product.images,
+                            filenamePrefix: product.name
+                          })
+                        }
+                      >
                         {product.images[0] ? (
                           <img src={product.images[0].dataUrl} alt={product.name} className="h-full w-full object-contain" />
                         ) : (
@@ -1638,7 +1705,7 @@ export default function LocalProductsPage() {
                           <FiImage />
                           {product.images.length}
                         </div>
-                      </div>
+                      </button>
 
                       <div className="flex flex-col gap-2 p-2">
                         <div className="min-w-0">
@@ -1685,10 +1752,16 @@ export default function LocalProductsPage() {
                           <button
                             type="button"
                             className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-2 text-[11px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
-                            onClick={() => handleDownloadProductImages(product)}
+                            onClick={() =>
+                              openImageAlbum({
+                                title: product.name,
+                                images: product.images,
+                                filenamePrefix: product.name
+                              })
+                            }
                           >
-                            <FiDownload />
-                            Ảnh
+                            <FiImage />
+                            Album
                           </button>
                         </div>
 
@@ -1722,8 +1795,8 @@ export default function LocalProductsPage() {
       </section>
 
       {activeModal ? (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 p-2 backdrop-blur">
-          <div className="max-h-[94vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl">
+        <div className="fixed inset-0 z-[99999] flex max-w-[100vw] items-center justify-center overflow-hidden bg-black/70 p-2 backdrop-blur">
+          <div className="max-h-[94vh] w-full max-w-[min(1120px,calc(100vw-1rem))] overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl">
             <div className="flex items-center justify-between gap-2 border-b border-white/10 p-2">
               <div className="flex min-w-0 items-center gap-2">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-200">
@@ -1732,6 +1805,7 @@ export default function LocalProductsPage() {
                   {activeModal === "global" ? <FiFileText /> : null}
                   {activeModal === "importExport" ? <FiArchive /> : null}
                   {activeModal === "slotDetail" ? <FiClipboard /> : null}
+                  {activeModal === "imageAlbum" ? <FiImage /> : null}
                 </div>
 
                 <div className="min-w-0">
@@ -1741,6 +1815,7 @@ export default function LocalProductsPage() {
                     {activeModal === "global" ? "Global Content" : null}
                     {activeModal === "importExport" ? "Import / Export Data" : null}
                     {activeModal === "slotDetail" ? "Chi tiết bài đăng" : null}
+                    {activeModal === "imageAlbum" ? "Album ảnh" : null}
                   </h2>
                   <p className="truncate text-xs text-slate-400">UI modal gọn, thao tác nhanh.</p>
                 </div>
@@ -1812,11 +1887,10 @@ export default function LocalProductsPage() {
 
                   <section className="flex flex-col gap-2">
                     <label
-                      className={`cursor-pointer rounded-2xl border border-dashed p-4 text-center transition ${
-                        isDragging
+                      className={`cursor-pointer rounded-2xl border border-dashed p-4 text-center transition ${isDragging
                           ? "border-cyan-300/80 bg-cyan-300/10"
                           : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
-                      }`}
+                        }`}
                       onDrop={(event) => void handleDrop(event)}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
@@ -1963,11 +2037,10 @@ export default function LocalProductsPage() {
                             <button
                               key={category}
                               type="button"
-                              className={`rounded-2xl border px-3 py-2 text-xs font-black transition ${
-                                active
+                              className={`rounded-2xl border px-3 py-2 text-xs font-black transition ${active
                                   ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
                                   : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                              }`}
+                                }`}
                               onClick={() => toggleScheduleCategory(category)}
                             >
                               {category}
@@ -2098,20 +2171,44 @@ export default function LocalProductsPage() {
               ) : null}
 
               {activeModal === "slotDetail" && selectedSlot ? (
-                <section className="grid grid-cols-1 gap-2 xl:grid-cols-[420px_1fr]">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
+                <section className="grid min-w-0 grid-cols-1 gap-2 xl:grid-cols-[420px_minmax(0,1fr)]">
+                  <div className="min-w-0 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
+                      onClick={() =>
+                        openImageAlbum({
+                          title: selectedSlot.productName,
+                          images: selectedSlot.images,
+                          filenamePrefix: selectedSlot.productName
+                        })
+                      }
+                    >
                       {selectedSlot.image ? (
                         <img src={selectedSlot.image} alt={selectedSlot.productName} className="h-full w-full object-contain" />
                       ) : (
                         <FiImage className="text-4xl text-slate-600" />
                       )}
-                    </div>
+                    </button>
 
                     {selectedSlot.images.length > 1 ? (
                       <div className="grid grid-cols-5 gap-2">
-                        {selectedSlot.images.map((image, index) => (
-                          <img key={image.id} src={image.dataUrl} alt={image.name} className="aspect-square rounded-2xl bg-slate-900 object-contain" title={`Ảnh ${index + 1}`} />
+                        {selectedSlot.images.slice(0, 10).map((image, index) => (
+                          <button
+                            key={image.id}
+                            type="button"
+                            className="aspect-square overflow-hidden rounded-2xl bg-slate-900 ring-1 ring-white/10 transition hover:ring-cyan-300/60"
+                            onClick={() =>
+                              openImageAlbum({
+                                title: selectedSlot.productName,
+                                images: selectedSlot.images,
+                                filenamePrefix: selectedSlot.productName
+                              })
+                            }
+                            title={`Ảnh ${index + 1}`}
+                          >
+                            <img src={image.dataUrl} alt={image.name} className="h-full w-full object-contain" />
+                          </button>
                         ))}
                       </div>
                     ) : null}
@@ -2126,11 +2223,10 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className={`flex items-center justify-center gap-2 rounded-2xl px-3 py-2 text-xs font-black transition ${
-                            postedIds.has(selectedSlot.id)
+                          className={`flex items-center justify-center gap-2 rounded-2xl px-3 py-2 text-xs font-black transition ${postedIds.has(selectedSlot.id)
                               ? "bg-emerald-300 text-slate-950"
                               : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
-                          }`}
+                            }`}
                           onClick={() => togglePostedSlot(selectedSlot)}
                         >
                           {postedIds.has(selectedSlot.id) ? <FiCheckCircle /> : <FiCheck />}
@@ -2186,6 +2282,83 @@ export default function LocalProductsPage() {
                       </button>
                     </div>
                   </div>
+                </section>
+              ) : null}
+
+              {activeModal === "imageAlbum" && albumSource ? (
+                <section className="grid min-w-0 grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_280px]">
+                  <div className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                    <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="truncate text-sm font-black text-white">{albumSource.title}</h3>
+                        <p className="truncate text-xs text-slate-400">
+                          {albumSource.images.length} ảnh · chọn thumbnail để xem và tải đúng ảnh mong muốn
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="shrink-0 rounded-2xl bg-cyan-300 px-3 py-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
+                        onClick={handleDownloadSelectedAlbumImage}
+                      >
+                        Tải ảnh đang chọn
+                      </button>
+                    </div>
+
+                    <div className="flex max-h-[62vh] min-h-[280px] items-center justify-center overflow-hidden rounded-2xl bg-slate-900">
+                      {selectedAlbumImage ? (
+                        <img src={selectedAlbumImage.dataUrl} alt={selectedAlbumImage.name} className="h-full max-h-[62vh] w-full object-contain" />
+                      ) : (
+                        <FiImage className="text-4xl text-slate-600" />
+                      )}
+                    </div>
+                  </div>
+
+                  <aside className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                    <div className="mb-2 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        className="rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
+                        onClick={handleDownloadAlbumImages}
+                      >
+                        Tải tất cả
+                      </button>
+
+                      <button
+                        type="button"
+                        className="rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
+                        onClick={() => {
+                          if (selectedAlbumImage) {
+                            void handleCopyField("album-image-name", "tên ảnh", selectedAlbumImage.name);
+                          }
+                        }}
+                      >
+                        Copy tên ảnh
+                      </button>
+                    </div>
+
+                    <div className="grid max-h-[62vh] grid-cols-3 gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
+                      {albumSource.images.map((image, index) => {
+                        const active = image.id === selectedAlbumImage?.id;
+
+                        return (
+                          <button
+                            key={image.id}
+                            type="button"
+                            className={`group relative aspect-square overflow-hidden rounded-2xl bg-slate-900 ring-1 transition ${active ? "ring-2 ring-cyan-300" : "ring-white/10 hover:ring-cyan-300/60"
+                              }`}
+                            onClick={() => setSelectedAlbumImageId(image.id)}
+                            title={`Ảnh ${index + 1}`}
+                          >
+                            <img src={image.dataUrl} alt={image.name} className="h-full w-full object-contain" />
+                            <span className="absolute left-1 top-1 rounded-xl bg-black/70 px-2 py-1 text-[10px] font-black text-white">
+                              {index + 1}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </aside>
                 </section>
               ) : null}
             </div>
