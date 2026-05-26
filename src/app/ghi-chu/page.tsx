@@ -114,7 +114,6 @@ type PostedRecord = {
 type AlbumSource = {
   title: string;
   images: ProductImage[];
-  filenamePrefix: string;
 };
 
 type ModalName = "product" | "schedule" | "global" | "importExport" | "slotDetail" | "imageAlbum" | "";
@@ -421,25 +420,27 @@ const fileToCompressedDataUrl = async (file: File): Promise<string> => {
     throw new Error("Không thể xử lý ảnh");
   }
 
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, width, height);
   context.drawImage(imageBitmap, 0, 0, width, height);
 
-  return canvas.toDataURL("image/webp", 0.84);
+  return canvas.toDataURL("image/jpeg", 0.92);
 };
 
 const convertFilesToImages = async (files: File[]): Promise<ProductImage[]> => {
   const validFiles = files.filter((file) => file.type.startsWith("image/"));
 
   return Promise.all(
-    validFiles.map(async (file) => {
+    validFiles.map(async (file, index) => {
       const now = new Date().toISOString();
       const dataUrl = await fileToCompressedDataUrl(file);
 
       return {
         id: crypto.randomUUID(),
-        name: file.name || `image-${Date.now()}.webp`,
+        name: createSystemImageFilename(index),
         dataUrl,
         size: file.size,
-        type: "image/webp",
+        type: "image/jpeg",
         createdAt: now
       };
     })
@@ -552,15 +553,43 @@ const buildPostText = (product: LocalProduct, commonDescription: string): string
   return lines.join("\n");
 };
 
-const safeFilename = (value: string): string => {
-  const filename = value
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
+const createSystemImageFilename = (index: number): string => {
+  return `sanpham${index + 1}.jpg`;
+};
 
-  return filename || "product";
+const convertDataUrlToJpeg = async (dataUrl: string): Promise<string> => {
+  if (dataUrl.startsWith("data:image/jpeg")) {
+    return dataUrl;
+  }
+
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+
+      const context = canvas.getContext("2d");
+
+      if (!context) {
+        reject(new Error("Không thể convert ảnh sang JPG"));
+        return;
+      }
+
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0);
+
+      resolve(canvas.toDataURL("image/jpeg", 0.92));
+    };
+
+    image.onerror = () => {
+      reject(new Error("Không thể đọc ảnh"));
+    };
+
+    image.src = dataUrl;
+  });
 };
 
 const downloadDataUrl = (dataUrl: string, filename: string): void => {
@@ -572,6 +601,12 @@ const downloadDataUrl = (dataUrl: string, filename: string): void => {
   document.body.appendChild(link);
   link.click();
   link.remove();
+};
+
+const downloadImageAsJpg = async (dataUrl: string, index: number): Promise<void> => {
+  const jpegDataUrl = await convertDataUrlToJpeg(dataUrl);
+
+  downloadDataUrl(jpegDataUrl, createSystemImageFilename(index));
 };
 
 const downloadBlob = (blob: Blob, filename: string): void => {
@@ -1252,17 +1287,13 @@ export default function LocalProductsPage() {
       return;
     }
 
-    const productName = safeFilename(product.name);
-
     product.images.forEach((image, index) => {
-      const filename = `${productName}-${String(index + 1).padStart(2, "0")}.webp`;
-
       window.setTimeout(() => {
-        downloadDataUrl(image.dataUrl, filename);
+        void downloadImageAsJpg(image.dataUrl, index);
       }, index * 180);
     });
 
-    Toastify(`Đang tải ${product.images.length} ảnh`, 200);
+    Toastify(`Đang tải ${product.images.length} ảnh JPG`, 200);
   };
 
   const handleDownloadSlotImages = (slot: ScheduleSlot): void => {
@@ -1271,17 +1302,13 @@ export default function LocalProductsPage() {
       return;
     }
 
-    const productName = safeFilename(slot.productName);
-
     slot.images.forEach((image, index) => {
-      const filename = `${productName}-${String(index + 1).padStart(2, "0")}.webp`;
-
       window.setTimeout(() => {
-        downloadDataUrl(image.dataUrl, filename);
+        void downloadImageAsJpg(image.dataUrl, index);
       }, index * 180);
     });
 
-    Toastify(`Đang tải ${slot.images.length} ảnh`, 200);
+    Toastify(`Đang tải ${slot.images.length} ảnh JPG`, 200);
   };
 
   const openImageAlbum = (source: AlbumSource): void => {
@@ -1302,10 +1329,10 @@ export default function LocalProductsPage() {
     }
 
     const selectedIndex = albumSource.images.findIndex((image) => image.id === selectedAlbumImage.id);
-    const filename = `${safeFilename(albumSource.filenamePrefix)}-${String(selectedIndex + 1).padStart(2, "0")}.webp`;
+    const safeIndex = selectedIndex >= 0 ? selectedIndex : 0;
 
-    downloadDataUrl(selectedAlbumImage.dataUrl, filename);
-    Toastify("Đã tải ảnh đang chọn", 200);
+    void downloadImageAsJpg(selectedAlbumImage.dataUrl, safeIndex);
+    Toastify("Đang tải ảnh JPG", 200);
   };
 
   const handleDownloadAlbumImages = (): void => {
@@ -1314,43 +1341,30 @@ export default function LocalProductsPage() {
       return;
     }
 
-    const filenamePrefix = safeFilename(albumSource.filenamePrefix);
-
     albumSource.images.forEach((image, index) => {
-      const filename = `${filenamePrefix}-${String(index + 1).padStart(2, "0")}.webp`;
-
       window.setTimeout(() => {
-        downloadDataUrl(image.dataUrl, filename);
+        void downloadImageAsJpg(image.dataUrl, index);
       }, index * 180);
     });
 
-    Toastify(`Đang tải ${albumSource.images.length} ảnh`, 200);
+    Toastify(`Đang tải ${albumSource.images.length} ảnh JPG`, 200);
   };
 
   const handleDownloadAllImages = (): void => {
-    const allImages = products.flatMap((product) =>
-      product.images.map((image, index) => ({
-        productName: product.name,
-        image,
-        index
-      }))
-    );
+    const allImages = products.flatMap((product) => product.images);
 
     if (allImages.length === 0) {
       Toastify("Chưa có ảnh để tải", 300);
       return;
     }
 
-    allImages.forEach((item, globalIndex) => {
-      const productName = safeFilename(item.productName);
-      const filename = `${productName}-${String(item.index + 1).padStart(2, "0")}.webp`;
-
+    allImages.forEach((image, index) => {
       window.setTimeout(() => {
-        downloadDataUrl(item.image.dataUrl, filename);
-      }, globalIndex * 180);
+        void downloadImageAsJpg(image.dataUrl, index);
+      }, index * 180);
     });
 
-    Toastify(`Đang tải ${allImages.length} ảnh`, 200);
+    Toastify(`Đang tải ${allImages.length} ảnh JPG`, 200);
   };
 
   const toggleScheduleCategory = (category: string): void => {
@@ -1595,10 +1609,10 @@ export default function LocalProductsPage() {
                       <article
                         key={slot.id}
                         className={`relative overflow-hidden rounded-2xl border p-2 transition ${isPosted
-                            ? "border-emerald-400/30 bg-emerald-400/10"
-                            : isNext
-                              ? "border-cyan-300/50 bg-cyan-300/10"
-                              : "border-white/10 bg-slate-950/80"
+                          ? "border-emerald-400/30 bg-emerald-400/10"
+                          : isNext
+                            ? "border-cyan-300/50 bg-cyan-300/10"
+                            : "border-white/10 bg-slate-950/80"
                           }`}
                       >
                         {isOverdue ? <div className="absolute inset-0 z-10 bg-slate-950/55 backdrop-blur-[1px]" /> : null}
@@ -1607,8 +1621,8 @@ export default function LocalProductsPage() {
                           <button
                             type="button"
                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-sm transition ${isPosted
-                                ? "border-emerald-300 bg-emerald-300 text-slate-950"
-                                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                              ? "border-emerald-300 bg-emerald-300 text-slate-950"
+                              : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
                               }`}
                             onClick={() => togglePostedSlot(slot)}
                             title="Đánh dấu đã đăng"
@@ -1690,8 +1704,7 @@ export default function LocalProductsPage() {
                         onClick={() =>
                           openImageAlbum({
                             title: product.name,
-                            images: product.images,
-                            filenamePrefix: product.name
+                            images: product.images
                           })
                         }
                       >
@@ -1755,8 +1768,7 @@ export default function LocalProductsPage() {
                             onClick={() =>
                               openImageAlbum({
                                 title: product.name,
-                                images: product.images,
-                                filenamePrefix: product.name
+                                images: product.images
                               })
                             }
                           >
@@ -1888,8 +1900,8 @@ export default function LocalProductsPage() {
                   <section className="flex flex-col gap-2">
                     <label
                       className={`cursor-pointer rounded-2xl border border-dashed p-4 text-center transition ${isDragging
-                          ? "border-cyan-300/80 bg-cyan-300/10"
-                          : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
+                        ? "border-cyan-300/80 bg-cyan-300/10"
+                        : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
                         }`}
                       onDrop={(event) => void handleDrop(event)}
                       onDragOver={handleDragOver}
@@ -1899,7 +1911,7 @@ export default function LocalProductsPage() {
                         <FiUploadCloud />
                         {isProcessingImages ? "Đang xử lý ảnh..." : "Chọn / kéo thả / paste ảnh"}
                       </div>
-                      <div className="mt-2 text-xs leading-5 text-slate-400">Hỗ trợ nhiều ảnh, tự nén WebP.</div>
+                      <div className="mt-2 text-xs leading-5 text-slate-400">Hỗ trợ nhiều ảnh, tự nén JPG.</div>
                       <input type="file" accept="image/*" multiple className="hidden" onChange={(event) => void handleImageInput(event)} />
                     </label>
 
@@ -2038,8 +2050,8 @@ export default function LocalProductsPage() {
                               key={category}
                               type="button"
                               className={`rounded-2xl border px-3 py-2 text-xs font-black transition ${active
-                                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                                ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
                                 }`}
                               onClick={() => toggleScheduleCategory(category)}
                             >
@@ -2091,11 +2103,11 @@ export default function LocalProductsPage() {
 
                     <button
                       type="button"
-                      className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
-                      onClick={() => void handleCopyField("global-desc", "mô tả chung", settings.commonDescription)}
+                      className="flex items-center justify-center gap-2 rounded-2xl border border-fuchsia-300/30 bg-fuchsia-300/10 p-2 text-sm font-black text-fuchsia-100 transition hover:bg-fuchsia-300/20"
+                      onClick={() => void handleCopyField("global-description", "mô tả chung", settings.commonDescription)}
                     >
-                      {renderCopyIcon("global-desc")}
-                      Copy mô tả
+                      {renderCopyIcon("global-description")}
+                      Copy mô tả chung
                     </button>
                   </label>
 
@@ -2105,12 +2117,12 @@ export default function LocalProductsPage() {
                       value={settings.globalNote}
                       onChange={(event) => updateSettingField("globalNote", event.target.value)}
                       className="min-h-56 rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-fuchsia-300/60"
-                      placeholder="Ghi chú riêng, không nằm trong sản phẩm..."
+                      placeholder="Ghi chú ngoài từng bài..."
                     />
 
                     <button
                       type="button"
-                      className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
+                      className="flex items-center justify-center gap-2 rounded-2xl border border-fuchsia-300/30 bg-fuchsia-300/10 p-2 text-sm font-black text-fuchsia-100 transition hover:bg-fuchsia-300/20"
                       onClick={() => void handleCopyField("global-note", "ghi chú global", settings.globalNote)}
                     >
                       {renderCopyIcon("global-note")}
@@ -2122,222 +2134,203 @@ export default function LocalProductsPage() {
 
               {activeModal === "importExport" ? (
                 <section className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                    <h3 className="text-sm font-black text-white">Import JSON</h3>
-                    <p className="mt-2 text-xs leading-5 text-slate-400">
-                      Import sẽ thay toàn bộ dữ liệu hiện tại. File cũ có field status vẫn đọc được, nhưng hệ thống mới sẽ bỏ trạng thái ẩn/hiện.
+                  <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                    <h3 className="text-sm font-black text-white">Export</h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-400">
+                      Tải JSON để backup toàn bộ sản phẩm, ảnh, mô tả chung và ghi chú global.
                     </p>
 
-                    <button
-                      type="button"
-                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
-                      onClick={() => fileImportRef.current?.click()}
-                    >
-                      <FiUploadCloud />
-                      Chọn file JSON
-                    </button>
-
-                    <input ref={fileImportRef} type="file" accept="application/json" className="hidden" onChange={(event) => void handleImportJson(event)} />
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                    <h3 className="text-sm font-black text-white">Export dữ liệu</h3>
-                    <p className="mt-2 text-xs leading-5 text-slate-400">
-                      Export sản phẩm, mô tả chung, ghi chú global hoặc export riêng lịch đăng hiện tại.
-                    </p>
-
-                    <div className="mt-4 grid grid-cols-1 gap-2">
+                    <div className="mt-2 grid grid-cols-1 gap-2">
                       <button
                         type="button"
-                        className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-sm font-bold text-white transition hover:bg-white/10"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
                         onClick={handleExportJson}
                       >
-                        <FiArchive />
-                        Export sản phẩm
+                        <FiDownload />
+                        Export toàn bộ JSON
                       </button>
 
                       <button
                         type="button"
                         className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-sm font-bold text-white transition hover:bg-white/10"
                         onClick={handleExportScheduleJson}
-                        disabled={scheduleResult.slots.length === 0}
                       >
                         <FiCalendar />
                         Export lịch đăng
                       </button>
                     </div>
-                  </div>
+                  </article>
+
+                  <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                    <h3 className="text-sm font-black text-white">Import</h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-400">
+                      Import JSON sẽ thay thế toàn bộ dữ liệu sản phẩm hiện tại trong IndexedDB.
+                    </p>
+
+                    <input ref={fileImportRef} type="file" accept="application/json,.json" className="hidden" onChange={(event) => void handleImportJson(event)} />
+
+                    <button
+                      type="button"
+                      className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-2 text-sm font-black text-amber-100 transition hover:bg-amber-300/20"
+                      onClick={() => fileImportRef.current?.click()}
+                    >
+                      <FiUploadCloud />
+                      Chọn file JSON để import
+                    </button>
+                  </article>
                 </section>
               ) : null}
 
               {activeModal === "slotDetail" && selectedSlot ? (
-                <section className="grid min-w-0 grid-cols-1 gap-2 xl:grid-cols-[420px_minmax(0,1fr)]">
-                  <div className="min-w-0 flex flex-col gap-2">
+                <section className="grid grid-cols-1 gap-2 xl:grid-cols-[360px_1fr]">
+                  <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
                     <button
                       type="button"
-                      className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
+                      className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-900"
                       onClick={() =>
                         openImageAlbum({
                           title: selectedSlot.productName,
-                          images: selectedSlot.images,
-                          filenamePrefix: selectedSlot.productName
+                          images: selectedSlot.images
                         })
                       }
                     >
                       {selectedSlot.image ? (
                         <img src={selectedSlot.image} alt={selectedSlot.productName} className="h-full w-full object-contain" />
                       ) : (
-                        <FiImage className="text-4xl text-slate-600" />
+                        <FiImage className="text-slate-600" />
                       )}
                     </button>
 
                     {selectedSlot.images.length > 1 ? (
-                      <div className="grid grid-cols-5 gap-2">
+                      <div className="mt-2 grid grid-cols-5 gap-2">
                         {selectedSlot.images.slice(0, 10).map((image, index) => (
                           <button
                             key={image.id}
                             type="button"
-                            className="aspect-square overflow-hidden rounded-2xl bg-slate-900 ring-1 ring-white/10 transition hover:ring-cyan-300/60"
+                            className="aspect-square overflow-hidden rounded-xl bg-slate-900 ring-1 ring-white/10 transition hover:ring-cyan-300"
                             onClick={() =>
                               openImageAlbum({
                                 title: selectedSlot.productName,
-                                images: selectedSlot.images,
-                                filenamePrefix: selectedSlot.productName
+                                images: selectedSlot.images
                               })
                             }
-                            title={`Ảnh ${index + 1}`}
                           >
                             <img src={image.dataUrl} alt={image.name} className="h-full w-full object-contain" />
                           </button>
                         ))}
                       </div>
                     ) : null}
-                  </div>
 
-                  <div className="flex flex-col gap-2">
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="rounded-2xl bg-cyan-300 px-3 py-1 text-xs font-black text-slate-950">
-                          {selectedSlot.date} · {selectedSlot.time}
-                        </span>
-
-                        <button
-                          type="button"
-                          className={`flex items-center justify-center gap-2 rounded-2xl px-3 py-2 text-xs font-black transition ${postedIds.has(selectedSlot.id)
-                              ? "bg-emerald-300 text-slate-950"
-                              : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
-                            }`}
-                          onClick={() => togglePostedSlot(selectedSlot)}
-                        >
-                          {postedIds.has(selectedSlot.id) ? <FiCheckCircle /> : <FiCheck />}
-                          {postedIds.has(selectedSlot.id) ? "Đã đăng" : "Đánh dấu đã đăng"}
-                        </button>
-                      </div>
-
-                      <h3 className="mt-3 text-xl font-black text-white">{selectedSlot.productName}</h3>
-                      <p className="mt-2 text-sm text-slate-400">{selectedSlot.category || "Chưa có danh mục"}</p>
-                      <p className="mt-1 text-lg font-black text-cyan-200">{selectedSlot.priceText || "Chưa có giá"}</p>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                      <h4 className="text-sm font-black text-white">Mô tả chính</h4>
-                      <p className="mt-2 whitespace-pre-line rounded-2xl bg-white/[0.03] p-2 text-sm leading-6 text-slate-300">
-                        {selectedSlot.description || "Chưa có mô tả"}
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                      <h4 className="text-sm font-black text-white">Bài đăng đầy đủ</h4>
-                      <p className="mt-2 whitespace-pre-line rounded-2xl bg-white/[0.03] p-2 text-sm leading-6 text-slate-300">
-                        {selectedSlot.postText || "Chưa có nội dung bài đăng"}
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
+                    <div className="mt-2 grid grid-cols-2 gap-2">
                       <button
                         type="button"
-                        className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-sm font-bold text-white transition hover:bg-white/10"
-                        onClick={() => void handleCopyField(`slot-desc-${selectedSlot.id}`, "mô tả", selectedSlot.description)}
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-300 p-2 text-xs font-black text-slate-950 transition hover:bg-emerald-200"
+                        onClick={() => togglePostedSlot(selectedSlot)}
                       >
-                        {renderCopyIcon(`slot-desc-${selectedSlot.id}`)}
-                        Copy mô tả
+                        <FiCheck />
+                        Đã đăng
                       </button>
 
                       <button
                         type="button"
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
-                        onClick={() => void handleCopyField(`slot-post-${selectedSlot.id}`, "bài đăng", selectedSlot.postText)}
-                      >
-                        {renderCopyIcon(`slot-post-${selectedSlot.id}`)}
-                        Copy bài
-                      </button>
-
-                      <button
-                        type="button"
-                        className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-sm font-bold text-white transition hover:bg-white/10"
+                        className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
                         onClick={() => handleDownloadSlotImages(selectedSlot)}
                       >
                         <FiDownload />
                         Tải ảnh
                       </button>
                     </div>
-                  </div>
+                  </article>
+
+                  <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="rounded-2xl bg-cyan-300 px-3 py-1 text-xs font-black text-slate-950">{selectedSlot.time}</div>
+                        <h3 className="mt-2 text-base font-black text-white">{selectedSlot.productName}</h3>
+                        <p className="mt-1 text-xs text-slate-400">{selectedSlot.category || "Chưa có danh mục"}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
+                        onClick={() => void handleCopyField(`slot-name-${selectedSlot.id}`, "tên sản phẩm", selectedSlot.productName)}
+                      >
+                        {renderCopyIcon(`slot-name-${selectedSlot.id}`)}
+                        Copy tên
+                      </button>
+
+                      <button
+                        type="button"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
+                        onClick={() => void handleCopyField(`slot-post-${selectedSlot.id}`, "bài đăng", selectedSlot.postText)}
+                      >
+                        {renderCopyIcon(`slot-post-${selectedSlot.id}`)}
+                        Copy bài
+                      </button>
+                    </div>
+
+                    <pre className="mt-2 max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-2xl border border-white/10 bg-black/30 p-2 text-xs leading-6 text-slate-200">
+                      {selectedSlot.postText}
+                    </pre>
+                  </article>
                 </section>
               ) : null}
 
               {activeModal === "imageAlbum" && albumSource ? (
-                <section className="grid min-w-0 grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_280px]">
-                  <div className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                <section className="grid min-w-0 grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_260px]">
+                  <article className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/70 p-2">
                     <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
                       <div className="min-w-0">
                         <h3 className="truncate text-sm font-black text-white">{albumSource.title}</h3>
-                        <p className="truncate text-xs text-slate-400">
-                          {albumSource.images.length} ảnh · chọn thumbnail để xem và tải đúng ảnh mong muốn
-                        </p>
+                        <p className="text-xs text-slate-400">{albumSource.images.length} ảnh trong album</p>
                       </div>
 
-                      <button
-                        type="button"
-                        className="shrink-0 rounded-2xl bg-cyan-300 px-3 py-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
-                        onClick={handleDownloadSelectedAlbumImage}
-                      >
-                        Tải ảnh đang chọn
-                      </button>
+                      <div className="flex shrink-0 gap-2">
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 px-3 py-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
+                          onClick={handleDownloadSelectedAlbumImage}
+                        >
+                          <FiDownload />
+                          Tải ảnh này
+                        </button>
+
+                        <button
+                          type="button"
+                          className="hidden items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10 xl:flex"
+                          onClick={handleDownloadAlbumImages}
+                        >
+                          <FiArchive />
+                          Tải album
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="flex max-h-[62vh] min-h-[280px] items-center justify-center overflow-hidden rounded-2xl bg-slate-900">
+                    <div className="flex h-[58vh] max-h-[58vh] min-h-[260px] items-center justify-center overflow-hidden rounded-2xl bg-slate-900">
                       {selectedAlbumImage ? (
-                        <img src={selectedAlbumImage.dataUrl} alt={selectedAlbumImage.name} className="h-full max-h-[62vh] w-full object-contain" />
+                        <img src={selectedAlbumImage.dataUrl} alt={selectedAlbumImage.name} className="h-full w-full object-contain" />
                       ) : (
-                        <FiImage className="text-4xl text-slate-600" />
+                        <FiImage className="text-slate-600" />
                       )}
                     </div>
-                  </div>
+                  </article>
 
                   <aside className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                    <div className="mb-2 grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        className="rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
-                        onClick={handleDownloadAlbumImages}
-                      >
-                        Tải tất cả
-                      </button>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-black text-white">Thumbnail</h3>
 
                       <button
                         type="button"
-                        className="rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
-                        onClick={() => {
-                          if (selectedAlbumImage) {
-                            void handleCopyField("album-image-name", "tên ảnh", selectedAlbumImage.name);
-                          }
-                        }}
+                        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10 xl:hidden"
+                        onClick={handleDownloadAlbumImages}
                       >
-                        Copy tên ảnh
+                        Tải album
                       </button>
                     </div>
 
-                    <div className="grid max-h-[62vh] grid-cols-3 gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
+                    <div className="grid max-h-[58vh] grid-cols-4 gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
                       {albumSource.images.map((image, index) => {
                         const active = image.id === selectedAlbumImage?.id;
 
