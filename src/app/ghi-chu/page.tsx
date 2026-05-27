@@ -7,7 +7,7 @@ import {
   type ChangeEvent,
   type ClipboardEvent,
   type DragEvent,
-  type FormEvent
+  type FormEvent,
 } from "react";
 import {
   FiArchive,
@@ -24,10 +24,9 @@ import {
   FiPlus,
   FiRefreshCcw,
   FiSearch,
-  FiSettings,
   FiTrash2,
   FiUploadCloud,
-  FiX
+  FiX,
 } from "react-icons/fi";
 import { toast, ToastContainer, type ToastOptions } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -97,7 +96,12 @@ type ScheduleSlot = {
 };
 
 type ScheduleWarning = {
-  type: "emptyProducts" | "emptyCategory" | "notEnoughProducts" | "overflow" | "invalidTime";
+  type:
+    | "emptyProducts"
+    | "emptyCategory"
+    | "notEnoughProducts"
+    | "overflow"
+    | "invalidTime";
   message: string;
 };
 
@@ -116,7 +120,26 @@ type AlbumSource = {
   images: ProductImage[];
 };
 
-type ModalName = "product" | "schedule" | "global" | "importExport" | "slotDetail" | "imageAlbum" | "";
+type ModalName =
+  | "product"
+  | "schedule"
+  | "global"
+  | "importExport"
+  | "slotDetail"
+  | "imageAlbum"
+  | "";
+
+type CategoryTab = "all" | string;
+
+type DownloadMode = "single" | "multiple";
+
+type DownloadRequest = {
+  title: string;
+  description: string;
+  mode: DownloadMode;
+  images: ProductImage[];
+  startIndex: number;
+};
 
 type SlotTimeStatus = "posted" | "next" | "future" | "overdue";
 
@@ -125,19 +148,20 @@ const DB_VERSION = 1;
 const STORE_NAME = "products";
 const SETTINGS_KEY = "local_product_global_settings";
 const POSTED_KEY = "local_product_posted_slots_v1";
+const SCHEDULE_CONFIG_KEY = "local_product_schedule_config_v1";
 
 const emptyDraft: ProductDraft = {
   name: "",
   description: "",
   priceText: "",
   category: "",
-  images: []
+  images: [],
 };
 
 const defaultSettings: GlobalSettings = {
   commonDescription: "",
   globalNote: "",
-  updatedAt: ""
+  updatedAt: "",
 };
 
 const defaultScheduleConfig: ScheduleConfig = {
@@ -146,10 +170,13 @@ const defaultScheduleConfig: ScheduleConfig = {
   startTime: "08:00",
   endTime: "22:00",
   gapHours: 3,
-  selectedCategories: []
+  selectedCategories: [],
 };
 
-const Toastify = (message: string | Record<string, string>, statusCode: number): void => {
+const Toastify = (
+  message: string | Record<string, string>,
+  statusCode: number,
+): void => {
   const toastOptions: ToastOptions = {
     position: "top-right",
     autoClose: 2000,
@@ -161,8 +188,8 @@ const Toastify = (message: string | Record<string, string>, statusCode: number):
     theme: "light",
     style: {
       zIndex: 999999,
-      marginTop: "0"
-    }
+      marginTop: "0",
+    },
   };
 
   const showToast = (text: string): void => {
@@ -202,6 +229,14 @@ const getCurrentTimeString = (): string => {
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 };
 
+const createPostedKey = (date: string, productId: string): string => {
+  return `${date}::${productId}`;
+};
+
+const createSlotPostedKey = (slot: ScheduleSlot): string => {
+  return createPostedKey(slot.date, slot.productId);
+};
+
 const openDatabase = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -219,7 +254,7 @@ const openDatabase = (): Promise<IDBDatabase> => {
 
       if (!database.objectStoreNames.contains(STORE_NAME)) {
         database.createObjectStore(STORE_NAME, {
-          keyPath: "id"
+          keyPath: "id",
         });
       }
     };
@@ -332,9 +367,13 @@ const loadGlobalSettings = (): GlobalSettings => {
     const record = parsed as Record<string, unknown>;
 
     return {
-      commonDescription: typeof record.commonDescription === "string" ? record.commonDescription : "",
-      globalNote: typeof record.globalNote === "string" ? record.globalNote : "",
-      updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : ""
+      commonDescription:
+        typeof record.commonDescription === "string"
+          ? record.commonDescription
+          : "",
+      globalNote:
+        typeof record.globalNote === "string" ? record.globalNote : "",
+      updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : "",
     };
   } catch {
     return defaultSettings;
@@ -364,7 +403,9 @@ const loadPostedRecords = (): PostedRecord[] => {
 
       const record = item as Record<string, unknown>;
 
-      return typeof record.slotId === "string" && typeof record.postedAt === "string";
+      return (
+        typeof record.slotId === "string" && typeof record.postedAt === "string"
+      );
     });
   } catch {
     return [];
@@ -375,6 +416,83 @@ const savePostedRecords = (records: PostedRecord[]): void => {
   if (typeof window === "undefined") return;
 
   localStorage.setItem(POSTED_KEY, JSON.stringify(records));
+};
+
+const loadScheduleConfig = (): ScheduleConfig => {
+  const today = getTodayString();
+
+  if (typeof window === "undefined") {
+    return {
+      ...defaultScheduleConfig,
+      dateFrom: today,
+      dateTo: today,
+    };
+  }
+
+  const raw = localStorage.getItem(SCHEDULE_CONFIG_KEY);
+
+  if (!raw) {
+    return {
+      ...defaultScheduleConfig,
+      dateFrom: today,
+      dateTo: today,
+    };
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+
+    if (typeof parsed !== "object" || parsed === null) {
+      return {
+        ...defaultScheduleConfig,
+        dateFrom: today,
+        dateTo: today,
+      };
+    }
+
+    const record = parsed as Record<string, unknown>;
+    const selectedCategories = Array.isArray(record.selectedCategories)
+      ? record.selectedCategories.filter(
+          (item): item is string => typeof item === "string",
+        )
+      : [];
+
+    return {
+      dateFrom:
+        typeof record.dateFrom === "string" && record.dateFrom
+          ? record.dateFrom
+          : today,
+      dateTo:
+        typeof record.dateTo === "string" && record.dateTo
+          ? record.dateTo
+          : today,
+      startTime:
+        typeof record.startTime === "string" && record.startTime
+          ? record.startTime
+          : defaultScheduleConfig.startTime,
+      endTime:
+        typeof record.endTime === "string" && record.endTime
+          ? record.endTime
+          : defaultScheduleConfig.endTime,
+      gapHours:
+        typeof record.gapHours === "number" && Number.isFinite(record.gapHours)
+          ? record.gapHours
+          : defaultScheduleConfig.gapHours,
+      selectedCategories,
+    };
+  } catch {
+    return {
+      ...defaultScheduleConfig,
+      dateFrom: today,
+      dateTo: today,
+    };
+  }
+};
+
+const saveScheduleConfig = (config: ScheduleConfig): void => {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem(SCHEDULE_CONFIG_KEY, JSON.stringify(config));
 };
 
 const parsePriceNumber = (priceText: string): number => {
@@ -441,9 +559,9 @@ const convertFilesToImages = async (files: File[]): Promise<ProductImage[]> => {
         dataUrl,
         size: file.size,
         type: "image/jpeg",
-        createdAt: now
+        createdAt: now,
       };
-    })
+    }),
   );
 };
 
@@ -474,30 +592,45 @@ const normalizeProduct = (value: unknown): LocalProduct | null => {
   if (typeof record.id !== "string") return null;
   if (typeof record.name !== "string") return null;
 
-  const priceText = typeof record.priceText === "string" ? record.priceText : "";
-  const description = typeof record.description === "string" ? record.description : "";
+  const priceText =
+    typeof record.priceText === "string" ? record.priceText : "";
+  const description =
+    typeof record.description === "string" ? record.description : "";
   const category = typeof record.category === "string" ? record.category : "";
 
   return {
     id: record.id,
     name: record.name,
     description,
-    price: typeof record.price === "number" ? record.price : parsePriceNumber(priceText),
+    price:
+      typeof record.price === "number"
+        ? record.price
+        : parsePriceNumber(priceText),
     priceText,
     category,
     images: normalizeImages(record.images),
-    createdAt: typeof record.createdAt === "string" ? record.createdAt : new Date().toISOString(),
-    updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : new Date().toISOString()
+    createdAt:
+      typeof record.createdAt === "string"
+        ? record.createdAt
+        : new Date().toISOString(),
+    updatedAt:
+      typeof record.updatedAt === "string"
+        ? record.updatedAt
+        : new Date().toISOString(),
   };
 };
 
 const normalizeProductsArray = (value: unknown): LocalProduct[] => {
   if (!Array.isArray(value)) return [];
 
-  return value.map((item) => normalizeProduct(item)).filter((item): item is LocalProduct => item !== null);
+  return value
+    .map((item) => normalizeProduct(item))
+    .filter((item): item is LocalProduct => item !== null);
 };
 
-const parseImportPayload = (value: unknown): {
+const parseImportPayload = (
+  value: unknown,
+): {
   settings?: GlobalSettings;
   products: LocalProduct[];
 } | null => {
@@ -505,7 +638,7 @@ const parseImportPayload = (value: unknown): {
     const products = normalizeProductsArray(value);
 
     return {
-      products
+      products,
     };
   }
 
@@ -520,7 +653,7 @@ const parseImportPayload = (value: unknown): {
 
   if (typeof settingsRecord !== "object" || settingsRecord === null) {
     return {
-      products
+      products,
     };
   }
 
@@ -528,11 +661,20 @@ const parseImportPayload = (value: unknown): {
 
   return {
     settings: {
-      commonDescription: typeof settingsSource.commonDescription === "string" ? settingsSource.commonDescription : "",
-      globalNote: typeof settingsSource.globalNote === "string" ? settingsSource.globalNote : "",
-      updatedAt: typeof settingsSource.updatedAt === "string" ? settingsSource.updatedAt : ""
+      commonDescription:
+        typeof settingsSource.commonDescription === "string"
+          ? settingsSource.commonDescription
+          : "",
+      globalNote:
+        typeof settingsSource.globalNote === "string"
+          ? settingsSource.globalNote
+          : "",
+      updatedAt:
+        typeof settingsSource.updatedAt === "string"
+          ? settingsSource.updatedAt
+          : "",
     },
-    products
+    products,
   };
 };
 
@@ -540,14 +682,17 @@ const copyText = async (value: string): Promise<void> => {
   await navigator.clipboard.writeText(value);
 };
 
-const buildPostText = (product: LocalProduct, commonDescription: string): string => {
+const buildPostText = (
+  product: LocalProduct,
+  commonDescription: string,
+): string => {
   const description = product.description.trim() || commonDescription.trim();
 
   const lines = [
     product.name,
     product.priceText ? `Giá: ${product.priceText}` : "",
     product.category ? `Danh mục: ${product.category}` : "",
-    description
+    description,
   ].filter(Boolean);
 
   return lines.join("\n");
@@ -592,6 +737,42 @@ const convertDataUrlToJpeg = async (dataUrl: string): Promise<string> => {
   });
 };
 
+const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
+  const response = await fetch(dataUrl);
+
+  return response.blob();
+};
+
+const copyImageDataUrlAsBlob = async (dataUrl: string): Promise<void> => {
+  const jpegDataUrl = await convertDataUrlToJpeg(dataUrl);
+  const blob = await dataUrlToBlob(jpegDataUrl);
+
+  await navigator.clipboard.write([
+    new ClipboardItem({
+      [blob.type]: blob,
+    }),
+  ]);
+};
+
+const copyImagesDataUrlAsBlob = async (
+  images: ProductImage[],
+): Promise<void> => {
+  if (images.length === 0) return;
+
+  const items = await Promise.all(
+    images.map(async (image) => {
+      const jpegDataUrl = await convertDataUrlToJpeg(image.dataUrl);
+      const blob = await dataUrlToBlob(jpegDataUrl);
+
+      return new ClipboardItem({
+        [blob.type]: blob,
+      });
+    }),
+  );
+
+  await navigator.clipboard.write(items);
+};
+
 const downloadDataUrl = (dataUrl: string, filename: string): void => {
   const link = document.createElement("a");
 
@@ -603,7 +784,10 @@ const downloadDataUrl = (dataUrl: string, filename: string): void => {
   link.remove();
 };
 
-const downloadImageAsJpg = async (dataUrl: string, index: number): Promise<void> => {
+const downloadImageAsJpg = async (
+  dataUrl: string,
+  index: number,
+): Promise<void> => {
   const jpegDataUrl = await convertDataUrlToJpeg(dataUrl);
 
   downloadDataUrl(jpegDataUrl, createSystemImageFilename(index));
@@ -659,7 +843,7 @@ const getDatesBetween = (dateFrom: string, dateTo: string): string[] => {
 const createDailyTimes = (
   startTime: string,
   endTime: string,
-  gapHours: number
+  gapHours: number,
 ): {
   times: string[];
   warning?: string;
@@ -671,7 +855,7 @@ const createDailyTimes = (
   if (start > end) {
     return {
       times: [],
-      warning: "Mốc đầu đang lớn hơn mốc cuối. Vui lòng chọn lại khung giờ."
+      warning: "Mốc đầu đang lớn hơn mốc cuối. Vui lòng chọn lại khung giờ.",
     };
   }
 
@@ -688,12 +872,12 @@ const createDailyTimes = (
 
   const warning =
     cursor > end && lastValid && toMinutes(lastValid) !== end
-      ? `Khung giờ không chia đều. Mốc cuối phù hợp gần nhất là ${lastValid}. Nếu muốn thêm một bài nữa, cần kéo mốc cuối đến ${nextTime}.`
+      ? `Thông báo giờ: khung giờ hiện tại không chia đều. Mốc gần nhất theo khoảng cách đang chọn là ${lastValid}; mốc kế tiếp sẽ là ${nextTime}.`
       : undefined;
 
   return {
     times,
-    warning
+    warning,
   };
 };
 
@@ -714,30 +898,23 @@ const shuffleProducts = <T,>(items: T[]): T[] => {
 const buildRandomSchedule = (
   products: LocalProduct[],
   config: ScheduleConfig,
-  commonDescription: string
+  commonDescription: string,
 ): BuildScheduleResult => {
   if (products.length === 0) {
     return {
       slots: [],
-      warnings: []
+      warnings: [],
     };
   }
 
   const warnings: ScheduleWarning[] = [];
 
-  if (config.selectedCategories.length === 0) {
-    return {
-      slots: [],
-      warnings: [
-        {
-          type: "emptyCategory",
-          message: "Chưa chọn danh mục để chia lịch."
-        }
-      ]
-    };
-  }
-
-  const usableProducts = products.filter((product) => config.selectedCategories.includes(product.category));
+  const usableProducts =
+    config.selectedCategories.length === 0
+      ? products
+      : products.filter((product) =>
+          config.selectedCategories.includes(product.category),
+        );
 
   if (usableProducts.length === 0) {
     return {
@@ -745,9 +922,9 @@ const buildRandomSchedule = (
       warnings: [
         {
           type: "emptyCategory",
-          message: "Không có sản phẩm thuộc danh mục đang chọn."
-        }
-      ]
+          message: "Không có sản phẩm phù hợp để chia lịch.",
+        },
+      ],
     };
   }
 
@@ -759,18 +936,22 @@ const buildRandomSchedule = (
       warnings: [
         {
           type: "invalidTime",
-          message: "Khoảng ngày chưa hợp lệ."
-        }
-      ]
+          message: "Khoảng ngày chưa hợp lệ.",
+        },
+      ],
     };
   }
 
-  const dailyTimeResult = createDailyTimes(config.startTime, config.endTime, config.gapHours);
+  const dailyTimeResult = createDailyTimes(
+    config.startTime,
+    config.endTime,
+    config.gapHours,
+  );
 
   if (dailyTimeResult.warning) {
     warnings.push({
       type: "overflow",
-      message: dailyTimeResult.warning
+      message: dailyTimeResult.warning,
     });
   }
 
@@ -779,7 +960,7 @@ const buildRandomSchedule = (
   if (usableProducts.length < times.length) {
     warnings.push({
       type: "notEnoughProducts",
-      message: `Mỗi ngày có ${times.length} mốc đăng nhưng chỉ có ${usableProducts.length} sản phẩm khả dụng.`
+      message: `Mỗi ngày có ${times.length} mốc đăng nhưng chỉ có ${usableProducts.length} sản phẩm khả dụng.`,
     });
   }
 
@@ -795,20 +976,24 @@ const buildRandomSchedule = (
 
       let candidate = dailyPool.find((product) => {
         const duplicatedToday = dailyUsedProductIds.has(product.id);
-        const duplicatedWithPreviousDay = isFirstSlotOfDay && previousDayLastTwoProductIds.includes(product.id);
+        const duplicatedWithPreviousDay =
+          isFirstSlotOfDay && previousDayLastTwoProductIds.includes(product.id);
 
         return !duplicatedToday && !duplicatedWithPreviousDay;
       });
 
       if (!candidate) {
-        candidate = dailyPool.find((product) => !dailyUsedProductIds.has(product.id));
+        candidate = dailyPool.find(
+          (product) => !dailyUsedProductIds.has(product.id),
+        );
       }
 
       if (!candidate) {
         break;
       }
 
-      const description = candidate.description.trim() || commonDescription.trim();
+      const description =
+        candidate.description.trim() || commonDescription.trim();
       const postText = buildPostText(candidate, commonDescription);
 
       dailyUsedProductIds.add(candidate.id);
@@ -824,20 +1009,22 @@ const buildRandomSchedule = (
         images: candidate.images,
         priceText: candidate.priceText,
         description,
-        postText
+        postText,
       });
 
       dailyPool = dailyPool.filter((product) => product.id !== candidate.id);
     }
 
-    const currentDayProductIds = slots.filter((slot) => slot.date === date).map((slot) => slot.productId);
+    const currentDayProductIds = slots
+      .filter((slot) => slot.date === date)
+      .map((slot) => slot.productId);
 
     previousDayLastTwoProductIds = currentDayProductIds.slice(-2);
   }
 
   return {
     slots,
-    warnings
+    warnings,
   };
 };
 
@@ -846,12 +1033,13 @@ const getSlotStatus = (
   today: string,
   currentTime: string,
   postedIds: Set<string>,
-  nextSlotId: string
+  nextSlotId: string,
 ): SlotTimeStatus => {
-  if (postedIds.has(slot.id)) return "posted";
+  if (postedIds.has(createSlotPostedKey(slot))) return "posted";
   if (slot.id === nextSlotId) return "next";
   if (slot.date < today) return "overdue";
-  if (slot.date === today && toMinutes(slot.time) < toMinutes(currentTime)) return "overdue";
+  if (slot.date === today && toMinutes(slot.time) < toMinutes(currentTime))
+    return "overdue";
 
   return "future";
 };
@@ -870,6 +1058,10 @@ export default function LocalProductsPage() {
   const [settings, setSettings] = useState<GlobalSettings>(defaultSettings);
   const [editingId, setEditingId] = useState<string>("");
   const [query, setQuery] = useState<string>("");
+  const [activeCategoryTab, setActiveCategoryTab] =
+    useState<CategoryTab>("all");
+  const [pendingDownload, setPendingDownload] =
+    useState<DownloadRequest | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isProcessingImages, setIsProcessingImages] = useState<boolean>(false);
   const [isSettingsReady, setIsSettingsReady] = useState<boolean>(false);
@@ -880,40 +1072,48 @@ export default function LocalProductsPage() {
   const [copiedKey, setCopiedKey] = useState<string>("");
   const [postedRecords, setPostedRecords] = useState<PostedRecord[]>([]);
   const [nowTick, setNowTick] = useState<Date>(new Date());
-  const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>(() => {
-    const today = getTodayString();
-
-    return {
-      ...defaultScheduleConfig,
-      dateFrom: today,
-      dateTo: today
-    };
-  });
+  const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>(() =>
+    loadScheduleConfig(),
+  );
 
   const today = useMemo(() => nowTick.toISOString().slice(0, 10), [nowTick]);
   const currentTime = useMemo(() => getCurrentTimeString(), [nowTick]);
 
   const categories = useMemo(() => {
-    return Array.from(new Set(products.map((product) => product.category.trim()).filter(Boolean)));
+    return Array.from(
+      new Set(
+        products.map((product) => product.category.trim()).filter(Boolean),
+      ),
+    );
   }, [products]);
 
   const filteredProducts = useMemo(() => {
     const keyword = query.trim().toLowerCase();
 
-    if (!keyword) return products;
-
     return products.filter((product) => {
-      const content = `${product.name} ${product.description} ${product.priceText} ${product.category}`.toLowerCase();
-      return content.includes(keyword);
+      const matchesCategory =
+        activeCategoryTab === "all" || product.category === activeCategoryTab;
+      const content =
+        `${product.name} ${product.description} ${product.priceText} ${product.category}`.toLowerCase();
+      const matchesKeyword = !keyword || content.includes(keyword);
+
+      return matchesCategory && matchesKeyword;
     });
-  }, [products, query]);
+  }, [activeCategoryTab, products, query]);
 
   const totalImages = useMemo(() => {
-    return products.reduce((total, product) => total + product.images.length, 0);
+    return products.reduce(
+      (total, product) => total + product.images.length,
+      0,
+    );
   }, [products]);
 
   const scheduleResult = useMemo(() => {
-    return buildRandomSchedule(products, scheduleConfig, settings.commonDescription);
+    return buildRandomSchedule(
+      products,
+      scheduleConfig,
+      settings.commonDescription,
+    );
   }, [products, scheduleConfig, settings.commonDescription]);
 
   const todaySlots = useMemo(() => {
@@ -925,11 +1125,19 @@ export default function LocalProductsPage() {
   }, [postedRecords]);
 
   const nextSlot = useMemo(() => {
-    return todaySlots.find((slot) => !postedIds.has(slot.id) && toMinutes(slot.time) >= toMinutes(currentTime));
+    return todaySlots.find(
+      (slot) =>
+        !postedIds.has(createSlotPostedKey(slot)) &&
+        toMinutes(slot.time) >= toMinutes(currentTime),
+    );
   }, [todaySlots, postedIds, currentTime]);
 
   const overdueSlots = useMemo(() => {
-    return todaySlots.filter((slot) => !postedIds.has(slot.id) && toMinutes(slot.time) < toMinutes(currentTime));
+    return todaySlots.filter(
+      (slot) =>
+        !postedIds.has(createSlotPostedKey(slot)) &&
+        toMinutes(slot.time) < toMinutes(currentTime),
+    );
   }, [todaySlots, postedIds, currentTime]);
 
   const selectedSlot = useMemo(() => {
@@ -939,20 +1147,50 @@ export default function LocalProductsPage() {
   const selectedAlbumImage = useMemo(() => {
     if (!albumSource || albumSource.images.length === 0) return null;
 
-    return albumSource.images.find((image) => image.id === selectedAlbumImageId) ?? albumSource.images[0] ?? null;
+    return (
+      albumSource.images.find((image) => image.id === selectedAlbumImageId) ??
+      albumSource.images[0] ??
+      null
+    );
   }, [albumSource, selectedAlbumImageId]);
 
+  const scheduleProducts = useMemo(() => {
+    if (scheduleConfig.selectedCategories.length === 0) return products;
+
+    return products.filter((product) =>
+      scheduleConfig.selectedCategories.includes(product.category),
+    );
+  }, [products, scheduleConfig.selectedCategories]);
+
+  const todayPostedProductIds = useMemo(() => {
+    return new Set(
+      postedRecords
+        .map((record) => record.slotId)
+        .filter((slotId) => slotId.startsWith(`${today}::`))
+        .map((slotId) => slotId.replace(`${today}::`, "")),
+    );
+  }, [postedRecords, today]);
+
   const postedTodayCount = useMemo(() => {
-    return todaySlots.filter((slot) => postedIds.has(slot.id)).length;
-  }, [todaySlots, postedIds]);
+    return scheduleProducts.filter((product) =>
+      todayPostedProductIds.has(product.id),
+    ).length;
+  }, [scheduleProducts, todayPostedProductIds]);
 
   const remainingTodayCount = useMemo(() => {
-    return todaySlots.filter((slot) => !postedIds.has(slot.id)).length;
-  }, [todaySlots, postedIds]);
+    return Math.max(scheduleProducts.length - postedTodayCount, 0);
+  }, [postedTodayCount, scheduleProducts.length]);
+
+  const todayScheduledProductIds = useMemo(() => {
+    return new Set(todaySlots.map((slot) => slot.productId));
+  }, [todaySlots]);
 
   const loadProducts = async (): Promise<void> => {
     const list = await getAllProductsFromDb();
-    const sortedList = list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    const sortedList = list.sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    );
 
     setProducts(sortedList);
   };
@@ -975,46 +1213,91 @@ export default function LocalProductsPage() {
   }, []);
 
   useEffect(() => {
+    saveScheduleConfig(scheduleConfig);
+  }, [scheduleConfig]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== "Escape") return;
+
+      if (pendingDownload) {
+        setPendingDownload(null);
+        return;
+      }
+
+      if (activeModal) {
+        closeModal();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeModal, pendingDownload]);
+
+  useEffect(() => {
     if (!isSettingsReady) return;
 
     saveGlobalSettings({
       ...settings,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     });
   }, [settings.commonDescription, settings.globalNote, isSettingsReady]);
+
+  useEffect(() => {
+    if (activeCategoryTab === "all") return;
+    if (categories.includes(activeCategoryTab)) return;
+
+    setActiveCategoryTab("all");
+  }, [activeCategoryTab, categories]);
 
   useEffect(() => {
     if (categories.length === 0) return;
 
     setScheduleConfig((current) => {
-      const keptCategories = current.selectedCategories.filter((category) => categories.includes(category));
-      const nextCategories = keptCategories.length > 0 ? keptCategories : categories;
+      const keptCategories = current.selectedCategories.filter((category) =>
+        categories.includes(category),
+      );
+
+      if (keptCategories.length === current.selectedCategories.length)
+        return current;
 
       return {
         ...current,
-        selectedCategories: nextCategories
+        selectedCategories: keptCategories,
       };
     });
   }, [categories]);
 
-  const updateDraftField = <Key extends keyof ProductDraft>(key: Key, value: ProductDraft[Key]): void => {
+  const updateDraftField = <Key extends keyof ProductDraft>(
+    key: Key,
+    value: ProductDraft[Key],
+  ): void => {
     setDraft((current) => ({
       ...current,
-      [key]: value
+      [key]: value,
     }));
   };
 
-  const updateSettingField = <Key extends keyof GlobalSettings>(key: Key, value: GlobalSettings[Key]): void => {
+  const updateSettingField = <Key extends keyof GlobalSettings>(
+    key: Key,
+    value: GlobalSettings[Key],
+  ): void => {
     setSettings((current) => ({
       ...current,
-      [key]: value
+      [key]: value,
     }));
   };
 
-  const updateScheduleField = <Key extends keyof ScheduleConfig>(key: Key, value: ScheduleConfig[Key]): void => {
+  const updateScheduleField = <Key extends keyof ScheduleConfig>(
+    key: Key,
+    value: ScheduleConfig[Key],
+  ): void => {
     setScheduleConfig((current) => ({
       ...current,
-      [key]: value
+      [key]: value,
     }));
   };
 
@@ -1046,7 +1329,7 @@ export default function LocalProductsPage() {
 
       setDraft((current) => ({
         ...current,
-        images: [...current.images, ...images]
+        images: [...current.images, ...images],
       }));
 
       Toastify(`Đã thêm ${images.length} ảnh`, 200);
@@ -1057,7 +1340,9 @@ export default function LocalProductsPage() {
     }
   };
 
-  const handleImageInput = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
+  const handleImageInput = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ): Promise<void> => {
     const files = Array.from(event.target.files ?? []);
 
     await appendImagesToDraft(files);
@@ -1065,7 +1350,9 @@ export default function LocalProductsPage() {
     event.target.value = "";
   };
 
-  const handlePaste = async (event: ClipboardEvent<HTMLElement>): Promise<void> => {
+  const handlePaste = async (
+    event: ClipboardEvent<HTMLElement>,
+  ): Promise<void> => {
     const files = Array.from(event.clipboardData.files);
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
 
@@ -1074,7 +1361,9 @@ export default function LocalProductsPage() {
     await appendImagesToDraft(imageFiles);
   };
 
-  const handleDrop = async (event: DragEvent<HTMLLabelElement>): Promise<void> => {
+  const handleDrop = async (
+    event: DragEvent<HTMLLabelElement>,
+  ): Promise<void> => {
     event.preventDefault();
     setIsDragging(false);
 
@@ -1095,19 +1384,23 @@ export default function LocalProductsPage() {
   const removeDraftImage = (imageId: string): void => {
     setDraft((current) => ({
       ...current,
-      images: current.images.filter((image) => image.id !== imageId)
+      images: current.images.filter((image) => image.id !== imageId),
     }));
   };
 
   const moveDraftImage = (imageId: string, direction: "up" | "down"): void => {
     setDraft((current) => {
-      const currentIndex = current.images.findIndex((image) => image.id === imageId);
+      const currentIndex = current.images.findIndex(
+        (image) => image.id === imageId,
+      );
 
       if (currentIndex === -1) return current;
 
-      const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+      const targetIndex =
+        direction === "up" ? currentIndex - 1 : currentIndex + 1;
 
-      if (targetIndex < 0 || targetIndex >= current.images.length) return current;
+      if (targetIndex < 0 || targetIndex >= current.images.length)
+        return current;
 
       const nextImages = [...current.images];
       const currentImage = nextImages[currentIndex];
@@ -1120,7 +1413,7 @@ export default function LocalProductsPage() {
 
       return {
         ...current,
-        images: nextImages
+        images: nextImages,
       };
     });
   };
@@ -1130,7 +1423,9 @@ export default function LocalProductsPage() {
     setEditingId("");
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     event.preventDefault();
 
     const now = new Date().toISOString();
@@ -1155,7 +1450,7 @@ export default function LocalProductsPage() {
       category,
       images: draft.images,
       createdAt: currentProduct?.createdAt ?? now,
-      updatedAt: now
+      updatedAt: now,
     };
 
     await saveProductToDb(product);
@@ -1173,7 +1468,7 @@ export default function LocalProductsPage() {
       description: product.description,
       priceText: product.priceText,
       category: product.category,
-      images: product.images
+      images: product.images,
     });
 
     setActiveModal("product");
@@ -1189,7 +1484,11 @@ export default function LocalProductsPage() {
     Toastify("Đã xóa sản phẩm", 200);
   };
 
-  const handleCopyField = async (key: string, label: string, value: string): Promise<void> => {
+  const handleCopyField = async (
+    key: string,
+    label: string,
+    value: string,
+  ): Promise<void> => {
     if (!value.trim()) {
       Toastify(`${label} đang trống`, 300);
       return;
@@ -1208,12 +1507,12 @@ export default function LocalProductsPage() {
     const payload: ExportPayload = {
       version: 3,
       settings,
-      products
+      products,
     };
 
     const content = JSON.stringify(payload, null, 2);
     const blob = new Blob([content], {
-      type: "application/json"
+      type: "application/json",
     });
 
     downloadBlob(blob, `local-products-${Date.now()}.json`);
@@ -1221,24 +1520,28 @@ export default function LocalProductsPage() {
   };
 
   const handleExportScheduleJson = (): void => {
-    const postedMap = new Map(postedRecords.map((record) => [record.slotId, record.postedAt]));
+    const postedMap = new Map(
+      postedRecords.map((record) => [record.slotId, record.postedAt]),
+    );
 
     const data = scheduleResult.slots.map((slot) => ({
       ...slot,
-      isPosted: postedMap.has(slot.id),
-      postedAt: postedMap.get(slot.id) ?? ""
+      isPosted: postedMap.has(createSlotPostedKey(slot)),
+      postedAt: postedMap.get(createSlotPostedKey(slot)) ?? "",
     }));
 
     const content = JSON.stringify(data, null, 2);
     const blob = new Blob([content], {
-      type: "application/json"
+      type: "application/json",
     });
 
     downloadBlob(blob, `post-schedule-${Date.now()}.json`);
     Toastify("Đã export lịch đăng", 200);
   };
 
-  const handleImportJson = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
+  const handleImportJson = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ): Promise<void> => {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -1254,7 +1557,9 @@ export default function LocalProductsPage() {
         return;
       }
 
-      const accepted = window.confirm("Import JSON sẽ thay thế toàn bộ dữ liệu sản phẩm hiện tại. Tiếp tục?");
+      const accepted = window.confirm(
+        "Import JSON sẽ thay thế toàn bộ dữ liệu sản phẩm hiện tại. Tiếp tục?",
+      );
 
       if (!accepted) {
         event.target.value = "";
@@ -1281,19 +1586,39 @@ export default function LocalProductsPage() {
     }
   };
 
+  const requestDownload = (request: DownloadRequest): void => {
+    setPendingDownload(request);
+  };
+
+  const executeDownloadRequest = (): void => {
+    if (!pendingDownload) return;
+
+    pendingDownload.images.forEach((image, index) => {
+      window.setTimeout(() => {
+        void downloadImageAsJpg(
+          image.dataUrl,
+          pendingDownload.startIndex + index,
+        );
+      }, index * 180);
+    });
+
+    Toastify(`Đang tải ${pendingDownload.images.length} ảnh JPG`, 200);
+    setPendingDownload(null);
+  };
+
   const handleDownloadProductImages = (product: LocalProduct): void => {
     if (product.images.length === 0) {
       Toastify("Sản phẩm chưa có ảnh để tải", 300);
       return;
     }
 
-    product.images.forEach((image, index) => {
-      window.setTimeout(() => {
-        void downloadImageAsJpg(image.dataUrl, index);
-      }, index * 180);
+    requestDownload({
+      title: "Tải ảnh sản phẩm",
+      description: `Bạn có muốn tải ${product.images.length} ảnh của sản phẩm này về máy không?`,
+      mode: "multiple",
+      images: product.images,
+      startIndex: 0,
     });
-
-    Toastify(`Đang tải ${product.images.length} ảnh JPG`, 200);
   };
 
   const handleDownloadSlotImages = (slot: ScheduleSlot): void => {
@@ -1302,13 +1627,13 @@ export default function LocalProductsPage() {
       return;
     }
 
-    slot.images.forEach((image, index) => {
-      window.setTimeout(() => {
-        void downloadImageAsJpg(image.dataUrl, index);
-      }, index * 180);
+    requestDownload({
+      title: "Tải ảnh lịch đăng",
+      description: `Bạn có muốn tải ${slot.images.length} ảnh của sản phẩm trong lịch về máy không?`,
+      mode: "multiple",
+      images: slot.images,
+      startIndex: 0,
     });
-
-    Toastify(`Đang tải ${slot.images.length} ảnh JPG`, 200);
   };
 
   const openImageAlbum = (source: AlbumSource): void => {
@@ -1328,11 +1653,18 @@ export default function LocalProductsPage() {
       return;
     }
 
-    const selectedIndex = albumSource.images.findIndex((image) => image.id === selectedAlbumImage.id);
+    const selectedIndex = albumSource.images.findIndex(
+      (image) => image.id === selectedAlbumImage.id,
+    );
     const safeIndex = selectedIndex >= 0 ? selectedIndex : 0;
 
-    void downloadImageAsJpg(selectedAlbumImage.dataUrl, safeIndex);
-    Toastify("Đang tải ảnh JPG", 200);
+    requestDownload({
+      title: "Tải ảnh đang chọn",
+      description: `Bạn có muốn tải ảnh số ${safeIndex + 1} về máy không?`,
+      mode: "single",
+      images: [selectedAlbumImage],
+      startIndex: safeIndex,
+    });
   };
 
   const handleDownloadAlbumImages = (): void => {
@@ -1341,13 +1673,13 @@ export default function LocalProductsPage() {
       return;
     }
 
-    albumSource.images.forEach((image, index) => {
-      window.setTimeout(() => {
-        void downloadImageAsJpg(image.dataUrl, index);
-      }, index * 180);
+    requestDownload({
+      title: "Tải toàn bộ album",
+      description: `Bạn có muốn tải ${albumSource.images.length} ảnh trong album về máy không?`,
+      mode: "multiple",
+      images: albumSource.images,
+      startIndex: 0,
     });
-
-    Toastify(`Đang tải ${albumSource.images.length} ảnh JPG`, 200);
   };
 
   const handleDownloadAllImages = (): void => {
@@ -1358,13 +1690,41 @@ export default function LocalProductsPage() {
       return;
     }
 
-    allImages.forEach((image, index) => {
-      window.setTimeout(() => {
-        void downloadImageAsJpg(image.dataUrl, index);
-      }, index * 180);
+    requestDownload({
+      title: "Tải toàn bộ ảnh",
+      description: `Bạn có muốn tải ${allImages.length} ảnh của tất cả sản phẩm về máy không?`,
+      mode: "multiple",
+      images: allImages,
+      startIndex: 0,
     });
+  };
 
-    Toastify(`Đang tải ${allImages.length} ảnh JPG`, 200);
+  const handleCopySelectedAlbumImageAsBlob = async (): Promise<void> => {
+    if (!selectedAlbumImage) {
+      Toastify("Chưa chọn ảnh để copy", 300);
+      return;
+    }
+
+    try {
+      await copyImageDataUrlAsBlob(selectedAlbumImage.dataUrl);
+      Toastify("Đã copy ảnh vào clipboard", 200);
+    } catch {
+      Toastify("Trình duyệt không hỗ trợ copy ảnh dạng blob", 400);
+    }
+  };
+
+  const handleCopyAlbumImagesAsBlob = async (): Promise<void> => {
+    if (!albumSource || albumSource.images.length === 0) {
+      Toastify("Album chưa có ảnh để copy", 300);
+      return;
+    }
+
+    try {
+      await copyImagesDataUrlAsBlob(albumSource.images);
+      Toastify(`Đã copy ${albumSource.images.length} ảnh vào clipboard`, 200);
+    } catch {
+      Toastify("Trình duyệt có thể chỉ hỗ trợ copy một ảnh mỗi lần", 400);
+    }
   };
 
   const toggleScheduleCategory = (category: string): void => {
@@ -1375,43 +1735,60 @@ export default function LocalProductsPage() {
         ...current,
         selectedCategories: exists
           ? current.selectedCategories.filter((item) => item !== category)
-          : [...current.selectedCategories, category]
+          : [...current.selectedCategories, category],
       };
     });
   };
 
-  const togglePostedSlot = (slot: ScheduleSlot): void => {
+  const togglePostedProduct = (date: string, productId: string): void => {
+    const postedKey = createPostedKey(date, productId);
+
     setPostedRecords((current) => {
-      const exists = current.some((record) => record.slotId === slot.id);
+      const exists = current.some((record) => record.slotId === postedKey);
 
       const nextRecords = exists
-        ? current.filter((record) => record.slotId !== slot.id)
+        ? current.filter((record) => record.slotId !== postedKey)
         : [
-          ...current,
-          {
-            slotId: slot.id,
-            postedAt: new Date().toISOString()
-          }
-        ];
+            ...current,
+            {
+              slotId: postedKey,
+              postedAt: new Date().toISOString(),
+            },
+          ];
 
       savePostedRecords(nextRecords);
-      Toastify(exists ? "Đã hoàn tác trạng thái đăng" : "Đã đánh dấu bài vừa đăng", 200);
+      Toastify(
+        exists ? "Đã chuyển về chưa đăng" : "Đã đánh dấu DONE",
+        200,
+      );
 
       return nextRecords;
     });
   };
 
+  const togglePostedSlot = (slot: ScheduleSlot): void => {
+    togglePostedProduct(slot.date, slot.productId);
+  };
+
   const resetTodayPosted = (): void => {
-    const todaySlotIds = new Set(todaySlots.map((slot) => slot.id));
+    const todayPrefix = `${today}::`;
 
     setPostedRecords((current) => {
-      const nextRecords = current.filter((record) => !todaySlotIds.has(record.slotId));
+      const nextRecords = current.filter(
+        (record) => !record.slotId.startsWith(todayPrefix),
+      );
 
       savePostedRecords(nextRecords);
       Toastify("Đã reset tiến độ đăng hôm nay", 200);
 
       return nextRecords;
     });
+  };
+
+  const resetAllPosted = (): void => {
+    setPostedRecords([]);
+    savePostedRecords([]);
+    Toastify("Đã reset toàn bộ lịch về chưa đăng", 200);
   };
 
   const openSlotModal = (slot: ScheduleSlot): void => {
@@ -1441,9 +1818,12 @@ export default function LocalProductsPage() {
               </div>
 
               <div className="min-w-0">
-                <h1 className="truncate text-lg font-black tracking-tight text-white xl:text-xl">Local Product Manager</h1>
+                <h1 className="truncate text-lg font-black tracking-tight text-white xl:text-xl">
+                  Local Product Manager
+                </h1>
                 <p className="truncate text-xs text-slate-400">
-                  {products.length} sản phẩm · {totalImages} ảnh · hôm nay {postedTodayCount}/{todaySlots.length} bài đã đăng
+                  {products.length} sản phẩm · {totalImages} ảnh · hôm nay{" "}
+                  {postedTodayCount}/{todaySlots.length} bài đã đăng
                 </p>
               </div>
             </div>
@@ -1502,8 +1882,12 @@ export default function LocalProductsPage() {
             <section className="rounded-2xl border border-emerald-400/20 bg-slate-950/70 p-2 shadow-2xl shadow-emerald-950/20 backdrop-blur">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <h2 className="text-sm font-black text-white">Bài cần đăng tiếp theo</h2>
-                  <p className="text-xs text-slate-400">Real-time {today} · {currentTime}</p>
+                  <h2 className="text-sm font-black text-white">
+                    Bài cần đăng tiếp theo
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    Real-time {today} · {currentTime}
+                  </p>
                 </div>
 
                 <button
@@ -1525,7 +1909,11 @@ export default function LocalProductsPage() {
                   <div className="flex gap-2">
                     <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-950">
                       {nextSlot.image ? (
-                        <img src={nextSlot.image} alt={nextSlot.productName} className="h-full w-full object-contain" />
+                        <img
+                          src={nextSlot.image}
+                          alt={nextSlot.productName}
+                          className="h-full w-full object-contain"
+                        />
                       ) : (
                         <FiImage className="text-slate-600" />
                       )}
@@ -1533,7 +1921,9 @@ export default function LocalProductsPage() {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="rounded-2xl bg-emerald-300 px-3 py-1 text-xs font-black text-slate-950">{nextSlot.time}</span>
+                        <span className="rounded-2xl bg-emerald-300 px-3 py-1 text-xs font-black text-slate-950">
+                          {nextSlot.time}
+                        </span>
 
                         <button
                           type="button"
@@ -1544,8 +1934,12 @@ export default function LocalProductsPage() {
                         </button>
                       </div>
 
-                      <h3 className="mt-2 line-clamp-2 text-sm font-black text-white">{nextSlot.productName}</h3>
-                      <p className="mt-1 truncate text-xs text-emerald-100">{nextSlot.priceText || "Chưa có giá"}</p>
+                      <h3 className="mt-2 line-clamp-2 text-sm font-black text-white">
+                        {nextSlot.productName}
+                      </h3>
+                      <p className="mt-1 truncate text-xs text-emerald-100">
+                        {nextSlot.priceText || "Chưa có giá"}
+                      </p>
 
                       <button
                         type="button"
@@ -1566,17 +1960,23 @@ export default function LocalProductsPage() {
               <div className="mt-2 grid grid-cols-3 gap-2">
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2">
                   <div className="text-[10px] text-slate-400">Hôm nay</div>
-                  <div className="text-lg font-black text-white">{todaySlots.length}</div>
+                  <div className="text-lg font-black text-white">
+                    {todaySlots.length}
+                  </div>
                 </div>
 
                 <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-2">
                   <div className="text-[10px] text-emerald-200">Đã đăng</div>
-                  <div className="text-lg font-black text-white">{postedTodayCount}</div>
+                  <div className="text-lg font-black text-white">
+                    {postedTodayCount}
+                  </div>
                 </div>
 
                 <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 p-2">
                   <div className="text-[10px] text-rose-200">Còn lại</div>
-                  <div className="text-lg font-black text-white">{remainingTodayCount}</div>
+                  <div className="text-lg font-black text-white">
+                    {remainingTodayCount}
+                  </div>
                 </div>
               </div>
             </section>
@@ -1584,12 +1984,18 @@ export default function LocalProductsPage() {
             <section className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/50 p-2 shadow-2xl shadow-black/30 backdrop-blur">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <h2 className="text-sm font-black text-white">Lịch hôm nay</h2>
-                  <p className="truncate text-xs text-slate-400">Tích trực tiếp sau khi vừa đăng bài.</p>
+                  <h2 className="text-sm font-black text-white">
+                    Lịch hôm nay
+                  </h2>
+                  <p className="truncate text-xs text-slate-400">
+                    Tích trực tiếp sau khi vừa đăng bài.
+                  </p>
                 </div>
 
                 {overdueSlots.length > 0 ? (
-                  <div className="rounded-2xl bg-rose-500 px-3 py-1 text-xs font-black text-white">{overdueSlots.length} quá giờ</div>
+                  <div className="rounded-2xl bg-rose-500 px-3 py-1 text-xs font-black text-white">
+                    {overdueSlots.length} quá giờ
+                  </div>
                 ) : null}
               </div>
 
@@ -1600,7 +2006,13 @@ export default function LocalProductsPage() {
               ) : (
                 <div className="grid grid-cols-1 gap-2">
                   {todaySlots.map((slot) => {
-                    const status = getSlotStatus(slot, today, currentTime, postedIds, nextSlot?.id ?? "");
+                    const status = getSlotStatus(
+                      slot,
+                      today,
+                      currentTime,
+                      postedIds,
+                      nextSlot?.id ?? "",
+                    );
                     const isPosted = status === "posted";
                     const isOverdue = status === "overdue";
                     const isNext = status === "next";
@@ -1608,22 +2020,26 @@ export default function LocalProductsPage() {
                     return (
                       <article
                         key={slot.id}
-                        className={`relative overflow-hidden rounded-2xl border p-2 transition ${isPosted
-                          ? "border-emerald-400/30 bg-emerald-400/10"
-                          : isNext
-                            ? "border-cyan-300/50 bg-cyan-300/10"
-                            : "border-white/10 bg-slate-950/80"
-                          }`}
+                        className={`relative overflow-hidden rounded-2xl border p-2 transition ${
+                          isPosted
+                            ? "border-emerald-400/30 bg-emerald-400/10"
+                            : isNext
+                              ? "border-cyan-300/50 bg-cyan-300/10"
+                              : "border-white/10 bg-slate-950/80"
+                        }`}
                       >
-                        {isOverdue ? <div className="absolute inset-0 z-10 bg-slate-950/55 backdrop-blur-[1px]" /> : null}
+                        {isOverdue ? (
+                          <div className="absolute inset-0 z-10 bg-slate-950/55 backdrop-blur-[1px]" />
+                        ) : null}
 
                         <div className="relative z-20 flex gap-2">
                           <button
                             type="button"
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-sm transition ${isPosted
-                              ? "border-emerald-300 bg-emerald-300 text-slate-950"
-                              : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                              }`}
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-sm transition ${
+                              isPosted
+                                ? "border-emerald-300 bg-emerald-300 text-slate-950"
+                                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                            }`}
                             onClick={() => togglePostedSlot(slot)}
                             title="Đánh dấu đã đăng"
                           >
@@ -1635,20 +2051,37 @@ export default function LocalProductsPage() {
                             onClick={() => openSlotModal(slot)}
                           >
                             {slot.image ? (
-                              <img src={slot.image} alt={slot.productName} className="h-full w-full object-contain" />
+                              <img
+                                src={slot.image}
+                                alt={slot.productName}
+                                className="h-full w-full object-contain"
+                              />
                             ) : (
                               <FiImage className="text-slate-600" />
                             )}
                           </div>
 
-                          <button type="button" className="min-w-0 flex-1 text-left" onClick={() => openSlotModal(slot)}>
+                          <button
+                            type="button"
+                            className="min-w-0 flex-1 text-left"
+                            onClick={() => openSlotModal(slot)}
+                          >
                             <div className="flex items-center justify-between gap-2">
-                              <span className="rounded-2xl bg-black/40 px-2 py-1 text-xs font-black text-white">{slot.time}</span>
-                              <span className="truncate text-[10px] font-bold text-slate-400">{getStatusLabel(status)}</span>
+                              <span className="rounded-2xl bg-black/40 px-2 py-1 text-xs font-black text-white">
+                                {slot.time}
+                              </span>
+                              <span className="truncate text-[10px] font-bold text-slate-400">
+                                {isPosted ? "DONE" : getStatusLabel(status)}
+                              </span>
                             </div>
 
-                            <h3 className="mt-2 line-clamp-2 text-sm font-black text-white">{slot.productName}</h3>
-                            <p className="mt-1 truncate text-xs text-slate-400">{slot.category || "Chưa có danh mục"}</p>
+                            <h3 className="mt-2 line-clamp-2 text-sm font-black text-white">
+                              {slot.productName}
+                            </h3>
+                            <p className="mt-1 truncate text-xs text-slate-400">
+                              {slot.category || "Chưa có danh mục"} ·{" "}
+                              {slot.priceText || "Chưa có giá"}
+                            </p>
                           </button>
                         </div>
 
@@ -1668,8 +2101,9 @@ export default function LocalProductsPage() {
           <section className="rounded-2xl border border-white/10 bg-slate-950/50 p-2 shadow-2xl shadow-black/30 backdrop-blur">
             <div className="mb-2 grid grid-cols-1 gap-2 xl:grid-cols-[1fr_360px] xl:items-center">
               <div className="min-w-0">
-                <h2 className="text-sm font-black text-white">Danh sách sản phẩm</h2>
-                <p className="truncate text-xs text-slate-400">Grid nhỏ gọn, bấm sửa hoặc copy nhanh nội dung.</p>
+                <h2 className="text-sm font-black text-white">
+                  Danh sách sản phẩm
+                </h2>
               </div>
 
               <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-slate-400">
@@ -1683,6 +2117,35 @@ export default function LocalProductsPage() {
               </label>
             </div>
 
+            <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
+              <button
+                type="button"
+                className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-black transition ${
+                  activeCategoryTab === "all"
+                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                }`}
+                onClick={() => setActiveCategoryTab("all")}
+              >
+                Tất cả
+              </button>
+
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-black transition ${
+                    activeCategoryTab === category
+                      ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                      : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                  }`}
+                  onClick={() => setActiveCategoryTab(category)}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+
             {filteredProducts.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-6 text-center text-sm text-slate-400">
                 Chưa có sản phẩm phù hợp.
@@ -1690,8 +2153,9 @@ export default function LocalProductsPage() {
             ) : (
               <div className="grid grid-cols-2 gap-2 xl:grid-cols-5">
                 {filteredProducts.map((product) => {
-                  const postText = buildPostText(product, settings.commonDescription);
-                  const descriptionPreview = product.description.trim() || settings.commonDescription.trim();
+                  const descriptionPreview =
+                    product.description.trim() ||
+                    settings.commonDescription.trim();
 
                   return (
                     <article
@@ -1704,12 +2168,16 @@ export default function LocalProductsPage() {
                         onClick={() =>
                           openImageAlbum({
                             title: product.name,
-                            images: product.images
+                            images: product.images,
                           })
                         }
                       >
                         {product.images[0] ? (
-                          <img src={product.images[0].dataUrl} alt={product.name} className="h-full w-full object-contain" />
+                          <img
+                            src={product.images[0].dataUrl}
+                            alt={product.name}
+                            className="h-full w-full object-contain"
+                          />
                         ) : (
                           <FiImage className="text-slate-600" />
                         )}
@@ -1723,14 +2191,20 @@ export default function LocalProductsPage() {
                       <div className="flex flex-col gap-2 p-2">
                         <div className="min-w-0">
                           {product.category ? (
-                            <div className="truncate text-[10px] font-black uppercase tracking-wide text-cyan-200">{product.category}</div>
+                            <div className="truncate text-[10px] font-black uppercase tracking-wide text-cyan-200">
+                              {product.category}
+                            </div>
                           ) : null}
 
-                          <h3 className="line-clamp-2 min-h-10 text-sm font-black leading-5 text-white">{product.name}</h3>
-                          <div className="mt-2 truncate text-base font-black text-cyan-200">{product.priceText || "Chưa có giá"}</div>
+                          <h3 className="line-clamp-2 min-h-10 text-sm font-black leading-5 text-white">
+                            {product.name}
+                          </h3>
+                          <div className="mt-2 truncate text-base font-black text-cyan-200">
+                            {product.priceText || "Chưa có giá"}
+                          </div>
                         </div>
 
-                        <p className="line-clamp-3 min-h-[3.75rem] whitespace-pre-line rounded-2xl border border-white/10 bg-white/[0.03] p-2 text-xs leading-5 text-slate-300">
+                        <p className="line-clamp-10 min-h-40 whitespace-pre-line rounded-2xl border border-white/10 bg-white/[0.03] p-2 text-xs leading-5 text-slate-300">
                           {descriptionPreview || "Chưa có mô tả"}
                         </p>
 
@@ -1738,7 +2212,13 @@ export default function LocalProductsPage() {
                           <button
                             type="button"
                             className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-2 text-[11px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
-                            onClick={() => void handleCopyField(`name-${product.id}`, "tên", product.name)}
+                            onClick={() =>
+                              void handleCopyField(
+                                `name-${product.id}`,
+                                "tên",
+                                product.name,
+                              )
+                            }
                           >
                             {renderCopyIcon(`name-${product.id}`)}
                             Tên
@@ -1747,19 +2227,16 @@ export default function LocalProductsPage() {
                           <button
                             type="button"
                             className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-2 text-[11px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
-                            onClick={() => void handleCopyField(`desc-${product.id}`, "mô tả", descriptionPreview)}
+                            onClick={() =>
+                              void handleCopyField(
+                                `desc-${product.id}`,
+                                "mô tả",
+                                descriptionPreview,
+                              )
+                            }
                           >
                             {renderCopyIcon(`desc-${product.id}`)}
                             Mô tả
-                          </button>
-
-                          <button
-                            type="button"
-                            className="flex items-center justify-center gap-1 rounded-2xl bg-cyan-300 p-2 text-[11px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
-                            onClick={() => void handleCopyField(`post-${product.id}`, "bài đăng", postText)}
-                          >
-                            {renderCopyIcon(`post-${product.id}`)}
-                            Bài
                           </button>
 
                           <button
@@ -1768,12 +2245,21 @@ export default function LocalProductsPage() {
                             onClick={() =>
                               openImageAlbum({
                                 title: product.name,
-                                images: product.images
+                                images: product.images,
                               })
                             }
                           >
                             <FiImage />
                             Album
+                          </button>
+
+                          <button
+                            type="button"
+                            className="flex items-center justify-center gap-1 rounded-2xl bg-cyan-300 p-2 text-[11px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                            onClick={() => handleDownloadProductImages(product)}
+                          >
+                            <FiDownload />
+                            Tải ảnh
                           </button>
                         </div>
 
@@ -1822,14 +2308,19 @@ export default function LocalProductsPage() {
 
                 <div className="min-w-0">
                   <h2 className="truncate text-sm font-black text-white">
-                    {activeModal === "product" ? (editingId ? "Sửa sản phẩm" : "Thêm sản phẩm") : null}
+                    {activeModal === "product"
+                      ? editingId
+                        ? "Sửa sản phẩm"
+                        : "Thêm sản phẩm"
+                      : null}
                     {activeModal === "schedule" ? "Cấu hình lịch đăng" : null}
                     {activeModal === "global" ? "Global Content" : null}
-                    {activeModal === "importExport" ? "Import / Export Data" : null}
+                    {activeModal === "importExport"
+                      ? "Import / Export Data"
+                      : null}
                     {activeModal === "slotDetail" ? "Chi tiết bài đăng" : null}
                     {activeModal === "imageAlbum" ? "Album ảnh" : null}
                   </h2>
-                  <p className="truncate text-xs text-slate-400">UI modal gọn, thao tác nhanh.</p>
                 </div>
               </div>
 
@@ -1844,13 +2335,20 @@ export default function LocalProductsPage() {
 
             <div className="max-h-[calc(94vh-58px)] overflow-y-auto p-2">
               {activeModal === "product" ? (
-                <form className="grid grid-cols-1 gap-2 xl:grid-cols-[360px_1fr]" onSubmit={(event) => void handleSubmit(event)}>
+                <form
+                  className="grid grid-cols-1 gap-2 xl:grid-cols-[360px_1fr]"
+                  onSubmit={(event) => void handleSubmit(event)}
+                >
                   <section className="flex flex-col gap-2">
                     <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">Tên sản phẩm</span>
+                      <span className="text-xs font-bold text-slate-300">
+                        Tên sản phẩm
+                      </span>
                       <input
                         value={draft.name}
-                        onChange={(event) => updateDraftField("name", event.target.value)}
+                        onChange={(event) =>
+                          updateDraftField("name", event.target.value)
+                        }
                         className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
                         placeholder="Dell Latitude 7440 i5 13th"
                       />
@@ -1858,20 +2356,28 @@ export default function LocalProductsPage() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <label className="flex flex-col gap-2">
-                        <span className="text-xs font-bold text-slate-300">Giá</span>
+                        <span className="text-xs font-bold text-slate-300">
+                          Giá
+                        </span>
                         <input
                           value={draft.priceText}
-                          onChange={(event) => updateDraftField("priceText", event.target.value)}
+                          onChange={(event) =>
+                            updateDraftField("priceText", event.target.value)
+                          }
                           className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
                           placeholder="13tr8"
                         />
                       </label>
 
                       <label className="flex flex-col gap-2">
-                        <span className="text-xs font-bold text-slate-300">Danh mục</span>
+                        <span className="text-xs font-bold text-slate-300">
+                          Danh mục
+                        </span>
                         <input
                           value={draft.category}
-                          onChange={(event) => updateDraftField("category", event.target.value)}
+                          onChange={(event) =>
+                            updateDraftField("category", event.target.value)
+                          }
                           className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
                           placeholder="Laptop Dell"
                         />
@@ -1879,11 +2385,16 @@ export default function LocalProductsPage() {
                     </div>
 
                     <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">Mô tả sản phẩm</span>
+                      <span className="text-xs font-bold text-slate-300">
+                        Mô tả sản phẩm
+                      </span>
                       <textarea
                         value={draft.description}
-                        onChange={(event) => updateDraftField("description", event.target.value)}
-                        className="min-h-36 rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
+                        onChange={(event) =>
+                          updateDraftField("description", event.target.value)
+                        }
+                        rows={10}
+                        className="min-h-60 rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
                         placeholder="Để trống nếu muốn dùng mô tả chung..."
                       />
                     </label>
@@ -1899,20 +2410,31 @@ export default function LocalProductsPage() {
 
                   <section className="flex flex-col gap-2">
                     <label
-                      className={`cursor-pointer rounded-2xl border border-dashed p-4 text-center transition ${isDragging
-                        ? "border-cyan-300/80 bg-cyan-300/10"
-                        : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
-                        }`}
+                      className={`cursor-pointer rounded-2xl border border-dashed p-4 text-center transition ${
+                        isDragging
+                          ? "border-cyan-300/80 bg-cyan-300/10"
+                          : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
+                      }`}
                       onDrop={(event) => void handleDrop(event)}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                     >
                       <div className="flex items-center justify-center gap-2 text-sm font-black text-white">
                         <FiUploadCloud />
-                        {isProcessingImages ? "Đang xử lý ảnh..." : "Chọn / kéo thả / paste ảnh"}
+                        {isProcessingImages
+                          ? "Đang xử lý ảnh..."
+                          : "Chọn / kéo thả / paste ảnh"}
                       </div>
-                      <div className="mt-2 text-xs leading-5 text-slate-400">Hỗ trợ nhiều ảnh, tự nén JPG.</div>
-                      <input type="file" accept="image/*" multiple className="hidden" onChange={(event) => void handleImageInput(event)} />
+                      <div className="mt-2 text-xs leading-5 text-slate-400">
+                        Hỗ trợ nhiều ảnh, tự nén JPG.
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(event) => void handleImageInput(event)}
+                      />
                     </label>
 
                     {draft.images.length > 0 ? (
@@ -1935,8 +2457,15 @@ export default function LocalProductsPage() {
 
                         <div className="grid grid-cols-3 gap-2 xl:grid-cols-5">
                           {draft.images.map((image, index) => (
-                            <div key={image.id} className="group relative overflow-hidden rounded-2xl bg-slate-900">
-                              <img src={image.dataUrl} alt={image.name} className="aspect-square w-full object-contain" />
+                            <div
+                              key={image.id}
+                              className="group relative overflow-hidden rounded-2xl bg-slate-900"
+                            >
+                              <img
+                                src={image.dataUrl}
+                                alt={image.name}
+                                className="aspect-square w-full object-contain"
+                              />
 
                               <div className="absolute left-1 top-1 rounded-xl bg-black/70 px-2 py-1 text-[10px] font-black text-white">
                                 {index + 1}
@@ -1954,7 +2483,9 @@ export default function LocalProductsPage() {
                                 <button
                                   type="button"
                                   className="rounded-xl bg-black/80 p-1 text-[10px] font-bold text-white"
-                                  onClick={() => moveDraftImage(image.id, "down")}
+                                  onClick={() =>
+                                    moveDraftImage(image.id, "down")
+                                  }
                                 >
                                   Xuống
                                 </button>
@@ -1980,50 +2511,73 @@ export default function LocalProductsPage() {
                 <section className="flex flex-col gap-2">
                   <div className="grid grid-cols-2 gap-2 xl:grid-cols-5">
                     <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">Từ ngày</span>
+                      <span className="text-xs font-bold text-slate-300">
+                        Từ ngày
+                      </span>
                       <input
                         type="date"
                         value={scheduleConfig.dateFrom}
-                        onChange={(event) => updateScheduleField("dateFrom", event.target.value)}
+                        onChange={(event) =>
+                          updateScheduleField("dateFrom", event.target.value)
+                        }
                         className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition focus:border-cyan-300/60"
                       />
                     </label>
 
                     <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">Đến ngày</span>
+                      <span className="text-xs font-bold text-slate-300">
+                        Đến ngày
+                      </span>
                       <input
                         type="date"
                         value={scheduleConfig.dateTo}
-                        onChange={(event) => updateScheduleField("dateTo", event.target.value)}
+                        onChange={(event) =>
+                          updateScheduleField("dateTo", event.target.value)
+                        }
                         className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition focus:border-cyan-300/60"
                       />
                     </label>
 
                     <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">Mốc đầu</span>
+                      <span className="text-xs font-bold text-slate-300">
+                        Mốc đầu
+                      </span>
                       <input
                         type="time"
                         value={scheduleConfig.startTime}
-                        onChange={(event) => updateScheduleField("startTime", event.target.value)}
+                        onChange={(event) =>
+                          updateScheduleField("startTime", event.target.value)
+                        }
                         className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition focus:border-cyan-300/60"
                       />
                     </label>
 
                     <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">Mốc cuối</span>
+                      <span className="text-xs font-bold text-slate-300">
+                        Mốc cuối
+                      </span>
                       <input
                         type="time"
                         value={scheduleConfig.endTime}
-                        onChange={(event) => updateScheduleField("endTime", event.target.value)}
+                        onChange={(event) =>
+                          updateScheduleField("endTime", event.target.value)
+                        }
                         className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition focus:border-cyan-300/60"
                       />
                     </label>
 
                     <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">Cách nhau</span>
+                      <span className="text-xs font-bold text-slate-300">
+                        Cách nhau
+                      </span>
                       <select
                         value={scheduleConfig.gapHours}
-                        onChange={(event) => updateScheduleField("gapHours", Number(event.target.value))}
+                        onChange={(event) =>
+                          updateScheduleField(
+                            "gapHours",
+                            Number(event.target.value),
+                          )
+                        }
                         className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition focus:border-cyan-300/60"
                       >
                         {[1, 2, 3, 4, 5, 6].map((hour) => (
@@ -2036,23 +2590,41 @@ export default function LocalProductsPage() {
                   </div>
 
                   <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                    <h3 className="text-sm font-black text-white">Danh mục dùng để xếp lịch</h3>
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-black text-white">
+                        Danh mục dùng để xếp lịch
+                      </h3>
+
+                      <button
+                        type="button"
+                        className="rounded-2xl border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-xs font-black text-rose-100 transition hover:bg-rose-400/20"
+                        onClick={resetAllPosted}
+                      >
+                        Reset tất cả
+                      </button>
+                    </div>
 
                     {categories.length === 0 ? (
-                      <p className="mt-2 text-sm text-slate-400">Chưa có danh mục. Thêm hoặc import sản phẩm trước.</p>
+                      <p className="mt-2 text-sm text-slate-400">
+                        Chưa có danh mục. Thêm hoặc import sản phẩm trước.
+                      </p>
                     ) : (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {categories.map((category) => {
-                          const active = scheduleConfig.selectedCategories.includes(category);
+                          const active =
+                            scheduleConfig.selectedCategories.includes(
+                              category,
+                            );
 
                           return (
                             <button
                               key={category}
                               type="button"
-                              className={`rounded-2xl border px-3 py-2 text-xs font-black transition ${active
-                                ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                                }`}
+                              className={`rounded-2xl border px-3 py-2 text-xs font-black transition ${
+                                active
+                                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                              }`}
                               onClick={() => toggleScheduleCategory(category)}
                             >
                               {category}
@@ -2073,19 +2645,129 @@ export default function LocalProductsPage() {
 
                   <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2">
-                      <div className="text-[10px] text-slate-400">Tổng lịch</div>
-                      <div className="text-lg font-black text-white">{scheduleResult.slots.length}</div>
+                      <div className="text-[10px] text-slate-400">
+                        Tổng lịch
+                      </div>
+                      <div className="text-lg font-black text-white">
+                        {scheduleResult.slots.length}
+                      </div>
                     </div>
 
                     <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-2">
                       <div className="text-[10px] text-cyan-200">Hôm nay</div>
-                      <div className="text-lg font-black text-white">{todaySlots.length}</div>
+                      <div className="text-lg font-black text-white">
+                        {todaySlots.length}
+                      </div>
                     </div>
 
                     <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-2">
-                      <div className="text-[10px] text-emerald-200">Đã đăng</div>
-                      <div className="text-lg font-black text-white">{postedTodayCount}</div>
+                      <div className="text-[10px] text-emerald-200">DONE</div>
+                      <div className="text-lg font-black text-white">
+                        {postedTodayCount}
+                      </div>
                     </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-black text-white">
+                        Todo sản phẩm hôm nay
+                      </h3>
+                      <span className="text-xs text-slate-400">
+                        {scheduleProducts.length} sản phẩm
+                      </span>
+                    </div>
+
+                    {scheduleProducts.length === 0 ? (
+                      <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-4 text-center text-sm text-slate-400">
+                        Chưa có sản phẩm trong danh mục đang chọn.
+                      </div>
+                    ) : (
+                      <div className="grid max-h-[52vh] grid-cols-1 gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
+                        {scheduleProducts.map((product) => {
+                          const todaySlot = todaySlots.find(
+                            (slot) => slot.productId === product.id,
+                          );
+                          const done = todayPostedProductIds.has(product.id);
+                          const scheduled = todayScheduledProductIds.has(
+                            product.id,
+                          );
+
+                          return (
+                            <article
+                              key={product.id}
+                              className={`rounded-2xl border p-2 ${
+                                done
+                                  ? "border-emerald-400/30 bg-emerald-400/10"
+                                  : scheduled
+                                    ? "border-cyan-300/30 bg-cyan-300/10"
+                                    : "border-white/10 bg-slate-950/80"
+                              }`}
+                            >
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-xs font-black transition ${
+                                    done
+                                      ? "border-emerald-300 bg-emerald-300 text-slate-950"
+                                      : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                                  }`}
+                                  onClick={() => togglePostedProduct(today, product.id)}
+                                >
+                                  {done ? "DONE" : <FiCheck />}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-900"
+                                  onClick={() =>
+                                    openImageAlbum({
+                                      title: product.name,
+                                      images: product.images,
+                                    })
+                                  }
+                                >
+                                  {product.images[0] ? (
+                                    <img
+                                      src={product.images[0].dataUrl}
+                                      alt={product.name}
+                                      className="h-full w-full object-contain"
+                                    />
+                                  ) : (
+                                    <FiImage className="text-slate-600" />
+                                  )}
+                                </button>
+
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="truncate rounded-2xl bg-black/40 px-2 py-1 text-[10px] font-black text-white">
+                                      {todaySlot?.time ?? "Chưa có giờ"}
+                                    </span>
+                                    <span className="truncate text-[10px] font-bold text-slate-400">
+                                      {product.category || "Chưa có danh mục"}
+                                    </span>
+                                  </div>
+
+                                  <h4 className="mt-2 line-clamp-2 text-sm font-black text-white">
+                                    {product.name}
+                                  </h4>
+                                  <p className="mt-1 truncate text-xs font-black text-cyan-200">
+                                    {product.priceText || "Chưa có giá"}
+                                  </p>
+                                  <p className="mt-1 text-[10px] font-bold text-slate-500">
+                                    {done
+                                      ? "Đã đăng hôm nay"
+                                      : scheduled
+                                        ? "Có trong lịch hôm nay"
+                                        : "Chưa được xếp vào hôm nay"}
+                                  </p>
+                                </div>
+                              </div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </section>
               ) : null}
@@ -2093,10 +2775,17 @@ export default function LocalProductsPage() {
               {activeModal === "global" ? (
                 <section className="grid grid-cols-1 gap-2 xl:grid-cols-2">
                   <label className="flex flex-col gap-2">
-                    <span className="text-xs font-bold text-slate-300">Mô tả chung</span>
+                    <span className="text-xs font-bold text-slate-300">
+                      Mô tả chung
+                    </span>
                     <textarea
                       value={settings.commonDescription}
-                      onChange={(event) => updateSettingField("commonDescription", event.target.value)}
+                      onChange={(event) =>
+                        updateSettingField(
+                          "commonDescription",
+                          event.target.value,
+                        )
+                      }
                       className="min-h-56 rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-fuchsia-300/60"
                       placeholder="Dùng khi sản phẩm không có mô tả riêng..."
                     />
@@ -2104,7 +2793,13 @@ export default function LocalProductsPage() {
                     <button
                       type="button"
                       className="flex items-center justify-center gap-2 rounded-2xl border border-fuchsia-300/30 bg-fuchsia-300/10 p-2 text-sm font-black text-fuchsia-100 transition hover:bg-fuchsia-300/20"
-                      onClick={() => void handleCopyField("global-description", "mô tả chung", settings.commonDescription)}
+                      onClick={() =>
+                        void handleCopyField(
+                          "global-description",
+                          "mô tả chung",
+                          settings.commonDescription,
+                        )
+                      }
                     >
                       {renderCopyIcon("global-description")}
                       Copy mô tả chung
@@ -2112,10 +2807,14 @@ export default function LocalProductsPage() {
                   </label>
 
                   <label className="flex flex-col gap-2">
-                    <span className="text-xs font-bold text-slate-300">Ghi chú global</span>
+                    <span className="text-xs font-bold text-slate-300">
+                      Ghi chú global
+                    </span>
                     <textarea
                       value={settings.globalNote}
-                      onChange={(event) => updateSettingField("globalNote", event.target.value)}
+                      onChange={(event) =>
+                        updateSettingField("globalNote", event.target.value)
+                      }
                       className="min-h-56 rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-fuchsia-300/60"
                       placeholder="Ghi chú ngoài từng bài..."
                     />
@@ -2123,7 +2822,13 @@ export default function LocalProductsPage() {
                     <button
                       type="button"
                       className="flex items-center justify-center gap-2 rounded-2xl border border-fuchsia-300/30 bg-fuchsia-300/10 p-2 text-sm font-black text-fuchsia-100 transition hover:bg-fuchsia-300/20"
-                      onClick={() => void handleCopyField("global-note", "ghi chú global", settings.globalNote)}
+                      onClick={() =>
+                        void handleCopyField(
+                          "global-note",
+                          "ghi chú global",
+                          settings.globalNote,
+                        )
+                      }
                     >
                       {renderCopyIcon("global-note")}
                       Copy ghi chú
@@ -2137,7 +2842,8 @@ export default function LocalProductsPage() {
                   <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
                     <h3 className="text-sm font-black text-white">Export</h3>
                     <p className="mt-1 text-xs leading-5 text-slate-400">
-                      Tải JSON để backup toàn bộ sản phẩm, ảnh, mô tả chung và ghi chú global.
+                      Tải JSON để backup toàn bộ sản phẩm, ảnh, mô tả chung và
+                      ghi chú global.
                     </p>
 
                     <div className="mt-2 grid grid-cols-1 gap-2">
@@ -2164,10 +2870,17 @@ export default function LocalProductsPage() {
                   <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
                     <h3 className="text-sm font-black text-white">Import</h3>
                     <p className="mt-1 text-xs leading-5 text-slate-400">
-                      Import JSON sẽ thay thế toàn bộ dữ liệu sản phẩm hiện tại trong IndexedDB.
+                      Import JSON sẽ thay thế toàn bộ dữ liệu sản phẩm hiện tại
+                      trong IndexedDB.
                     </p>
 
-                    <input ref={fileImportRef} type="file" accept="application/json,.json" className="hidden" onChange={(event) => void handleImportJson(event)} />
+                    <input
+                      ref={fileImportRef}
+                      type="file"
+                      accept="application/json,.json"
+                      className="hidden"
+                      onChange={(event) => void handleImportJson(event)}
+                    />
 
                     <button
                       type="button"
@@ -2190,12 +2903,16 @@ export default function LocalProductsPage() {
                       onClick={() =>
                         openImageAlbum({
                           title: selectedSlot.productName,
-                          images: selectedSlot.images
+                          images: selectedSlot.images,
                         })
                       }
                     >
                       {selectedSlot.image ? (
-                        <img src={selectedSlot.image} alt={selectedSlot.productName} className="h-full w-full object-contain" />
+                        <img
+                          src={selectedSlot.image}
+                          alt={selectedSlot.productName}
+                          className="h-full w-full object-contain"
+                        />
                       ) : (
                         <FiImage className="text-slate-600" />
                       )}
@@ -2203,7 +2920,7 @@ export default function LocalProductsPage() {
 
                     {selectedSlot.images.length > 1 ? (
                       <div className="mt-2 grid grid-cols-5 gap-2">
-                        {selectedSlot.images.slice(0, 10).map((image, index) => (
+                        {selectedSlot.images.slice(0, 10).map((image) => (
                           <button
                             key={image.id}
                             type="button"
@@ -2211,11 +2928,15 @@ export default function LocalProductsPage() {
                             onClick={() =>
                               openImageAlbum({
                                 title: selectedSlot.productName,
-                                images: selectedSlot.images
+                                images: selectedSlot.images,
                               })
                             }
                           >
-                            <img src={image.dataUrl} alt={image.name} className="h-full w-full object-contain" />
+                            <img
+                              src={image.dataUrl}
+                              alt={image.name}
+                              className="h-full w-full object-contain"
+                            />
                           </button>
                         ))}
                       </div>
@@ -2228,7 +2949,7 @@ export default function LocalProductsPage() {
                         onClick={() => togglePostedSlot(selectedSlot)}
                       >
                         <FiCheck />
-                        Đã đăng
+                        {postedIds.has(createSlotPostedKey(selectedSlot)) ? "DONE" : "Chưa đăng"}
                       </button>
 
                       <button
@@ -2245,9 +2966,18 @@ export default function LocalProductsPage() {
                   <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="rounded-2xl bg-cyan-300 px-3 py-1 text-xs font-black text-slate-950">{selectedSlot.time}</div>
-                        <h3 className="mt-2 text-base font-black text-white">{selectedSlot.productName}</h3>
-                        <p className="mt-1 text-xs text-slate-400">{selectedSlot.category || "Chưa có danh mục"}</p>
+                        <div className="rounded-2xl bg-cyan-300 px-3 py-1 text-xs font-black text-slate-950">
+                          {selectedSlot.time}
+                        </div>
+                        <h3 className="mt-2 text-base font-black text-white">
+                          {selectedSlot.productName}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-400">
+                          {selectedSlot.category || "Chưa có danh mục"}
+                        </p>
+                        <p className="mt-1 text-sm font-black text-cyan-200">
+                          {selectedSlot.priceText || "Chưa có giá"}
+                        </p>
                       </div>
                     </div>
 
@@ -2255,7 +2985,13 @@ export default function LocalProductsPage() {
                       <button
                         type="button"
                         className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
-                        onClick={() => void handleCopyField(`slot-name-${selectedSlot.id}`, "tên sản phẩm", selectedSlot.productName)}
+                        onClick={() =>
+                          void handleCopyField(
+                            `slot-name-${selectedSlot.id}`,
+                            "tên sản phẩm",
+                            selectedSlot.productName,
+                          )
+                        }
                       >
                         {renderCopyIcon(`slot-name-${selectedSlot.id}`)}
                         Copy tên
@@ -2264,15 +3000,21 @@ export default function LocalProductsPage() {
                       <button
                         type="button"
                         className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
-                        onClick={() => void handleCopyField(`slot-post-${selectedSlot.id}`, "bài đăng", selectedSlot.postText)}
+                        onClick={() =>
+                          void handleCopyField(
+                            `slot-desc-${selectedSlot.id}`,
+                            "mô tả",
+                            selectedSlot.description,
+                          )
+                        }
                       >
-                        {renderCopyIcon(`slot-post-${selectedSlot.id}`)}
-                        Copy bài
+                        {renderCopyIcon(`slot-desc-${selectedSlot.id}`)}
+                        Copy mô tả
                       </button>
                     </div>
 
-                    <pre className="mt-2 max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-2xl border border-white/10 bg-black/30 p-2 text-xs leading-6 text-slate-200">
-                      {selectedSlot.postText}
+                    <pre className="mt-2 max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-2xl border border-white/10 bg-black/30 p-2 text-sm leading-6 text-slate-200">
+                      {selectedSlot.description || "Chưa có mô tả"}
                     </pre>
                   </article>
                 </section>
@@ -2281,25 +3023,49 @@ export default function LocalProductsPage() {
               {activeModal === "imageAlbum" && albumSource ? (
                 <section className="grid min-w-0 grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_260px]">
                   <article className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                    <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
+                    <div className="mb-2 flex min-w-0 flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
                       <div className="min-w-0">
-                        <h3 className="truncate text-sm font-black text-white">{albumSource.title}</h3>
-                        <p className="text-xs text-slate-400">{albumSource.images.length} ảnh trong album</p>
+                        <h3 className="truncate text-sm font-black text-white">
+                          {albumSource.title}
+                        </h3>
+                        <p className="text-xs text-slate-400">
+                          {albumSource.images.length} ảnh trong album
+                        </p>
                       </div>
 
-                      <div className="flex shrink-0 gap-2">
+                      <div className="grid shrink-0 grid-cols-2 gap-2 xl:grid-cols-4">
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10"
+                          onClick={() =>
+                            void handleCopySelectedAlbumImageAsBlob()
+                          }
+                        >
+                          <FiCopy />
+                          Copy ảnh
+                        </button>
+
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10"
+                          onClick={() => void handleCopyAlbumImagesAsBlob()}
+                        >
+                          <FiClipboard />
+                          Copy album
+                        </button>
+
                         <button
                           type="button"
                           className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 px-3 py-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
                           onClick={handleDownloadSelectedAlbumImage}
                         >
                           <FiDownload />
-                          Tải ảnh này
+                          Tải ảnh
                         </button>
 
                         <button
                           type="button"
-                          className="hidden items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10 xl:flex"
+                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10"
                           onClick={handleDownloadAlbumImages}
                         >
                           <FiArchive />
@@ -2310,7 +3076,11 @@ export default function LocalProductsPage() {
 
                     <div className="flex h-[58vh] max-h-[58vh] min-h-[260px] items-center justify-center overflow-hidden rounded-2xl bg-slate-900">
                       {selectedAlbumImage ? (
-                        <img src={selectedAlbumImage.dataUrl} alt={selectedAlbumImage.name} className="h-full w-full object-contain" />
+                        <img
+                          src={selectedAlbumImage.dataUrl}
+                          alt={selectedAlbumImage.name}
+                          className="h-full w-full object-contain"
+                        />
                       ) : (
                         <FiImage className="text-slate-600" />
                       )}
@@ -2319,15 +3089,9 @@ export default function LocalProductsPage() {
 
                   <aside className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/70 p-2">
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <h3 className="text-sm font-black text-white">Thumbnail</h3>
-
-                      <button
-                        type="button"
-                        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10 xl:hidden"
-                        onClick={handleDownloadAlbumImages}
-                      >
-                        Tải album
-                      </button>
+                      <h3 className="text-sm font-black text-white">
+                        Thumbnail
+                      </h3>
                     </div>
 
                     <div className="grid max-h-[58vh] grid-cols-4 gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
@@ -2338,12 +3102,19 @@ export default function LocalProductsPage() {
                           <button
                             key={image.id}
                             type="button"
-                            className={`group relative aspect-square overflow-hidden rounded-2xl bg-slate-900 ring-1 transition ${active ? "ring-2 ring-cyan-300" : "ring-white/10 hover:ring-cyan-300/60"
-                              }`}
+                            className={`group relative aspect-square overflow-hidden rounded-2xl bg-slate-900 ring-1 transition ${
+                              active
+                                ? "ring-2 ring-cyan-300"
+                                : "ring-white/10 hover:ring-cyan-300/60"
+                            }`}
                             onClick={() => setSelectedAlbumImageId(image.id)}
                             title={`Ảnh ${index + 1}`}
                           >
-                            <img src={image.dataUrl} alt={image.name} className="h-full w-full object-contain" />
+                            <img
+                              src={image.dataUrl}
+                              alt={image.name}
+                              className="h-full w-full object-contain"
+                            />
                             <span className="absolute left-1 top-1 rounded-xl bg-black/70 px-2 py-1 text-[10px] font-black text-white">
                               {index + 1}
                             </span>
@@ -2354,6 +3125,49 @@ export default function LocalProductsPage() {
                   </aside>
                 </section>
               ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {pendingDownload ? (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/75 p-2 backdrop-blur">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-950 p-2 shadow-2xl">
+            <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
+              <div className="min-w-0">
+                <h2 className="truncate text-sm font-black text-white">
+                  {pendingDownload.title}
+                </h2>
+                <p className="mt-1 text-xs leading-5 text-slate-400">
+                  {pendingDownload.description}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
+                onClick={() => setPendingDownload(null)}
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="rounded-2xl border border-white/10 bg-white/5 p-2 text-sm font-bold text-white transition hover:bg-white/10"
+                onClick={() => setPendingDownload(null)}
+              >
+                Hủy
+              </button>
+
+              <button
+                type="button"
+                className="rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
+                onClick={executeDownloadRequest}
+              >
+                Đồng ý tải
+              </button>
             </div>
           </div>
         </div>
