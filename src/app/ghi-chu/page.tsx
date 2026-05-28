@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  Fragment,
   type ChangeEvent,
   type ClipboardEvent,
   type DragEvent,
@@ -78,6 +79,7 @@ type ScheduleConfig = {
   startTime: string;
   endTime: string;
   gapHours: number;
+  taskCount: number;
   selectedCategories: string[];
 };
 
@@ -97,11 +99,11 @@ type ScheduleSlot = {
 
 type ScheduleWarning = {
   type:
-    | "emptyProducts"
-    | "emptyCategory"
-    | "notEnoughProducts"
-    | "overflow"
-    | "invalidTime";
+  | "emptyProducts"
+  | "emptyCategory"
+  | "notEnoughProducts"
+  | "overflow"
+  | "invalidTime";
   message: string;
 };
 
@@ -114,6 +116,8 @@ type PostedRecord = {
   slotId: string;
   postedAt: string;
 };
+
+type ScheduleAssignmentMap = Record<string, string>;
 
 type AlbumSource = {
   title: string;
@@ -149,6 +153,7 @@ const STORE_NAME = "products";
 const SETTINGS_KEY = "local_product_global_settings";
 const POSTED_KEY = "local_product_posted_slots_v1";
 const SCHEDULE_CONFIG_KEY = "local_product_schedule_config_v1";
+const SCHEDULE_ASSIGNMENTS_KEY = "local_product_schedule_assignments_v1";
 
 const emptyDraft: ProductDraft = {
   name: "",
@@ -170,6 +175,7 @@ const defaultScheduleConfig: ScheduleConfig = {
   startTime: "08:00",
   endTime: "22:00",
   gapHours: 3,
+  taskCount: 1,
   selectedCategories: [],
 };
 
@@ -229,12 +235,28 @@ const getCurrentTimeString = (): string => {
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 };
 
-const createPostedKey = (date: string, productId: string): string => {
+const createPostedKey = (
+  date: string,
+  productId: string,
+  taskIndex = 0,
+): string => {
+  return `${date}::task${taskIndex + 1}::${productId}`;
+};
+
+const createLegacyPostedKey = (date: string, productId: string): string => {
   return `${date}::${productId}`;
 };
 
-const createSlotPostedKey = (slot: ScheduleSlot): string => {
-  return createPostedKey(slot.date, slot.productId);
+const createScheduleAssignmentKey = (
+  date: string,
+  time: string,
+  taskIndex: number,
+): string => {
+  return `${date}::task${taskIndex + 1}::${time}`;
+};
+
+const createSlotPostedKey = (slot: ScheduleSlot, taskIndex = 0): string => {
+  return createPostedKey(slot.date, slot.productId, taskIndex);
 };
 
 const openDatabase = (): Promise<IDBDatabase> => {
@@ -453,8 +475,8 @@ const loadScheduleConfig = (): ScheduleConfig => {
     const record = parsed as Record<string, unknown>;
     const selectedCategories = Array.isArray(record.selectedCategories)
       ? record.selectedCategories.filter(
-          (item): item is string => typeof item === "string",
-        )
+        (item): item is string => typeof item === "string",
+      )
       : [];
 
     return {
@@ -478,6 +500,11 @@ const loadScheduleConfig = (): ScheduleConfig => {
         typeof record.gapHours === "number" && Number.isFinite(record.gapHours)
           ? record.gapHours
           : defaultScheduleConfig.gapHours,
+      taskCount:
+        typeof record.taskCount === "number" &&
+          Number.isFinite(record.taskCount)
+          ? Math.max(1, Math.min(8, Math.round(record.taskCount)))
+          : defaultScheduleConfig.taskCount,
       selectedCategories,
     };
   } catch {
@@ -493,6 +520,40 @@ const saveScheduleConfig = (config: ScheduleConfig): void => {
   if (typeof window === "undefined") return;
 
   localStorage.setItem(SCHEDULE_CONFIG_KEY, JSON.stringify(config));
+};
+
+const loadScheduleAssignments = (): ScheduleAssignmentMap => {
+  if (typeof window === "undefined") return {};
+
+  const raw = localStorage.getItem(SCHEDULE_ASSIGNMENTS_KEY);
+
+  if (!raw) return {};
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
+      return {};
+
+    const record = parsed as Record<string, unknown>;
+    const result: ScheduleAssignmentMap = {};
+
+    Object.entries(record).forEach(([key, value]) => {
+      if (typeof value === "string") {
+        result[key] = value;
+      }
+    });
+
+    return result;
+  } catch {
+    return {};
+  }
+};
+
+const saveScheduleAssignments = (assignments: ScheduleAssignmentMap): void => {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem(SCHEDULE_ASSIGNMENTS_KEY, JSON.stringify(assignments));
 };
 
 const parsePriceNumber = (priceText: string): number => {
@@ -913,8 +974,8 @@ const buildRandomSchedule = (
     config.selectedCategories.length === 0
       ? products
       : products.filter((product) =>
-          config.selectedCategories.includes(product.category),
-        );
+        config.selectedCategories.includes(product.category),
+      );
 
   if (usableProducts.length === 0) {
     return {
@@ -1062,6 +1123,8 @@ export default function LocalProductsPage() {
     useState<CategoryTab>("all");
   const [pendingDownload, setPendingDownload] =
     useState<DownloadRequest | null>(null);
+  const [scheduleAssignments, setScheduleAssignments] =
+    useState<ScheduleAssignmentMap>(() => loadScheduleAssignments());
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isProcessingImages, setIsProcessingImages] = useState<boolean>(false);
   const [isSettingsReady, setIsSettingsReady] = useState<boolean>(false);
@@ -1116,6 +1179,25 @@ export default function LocalProductsPage() {
     );
   }, [products, scheduleConfig, settings.commonDescription]);
 
+  const scheduleTaskIndexes = useMemo(() => {
+    return Array.from(
+      { length: Math.max(1, scheduleConfig.taskCount) },
+      (_, index) => index,
+    );
+  }, [scheduleConfig.taskCount]);
+
+  const scheduleTimes = useMemo(() => {
+    return createDailyTimes(
+      scheduleConfig.startTime,
+      scheduleConfig.endTime,
+      scheduleConfig.gapHours,
+    ).times;
+  }, [
+    scheduleConfig.endTime,
+    scheduleConfig.gapHours,
+    scheduleConfig.startTime,
+  ]);
+
   const todaySlots = useMemo(() => {
     return scheduleResult.slots.filter((slot) => slot.date === today);
   }, [scheduleResult.slots, today]);
@@ -1162,24 +1244,33 @@ export default function LocalProductsPage() {
     );
   }, [products, scheduleConfig.selectedCategories]);
 
-  const todayPostedProductIds = useMemo(() => {
+  const todayPostedProductKeys = useMemo(() => {
     return new Set(
       postedRecords
         .map((record) => record.slotId)
-        .filter((slotId) => slotId.startsWith(`${today}::`))
-        .map((slotId) => slotId.replace(`${today}::`, "")),
+        .filter((slotId) => slotId.startsWith(`${today}::task`)),
     );
   }, [postedRecords, today]);
 
+  const todayPostedProductIds = useMemo(() => {
+    return new Set(
+      Array.from(todayPostedProductKeys).map(
+        (slotId) => slotId.split("::").at(-1) ?? "",
+      ),
+    );
+  }, [todayPostedProductKeys]);
+
   const postedTodayCount = useMemo(() => {
-    return scheduleProducts.filter((product) =>
-      todayPostedProductIds.has(product.id),
-    ).length;
-  }, [scheduleProducts, todayPostedProductIds]);
+    return todayPostedProductKeys.size;
+  }, [todayPostedProductKeys]);
+
+  const totalTodayTaskCount = useMemo(() => {
+    return scheduleTimes.length * scheduleTaskIndexes.length;
+  }, [scheduleTaskIndexes.length, scheduleTimes.length]);
 
   const remainingTodayCount = useMemo(() => {
-    return Math.max(scheduleProducts.length - postedTodayCount, 0);
-  }, [postedTodayCount, scheduleProducts.length]);
+    return Math.max(totalTodayTaskCount - postedTodayCount, 0);
+  }, [postedTodayCount, totalTodayTaskCount]);
 
   const todayScheduledProductIds = useMemo(() => {
     return new Set(todaySlots.map((slot) => slot.productId));
@@ -1215,6 +1306,10 @@ export default function LocalProductsPage() {
   useEffect(() => {
     saveScheduleConfig(scheduleConfig);
   }, [scheduleConfig]);
+
+  useEffect(() => {
+    saveScheduleAssignments(scheduleAssignments);
+  }, [scheduleAssignments]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -1740,8 +1835,119 @@ export default function LocalProductsPage() {
     });
   };
 
-  const togglePostedProduct = (date: string, productId: string): void => {
-    const postedKey = createPostedKey(date, productId);
+  const getAssignedProduct = (
+    date: string,
+    time: string,
+    taskIndex: number,
+  ): LocalProduct | undefined => {
+    const productId =
+      scheduleAssignments[createScheduleAssignmentKey(date, time, taskIndex)];
+
+    return products.find((product) => product.id === productId);
+  };
+
+  const assignProductToSchedule = (
+    date: string,
+    time: string,
+    taskIndex: number,
+    productId: string,
+  ): void => {
+    const assignmentKey = createScheduleAssignmentKey(date, time, taskIndex);
+
+    setScheduleAssignments((current) => {
+      const nextAssignments: ScheduleAssignmentMap = { ...current };
+
+      if (!productId) {
+        delete nextAssignments[assignmentKey];
+        return nextAssignments;
+      }
+
+      const duplicated = Object.entries(nextAssignments).some(
+        ([key, value]) => {
+          if (key === assignmentKey) return false;
+          if (value !== productId) return false;
+
+          return key.startsWith(`${date}::task${taskIndex + 1}::`);
+        },
+      );
+
+      if (duplicated) {
+        Toastify("Sản phẩm này đã có trong task lịch này hôm nay", 300);
+        return current;
+      }
+
+      nextAssignments[assignmentKey] = productId;
+      return nextAssignments;
+    });
+  };
+
+  const addScheduleTask = (): void => {
+    setScheduleConfig((current) => ({
+      ...current,
+      taskCount: Math.min(8, current.taskCount + 1),
+    }));
+  };
+
+  const removeScheduleTask = (): void => {
+    setScheduleConfig((current) => {
+      const nextTaskCount = Math.max(1, current.taskCount - 1);
+
+      setScheduleAssignments((assignments) => {
+        const nextAssignments: ScheduleAssignmentMap = {};
+
+        Object.entries(assignments).forEach(([key, value]) => {
+          if (!key.includes(`::task${current.taskCount}::`)) {
+            nextAssignments[key] = value;
+          }
+        });
+
+        return nextAssignments;
+      });
+
+      return {
+        ...current,
+        taskCount: nextTaskCount,
+      };
+    });
+  };
+
+  const duplicateFirstScheduleTask = (): void => {
+    if (scheduleConfig.taskCount <= 1) {
+      Toastify("Cần ít nhất hai task lịch để nhân bản", 300);
+      return;
+    }
+
+    setScheduleAssignments((current) => {
+      const nextAssignments: ScheduleAssignmentMap = { ...current };
+
+      Object.entries(current).forEach(([key, value]) => {
+        const sourcePrefix = `${today}::task1::`;
+
+        if (!key.startsWith(sourcePrefix)) return;
+
+        const time = key.replace(sourcePrefix, "");
+
+        for (
+          let taskIndex = 1;
+          taskIndex < scheduleConfig.taskCount;
+          taskIndex += 1
+        ) {
+          nextAssignments[createScheduleAssignmentKey(today, time, taskIndex)] =
+            value;
+        }
+      });
+
+      return nextAssignments;
+    });
+
+    Toastify("Đã nhân bản task 1 sang các task còn lại", 200);
+  };
+  const togglePostedProduct = (
+    date: string,
+    productId: string,
+    taskIndex = 0,
+  ): void => {
+    const postedKey = createPostedKey(date, productId, taskIndex);
 
     setPostedRecords((current) => {
       const exists = current.some((record) => record.slotId === postedKey);
@@ -1749,18 +1955,15 @@ export default function LocalProductsPage() {
       const nextRecords = exists
         ? current.filter((record) => record.slotId !== postedKey)
         : [
-            ...current,
-            {
-              slotId: postedKey,
-              postedAt: new Date().toISOString(),
-            },
-          ];
+          ...current,
+          {
+            slotId: postedKey,
+            postedAt: new Date().toISOString(),
+          },
+        ];
 
       savePostedRecords(nextRecords);
-      Toastify(
-        exists ? "Đã chuyển về chưa đăng" : "Đã đánh dấu DONE",
-        200,
-      );
+      Toastify(exists ? "Đã chuyển về chưa đăng" : "Đã đánh dấu DONE", 200);
 
       return nextRecords;
     });
@@ -1802,14 +2005,14 @@ export default function LocalProductsPage() {
 
   return (
     <main
-      className="min-h-screen w-full overflow-x-hidden bg-[radial-gradient(circle_at_top_left,#1e293b_0,#020617_34%,#020617_100%)] p-2 text-slate-100 xl:p-0"
+      className="min-h-dvh w-full overflow-x-hidden bg-[radial-gradient(circle_at_top_left,#1e293b_0,#020617_34%,#020617_100%)] p-2 text-slate-100 xl:p-0"
       onPaste={(event) => {
         void handlePaste(event);
       }}
     >
       <ToastContainer />
 
-      <section className="mx-auto flex w-full max-w-[100vw] flex-col gap-2 xl:min-h-screen xl:p-2">
+      <section className="mx-auto flex w-full flex-col gap-2 xl:min-h-dvh xl:p-2">
         <header className="rounded-2xl border border-cyan-400/20 bg-slate-950/80 p-2 shadow-2xl shadow-cyan-950/30 backdrop-blur">
           <div className="grid grid-cols-1 gap-2 xl:grid-cols-[1fr_auto] xl:items-center">
             <div className="flex min-w-0 items-center gap-2">
@@ -2020,13 +2223,12 @@ export default function LocalProductsPage() {
                     return (
                       <article
                         key={slot.id}
-                        className={`relative overflow-hidden rounded-2xl border p-2 transition ${
-                          isPosted
+                        className={`relative overflow-hidden rounded-2xl border p-2 transition ${isPosted
                             ? "border-emerald-400/30 bg-emerald-400/10"
                             : isNext
                               ? "border-cyan-300/50 bg-cyan-300/10"
                               : "border-white/10 bg-slate-950/80"
-                        }`}
+                          }`}
                       >
                         {isOverdue ? (
                           <div className="absolute inset-0 z-10 bg-slate-950/55 backdrop-blur-[1px]" />
@@ -2035,11 +2237,10 @@ export default function LocalProductsPage() {
                         <div className="relative z-20 flex gap-2">
                           <button
                             type="button"
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-sm transition ${
-                              isPosted
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-sm transition ${isPosted
                                 ? "border-emerald-300 bg-emerald-300 text-slate-950"
                                 : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                            }`}
+                              }`}
                             onClick={() => togglePostedSlot(slot)}
                             title="Đánh dấu đã đăng"
                           >
@@ -2120,11 +2321,10 @@ export default function LocalProductsPage() {
             <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
               <button
                 type="button"
-                className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-black transition ${
-                  activeCategoryTab === "all"
+                className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-black transition ${activeCategoryTab === "all"
                     ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
                     : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                }`}
+                  }`}
                 onClick={() => setActiveCategoryTab("all")}
               >
                 Tất cả
@@ -2134,11 +2334,10 @@ export default function LocalProductsPage() {
                 <button
                   key={category}
                   type="button"
-                  className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-black transition ${
-                    activeCategoryTab === category
+                  className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-black transition ${activeCategoryTab === category
                       ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
                       : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                  }`}
+                    }`}
                   onClick={() => setActiveCategoryTab(category)}
                 >
                   {category}
@@ -2293,8 +2492,8 @@ export default function LocalProductsPage() {
       </section>
 
       {activeModal ? (
-        <div className="fixed inset-0 z-[99999] flex max-w-[100vw] items-center justify-center overflow-hidden bg-black/70 p-2 backdrop-blur">
-          <div className="max-h-[94vh] w-full max-w-[min(1120px,calc(100vw-1rem))] overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl">
+        <div className="fixed inset-0 z-[99999] flex h-dvh w-full items-center justify-center overflow-hidden bg-black/70 p-2 backdrop-blur">
+          <div className="h-[90dvh] w-full overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl">
             <div className="flex items-center justify-between gap-2 border-b border-white/10 p-2">
               <div className="flex min-w-0 items-center gap-2">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-200">
@@ -2333,7 +2532,7 @@ export default function LocalProductsPage() {
               </button>
             </div>
 
-            <div className="max-h-[calc(94vh-58px)] overflow-y-auto p-2">
+            <div className="h-[calc(90dvh-58px)] overflow-y-auto p-2">
               {activeModal === "product" ? (
                 <form
                   className="grid grid-cols-1 gap-2 xl:grid-cols-[360px_1fr]"
@@ -2410,11 +2609,10 @@ export default function LocalProductsPage() {
 
                   <section className="flex flex-col gap-2">
                     <label
-                      className={`cursor-pointer rounded-2xl border border-dashed p-4 text-center transition ${
-                        isDragging
+                      className={`cursor-pointer rounded-2xl border border-dashed p-4 text-center transition ${isDragging
                           ? "border-cyan-300/80 bg-cyan-300/10"
                           : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
-                      }`}
+                        }`}
                       onDrop={(event) => void handleDrop(event)}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
@@ -2508,8 +2706,8 @@ export default function LocalProductsPage() {
               ) : null}
 
               {activeModal === "schedule" ? (
-                <section className="flex flex-col gap-2">
-                  <div className="grid grid-cols-2 gap-2 xl:grid-cols-5">
+                <section className="flex min-h-full flex-col gap-2">
+                  <div className="grid grid-cols-2 gap-2 xl:grid-cols-6">
                     <label className="flex flex-col gap-2">
                       <span className="text-xs font-bold text-slate-300">
                         Từ ngày
@@ -2540,7 +2738,7 @@ export default function LocalProductsPage() {
 
                     <label className="flex flex-col gap-2">
                       <span className="text-xs font-bold text-slate-300">
-                        Mốc đầu
+                        Bài đầu
                       </span>
                       <input
                         type="time"
@@ -2554,7 +2752,7 @@ export default function LocalProductsPage() {
 
                     <label className="flex flex-col gap-2">
                       <span className="text-xs font-bold text-slate-300">
-                        Mốc cuối
+                        Bài cuối
                       </span>
                       <input
                         type="time"
@@ -2568,7 +2766,7 @@ export default function LocalProductsPage() {
 
                     <label className="flex flex-col gap-2">
                       <span className="text-xs font-bold text-slate-300">
-                        Cách nhau
+                        Khoảng cách
                       </span>
                       <select
                         value={scheduleConfig.gapHours}
@@ -2587,13 +2785,90 @@ export default function LocalProductsPage() {
                         ))}
                       </select>
                     </label>
+
+                    <label className="flex flex-col gap-2">
+                      <span className="text-xs font-bold text-slate-300">
+                        Số task
+                      </span>
+                      <select
+                        value={scheduleConfig.taskCount}
+                        onChange={(event) =>
+                          updateScheduleField(
+                            "taskCount",
+                            Number(event.target.value),
+                          )
+                        }
+                        className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition focus:border-cyan-300/60"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((count) => (
+                          <option key={count} value={count}>
+                            {count} task
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                    <div className="flex items-center justify-between gap-2">
+                  <div className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
                       <h3 className="text-sm font-black text-white">
                         Danh mục dùng để xếp lịch
                       </h3>
+
+                      {categories.length === 0 ? (
+                        <p className="mt-2 text-sm text-slate-400">
+                          Chưa có danh mục. Thêm hoặc import sản phẩm trước.
+                        </p>
+                      ) : (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {categories.map((category) => {
+                            const active =
+                              scheduleConfig.selectedCategories.includes(
+                                category,
+                              );
+
+                            return (
+                              <button
+                                key={category}
+                                type="button"
+                                className={`rounded-2xl border px-3 py-2 text-xs font-black transition ${active
+                                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                                  }`}
+                                onClick={() => toggleScheduleCategory(category)}
+                              >
+                                {category}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+                      <button
+                        type="button"
+                        className="rounded-2xl border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-300/20"
+                        onClick={addScheduleTask}
+                      >
+                        Thêm task
+                      </button>
+
+                      <button
+                        type="button"
+                        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-white transition hover:bg-white/10"
+                        onClick={removeScheduleTask}
+                      >
+                        Bớt task
+                      </button>
+
+                      <button
+                        type="button"
+                        className="rounded-2xl border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-xs font-black text-emerald-100 transition hover:bg-emerald-300/20"
+                        onClick={duplicateFirstScheduleTask}
+                      >
+                        Nhân bản task 1
+                      </button>
 
                       <button
                         type="button"
@@ -2603,36 +2878,6 @@ export default function LocalProductsPage() {
                         Reset tất cả
                       </button>
                     </div>
-
-                    {categories.length === 0 ? (
-                      <p className="mt-2 text-sm text-slate-400">
-                        Chưa có danh mục. Thêm hoặc import sản phẩm trước.
-                      </p>
-                    ) : (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {categories.map((category) => {
-                          const active =
-                            scheduleConfig.selectedCategories.includes(
-                              category,
-                            );
-
-                          return (
-                            <button
-                              key={category}
-                              type="button"
-                              className={`rounded-2xl border px-3 py-2 text-xs font-black transition ${
-                                active
-                                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                              }`}
-                              onClick={() => toggleScheduleCategory(category)}
-                            >
-                              {category}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
 
                   {scheduleResult.warnings.length > 0 ? (
@@ -2646,17 +2891,19 @@ export default function LocalProductsPage() {
                   <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2">
                       <div className="text-[10px] text-slate-400">
-                        Tổng lịch
+                        Khung giờ
                       </div>
                       <div className="text-lg font-black text-white">
-                        {scheduleResult.slots.length}
+                        {scheduleTimes.length}
                       </div>
                     </div>
 
                     <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-2">
-                      <div className="text-[10px] text-cyan-200">Hôm nay</div>
+                      <div className="text-[10px] text-cyan-200">
+                        Tổng task hôm nay
+                      </div>
                       <div className="text-lg font-black text-white">
-                        {todaySlots.length}
+                        {totalTodayTaskCount}
                       </div>
                     </div>
 
@@ -2668,58 +2915,236 @@ export default function LocalProductsPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <h3 className="text-sm font-black text-white">
-                        Todo sản phẩm hôm nay
-                      </h3>
-                      <span className="text-xs text-slate-400">
-                        {scheduleProducts.length} sản phẩm
-                      </span>
-                    </div>
-
-                    {scheduleProducts.length === 0 ? (
-                      <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-4 text-center text-sm text-slate-400">
-                        Chưa có sản phẩm trong danh mục đang chọn.
+                  <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_320px]">
+                    <section className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <h3 className="text-sm font-black text-white">
+                          Khung giờ đăng hôm nay
+                        </h3>
+                        <button
+                          type="button"
+                          className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-white transition hover:bg-white/10"
+                          onClick={resetTodayPosted}
+                        >
+                          Reset hôm nay
+                        </button>
                       </div>
-                    ) : (
-                      <div className="grid max-h-[52vh] grid-cols-1 gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
+
+                      {scheduleTimes.length === 0 ? (
+                        <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-4 text-center text-sm text-slate-400">
+                          Khung giờ chưa hợp lệ.
+                        </div>
+                      ) : (
+                        <div className="max-h-[58dvh] overflow-auto pr-1">
+                          <div
+                            className="grid min-w-[760px] gap-2"
+                            style={{
+                              gridTemplateColumns: `120px repeat(${scheduleTaskIndexes.length}, minmax(220px, 1fr))`,
+                            }}
+                          >
+                            <div className="rounded-2xl border border-white/10 bg-black/30 p-2 text-xs font-black text-slate-300">
+                              Giờ
+                            </div>
+                            {scheduleTaskIndexes.map((taskIndex) => (
+                              <div
+                                key={taskIndex}
+                                className="rounded-2xl border border-white/10 bg-black/30 p-2 text-xs font-black text-white"
+                              >
+                                Task {taskIndex + 1}
+                              </div>
+                            ))}
+
+                            {scheduleTimes.map((time, timeIndex) => {
+                              const nextTime =
+                                scheduleTimes[timeIndex + 1] ??
+                                scheduleConfig.endTime;
+
+                              return (
+                                <Fragment key={time}>
+                                  <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-2">
+                                    <div className="text-sm font-black text-white">
+                                      Bài {timeIndex + 1}
+                                    </div>
+                                    <div className="mt-1 text-xs text-slate-400">
+                                      {time} - {nextTime}
+                                    </div>
+                                  </div>
+
+                                  {scheduleTaskIndexes.map((taskIndex) => {
+                                    const assignedProduct = getAssignedProduct(
+                                      today,
+                                      time,
+                                      taskIndex,
+                                    );
+                                    const postedKey = assignedProduct
+                                      ? createPostedKey(
+                                        today,
+                                        assignedProduct.id,
+                                        taskIndex,
+                                      )
+                                      : "";
+                                    const done = postedKey
+                                      ? postedIds.has(postedKey)
+                                      : false;
+                                    const usedProductIds = new Set(
+                                      Object.entries(scheduleAssignments)
+                                        .filter(
+                                          ([key]) =>
+                                            key.startsWith(
+                                              `${today}::task${taskIndex + 1}::`,
+                                            ) &&
+                                            key !==
+                                            createScheduleAssignmentKey(
+                                              today,
+                                              time,
+                                              taskIndex,
+                                            ),
+                                        )
+                                        .map(([, value]) => value),
+                                    );
+
+                                    return (
+                                      <article
+                                        key={`${time}-${taskIndex}`}
+                                        className={`rounded-2xl border p-2 ${done
+                                            ? "border-emerald-400/30 bg-emerald-400/10"
+                                            : assignedProduct
+                                              ? "border-cyan-300/30 bg-cyan-300/10"
+                                              : "border-white/10 bg-slate-950/80"
+                                          }`}
+                                      >
+                                        <select
+                                          value={assignedProduct?.id ?? ""}
+                                          onChange={(event) =>
+                                            assignProductToSchedule(
+                                              today,
+                                              time,
+                                              taskIndex,
+                                              event.target.value,
+                                            )
+                                          }
+                                          className="w-full rounded-2xl border border-white/10 bg-slate-950 p-2 text-xs font-bold text-white outline-none focus:border-cyan-300/60"
+                                        >
+                                          <option value="">
+                                            Chọn sản phẩm
+                                          </option>
+                                          {scheduleProducts.map((product) => (
+                                            <option
+                                              key={product.id}
+                                              value={product.id}
+                                              disabled={usedProductIds.has(
+                                                product.id,
+                                              )}
+                                            >
+                                              {product.name}{" "}
+                                              {product.priceText
+                                                ? `- ${product.priceText}`
+                                                : ""}
+                                            </option>
+                                          ))}
+                                        </select>
+
+                                        <div className="mt-2 flex gap-2">
+                                          <button
+                                            type="button"
+                                            className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-900"
+                                            onClick={() =>
+                                              assignedProduct
+                                                ? openImageAlbum({
+                                                  title: assignedProduct.name,
+                                                  images:
+                                                    assignedProduct.images,
+                                                })
+                                                : undefined
+                                            }
+                                          >
+                                            {assignedProduct?.images[0] ? (
+                                              <img
+                                                src={
+                                                  assignedProduct.images[0]
+                                                    .dataUrl
+                                                }
+                                                alt={assignedProduct.name}
+                                                className="h-full w-full object-contain"
+                                              />
+                                            ) : (
+                                              <FiImage className="text-slate-600" />
+                                            )}
+                                          </button>
+
+                                          <div className="min-w-0 flex-1">
+                                            <h4 className="line-clamp-2 text-xs font-black text-white">
+                                              {assignedProduct?.name ??
+                                                "Chưa chọn sản phẩm"}
+                                            </h4>
+                                            <p className="mt-1 truncate text-[11px] font-black text-cyan-200">
+                                              {assignedProduct?.priceText ??
+                                                "Chưa có giá"}
+                                            </p>
+                                            <p className="mt-1 truncate text-[10px] font-bold text-slate-400">
+                                              {assignedProduct?.category ??
+                                                "Chưa có danh mục"}
+                                            </p>
+                                          </div>
+                                        </div>
+
+                                        <button
+                                          type="button"
+                                          disabled={!assignedProduct}
+                                          className={`mt-2 flex w-full items-center justify-center gap-2 rounded-2xl p-2 text-xs font-black transition ${done
+                                              ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                                              : assignedProduct
+                                                ? "border border-white/10 bg-white/5 text-white hover:bg-white/10"
+                                                : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
+                                            }`}
+                                          onClick={() =>
+                                            assignedProduct &&
+                                            togglePostedProduct(
+                                              today,
+                                              assignedProduct.id,
+                                              taskIndex,
+                                            )
+                                          }
+                                        >
+                                          {done ? "DONE" : "Chưa đăng"}
+                                        </button>
+                                      </article>
+                                    );
+                                  })}
+                                </Fragment>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </section>
+
+                    <aside className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                      <h3 className="text-sm font-black text-white">
+                        Sản phẩm khả dụng
+                      </h3>
+                      <div className="mt-2 grid max-h-[58dvh] grid-cols-1 gap-2 overflow-y-auto pr-1">
                         {scheduleProducts.map((product) => {
-                          const todaySlot = todaySlots.find(
-                            (slot) => slot.productId === product.id,
+                          const usedToday = Object.entries(
+                            scheduleAssignments,
+                          ).some(
+                            ([key, value]) =>
+                              key.startsWith(`${today}::`) &&
+                              value === product.id,
                           );
-                          const done = todayPostedProductIds.has(product.id);
-                          const scheduled = todayScheduledProductIds.has(
+                          const doneToday = todayPostedProductIds.has(
                             product.id,
                           );
 
                           return (
                             <article
                               key={product.id}
-                              className={`rounded-2xl border p-2 ${
-                                done
-                                  ? "border-emerald-400/30 bg-emerald-400/10"
-                                  : scheduled
-                                    ? "border-cyan-300/30 bg-cyan-300/10"
-                                    : "border-white/10 bg-slate-950/80"
-                              }`}
+                              className="rounded-2xl border border-white/10 bg-slate-950/80 p-2"
                             >
                               <div className="flex gap-2">
                                 <button
                                   type="button"
-                                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-xs font-black transition ${
-                                    done
-                                      ? "border-emerald-300 bg-emerald-300 text-slate-950"
-                                      : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                                  }`}
-                                  onClick={() => togglePostedProduct(today, product.id)}
-                                >
-                                  {done ? "DONE" : <FiCheck />}
-                                </button>
-
-                                <button
-                                  type="button"
-                                  className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-900"
+                                  className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-900"
                                   onClick={() =>
                                     openImageAlbum({
                                       title: product.name,
@@ -2739,35 +3164,34 @@ export default function LocalProductsPage() {
                                 </button>
 
                                 <div className="min-w-0 flex-1">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="truncate rounded-2xl bg-black/40 px-2 py-1 text-[10px] font-black text-white">
-                                      {todaySlot?.time ?? "Chưa có giờ"}
-                                    </span>
-                                    <span className="truncate text-[10px] font-bold text-slate-400">
-                                      {product.category || "Chưa có danh mục"}
-                                    </span>
-                                  </div>
-
-                                  <h4 className="mt-2 line-clamp-2 text-sm font-black text-white">
+                                  <h4 className="line-clamp-2 text-xs font-black text-white">
                                     {product.name}
                                   </h4>
-                                  <p className="mt-1 truncate text-xs font-black text-cyan-200">
+                                  <p className="mt-1 truncate text-[11px] font-black text-cyan-200">
                                     {product.priceText || "Chưa có giá"}
                                   </p>
-                                  <p className="mt-1 text-[10px] font-bold text-slate-500">
-                                    {done
-                                      ? "Đã đăng hôm nay"
-                                      : scheduled
-                                        ? "Có trong lịch hôm nay"
-                                        : "Chưa được xếp vào hôm nay"}
+                                  <p className="mt-1 truncate text-[10px] font-bold text-slate-400">
+                                    {product.category || "Chưa có danh mục"}
                                   </p>
                                 </div>
+                              </div>
+                              <div className="mt-2 flex gap-2">
+                                {usedToday ? (
+                                  <span className="rounded-2xl bg-cyan-300/10 px-2 py-1 text-[10px] font-black text-cyan-100">
+                                    Đã xếp
+                                  </span>
+                                ) : null}
+                                {doneToday ? (
+                                  <span className="rounded-2xl bg-emerald-300 px-2 py-1 text-[10px] font-black text-slate-950">
+                                    DONE
+                                  </span>
+                                ) : null}
                               </div>
                             </article>
                           );
                         })}
                       </div>
-                    )}
+                    </aside>
                   </div>
                 </section>
               ) : null}
@@ -2949,7 +3373,9 @@ export default function LocalProductsPage() {
                         onClick={() => togglePostedSlot(selectedSlot)}
                       >
                         <FiCheck />
-                        {postedIds.has(createSlotPostedKey(selectedSlot)) ? "DONE" : "Chưa đăng"}
+                        {postedIds.has(createSlotPostedKey(selectedSlot))
+                          ? "DONE"
+                          : "Chưa đăng"}
                       </button>
 
                       <button
@@ -3013,7 +3439,7 @@ export default function LocalProductsPage() {
                       </button>
                     </div>
 
-                    <pre className="mt-2 max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-2xl border border-white/10 bg-black/30 p-2 text-sm leading-6 text-slate-200">
+                    <pre className="mt-2 max-h-[50dvh] overflow-y-auto whitespace-pre-wrap rounded-2xl border border-white/10 bg-black/30 p-2 text-sm leading-6 text-slate-200">
                       {selectedSlot.description || "Chưa có mô tả"}
                     </pre>
                   </article>
@@ -3074,7 +3500,7 @@ export default function LocalProductsPage() {
                       </div>
                     </div>
 
-                    <div className="flex h-[58vh] max-h-[58vh] min-h-[260px] items-center justify-center overflow-hidden rounded-2xl bg-slate-900">
+                    <div className="flex h-[58dvh] max-h-[58dvh] min-h-[260px] items-center justify-center overflow-hidden rounded-2xl bg-slate-900">
                       {selectedAlbumImage ? (
                         <img
                           src={selectedAlbumImage.dataUrl}
@@ -3094,7 +3520,7 @@ export default function LocalProductsPage() {
                       </h3>
                     </div>
 
-                    <div className="grid max-h-[58vh] grid-cols-4 gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
+                    <div className="grid max-h-[58dvh] grid-cols-4 gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
                       {albumSource.images.map((image, index) => {
                         const active = image.id === selectedAlbumImage?.id;
 
@@ -3102,11 +3528,10 @@ export default function LocalProductsPage() {
                           <button
                             key={image.id}
                             type="button"
-                            className={`group relative aspect-square overflow-hidden rounded-2xl bg-slate-900 ring-1 transition ${
-                              active
+                            className={`group relative aspect-square overflow-hidden rounded-2xl bg-slate-900 ring-1 transition ${active
                                 ? "ring-2 ring-cyan-300"
                                 : "ring-white/10 hover:ring-cyan-300/60"
-                            }`}
+                              }`}
                             onClick={() => setSelectedAlbumImageId(image.id)}
                             title={`Ảnh ${index + 1}`}
                           >
@@ -3131,43 +3556,45 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingDownload ? (
-        <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/75 p-2 backdrop-blur">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-950 p-2 shadow-2xl">
-            <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
-              <div className="min-w-0">
-                <h2 className="truncate text-sm font-black text-white">
-                  {pendingDownload.title}
-                </h2>
-                <p className="mt-1 text-xs leading-5 text-slate-400">
-                  {pendingDownload.description}
-                </p>
+        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/75 p-2 backdrop-blur">
+          <div className="flex h-[90dvh] w-full items-center justify-center rounded-3xl border border-white/10 bg-slate-950 p-2 shadow-2xl">
+            <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-2">
+              <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
+                <div className="min-w-0">
+                  <h2 className="truncate text-sm font-black text-white">
+                    {pendingDownload.title}
+                  </h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-400">
+                    {pendingDownload.description}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
+                  onClick={() => setPendingDownload(null)}
+                >
+                  <FiX />
+                </button>
               </div>
 
-              <button
-                type="button"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
-                onClick={() => setPendingDownload(null)}
-              >
-                <FiX />
-              </button>
-            </div>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  className="rounded-2xl border border-white/10 bg-white/5 p-2 text-sm font-bold text-white transition hover:bg-white/10"
+                  onClick={() => setPendingDownload(null)}
+                >
+                  Hủy
+                </button>
 
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                className="rounded-2xl border border-white/10 bg-white/5 p-2 text-sm font-bold text-white transition hover:bg-white/10"
-                onClick={() => setPendingDownload(null)}
-              >
-                Hủy
-              </button>
-
-              <button
-                type="button"
-                className="rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
-                onClick={executeDownloadRequest}
-              >
-                Đồng ý tải
-              </button>
+                <button
+                  type="button"
+                  className="rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
+                  onClick={executeDownloadRequest}
+                >
+                  Đồng ý tải
+                </button>
+              </div>
             </div>
           </div>
         </div>
