@@ -80,6 +80,7 @@ type ScheduleConfig = {
   endTime: string;
   gapHours: number;
   taskCount: number;
+  taskNames: string[];
   selectedCategories: string[];
 };
 
@@ -176,6 +177,7 @@ const defaultScheduleConfig: ScheduleConfig = {
   endTime: "22:00",
   gapHours: 3,
   taskCount: 1,
+  taskNames: ["Task 1"],
   selectedCategories: [],
 };
 
@@ -233,6 +235,20 @@ const getCurrentTimeString = (): string => {
   const now = new Date();
 
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+};
+
+const normalizeTextKey = (value: string): string => {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+};
+
+const normalizeCategoryName = (value: string): string => {
+  return value.trim().replace(/\s+/g, " ");
+};
+
+const getTaskName = (config: ScheduleConfig, taskIndex: number): string => {
+  const name = config.taskNames[taskIndex]?.trim();
+
+  return name || `Task ${taskIndex + 1}`;
 };
 
 const createPostedKey = (
@@ -474,7 +490,19 @@ const loadScheduleConfig = (): ScheduleConfig => {
 
     const record = parsed as Record<string, unknown>;
     const selectedCategories = Array.isArray(record.selectedCategories)
-      ? record.selectedCategories.filter(
+      ? Array.from(
+        new Map(
+          record.selectedCategories
+            .filter((item): item is string => typeof item === "string")
+            .map((item) => [
+              normalizeTextKey(item),
+              normalizeCategoryName(item),
+            ]),
+        ).values(),
+      ).filter(Boolean)
+      : [];
+    const taskNames = Array.isArray(record.taskNames)
+      ? record.taskNames.filter(
         (item): item is string => typeof item === "string",
       )
       : [];
@@ -505,6 +533,7 @@ const loadScheduleConfig = (): ScheduleConfig => {
           Number.isFinite(record.taskCount)
           ? Math.max(1, Math.min(8, Math.round(record.taskCount)))
           : defaultScheduleConfig.taskCount,
+      taskNames,
       selectedCategories,
     };
   } catch {
@@ -970,11 +999,15 @@ const buildRandomSchedule = (
 
   const warnings: ScheduleWarning[] = [];
 
+  const selectedCategoryKeys = new Set(
+    config.selectedCategories.map((category) => normalizeTextKey(category)),
+  );
+
   const usableProducts =
     config.selectedCategories.length === 0
       ? products
       : products.filter((product) =>
-        config.selectedCategories.includes(product.category),
+        selectedCategoryKeys.has(normalizeTextKey(product.category)),
       );
 
   if (usableProducts.length === 0) {
@@ -1121,6 +1154,19 @@ export default function LocalProductsPage() {
   const [query, setQuery] = useState<string>("");
   const [activeCategoryTab, setActiveCategoryTab] =
     useState<CategoryTab>("all");
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [scheduleQuery, setScheduleQuery] = useState<string>("");
+  const [expandedProductIds, setExpandedProductIds] = useState<Set<string>>(
+    () => new Set<string>(),
+  );
+  const [compactScheduleConfig, setCompactScheduleConfig] =
+    useState<boolean>(true);
+  const [activeScheduleTaskIndex, setActiveScheduleTaskIndex] =
+    useState<number>(0);
+  const [draggingProductId, setDraggingProductId] = useState<string>("");
+  const [pendingRemoveTaskIndex, setPendingRemoveTaskIndex] = useState<
+    number | null
+  >(null);
   const [pendingDownload, setPendingDownload] =
     useState<DownloadRequest | null>(null);
   const [scheduleAssignments, setScheduleAssignments] =
@@ -1143,21 +1189,30 @@ export default function LocalProductsPage() {
   const currentTime = useMemo(() => getCurrentTimeString(), [nowTick]);
 
   const categories = useMemo(() => {
-    return Array.from(
-      new Set(
-        products.map((product) => product.category.trim()).filter(Boolean),
-      ),
-    );
+    const categoryMap = new Map<string, string>();
+
+    products.forEach((product) => {
+      const category = normalizeCategoryName(product.category);
+      const key = normalizeTextKey(category);
+
+      if (!category || categoryMap.has(key)) return;
+      categoryMap.set(key, category);
+    });
+
+    return Array.from(categoryMap.values());
   }, [products]);
 
   const filteredProducts = useMemo(() => {
-    const keyword = query.trim().toLowerCase();
+    const keyword = normalizeTextKey(query);
+    const activeCategoryKey = normalizeTextKey(activeCategoryTab);
 
     return products.filter((product) => {
+      const productCategoryKey = normalizeTextKey(product.category);
       const matchesCategory =
-        activeCategoryTab === "all" || product.category === activeCategoryTab;
-      const content =
-        `${product.name} ${product.description} ${product.priceText} ${product.category}`.toLowerCase();
+        activeCategoryTab === "all" || productCategoryKey === activeCategoryKey;
+      const content = normalizeTextKey(
+        `${product.name} ${product.description} ${product.priceText} ${product.category}`,
+      );
       const matchesKeyword = !keyword || content.includes(keyword);
 
       return matchesCategory && matchesKeyword;
@@ -1239,10 +1294,28 @@ export default function LocalProductsPage() {
   const scheduleProducts = useMemo(() => {
     if (scheduleConfig.selectedCategories.length === 0) return products;
 
+    const selectedCategoryKeys = new Set(
+      scheduleConfig.selectedCategories.map((category) =>
+        normalizeTextKey(category),
+      ),
+    );
+
     return products.filter((product) =>
-      scheduleConfig.selectedCategories.includes(product.category),
+      selectedCategoryKeys.has(normalizeTextKey(product.category)),
     );
   }, [products, scheduleConfig.selectedCategories]);
+
+  const filteredScheduleProducts = useMemo(() => {
+    const keyword = normalizeTextKey(scheduleQuery);
+
+    return scheduleProducts.filter((product) => {
+      const content = normalizeTextKey(
+        `${product.name} ${product.description} ${product.priceText} ${product.category}`,
+      );
+
+      return !keyword || content.includes(keyword);
+    });
+  }, [scheduleProducts, scheduleQuery]);
 
   const todayPostedProductKeys = useMemo(() => {
     return new Set(
@@ -1343,7 +1416,12 @@ export default function LocalProductsPage() {
 
   useEffect(() => {
     if (activeCategoryTab === "all") return;
-    if (categories.includes(activeCategoryTab)) return;
+
+    const categoryKeys = new Set(
+      categories.map((category) => normalizeTextKey(category)),
+    );
+
+    if (categoryKeys.has(normalizeTextKey(activeCategoryTab))) return;
 
     setActiveCategoryTab("all");
   }, [activeCategoryTab, categories]);
@@ -1351,16 +1429,30 @@ export default function LocalProductsPage() {
   useEffect(() => {
     if (categories.length === 0) return;
 
+    const categoryKeys = new Set(
+      categories.map((category) => normalizeTextKey(category)),
+    );
+
     setScheduleConfig((current) => {
       const keptCategories = current.selectedCategories.filter((category) =>
-        categories.includes(category),
+        categoryKeys.has(normalizeTextKey(category)),
       );
 
-      if (keptCategories.length === current.selectedCategories.length)
+      const taskNames = Array.from(
+        { length: Math.max(1, current.taskCount) },
+        (_, index) => current.taskNames[index] || `Task ${index + 1}`,
+      );
+
+      if (
+        keptCategories.length === current.selectedCategories.length &&
+        taskNames.length === current.taskNames.length
+      ) {
         return current;
+      }
 
       return {
         ...current,
+        taskNames,
         selectedCategories: keptCategories,
       };
     });
@@ -1570,13 +1662,121 @@ export default function LocalProductsPage() {
   };
 
   const handleDelete = async (id: string): Promise<void> => {
-    const accepted = window.confirm("Xóa sản phẩm này?");
+    const product = products.find((item) => item.id === id);
+    const productName = product?.name ?? "sản phẩm này";
+    const accepted = window.confirm(
+      `Xóa vĩnh viễn ${productName}? Dữ liệu sản phẩm và ảnh đã lưu trong trình duyệt sẽ bị xóa.`,
+    );
 
     if (!accepted) return;
 
     await deleteProductFromDb(id);
+
+    setSelectedProductId((current) => (current === id ? "" : current));
+    setExpandedProductIds((current) => {
+      if (!current.has(id)) return current;
+
+      const nextIds = new Set(current);
+      nextIds.delete(id);
+
+      return nextIds;
+    });
+    setScheduleAssignments((current) => {
+      const nextAssignments: ScheduleAssignmentMap = {};
+
+      Object.entries(current).forEach(([key, value]) => {
+        if (value !== id) {
+          nextAssignments[key] = value;
+        }
+      });
+
+      return nextAssignments;
+    });
+    setPostedRecords((current) => {
+      const nextRecords = current.filter(
+        (record) => !record.slotId.endsWith(`::${id}`),
+      );
+
+      if (nextRecords.length !== current.length) {
+        savePostedRecords(nextRecords);
+      }
+
+      return nextRecords;
+    });
+
     await loadProducts();
-    Toastify("Đã xóa sản phẩm", 200);
+    Toastify("Đã xóa vĩnh viễn sản phẩm", 200);
+  };
+
+  const handleDeleteProductImage = async (
+    productId: string,
+    imageId: string,
+  ): Promise<void> => {
+    const product = products.find((item) => item.id === productId);
+
+    if (!product) {
+      Toastify("Không tìm thấy sản phẩm để xóa ảnh", 400);
+      return;
+    }
+
+    const imageIndex = product.images.findIndex((image) => image.id === imageId);
+
+    if (imageIndex === -1) {
+      Toastify("Không tìm thấy ảnh cần xóa", 400);
+      return;
+    }
+
+    const accepted = window.confirm(
+      `Xóa vĩnh viễn ảnh số ${imageIndex + 1} của ${product.name}?`,
+    );
+
+    if (!accepted) return;
+
+    const nextProduct: LocalProduct = {
+      ...product,
+      images: product.images.filter((image) => image.id !== imageId),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await saveProductToDb(nextProduct);
+
+    setProducts((current) =>
+      current.map((item) => (item.id === productId ? nextProduct : item)),
+    );
+
+    setDraft((current) => {
+      if (editingId !== productId) return current;
+
+      return {
+        ...current,
+        images: current.images.filter((image) => image.id !== imageId),
+      };
+    });
+
+    setAlbumSource((current) => {
+      if (!current || current.title !== product.name) return current;
+
+      const nextImages = current.images.filter((image) => image.id !== imageId);
+
+      if (nextImages.length === 0) {
+        setSelectedAlbumImageId("");
+        return {
+          ...current,
+          images: [],
+        };
+      }
+
+      setSelectedAlbumImageId((currentImageId) =>
+        currentImageId === imageId ? (nextImages[0]?.id ?? "") : currentImageId,
+      );
+
+      return {
+        ...current,
+        images: nextImages,
+      };
+    });
+
+    Toastify("Đã xóa ảnh khỏi sản phẩm", 200);
   };
 
   const handleCopyField = async (
@@ -1824,13 +2024,18 @@ export default function LocalProductsPage() {
 
   const toggleScheduleCategory = (category: string): void => {
     setScheduleConfig((current) => {
-      const exists = current.selectedCategories.includes(category);
+      const categoryKey = normalizeTextKey(category);
+      const exists = current.selectedCategories.some(
+        (item) => normalizeTextKey(item) === categoryKey,
+      );
 
       return {
         ...current,
         selectedCategories: exists
-          ? current.selectedCategories.filter((item) => item !== category)
-          : [...current.selectedCategories, category],
+          ? current.selectedCategories.filter(
+            (item) => normalizeTextKey(item) !== categoryKey,
+          )
+          : [...current.selectedCategories, normalizeCategoryName(category)],
       };
     });
   };
@@ -1872,33 +2077,84 @@ export default function LocalProductsPage() {
       );
 
       if (duplicated) {
-        Toastify("Sản phẩm này đã có trong task lịch này hôm nay", 300);
+        Toastify("Sản phẩm này đã có trong task này hôm nay", 300);
         return current;
       }
 
       nextAssignments[assignmentKey] = productId;
+      setSelectedProductId(productId);
       return nextAssignments;
     });
   };
 
-  const addScheduleTask = (): void => {
-    setScheduleConfig((current) => ({
-      ...current,
-      taskCount: Math.min(8, current.taskCount + 1),
-    }));
+  const handleScheduleDrop = (
+    event: DragEvent<HTMLElement>,
+    date: string,
+    time: string,
+    taskIndex: number,
+  ): void => {
+    event.preventDefault();
+
+    const productId =
+      event.dataTransfer.getData("text/plain") || draggingProductId;
+
+    if (!productId) return;
+
+    assignProductToSchedule(date, time, taskIndex, productId);
+    setDraggingProductId("");
   };
 
-  const removeScheduleTask = (): void => {
+  const addScheduleTask = (): void => {
+    setScheduleConfig((current) => {
+      const nextTaskCount = Math.min(8, current.taskCount + 1);
+
+      return {
+        ...current,
+        taskCount: nextTaskCount,
+        taskNames: Array.from(
+          { length: nextTaskCount },
+          (_, index) => current.taskNames[index] || `Task ${index + 1}`,
+        ),
+      };
+    });
+  };
+
+  const requestRemoveScheduleTask = (taskIndex: number): void => {
+    if (scheduleConfig.taskCount <= 1) {
+      Toastify("Cần giữ lại ít nhất một task", 300);
+      return;
+    }
+
+    setPendingRemoveTaskIndex(taskIndex);
+  };
+
+  const removeScheduleTask = (taskIndexToRemove: number): void => {
     setScheduleConfig((current) => {
       const nextTaskCount = Math.max(1, current.taskCount - 1);
+      const nextTaskNames = current.taskNames.filter(
+        (_, index) => index !== taskIndexToRemove,
+      );
 
       setScheduleAssignments((assignments) => {
         const nextAssignments: ScheduleAssignmentMap = {};
 
         Object.entries(assignments).forEach(([key, value]) => {
-          if (!key.includes(`::task${current.taskCount}::`)) {
-            nextAssignments[key] = value;
+          const match = key.match(/::task(\d+)::/);
+          const taskNumber = match ? Number(match[1]) : 0;
+          const taskIndex = taskNumber - 1;
+
+          if (taskIndex === taskIndexToRemove) return;
+
+          if (taskIndex > taskIndexToRemove) {
+            const shiftedKey = key.replace(
+              `::task${taskNumber}::`,
+              `::task${taskNumber - 1}::`,
+            );
+            nextAssignments[shiftedKey] = value;
+            return;
           }
+
+          nextAssignments[key] = value;
         });
 
         return nextAssignments;
@@ -1907,6 +2163,32 @@ export default function LocalProductsPage() {
       return {
         ...current,
         taskCount: nextTaskCount,
+        taskNames: Array.from(
+          { length: nextTaskCount },
+          (_, index) => nextTaskNames[index] || `Task ${index + 1}`,
+        ),
+      };
+    });
+
+    setActiveScheduleTaskIndex((current) =>
+      Math.min(current, Math.max(0, scheduleConfig.taskCount - 2)),
+    );
+    setPendingRemoveTaskIndex(null);
+    Toastify("Đã xoá đúng task đã chọn", 200);
+  };
+
+  const updateScheduleTaskName = (taskIndex: number, value: string): void => {
+    setScheduleConfig((current) => {
+      const taskNames = Array.from(
+        { length: Math.max(1, current.taskCount) },
+        (_, index) => current.taskNames[index] || `Task ${index + 1}`,
+      );
+
+      taskNames[taskIndex] = value;
+
+      return {
+        ...current,
+        taskNames,
       };
     });
   };
@@ -1942,6 +2224,21 @@ export default function LocalProductsPage() {
 
     Toastify("Đã nhân bản task 1 sang các task còn lại", 200);
   };
+
+  const toggleExpandedProduct = (productId: string): void => {
+    setExpandedProductIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+
+      return next;
+    });
+  };
+
   const togglePostedProduct = (
     date: string,
     productId: string,
@@ -2080,414 +2377,344 @@ export default function LocalProductsPage() {
           </div>
         </header>
 
-        <section className="grid min-w-0 grid-cols-1 gap-2 xl:grid-cols-[420px_minmax(0,1fr)]">
-          <aside className="min-w-0 flex flex-col gap-2">
-            <section className="rounded-2xl border border-emerald-400/20 bg-slate-950/70 p-2 shadow-2xl shadow-emerald-950/20 backdrop-blur">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <h2 className="text-sm font-black text-white">
-                    Bài cần đăng tiếp theo
-                  </h2>
-                  <p className="text-xs text-slate-400">
-                    Real-time {today} · {currentTime}
-                  </p>
-                </div>
+        <section className="grid grid-cols-2 gap-2 xl:grid-cols-6">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2">
+            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+              Sản phẩm
+            </div>
+            <div className="text-lg font-black text-white">
+              {products.length}
+            </div>
+          </div>
 
-                <button
-                  type="button"
-                  className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10"
-                  onClick={resetTodayPosted}
-                  disabled={todaySlots.length === 0}
-                >
-                  Reset hôm nay
-                </button>
-              </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2">
+            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+              Ảnh
+            </div>
+            <div className="text-lg font-black text-white">{totalImages}</div>
+          </div>
 
-              {products.length === 0 ? (
-                <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-4 text-center text-sm text-slate-400">
-                  Chưa có sản phẩm. Thêm hoặc import data trước.
-                </div>
-              ) : nextSlot ? (
-                <article className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-2">
-                  <div className="flex gap-2">
-                    <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-950">
-                      {nextSlot.image ? (
+          <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-2">
+            <div className="text-[10px] font-bold uppercase tracking-wide text-cyan-200">
+              Hôm nay
+            </div>
+            <div className="text-lg font-black text-white">
+              {totalTodayTaskCount}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-2">
+            <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-200">
+              DONE
+            </div>
+            <div className="text-lg font-black text-white">
+              {postedTodayCount}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 p-2">
+            <div className="text-[10px] font-bold uppercase tracking-wide text-rose-200">
+              Còn lại
+            </div>
+            <div className="text-lg font-black text-white">
+              {remainingTodayCount}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="rounded-2xl border border-white/10 bg-white/5 p-2 text-left transition hover:bg-white/10 active:scale-[0.99]"
+            onClick={() => setActiveModal("schedule")}
+          >
+            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+              Lịch
+            </div>
+            <div className="truncate text-sm font-black text-white">
+              {nextSlot
+                ? `${nextSlot.time} · ${nextSlot.productName}`
+                : "Mở lịch đăng"}
+            </div>
+          </button>
+        </section>
+
+        <section className="rounded-2xl border border-white/10 bg-slate-950/50 p-2 shadow-2xl shadow-black/30 backdrop-blur">
+          <div className="mb-2 grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-center">
+            <div className="min-w-0">
+              <h2 className="text-sm font-black text-white">
+                Danh sách sản phẩm
+              </h2>
+              <p className="text-xs text-slate-400">
+                Click vào sản phẩm để active. Mô tả mặc định đã thu gọn để nhìn
+                được nhiều sản phẩm hơn.
+              </p>
+            </div>
+
+            <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-slate-400">
+              <FiSearch className="shrink-0" />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => event.stopPropagation()}
+                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-600"
+                placeholder="Tìm sản phẩm, giá, danh mục"
+              />
+            </label>
+          </div>
+
+          <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
+            <button
+              type="button"
+              className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${activeCategoryTab === "all"
+                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                }`}
+              onClick={() => setActiveCategoryTab("all")}
+            >
+              Tất cả
+            </button>
+
+            {categories.map((category) => (
+              <button
+                key={category}
+                type="button"
+                className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${normalizeTextKey(activeCategoryTab) ===
+                    normalizeTextKey(category)
+                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                  }`}
+                onClick={() => setActiveCategoryTab(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          {filteredProducts.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-6 text-center text-sm text-slate-400">
+              Chưa có sản phẩm phù hợp.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 xl:grid-cols-6">
+              {filteredProducts.map((product) => {
+                const descriptionPreview =
+                  product.description.trim() ||
+                  settings.commonDescription.trim();
+                const active = selectedProductId === product.id;
+                const expanded = expandedProductIds.has(product.id);
+
+                return (
+                  <article
+                    key={product.id}
+                    className={`overflow-hidden rounded-2xl border shadow-xl shadow-black/20 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-slate-900 ${active
+                        ? "border-cyan-300/70 bg-cyan-300/10 ring-1 ring-cyan-300/30"
+                        : "border-white/10 bg-slate-950/80"
+                      }`}
+                    onClick={() => setSelectedProductId(product.id)}
+                  >
+                    <button
+                      type="button"
+                      className="relative flex aspect-[4/3] w-full items-center justify-center bg-slate-900"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openImageAlbum({
+                          title: product.name,
+                          images: product.images,
+                        });
+                      }}
+                    >
+                      {product.images[0] ? (
                         <img
-                          src={nextSlot.image}
-                          alt={nextSlot.productName}
+                          src={product.images[0].dataUrl}
+                          alt={product.name}
                           className="h-full w-full object-contain"
                         />
                       ) : (
                         <FiImage className="text-slate-600" />
                       )}
-                    </div>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="rounded-2xl bg-emerald-300 px-3 py-1 text-xs font-black text-slate-950">
-                          {nextSlot.time}
-                        </span>
-
-                        <button
-                          type="button"
-                          className="flex h-8 w-8 items-center justify-center rounded-2xl bg-emerald-300 text-slate-950 transition hover:bg-emerald-200"
-                          onClick={() => togglePostedSlot(nextSlot)}
-                        >
-                          <FiCheck />
-                        </button>
+                      <div className="absolute left-2 top-2 flex items-center gap-1 rounded-2xl bg-black/70 px-2 py-1 text-[10px] font-bold text-white">
+                        <FiImage />
+                        {product.images.length}
                       </div>
 
-                      <h3 className="mt-2 line-clamp-2 text-sm font-black text-white">
-                        {nextSlot.productName}
-                      </h3>
-                      <p className="mt-1 truncate text-xs text-emerald-100">
-                        {nextSlot.priceText || "Chưa có giá"}
-                      </p>
+                      {active ? (
+                        <div className="absolute right-2 top-2 rounded-2xl bg-cyan-300 px-2 py-1 text-[10px] font-black text-slate-950">
+                          ACTIVE
+                        </div>
+                      ) : null}
+                    </button>
 
-                      <button
-                        type="button"
-                        className="mt-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-white transition hover:bg-white/10"
-                        onClick={() => openSlotModal(nextSlot)}
-                      >
-                        Xem bài
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ) : (
-                <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-4 text-center text-sm text-slate-400">
-                  Không còn bài cần đăng trong hôm nay.
-                </div>
-              )}
-
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2">
-                  <div className="text-[10px] text-slate-400">Hôm nay</div>
-                  <div className="text-lg font-black text-white">
-                    {todaySlots.length}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-2">
-                  <div className="text-[10px] text-emerald-200">Đã đăng</div>
-                  <div className="text-lg font-black text-white">
-                    {postedTodayCount}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 p-2">
-                  <div className="text-[10px] text-rose-200">Còn lại</div>
-                  <div className="text-lg font-black text-white">
-                    {remainingTodayCount}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/50 p-2 shadow-2xl shadow-black/30 backdrop-blur">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <h2 className="text-sm font-black text-white">
-                    Lịch hôm nay
-                  </h2>
-                  <p className="truncate text-xs text-slate-400">
-                    Tích trực tiếp sau khi vừa đăng bài.
-                  </p>
-                </div>
-
-                {overdueSlots.length > 0 ? (
-                  <div className="rounded-2xl bg-rose-500 px-3 py-1 text-xs font-black text-white">
-                    {overdueSlots.length} quá giờ
-                  </div>
-                ) : null}
-              </div>
-
-              {todaySlots.length === 0 ? (
-                <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-center text-sm text-slate-400">
-                  Chưa có lịch hôm nay.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-2">
-                  {todaySlots.map((slot) => {
-                    const status = getSlotStatus(
-                      slot,
-                      today,
-                      currentTime,
-                      postedIds,
-                      nextSlot?.id ?? "",
-                    );
-                    const isPosted = status === "posted";
-                    const isOverdue = status === "overdue";
-                    const isNext = status === "next";
-
-                    return (
-                      <article
-                        key={slot.id}
-                        className={`relative overflow-hidden rounded-2xl border p-2 transition ${isPosted
-                            ? "border-emerald-400/30 bg-emerald-400/10"
-                            : isNext
-                              ? "border-cyan-300/50 bg-cyan-300/10"
-                              : "border-white/10 bg-slate-950/80"
-                          }`}
-                      >
-                        {isOverdue ? (
-                          <div className="absolute inset-0 z-10 bg-slate-950/55 backdrop-blur-[1px]" />
-                        ) : null}
-
-                        <div className="relative z-20 flex gap-2">
-                          <button
-                            type="button"
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-sm transition ${isPosted
-                                ? "border-emerald-300 bg-emerald-300 text-slate-950"
-                                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                              }`}
-                            onClick={() => togglePostedSlot(slot)}
-                            title="Đánh dấu đã đăng"
-                          >
-                            {isPosted ? <FiCheckCircle /> : <FiCheck />}
-                          </button>
-
+                    {product.images.length > 0 ? (
+                      <div className="flex gap-1 overflow-x-auto border-t border-white/10 bg-slate-950/70 p-1">
+                        {product.images.slice(0, 6).map((image, imageIndex) => (
                           <div
-                            className="flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-slate-900"
-                            onClick={() => openSlotModal(slot)}
+                            key={image.id}
+                            className="group relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-slate-900"
                           >
-                            {slot.image ? (
+                            <button
+                              type="button"
+                              className="h-full w-full"
+                              title={`Xem ảnh ${imageIndex + 1}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setAlbumSource({
+                                  title: product.name,
+                                  images: product.images,
+                                });
+                                setSelectedAlbumImageId(image.id);
+                                setActiveModal("imageAlbum");
+                              }}
+                            >
                               <img
-                                src={slot.image}
-                                alt={slot.productName}
+                                src={image.dataUrl}
+                                alt={`${product.name} ${imageIndex + 1}`}
                                 className="h-full w-full object-contain"
                               />
-                            ) : (
-                              <FiImage className="text-slate-600" />
-                            )}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] text-white opacity-100 transition hover:bg-rose-400 xl:opacity-0 xl:group-hover:opacity-100"
+                              title={`Xóa ảnh ${imageIndex + 1}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void handleDeleteProductImage(product.id, image.id);
+                              }}
+                            >
+                              <FiX />
+                            </button>
                           </div>
+                        ))}
 
+                        {product.images.length > 6 ? (
                           <button
                             type="button"
-                            className="min-w-0 flex-1 text-left"
-                            onClick={() => openSlotModal(slot)}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="rounded-2xl bg-black/40 px-2 py-1 text-xs font-black text-white">
-                                {slot.time}
-                              </span>
-                              <span className="truncate text-[10px] font-bold text-slate-400">
-                                {isPosted ? "DONE" : getStatusLabel(status)}
-                              </span>
-                            </div>
-
-                            <h3 className="mt-2 line-clamp-2 text-sm font-black text-white">
-                              {slot.productName}
-                            </h3>
-                            <p className="mt-1 truncate text-xs text-slate-400">
-                              {slot.category || "Chưa có danh mục"} ·{" "}
-                              {slot.priceText || "Chưa có giá"}
-                            </p>
-                          </button>
-                        </div>
-
-                        {isOverdue ? (
-                          <div className="absolute inset-x-2 bottom-2 z-30 rounded-2xl bg-rose-500 px-3 py-2 text-center text-xs font-black text-white">
-                            Quá giờ chưa đăng
-                          </div>
-                        ) : null}
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          </aside>
-
-          <section className="rounded-2xl border border-white/10 bg-slate-950/50 p-2 shadow-2xl shadow-black/30 backdrop-blur">
-            <div className="mb-2 grid grid-cols-1 gap-2 xl:grid-cols-[1fr_360px] xl:items-center">
-              <div className="min-w-0">
-                <h2 className="text-sm font-black text-white">
-                  Danh sách sản phẩm
-                </h2>
-              </div>
-
-              <label className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-slate-400">
-                <FiSearch className="shrink-0" />
-                <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-600"
-                  placeholder="Tìm sản phẩm"
-                />
-              </label>
-            </div>
-
-            <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
-              <button
-                type="button"
-                className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-black transition ${activeCategoryTab === "all"
-                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                  }`}
-                onClick={() => setActiveCategoryTab("all")}
-              >
-                Tất cả
-              </button>
-
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  className={`shrink-0 rounded-2xl border px-3 py-2 text-xs font-black transition ${activeCategoryTab === category
-                      ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                      : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                    }`}
-                  onClick={() => setActiveCategoryTab(category)}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-
-            {filteredProducts.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-6 text-center text-sm text-slate-400">
-                Chưa có sản phẩm phù hợp.
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 xl:grid-cols-5">
-                {filteredProducts.map((product) => {
-                  const descriptionPreview =
-                    product.description.trim() ||
-                    settings.commonDescription.trim();
-
-                  return (
-                    <article
-                      key={product.id}
-                      className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 shadow-xl shadow-black/20 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-slate-900"
-                    >
-                      <button
-                        type="button"
-                        className="relative flex aspect-[4/3] w-full items-center justify-center bg-slate-900"
-                        onClick={() =>
-                          openImageAlbum({
-                            title: product.name,
-                            images: product.images,
-                          })
-                        }
-                      >
-                        {product.images[0] ? (
-                          <img
-                            src={product.images[0].dataUrl}
-                            alt={product.name}
-                            className="h-full w-full object-contain"
-                          />
-                        ) : (
-                          <FiImage className="text-slate-600" />
-                        )}
-
-                        <div className="absolute left-2 top-2 flex items-center gap-1 rounded-2xl bg-black/70 px-2 py-1 text-[11px] font-bold text-white">
-                          <FiImage />
-                          {product.images.length}
-                        </div>
-                      </button>
-
-                      <div className="flex flex-col gap-2 p-2">
-                        <div className="min-w-0">
-                          {product.category ? (
-                            <div className="truncate text-[10px] font-black uppercase tracking-wide text-cyan-200">
-                              {product.category}
-                            </div>
-                          ) : null}
-
-                          <h3 className="line-clamp-2 min-h-10 text-sm font-black leading-5 text-white">
-                            {product.name}
-                          </h3>
-                          <div className="mt-2 truncate text-base font-black text-cyan-200">
-                            {product.priceText || "Chưa có giá"}
-                          </div>
-                        </div>
-
-                        <p className="line-clamp-10 min-h-40 whitespace-pre-line rounded-2xl border border-white/10 bg-white/[0.03] p-2 text-xs leading-5 text-slate-300">
-                          {descriptionPreview || "Chưa có mô tả"}
-                        </p>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-2 text-[11px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
-                            onClick={() =>
-                              void handleCopyField(
-                                `name-${product.id}`,
-                                "tên",
-                                product.name,
-                              )
-                            }
-                          >
-                            {renderCopyIcon(`name-${product.id}`)}
-                            Tên
-                          </button>
-
-                          <button
-                            type="button"
-                            className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-2 text-[11px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
-                            onClick={() =>
-                              void handleCopyField(
-                                `desc-${product.id}`,
-                                "mô tả",
-                                descriptionPreview,
-                              )
-                            }
-                          >
-                            {renderCopyIcon(`desc-${product.id}`)}
-                            Mô tả
-                          </button>
-
-                          <button
-                            type="button"
-                            className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-2 text-[11px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
-                            onClick={() =>
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[10px] font-black text-slate-300"
+                            onClick={(event) => {
+                              event.stopPropagation();
                               openImageAlbum({
                                 title: product.name,
                                 images: product.images,
-                              })
-                            }
+                              });
+                            }}
                           >
-                            <FiImage />
-                            Album
+                            +{product.images.length - 6}
                           </button>
+                        ) : null}
+                      </div>
+                    ) : null}
 
-                          <button
-                            type="button"
-                            className="flex items-center justify-center gap-1 rounded-2xl bg-cyan-300 p-2 text-[11px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
-                            onClick={() => handleDownloadProductImages(product)}
-                          >
-                            <FiDownload />
-                            Tải ảnh
-                          </button>
-                        </div>
+                    <div className="flex flex-col gap-2 p-2">
+                      <div className="min-w-0">
+                        {product.category ? (
+                          <div className="truncate text-[10px] font-black uppercase tracking-wide text-cyan-200">
+                            {product.category}
+                          </div>
+                        ) : null}
 
-                        <div className="grid grid-cols-2 gap-2 border-t border-white/10 pt-2">
-                          <button
-                            type="button"
-                            className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-2 text-[11px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
-                            onClick={() => handleEdit(product)}
-                          >
-                            <FiEdit3 />
-                            Sửa
-                          </button>
-
-                          <button
-                            type="button"
-                            className="flex items-center justify-center gap-1 rounded-2xl bg-red-500 p-2 text-[11px] font-black text-white transition hover:bg-red-400 active:scale-[0.98]"
-                            onClick={() => void handleDelete(product.id)}
-                          >
-                            <FiTrash2 />
-                            Xóa
-                          </button>
+                        <h3 className="line-clamp-2 min-h-9 text-xs font-black leading-4 text-white xl:text-sm xl:leading-5">
+                          {product.name}
+                        </h3>
+                        <div className="mt-1 truncate text-sm font-black text-cyan-200">
+                          {product.priceText || "Chưa có giá"}
                         </div>
                       </div>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-2">
+                        <p
+                          className={`${expanded ? "line-clamp-none" : "line-clamp-3"} whitespace-pre-line text-[11px] leading-5 text-slate-300`}
+                        >
+                          {descriptionPreview || "Chưa có mô tả"}
+                        </p>
+                        {descriptionPreview.length > 90 ? (
+                          <button
+                            type="button"
+                            className="mt-1 text-[11px] font-black text-cyan-200"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggleExpandedProduct(product.id);
+                            }}
+                          >
+                            {expanded ? "Thu gọn" : "Xem thêm"}
+                          </button>
+                        ) : null}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleCopyField(
+                              `name-${product.id}`,
+                              "tên",
+                              product.name,
+                            );
+                          }}
+                        >
+                          {renderCopyIcon(`name-${product.id}`)}
+                          Tên
+                        </button>
+
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleCopyField(
+                              `desc-${product.id}`,
+                              "mô tả",
+                              descriptionPreview,
+                            );
+                          }}
+                        >
+                          {renderCopyIcon(`desc-${product.id}`)}
+                          Mô tả
+                        </button>
+
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleEdit(product);
+                          }}
+                        >
+                          <FiEdit3 />
+                          Sửa
+                        </button>
+
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-1 rounded-2xl bg-cyan-300 p-1.5 text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleDownloadProductImages(product);
+                          }}
+                        >
+                          <FiDownload />
+                          Ảnh
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-center gap-1 rounded-2xl border border-rose-400/30 bg-rose-400/10 p-1.5 text-[10px] font-black text-rose-100 transition hover:bg-rose-400/20 active:scale-[0.98]"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void handleDelete(product.id);
+                        }}
+                      >
+                        <FiTrash2 />
+                        Xóa vĩnh viễn
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
       </section>
 
@@ -2708,189 +2935,8 @@ export default function LocalProductsPage() {
               {activeModal === "schedule" ? (
                 <section className="flex min-h-full flex-col gap-2">
                   <div className="grid grid-cols-2 gap-2 xl:grid-cols-6">
-                    <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">
-                        Từ ngày
-                      </span>
-                      <input
-                        type="date"
-                        value={scheduleConfig.dateFrom}
-                        onChange={(event) =>
-                          updateScheduleField("dateFrom", event.target.value)
-                        }
-                        className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition focus:border-cyan-300/60"
-                      />
-                    </label>
-
-                    <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">
-                        Đến ngày
-                      </span>
-                      <input
-                        type="date"
-                        value={scheduleConfig.dateTo}
-                        onChange={(event) =>
-                          updateScheduleField("dateTo", event.target.value)
-                        }
-                        className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition focus:border-cyan-300/60"
-                      />
-                    </label>
-
-                    <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">
-                        Bài đầu
-                      </span>
-                      <input
-                        type="time"
-                        value={scheduleConfig.startTime}
-                        onChange={(event) =>
-                          updateScheduleField("startTime", event.target.value)
-                        }
-                        className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition focus:border-cyan-300/60"
-                      />
-                    </label>
-
-                    <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">
-                        Bài cuối
-                      </span>
-                      <input
-                        type="time"
-                        value={scheduleConfig.endTime}
-                        onChange={(event) =>
-                          updateScheduleField("endTime", event.target.value)
-                        }
-                        className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition focus:border-cyan-300/60"
-                      />
-                    </label>
-
-                    <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">
-                        Khoảng cách
-                      </span>
-                      <select
-                        value={scheduleConfig.gapHours}
-                        onChange={(event) =>
-                          updateScheduleField(
-                            "gapHours",
-                            Number(event.target.value),
-                          )
-                        }
-                        className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition focus:border-cyan-300/60"
-                      >
-                        {[1, 2, 3, 4, 5, 6].map((hour) => (
-                          <option key={hour} value={hour}>
-                            {hour} tiếng
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">
-                        Số task
-                      </span>
-                      <select
-                        value={scheduleConfig.taskCount}
-                        onChange={(event) =>
-                          updateScheduleField(
-                            "taskCount",
-                            Number(event.target.value),
-                          )
-                        }
-                        className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition focus:border-cyan-300/60"
-                      >
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((count) => (
-                          <option key={count} value={count}>
-                            {count} task
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                      <h3 className="text-sm font-black text-white">
-                        Danh mục dùng để xếp lịch
-                      </h3>
-
-                      {categories.length === 0 ? (
-                        <p className="mt-2 text-sm text-slate-400">
-                          Chưa có danh mục. Thêm hoặc import sản phẩm trước.
-                        </p>
-                      ) : (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {categories.map((category) => {
-                            const active =
-                              scheduleConfig.selectedCategories.includes(
-                                category,
-                              );
-
-                            return (
-                              <button
-                                key={category}
-                                type="button"
-                                className={`rounded-2xl border px-3 py-2 text-xs font-black transition ${active
-                                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                                  }`}
-                                onClick={() => toggleScheduleCategory(category)}
-                              >
-                                {category}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-                      <button
-                        type="button"
-                        className="rounded-2xl border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-300/20"
-                        onClick={addScheduleTask}
-                      >
-                        Thêm task
-                      </button>
-
-                      <button
-                        type="button"
-                        className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-white transition hover:bg-white/10"
-                        onClick={removeScheduleTask}
-                      >
-                        Bớt task
-                      </button>
-
-                      <button
-                        type="button"
-                        className="rounded-2xl border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-xs font-black text-emerald-100 transition hover:bg-emerald-300/20"
-                        onClick={duplicateFirstScheduleTask}
-                      >
-                        Nhân bản task 1
-                      </button>
-
-                      <button
-                        type="button"
-                        className="rounded-2xl border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-xs font-black text-rose-100 transition hover:bg-rose-400/20"
-                        onClick={resetAllPosted}
-                      >
-                        Reset tất cả
-                      </button>
-                    </div>
-                  </div>
-
-                  {scheduleResult.warnings.length > 0 ? (
-                    <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-2 text-sm text-amber-100">
-                      {scheduleResult.warnings.map((warning) => (
-                        <p key={warning.message}>{warning.message}</p>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2">
-                      <div className="text-[10px] text-slate-400">
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
                         Khung giờ
                       </div>
                       <div className="text-lg font-black text-white">
@@ -2899,8 +2945,8 @@ export default function LocalProductsPage() {
                     </div>
 
                     <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-2">
-                      <div className="text-[10px] text-cyan-200">
-                        Tổng task hôm nay
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-cyan-200">
+                        Tổng task
                       </div>
                       <div className="text-lg font-black text-white">
                         {totalTodayTaskCount}
@@ -2908,26 +2954,293 @@ export default function LocalProductsPage() {
                     </div>
 
                     <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-2">
-                      <div className="text-[10px] text-emerald-200">DONE</div>
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-200">
+                        DONE
+                      </div>
                       <div className="text-lg font-black text-white">
                         {postedTodayCount}
                       </div>
                     </div>
+
+                    <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 p-2">
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-rose-200">
+                        Còn lại
+                      </div>
+                      <div className="text-lg font-black text-white">
+                        {remainingTodayCount}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="rounded-2xl border border-white/10 bg-white/5 p-2 text-left transition hover:bg-white/10"
+                      onClick={() =>
+                        setCompactScheduleConfig((current) => !current)
+                      }
+                    >
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                        Cấu hình
+                      </div>
+                      <div className="text-sm font-black text-white">
+                        {compactScheduleConfig ? "Mở" : "Thu gọn"}
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="rounded-2xl border border-white/10 bg-white/5 p-2 text-left transition hover:bg-white/10"
+                      onClick={resetTodayPosted}
+                    >
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                        Tiến độ
+                      </div>
+                      <div className="text-sm font-black text-white">
+                        Reset hôm nay
+                      </div>
+                    </button>
                   </div>
 
-                  <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_320px]">
-                    <section className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <h3 className="text-sm font-black text-white">
-                          Khung giờ đăng hôm nay
-                        </h3>
+                  {!compactScheduleConfig ? (
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                      <div className="grid grid-cols-2 gap-2 xl:grid-cols-6">
+                        <label className="flex flex-col gap-1">
+                          <span className="text-[11px] font-bold text-slate-300">
+                            Từ ngày
+                          </span>
+                          <input
+                            type="date"
+                            value={scheduleConfig.dateFrom}
+                            onChange={(event) =>
+                              updateScheduleField(
+                                "dateFrom",
+                                event.target.value,
+                              )
+                            }
+                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                          />
+                        </label>
+
+                        <label className="flex flex-col gap-1">
+                          <span className="text-[11px] font-bold text-slate-300">
+                            Đến ngày
+                          </span>
+                          <input
+                            type="date"
+                            value={scheduleConfig.dateTo}
+                            onChange={(event) =>
+                              updateScheduleField("dateTo", event.target.value)
+                            }
+                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                          />
+                        </label>
+
+                        <label className="flex flex-col gap-1">
+                          <span className="text-[11px] font-bold text-slate-300">
+                            Bài đầu
+                          </span>
+                          <input
+                            type="time"
+                            value={scheduleConfig.startTime}
+                            onChange={(event) =>
+                              updateScheduleField(
+                                "startTime",
+                                event.target.value,
+                              )
+                            }
+                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                          />
+                        </label>
+
+                        <label className="flex flex-col gap-1">
+                          <span className="text-[11px] font-bold text-slate-300">
+                            Bài cuối
+                          </span>
+                          <input
+                            type="time"
+                            value={scheduleConfig.endTime}
+                            onChange={(event) =>
+                              updateScheduleField("endTime", event.target.value)
+                            }
+                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                          />
+                        </label>
+
+                        <label className="flex flex-col gap-1">
+                          <span className="text-[11px] font-bold text-slate-300">
+                            Khoảng cách
+                          </span>
+                          <select
+                            value={scheduleConfig.gapHours}
+                            onChange={(event) =>
+                              updateScheduleField(
+                                "gapHours",
+                                Number(event.target.value),
+                              )
+                            }
+                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                          >
+                            {[1, 2, 3, 4, 5, 6].map((hour) => (
+                              <option key={hour} value={hour}>
+                                {hour} tiếng
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="flex flex-col gap-1">
+                          <span className="text-[11px] font-bold text-slate-300">
+                            Số task
+                          </span>
+                          <select
+                            value={scheduleConfig.taskCount}
+                            onChange={(event) => {
+                              const taskCount = Number(event.target.value);
+                              setScheduleConfig((current) => ({
+                                ...current,
+                                taskCount,
+                                taskNames: Array.from(
+                                  { length: taskCount },
+                                  (_, index) =>
+                                    current.taskNames[index] ||
+                                    `Task ${index + 1}`,
+                                ),
+                              }));
+                            }}
+                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                          >
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map((count) => (
+                              <option key={count} value={count}>
+                                {count} task
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap gap-2 border-t border-white/10 pt-2">
                         <button
                           type="button"
-                          className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-white transition hover:bg-white/10"
-                          onClick={resetTodayPosted}
+                          className="rounded-2xl border border-cyan-300/30 bg-cyan-300/10 px-3 py-1.5 text-[11px] font-black text-cyan-100 transition hover:bg-cyan-300/20"
+                          onClick={addScheduleTask}
                         >
-                          Reset hôm nay
+                          Thêm task
                         </button>
+
+                        <button
+                          type="button"
+                          className="rounded-2xl border border-emerald-300/30 bg-emerald-300/10 px-3 py-1.5 text-[11px] font-black text-emerald-100 transition hover:bg-emerald-300/20"
+                          onClick={duplicateFirstScheduleTask}
+                        >
+                          Nhân bản task 1
+                        </button>
+
+                        <button
+                          type="button"
+                          className="rounded-2xl border border-rose-400/30 bg-rose-400/10 px-3 py-1.5 text-[11px] font-black text-rose-100 transition hover:bg-rose-400/20"
+                          onClick={resetAllPosted}
+                        >
+                          Reset tất cả
+                        </button>
+                      </div>
+
+                      <div className="mt-2 rounded-2xl border border-white/10 bg-black/20 p-2">
+                        <div className="mb-2 text-[11px] font-black uppercase tracking-wide text-slate-400">
+                          Danh mục dùng để xếp lịch
+                        </div>
+                        {categories.length === 0 ? (
+                          <p className="text-xs text-slate-400">
+                            Chưa có danh mục. Thêm hoặc import sản phẩm trước.
+                          </p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {categories.map((category) => {
+                              const active =
+                                scheduleConfig.selectedCategories.some(
+                                  (item) =>
+                                    normalizeTextKey(item) ===
+                                    normalizeTextKey(category),
+                                );
+
+                              return (
+                                <button
+                                  key={category}
+                                  type="button"
+                                  className={`rounded-2xl border px-3 py-1.5 text-[11px] font-black transition ${active
+                                      ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                                      : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                                    }`}
+                                  onClick={() =>
+                                    toggleScheduleCategory(category)
+                                  }
+                                >
+                                  {category}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {scheduleResult.warnings.length > 0 ? (
+                    <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-2 text-xs text-amber-100">
+                      {scheduleResult.warnings.map((warning) => (
+                        <p key={warning.message}>{warning.message}</p>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_340px]">
+                    <section className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                      <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
+                        {scheduleTaskIndexes.map((taskIndex) => {
+                          const active = activeScheduleTaskIndex === taskIndex;
+
+                          return (
+                            <div
+                              key={taskIndex}
+                              className={`flex min-w-56 shrink-0 items-center gap-2 rounded-2xl border p-2 ${active
+                                  ? "border-cyan-300/60 bg-cyan-300/10"
+                                  : "border-white/10 bg-white/[0.03]"
+                                }`}
+                            >
+                              <button
+                                type="button"
+                                className="shrink-0 rounded-xl bg-white/5 px-2 py-1 text-[10px] font-black text-white"
+                                onClick={() =>
+                                  setActiveScheduleTaskIndex(taskIndex)
+                                }
+                              >
+                                {taskIndex + 1}
+                              </button>
+                              <input
+                                value={getTaskName(scheduleConfig, taskIndex)}
+                                onChange={(event) =>
+                                  updateScheduleTaskName(
+                                    taskIndex,
+                                    event.target.value,
+                                  )
+                                }
+                                onFocus={() =>
+                                  setActiveScheduleTaskIndex(taskIndex)
+                                }
+                                onKeyDown={(event) => event.stopPropagation()}
+                                className="min-w-0 flex-1 bg-transparent text-xs font-black text-white outline-none placeholder:text-slate-600"
+                              />
+                              <button
+                                type="button"
+                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-rose-400/30 bg-rose-400/10 text-rose-100 transition hover:bg-rose-400/20"
+                                onClick={() =>
+                                  requestRemoveScheduleTask(taskIndex)
+                                }
+                                title="Xoá task này"
+                              >
+                                <FiTrash2 />
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
 
                       {scheduleTimes.length === 0 ? (
@@ -2935,183 +3248,172 @@ export default function LocalProductsPage() {
                           Khung giờ chưa hợp lệ.
                         </div>
                       ) : (
-                        <div className="max-h-[58dvh] overflow-auto pr-1">
-                          <div
-                            className="grid min-w-[760px] gap-2"
-                            style={{
-                              gridTemplateColumns: `120px repeat(${scheduleTaskIndexes.length}, minmax(220px, 1fr))`,
-                            }}
-                          >
-                            <div className="rounded-2xl border border-white/10 bg-black/30 p-2 text-xs font-black text-slate-300">
-                              Giờ
-                            </div>
-                            {scheduleTaskIndexes.map((taskIndex) => (
-                              <div
-                                key={taskIndex}
-                                className="rounded-2xl border border-white/10 bg-black/30 p-2 text-xs font-black text-white"
-                              >
-                                Task {taskIndex + 1}
-                              </div>
-                            ))}
-
+                        <div className="max-h-[62dvh] overflow-auto pr-1">
+                          <div className="grid grid-cols-1 gap-2">
                             {scheduleTimes.map((time, timeIndex) => {
                               const nextTime =
                                 scheduleTimes[timeIndex + 1] ??
                                 scheduleConfig.endTime;
+                              const assignedProduct = getAssignedProduct(
+                                today,
+                                time,
+                                activeScheduleTaskIndex,
+                              );
+                              const postedKey = assignedProduct
+                                ? createPostedKey(
+                                  today,
+                                  assignedProduct.id,
+                                  activeScheduleTaskIndex,
+                                )
+                                : "";
+                              const done = postedKey
+                                ? postedIds.has(postedKey)
+                                : false;
 
                               return (
-                                <Fragment key={time}>
-                                  <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-2">
-                                    <div className="text-sm font-black text-white">
-                                      Bài {timeIndex + 1}
-                                    </div>
-                                    <div className="mt-1 text-xs text-slate-400">
-                                      {time} - {nextTime}
-                                    </div>
-                                  </div>
-
-                                  {scheduleTaskIndexes.map((taskIndex) => {
-                                    const assignedProduct = getAssignedProduct(
+                                <article
+                                  key={`${time}-${activeScheduleTaskIndex}`}
+                                  className={`rounded-2xl border p-2 transition ${done
+                                      ? "border-emerald-400/30 bg-emerald-400/10"
+                                      : assignedProduct
+                                        ? "border-cyan-300/30 bg-cyan-300/10"
+                                        : "border-white/10 bg-slate-950/80"
+                                    }`}
+                                  onDragOver={(event) => event.preventDefault()}
+                                  onDrop={(event) =>
+                                    handleScheduleDrop(
+                                      event,
                                       today,
                                       time,
-                                      taskIndex,
-                                    );
-                                    const postedKey = assignedProduct
-                                      ? createPostedKey(
-                                        today,
-                                        assignedProduct.id,
-                                        taskIndex,
-                                      )
-                                      : "";
-                                    const done = postedKey
-                                      ? postedIds.has(postedKey)
-                                      : false;
-                                    const usedProductIds = new Set(
-                                      Object.entries(scheduleAssignments)
-                                        .filter(
-                                          ([key]) =>
-                                            key.startsWith(
-                                              `${today}::task${taskIndex + 1}::`,
-                                            ) &&
-                                            key !==
-                                            createScheduleAssignmentKey(
-                                              today,
-                                              time,
-                                              taskIndex,
-                                            ),
+                                      activeScheduleTaskIndex,
+                                    )
+                                  }
+                                >
+                                  <div className="grid grid-cols-[82px_minmax(0,1fr)] gap-2 xl:grid-cols-[96px_170px_minmax(0,1fr)_100px] xl:items-center">
+                                    <div className="rounded-2xl border border-white/10 bg-black/30 p-2">
+                                      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                        Bài {timeIndex + 1}
+                                      </div>
+                                      <div className="text-sm font-black text-white">
+                                        {time}
+                                      </div>
+                                      <div className="text-[10px] text-slate-500">
+                                        đến {nextTime}
+                                      </div>
+                                    </div>
+
+                                    <select
+                                      value={assignedProduct?.id ?? ""}
+                                      onChange={(event) =>
+                                        assignProductToSchedule(
+                                          today,
+                                          time,
+                                          activeScheduleTaskIndex,
+                                          event.target.value,
                                         )
-                                        .map(([, value]) => value),
-                                    );
-
-                                    return (
-                                      <article
-                                        key={`${time}-${taskIndex}`}
-                                        className={`rounded-2xl border p-2 ${done
-                                            ? "border-emerald-400/30 bg-emerald-400/10"
-                                            : assignedProduct
-                                              ? "border-cyan-300/30 bg-cyan-300/10"
-                                              : "border-white/10 bg-slate-950/80"
-                                          }`}
-                                      >
-                                        <select
-                                          value={assignedProduct?.id ?? ""}
-                                          onChange={(event) =>
-                                            assignProductToSchedule(
-                                              today,
-                                              time,
-                                              taskIndex,
-                                              event.target.value,
+                                      }
+                                      className="col-span-1 rounded-2xl border border-white/10 bg-slate-950 p-2 text-xs font-bold text-white outline-none focus:border-cyan-300/60 xl:col-span-1"
+                                    >
+                                      <option value="">Chọn sản phẩm</option>
+                                      {scheduleProducts.map((product) => {
+                                        const usedProductIds = new Set(
+                                          Object.entries(scheduleAssignments)
+                                            .filter(
+                                              ([key]) =>
+                                                key.startsWith(
+                                                  `${today}::task${activeScheduleTaskIndex + 1}::`,
+                                                ) &&
+                                                key !==
+                                                createScheduleAssignmentKey(
+                                                  today,
+                                                  time,
+                                                  activeScheduleTaskIndex,
+                                                ),
                                             )
-                                          }
-                                          className="w-full rounded-2xl border border-white/10 bg-slate-950 p-2 text-xs font-bold text-white outline-none focus:border-cyan-300/60"
-                                        >
-                                          <option value="">
-                                            Chọn sản phẩm
-                                          </option>
-                                          {scheduleProducts.map((product) => (
-                                            <option
-                                              key={product.id}
-                                              value={product.id}
-                                              disabled={usedProductIds.has(
-                                                product.id,
-                                              )}
-                                            >
-                                              {product.name}{" "}
-                                              {product.priceText
-                                                ? `- ${product.priceText}`
-                                                : ""}
-                                            </option>
-                                          ))}
-                                        </select>
+                                            .map(([, value]) => value),
+                                        );
 
-                                        <div className="mt-2 flex gap-2">
-                                          <button
-                                            type="button"
-                                            className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-900"
-                                            onClick={() =>
-                                              assignedProduct
-                                                ? openImageAlbum({
-                                                  title: assignedProduct.name,
-                                                  images:
-                                                    assignedProduct.images,
-                                                })
-                                                : undefined
-                                            }
-                                          >
-                                            {assignedProduct?.images[0] ? (
-                                              <img
-                                                src={
-                                                  assignedProduct.images[0]
-                                                    .dataUrl
-                                                }
-                                                alt={assignedProduct.name}
-                                                className="h-full w-full object-contain"
-                                              />
-                                            ) : (
-                                              <FiImage className="text-slate-600" />
+                                        return (
+                                          <option
+                                            key={product.id}
+                                            value={product.id}
+                                            disabled={usedProductIds.has(
+                                              product.id,
                                             )}
-                                          </button>
+                                          >
+                                            {product.name}{" "}
+                                            {product.priceText
+                                              ? `- ${product.priceText}`
+                                              : ""}
+                                          </option>
+                                        );
+                                      })}
+                                    </select>
 
-                                          <div className="min-w-0 flex-1">
-                                            <h4 className="line-clamp-2 text-xs font-black text-white">
-                                              {assignedProduct?.name ??
-                                                "Chưa chọn sản phẩm"}
-                                            </h4>
-                                            <p className="mt-1 truncate text-[11px] font-black text-cyan-200">
-                                              {assignedProduct?.priceText ??
-                                                "Chưa có giá"}
-                                            </p>
-                                            <p className="mt-1 truncate text-[10px] font-bold text-slate-400">
-                                              {assignedProduct?.category ??
-                                                "Chưa có danh mục"}
-                                            </p>
-                                          </div>
-                                        </div>
+                                    <div className="col-span-2 flex min-w-0 gap-2 xl:col-span-1">
+                                      <button
+                                        type="button"
+                                        className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-900"
+                                        onClick={() =>
+                                          assignedProduct
+                                            ? openImageAlbum({
+                                              title: assignedProduct.name,
+                                              images: assignedProduct.images,
+                                            })
+                                            : undefined
+                                        }
+                                      >
+                                        {assignedProduct?.images[0] ? (
+                                          <img
+                                            src={
+                                              assignedProduct.images[0].dataUrl
+                                            }
+                                            alt={assignedProduct.name}
+                                            className="h-full w-full object-contain"
+                                          />
+                                        ) : (
+                                          <FiImage className="text-slate-600" />
+                                        )}
+                                      </button>
 
-                                        <button
-                                          type="button"
-                                          disabled={!assignedProduct}
-                                          className={`mt-2 flex w-full items-center justify-center gap-2 rounded-2xl p-2 text-xs font-black transition ${done
-                                              ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                                              : assignedProduct
-                                                ? "border border-white/10 bg-white/5 text-white hover:bg-white/10"
-                                                : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
-                                            }`}
-                                          onClick={() =>
-                                            assignedProduct &&
-                                            togglePostedProduct(
-                                              today,
-                                              assignedProduct.id,
-                                              taskIndex,
-                                            )
-                                          }
-                                        >
-                                          {done ? "DONE" : "Chưa đăng"}
-                                        </button>
-                                      </article>
-                                    );
-                                  })}
-                                </Fragment>
+                                      <div className="min-w-0 flex-1">
+                                        <h4 className="line-clamp-2 text-xs font-black text-white">
+                                          {assignedProduct?.name ??
+                                            "Kéo sản phẩm vào đây hoặc chọn từ danh sách"}
+                                        </h4>
+                                        <p className="mt-1 truncate text-[11px] font-black text-cyan-200">
+                                          {assignedProduct?.priceText ??
+                                            "Chưa có giá"}
+                                        </p>
+                                        <p className="mt-1 truncate text-[10px] font-bold text-slate-400">
+                                          {assignedProduct?.category ??
+                                            "Chưa có danh mục"}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      disabled={!assignedProduct}
+                                      className={`col-span-2 flex items-center justify-center gap-2 rounded-2xl p-2 text-xs font-black transition xl:col-span-1 ${done
+                                          ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                                          : assignedProduct
+                                            ? "border border-white/10 bg-white/5 text-white hover:bg-white/10"
+                                            : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
+                                        }`}
+                                      onClick={() =>
+                                        assignedProduct &&
+                                        togglePostedProduct(
+                                          today,
+                                          assignedProduct.id,
+                                          activeScheduleTaskIndex,
+                                        )
+                                      }
+                                    >
+                                      {done ? "DONE" : "Chưa đăng"}
+                                    </button>
+                                  </div>
+                                </article>
                               );
                             })}
                           </div>
@@ -3120,11 +3422,35 @@ export default function LocalProductsPage() {
                     </section>
 
                     <aside className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                      <h3 className="text-sm font-black text-white">
-                        Sản phẩm khả dụng
-                      </h3>
-                      <div className="mt-2 grid max-h-[58dvh] grid-cols-1 gap-2 overflow-y-auto pr-1">
-                        {scheduleProducts.map((product) => {
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <div>
+                          <h3 className="text-sm font-black text-white">
+                            Sản phẩm khả dụng
+                          </h3>
+                          <p className="text-[11px] text-slate-400">
+                            Kéo thả vào khung giờ hoặc click để active.
+                          </p>
+                        </div>
+                        <span className="rounded-2xl bg-white/5 px-2 py-1 text-[10px] font-black text-slate-300">
+                          {filteredScheduleProducts.length}
+                        </span>
+                      </div>
+
+                      <label className="mb-2 flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-slate-400">
+                        <FiSearch className="shrink-0" />
+                        <input
+                          value={scheduleQuery}
+                          onChange={(event) =>
+                            setScheduleQuery(event.target.value)
+                          }
+                          onKeyDown={(event) => event.stopPropagation()}
+                          className="w-full bg-transparent text-xs text-white outline-none placeholder:text-slate-600"
+                          placeholder="Tìm trong lịch"
+                        />
+                      </label>
+
+                      <div className="grid max-h-[58dvh] grid-cols-1 gap-2 overflow-y-auto pr-1">
+                        {filteredScheduleProducts.map((product) => {
                           const usedToday = Object.entries(
                             scheduleAssignments,
                           ).some(
@@ -3135,22 +3461,38 @@ export default function LocalProductsPage() {
                           const doneToday = todayPostedProductIds.has(
                             product.id,
                           );
+                          const active = selectedProductId === product.id;
 
                           return (
                             <article
                               key={product.id}
-                              className="rounded-2xl border border-white/10 bg-slate-950/80 p-2"
+                              draggable
+                              onDragStart={(event) => {
+                                event.dataTransfer.setData(
+                                  "text/plain",
+                                  product.id,
+                                );
+                                setDraggingProductId(product.id);
+                                setSelectedProductId(product.id);
+                              }}
+                              onDragEnd={() => setDraggingProductId("")}
+                              onClick={() => setSelectedProductId(product.id)}
+                              className={`cursor-grab rounded-2xl border p-2 transition active:cursor-grabbing ${active
+                                  ? "border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30"
+                                  : "border-white/10 bg-slate-950/80 hover:border-cyan-300/30"
+                                }`}
                             >
                               <div className="flex gap-2">
                                 <button
                                   type="button"
                                   className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-900"
-                                  onClick={() =>
+                                  onClick={(event) => {
+                                    event.stopPropagation();
                                     openImageAlbum({
                                       title: product.name,
                                       images: product.images,
-                                    })
-                                  }
+                                    });
+                                  }}
                                 >
                                   {product.images[0] ? (
                                     <img
@@ -3175,7 +3517,12 @@ export default function LocalProductsPage() {
                                   </p>
                                 </div>
                               </div>
-                              <div className="mt-2 flex gap-2">
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {active ? (
+                                  <span className="rounded-2xl bg-cyan-300 px-2 py-1 text-[10px] font-black text-slate-950">
+                                    ACTIVE
+                                  </span>
+                                ) : null}
                                 {usedToday ? (
                                   <span className="rounded-2xl bg-cyan-300/10 px-2 py-1 text-[10px] font-black text-cyan-100">
                                     Đã xếp
@@ -3550,6 +3897,35 @@ export default function LocalProductsPage() {
                   </aside>
                 </section>
               ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {pendingRemoveTaskIndex !== null ? (
+        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/70 p-2 backdrop-blur">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-950 p-3 shadow-2xl">
+            <h3 className="text-sm font-black text-white">Xoá task đã chọn?</h3>
+            <p className="mt-2 text-xs leading-5 text-slate-400">
+              Thao tác này chỉ xoá{" "}
+              {getTaskName(scheduleConfig, pendingRemoveTaskIndex)} và dồn các
+              task phía sau lên đúng thứ tự.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-black text-white transition hover:bg-white/10"
+                onClick={() => setPendingRemoveTaskIndex(null)}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className="rounded-2xl bg-rose-500 p-2 text-xs font-black text-white transition hover:bg-rose-400"
+                onClick={() => removeScheduleTask(pendingRemoveTaskIndex)}
+              >
+                Xoá task
+              </button>
             </div>
           </div>
         </div>
