@@ -12,7 +12,7 @@ export const Toastify = (message: string | Record<string, string>, statusCode: n
     progress: undefined,
     theme: 'light',
     style: {
-      zIndex: 999999,
+      zIndex: 9999999,
       marginTop: '0',
     },
   };
