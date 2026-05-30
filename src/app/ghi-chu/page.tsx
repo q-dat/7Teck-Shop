@@ -251,7 +251,31 @@ const getTaskName = (config: ScheduleConfig, taskIndex: number): string => {
   return name || `Task ${taskIndex + 1}`;
 };
 
+const createScheduleAssignmentKey = (
+  date: string,
+  slotIndex: number,
+  taskIndex: number,
+): string => {
+  return `${date}::task${taskIndex + 1}::slot${slotIndex + 1}`;
+};
+
+const createLegacyScheduleAssignmentKey = (
+  date: string,
+  time: string,
+  taskIndex: number,
+): string => {
+  return `${date}::task${taskIndex + 1}::${time}`;
+};
+
 const createPostedKey = (
+  date: string,
+  slotIndex: number,
+  taskIndex = 0,
+): string => {
+  return createScheduleAssignmentKey(date, slotIndex, taskIndex);
+};
+
+const createLegacyPostedProductKey = (
   date: string,
   productId: string,
   taskIndex = 0,
@@ -263,16 +287,8 @@ const createLegacyPostedKey = (date: string, productId: string): string => {
   return `${date}::${productId}`;
 };
 
-const createScheduleAssignmentKey = (
-  date: string,
-  time: string,
-  taskIndex: number,
-): string => {
-  return `${date}::task${taskIndex + 1}::${time}`;
-};
-
 const createSlotPostedKey = (slot: ScheduleSlot, taskIndex = 0): string => {
-  return createPostedKey(slot.date, slot.productId, taskIndex);
+  return createLegacyPostedProductKey(slot.date, slot.productId, taskIndex);
 };
 
 const openDatabase = (): Promise<IDBDatabase> => {
@@ -1277,10 +1293,6 @@ export default function LocalProductsPage() {
     );
   }, [todaySlots, postedIds, currentTime]);
 
-  const selectedSlot = useMemo(() => {
-    return scheduleResult.slots.find((slot) => slot.id === selectedSlotId);
-  }, [scheduleResult.slots, selectedSlotId]);
-
   const selectedAlbumImage = useMemo(() => {
     if (!albumSource || albumSource.images.length === 0) return null;
 
@@ -1326,12 +1338,27 @@ export default function LocalProductsPage() {
   }, [postedRecords, today]);
 
   const todayPostedProductIds = useMemo(() => {
-    return new Set(
-      Array.from(todayPostedProductKeys).map(
-        (slotId) => slotId.split("::").at(-1) ?? "",
-      ),
-    );
-  }, [todayPostedProductKeys]);
+    const result = new Set<string>();
+
+    postedRecords.forEach((record) => {
+      if (!record.slotId.startsWith(`${today}::task`)) return;
+
+      const assignedProductId = scheduleAssignments[record.slotId];
+
+      if (assignedProductId) {
+        result.add(assignedProductId);
+        return;
+      }
+
+      const legacyProductId = record.slotId.split("::").at(-1) ?? "";
+
+      if (legacyProductId && !legacyProductId.startsWith("slot")) {
+        result.add(legacyProductId);
+      }
+    });
+
+    return result;
+  }, [postedRecords, scheduleAssignments, today]);
 
   const postedTodayCount = useMemo(() => {
     return todayPostedProductKeys.size;
@@ -1383,6 +1410,90 @@ export default function LocalProductsPage() {
   useEffect(() => {
     saveScheduleAssignments(scheduleAssignments);
   }, [scheduleAssignments]);
+
+  useEffect(() => {
+    if (scheduleTimes.length === 0) return;
+
+    setScheduleAssignments((current) => {
+      let changed = false;
+      const nextAssignments: ScheduleAssignmentMap = { ...current };
+
+      Object.entries(current).forEach(([key, value]) => {
+        const match = key.match(/^(\d{4}-\d{2}-\d{2})::task(\d+)::(.+)$/);
+
+        if (!match) return;
+
+        const [, date, taskNumberText, legacyTime] = match;
+
+        if (!date || !taskNumberText || !legacyTime) return;
+        if (legacyTime.startsWith("slot")) return;
+
+        const slotIndex = scheduleTimes.indexOf(legacyTime);
+
+        if (slotIndex < 0) return;
+
+        const taskIndex = Number(taskNumberText) - 1;
+        const nextKey = createScheduleAssignmentKey(date, slotIndex, taskIndex);
+
+        if (!nextAssignments[nextKey]) {
+          nextAssignments[nextKey] = value;
+        }
+
+        delete nextAssignments[key];
+        changed = true;
+      });
+
+      return changed ? nextAssignments : current;
+    });
+  }, [scheduleTimes]);
+
+  useEffect(() => {
+    if (scheduleTimes.length === 0) return;
+
+    setPostedRecords((current) => {
+      let changed = false;
+      const nextRecords = current.map((record) => {
+        const match = record.slotId.match(/^(\d{4}-\d{2}-\d{2})::task(\d+)::(.+)$/);
+
+        if (!match) return record;
+
+        const [, date, taskNumberText, legacyValue] = match;
+
+        if (!date || !taskNumberText || !legacyValue) return record;
+        if (legacyValue.startsWith("slot")) return record;
+
+        const taskIndex = Number(taskNumberText) - 1;
+        const legacyProduct = products.find((product) => product.id === legacyValue);
+
+        if (!legacyProduct) return record;
+
+        const matchedEntry = Object.entries(scheduleAssignments).find(([key, value]) => {
+          if (value !== legacyProduct.id) return false;
+          return key.startsWith(`${date}::task${taskIndex + 1}::slot`);
+        });
+
+        if (!matchedEntry) return record;
+
+        changed = true;
+
+        return {
+          ...record,
+          slotId: matchedEntry[0],
+        };
+      });
+
+      if (changed) {
+        const uniqueRecords = Array.from(
+          new Map(nextRecords.map((record) => [record.slotId, record])).values(),
+        );
+
+        savePostedRecords(uniqueRecords);
+        return uniqueRecords;
+      }
+
+      return current;
+    });
+  }, [products, scheduleAssignments, scheduleTimes]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -2043,10 +2154,19 @@ export default function LocalProductsPage() {
   const getAssignedProduct = (
     date: string,
     time: string,
+    slotIndex: number,
     taskIndex: number,
   ): LocalProduct | undefined => {
+    const assignmentKey = createScheduleAssignmentKey(date, slotIndex, taskIndex);
+    const legacyAssignmentKey = createLegacyScheduleAssignmentKey(
+      date,
+      time,
+      taskIndex,
+    );
+
     const productId =
-      scheduleAssignments[createScheduleAssignmentKey(date, time, taskIndex)];
+      scheduleAssignments[assignmentKey] ??
+      scheduleAssignments[legacyAssignmentKey];
 
     return products.find((product) => product.id === productId);
   };
@@ -2054,27 +2174,51 @@ export default function LocalProductsPage() {
   const assignProductToSchedule = (
     date: string,
     time: string,
+    slotIndex: number,
     taskIndex: number,
     productId: string,
   ): void => {
-    const assignmentKey = createScheduleAssignmentKey(date, time, taskIndex);
+    const assignmentKey = createScheduleAssignmentKey(date, slotIndex, taskIndex);
+    const legacyAssignmentKey = createLegacyScheduleAssignmentKey(
+      date,
+      time,
+      taskIndex,
+    );
+    const postedKey = createPostedKey(date, slotIndex, taskIndex);
+
+    const currentProductId =
+      scheduleAssignments[assignmentKey] ??
+      scheduleAssignments[legacyAssignmentKey] ??
+      "";
+
+    if (currentProductId !== productId) {
+      setPostedRecords((current) => {
+        const nextRecords = current.filter((record) => record.slotId !== postedKey);
+
+        if (nextRecords.length !== current.length) {
+          savePostedRecords(nextRecords);
+        }
+
+        return nextRecords;
+      });
+    }
 
     setScheduleAssignments((current) => {
       const nextAssignments: ScheduleAssignmentMap = { ...current };
+
+      delete nextAssignments[legacyAssignmentKey];
 
       if (!productId) {
         delete nextAssignments[assignmentKey];
         return nextAssignments;
       }
 
-      const duplicated = Object.entries(nextAssignments).some(
-        ([key, value]) => {
-          if (key === assignmentKey) return false;
-          if (value !== productId) return false;
+      const duplicated = Object.entries(nextAssignments).some(([key, value]) => {
+        if (key === assignmentKey) return false;
+        if (value !== productId) return false;
 
-          return key.startsWith(`${date}::task${taskIndex + 1}::`);
-        },
-      );
+        return key.startsWith(`${date}::task${taskIndex + 1}::`);
+      });
 
       if (duplicated) {
         Toastify("Sản phẩm này đã có trong task này hôm nay", 300);
@@ -2083,6 +2227,7 @@ export default function LocalProductsPage() {
 
       nextAssignments[assignmentKey] = productId;
       setSelectedProductId(productId);
+
       return nextAssignments;
     });
   };
@@ -2091,6 +2236,7 @@ export default function LocalProductsPage() {
     event: DragEvent<HTMLElement>,
     date: string,
     time: string,
+    slotIndex: number,
     taskIndex: number,
   ): void => {
     event.preventDefault();
@@ -2100,7 +2246,7 @@ export default function LocalProductsPage() {
 
     if (!productId) return;
 
-    assignProductToSchedule(date, time, taskIndex, productId);
+    assignProductToSchedule(date, time, slotIndex, taskIndex, productId);
     setDraggingProductId("");
   };
 
@@ -2202,19 +2348,19 @@ export default function LocalProductsPage() {
     setScheduleAssignments((current) => {
       const nextAssignments: ScheduleAssignmentMap = { ...current };
 
-      Object.entries(current).forEach(([key, value]) => {
-        const sourcePrefix = `${today}::task1::`;
+      scheduleTimes.forEach((time, slotIndex) => {
+        const sourceKey = createScheduleAssignmentKey(today, slotIndex, 0);
+        const legacySourceKey = createLegacyScheduleAssignmentKey(today, time, 0);
+        const value = current[sourceKey] ?? current[legacySourceKey];
 
-        if (!key.startsWith(sourcePrefix)) return;
-
-        const time = key.replace(sourcePrefix, "");
+        if (!value) return;
 
         for (
           let taskIndex = 1;
           taskIndex < scheduleConfig.taskCount;
           taskIndex += 1
         ) {
-          nextAssignments[createScheduleAssignmentKey(today, time, taskIndex)] =
+          nextAssignments[createScheduleAssignmentKey(today, slotIndex, taskIndex)] =
             value;
         }
       });
@@ -2241,10 +2387,10 @@ export default function LocalProductsPage() {
 
   const togglePostedProduct = (
     date: string,
-    productId: string,
+    slotIndex: number,
     taskIndex = 0,
   ): void => {
-    const postedKey = createPostedKey(date, productId, taskIndex);
+    const postedKey = createPostedKey(date, slotIndex, taskIndex);
 
     setPostedRecords((current) => {
       const exists = current.some((record) => record.slotId === postedKey);
@@ -2266,8 +2412,12 @@ export default function LocalProductsPage() {
     });
   };
 
-  const togglePostedSlot = (slot: ScheduleSlot): void => {
-    togglePostedProduct(slot.date, slot.productId);
+  const togglePostedSlot = (
+    date: string,
+    slotIndex: number,
+    taskIndex = 0,
+  ): void => {
+    togglePostedProduct(date, slotIndex, taskIndex);
   };
 
   const resetTodayPosted = (): void => {
@@ -2296,6 +2446,58 @@ export default function LocalProductsPage() {
     setActiveModal("slotDetail");
   };
 
+  const openAssignedSlotModal = (
+    date: string,
+    slotIndex: number,
+    taskIndex: number,
+  ): void => {
+    setSelectedSlotId(createScheduleAssignmentKey(date, slotIndex, taskIndex));
+    setActiveModal("slotDetail");
+  };
+
+  const selectedAssignedSlot = useMemo(() => {
+    const match = selectedSlotId.match(
+      /^(\d{4}-\d{2}-\d{2})::task(\d+)::slot(\d+)$/,
+    );
+
+    if (!match) return null;
+
+    const [, date, taskNumberText, slotNumberText] = match;
+
+    if (!date || !taskNumberText || !slotNumberText) return null;
+
+    const taskIndex = Number(taskNumberText) - 1;
+    const slotIndex = Number(slotNumberText) - 1;
+    const time = scheduleTimes[slotIndex] ?? "";
+    const product = getAssignedProduct(date, time, slotIndex, taskIndex);
+
+    if (!product) return null;
+
+    const description =
+      product.description.trim() || settings.commonDescription.trim();
+
+    return {
+      key: selectedSlotId,
+      date,
+      time,
+      slotIndex,
+      taskIndex,
+      taskName: getTaskName(scheduleConfig, taskIndex),
+      product,
+      description,
+      postText: buildPostText(product, settings.commonDescription),
+      done: postedIds.has(createPostedKey(date, slotIndex, taskIndex)),
+    };
+  }, [
+    selectedSlotId,
+    scheduleTimes,
+    scheduleAssignments,
+    products,
+    settings.commonDescription,
+    scheduleConfig,
+    postedIds,
+  ]);
+
   const renderCopyIcon = (key: string) => {
     return copiedKey === key ? <FiCheckCircle /> : <FiCopy />;
   };
@@ -2323,7 +2525,7 @@ export default function LocalProductsPage() {
                 </h1>
                 <p className="truncate text-xs text-slate-400">
                   {products.length} sản phẩm · {totalImages} ảnh · hôm nay{" "}
-                  {postedTodayCount}/{todaySlots.length} bài đã đăng
+                  {postedTodayCount}/{totalTodayTaskCount} bài đã đăng
                 </p>
               </div>
             </div>
@@ -2465,8 +2667,8 @@ export default function LocalProductsPage() {
             <button
               type="button"
               className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${activeCategoryTab === "all"
-                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
                 }`}
               onClick={() => setActiveCategoryTab("all")}
             >
@@ -2478,9 +2680,9 @@ export default function LocalProductsPage() {
                 key={category}
                 type="button"
                 className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${normalizeTextKey(activeCategoryTab) ===
-                    normalizeTextKey(category)
-                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                  normalizeTextKey(category)
+                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
                   }`}
                 onClick={() => setActiveCategoryTab(category)}
               >
@@ -2506,8 +2708,8 @@ export default function LocalProductsPage() {
                   <article
                     key={product.id}
                     className={`overflow-hidden rounded-2xl border shadow-xl shadow-black/20 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-slate-900 ${active
-                        ? "border-cyan-300/70 bg-cyan-300/10 ring-1 ring-cyan-300/30"
-                        : "border-white/10 bg-slate-950/80"
+                      ? "border-cyan-300/70 bg-cyan-300/10 ring-1 ring-cyan-300/30"
+                      : "border-white/10 bg-slate-950/80"
                       }`}
                     onClick={() => setSelectedProductId(product.id)}
                   >
@@ -2837,8 +3039,8 @@ export default function LocalProductsPage() {
                   <section className="flex flex-col gap-2">
                     <label
                       className={`cursor-pointer rounded-2xl border border-dashed p-4 text-center transition ${isDragging
-                          ? "border-cyan-300/80 bg-cyan-300/10"
-                          : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
+                        ? "border-cyan-300/80 bg-cyan-300/10"
+                        : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
                         }`}
                       onDrop={(event) => void handleDrop(event)}
                       onDragOver={handleDragOver}
@@ -3166,8 +3368,8 @@ export default function LocalProductsPage() {
                                   key={category}
                                   type="button"
                                   className={`rounded-2xl border px-3 py-1.5 text-[11px] font-black transition ${active
-                                      ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                                      : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
                                     }`}
                                   onClick={() =>
                                     toggleScheduleCategory(category)
@@ -3201,8 +3403,8 @@ export default function LocalProductsPage() {
                             <div
                               key={taskIndex}
                               className={`flex min-w-56 shrink-0 items-center gap-2 rounded-2xl border p-2 ${active
-                                  ? "border-cyan-300/60 bg-cyan-300/10"
-                                  : "border-white/10 bg-white/[0.03]"
+                                ? "border-cyan-300/60 bg-cyan-300/10"
+                                : "border-white/10 bg-white/[0.03]"
                                 }`}
                             >
                               <button
@@ -3257,27 +3459,24 @@ export default function LocalProductsPage() {
                               const assignedProduct = getAssignedProduct(
                                 today,
                                 time,
+                                timeIndex,
                                 activeScheduleTaskIndex,
                               );
-                              const postedKey = assignedProduct
-                                ? createPostedKey(
-                                  today,
-                                  assignedProduct.id,
-                                  activeScheduleTaskIndex,
-                                )
-                                : "";
-                              const done = postedKey
-                                ? postedIds.has(postedKey)
-                                : false;
+                              const postedKey = createPostedKey(
+                                today,
+                                timeIndex,
+                                activeScheduleTaskIndex,
+                              );
+                              const done = postedIds.has(postedKey);
 
                               return (
                                 <article
                                   key={`${time}-${activeScheduleTaskIndex}`}
                                   className={`rounded-2xl border p-2 transition ${done
-                                      ? "border-emerald-400/30 bg-emerald-400/10"
-                                      : assignedProduct
-                                        ? "border-cyan-300/30 bg-cyan-300/10"
-                                        : "border-white/10 bg-slate-950/80"
+                                    ? "border-emerald-400/30 bg-emerald-400/10"
+                                    : assignedProduct
+                                      ? "border-cyan-300/30 bg-cyan-300/10"
+                                      : "border-white/10 bg-slate-950/80"
                                     }`}
                                   onDragOver={(event) => event.preventDefault()}
                                   onDrop={(event) =>
@@ -3285,6 +3484,7 @@ export default function LocalProductsPage() {
                                       event,
                                       today,
                                       time,
+                                      timeIndex,
                                       activeScheduleTaskIndex,
                                     )
                                   }
@@ -3308,6 +3508,7 @@ export default function LocalProductsPage() {
                                         assignProductToSchedule(
                                           today,
                                           time,
+                                          timeIndex,
                                           activeScheduleTaskIndex,
                                           event.target.value,
                                         )
@@ -3326,7 +3527,7 @@ export default function LocalProductsPage() {
                                                 key !==
                                                 createScheduleAssignmentKey(
                                                   today,
-                                                  time,
+                                                  timeIndex,
                                                   activeScheduleTaskIndex,
                                                 ),
                                             )
@@ -3392,26 +3593,48 @@ export default function LocalProductsPage() {
                                       </div>
                                     </div>
 
-                                    <button
-                                      type="button"
-                                      disabled={!assignedProduct}
-                                      className={`col-span-2 flex items-center justify-center gap-2 rounded-2xl p-2 text-xs font-black transition xl:col-span-1 ${done
+                                    <div className="col-span-2 grid grid-cols-2 gap-2 xl:col-span-1 xl:grid-cols-1">
+                                      <button
+                                        type="button"
+                                        disabled={!assignedProduct}
+                                        className={`flex items-center justify-center gap-2 rounded-2xl p-2 text-xs font-black transition ${done
                                           ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
                                           : assignedProduct
                                             ? "border border-white/10 bg-white/5 text-white hover:bg-white/10"
                                             : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
-                                        }`}
-                                      onClick={() =>
-                                        assignedProduct &&
-                                        togglePostedProduct(
-                                          today,
-                                          assignedProduct.id,
-                                          activeScheduleTaskIndex,
-                                        )
-                                      }
-                                    >
-                                      {done ? "DONE" : "Chưa đăng"}
-                                    </button>
+                                          }`}
+                                        onClick={() =>
+                                          assignedProduct &&
+                                          togglePostedProduct(
+                                            today,
+                                            timeIndex,
+                                            activeScheduleTaskIndex,
+                                          )
+                                        }
+                                      >
+                                        {done ? "DONE" : "Chưa đăng"}
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        disabled={!assignedProduct}
+                                        className={`flex items-center justify-center gap-2 rounded-2xl p-2 text-xs font-black transition ${assignedProduct
+                                          ? "border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
+                                          : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
+                                          }`}
+                                        onClick={() =>
+                                          assignedProduct &&
+                                          openAssignedSlotModal(
+                                            today,
+                                            timeIndex,
+                                            activeScheduleTaskIndex,
+                                          )
+                                        }
+                                      >
+                                        <FiClipboard />
+                                        Chi tiết
+                                      </button>
+                                    </div>
                                   </div>
                                 </article>
                               );
@@ -3478,8 +3701,8 @@ export default function LocalProductsPage() {
                               onDragEnd={() => setDraggingProductId("")}
                               onClick={() => setSelectedProductId(product.id)}
                               className={`cursor-grab rounded-2xl border p-2 transition active:cursor-grabbing ${active
-                                  ? "border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30"
-                                  : "border-white/10 bg-slate-950/80 hover:border-cyan-300/30"
+                                ? "border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30"
+                                : "border-white/10 bg-slate-950/80 hover:border-cyan-300/30"
                                 }`}
                             >
                               <div className="flex gap-2">
@@ -3665,132 +3888,171 @@ export default function LocalProductsPage() {
                 </section>
               ) : null}
 
-              {activeModal === "slotDetail" && selectedSlot ? (
-                <section className="grid grid-cols-1 gap-2 xl:grid-cols-[360px_1fr]">
-                  <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                    <button
-                      type="button"
-                      className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-900"
-                      onClick={() =>
-                        openImageAlbum({
-                          title: selectedSlot.productName,
-                          images: selectedSlot.images,
-                        })
-                      }
-                    >
-                      {selectedSlot.image ? (
-                        <img
-                          src={selectedSlot.image}
-                          alt={selectedSlot.productName}
-                          className="h-full w-full object-contain"
-                        />
-                      ) : (
-                        <FiImage className="text-slate-600" />
-                      )}
-                    </button>
-
-                    {selectedSlot.images.length > 1 ? (
-                      <div className="mt-2 grid grid-cols-5 gap-2">
-                        {selectedSlot.images.slice(0, 10).map((image) => (
-                          <button
-                            key={image.id}
-                            type="button"
-                            className="aspect-square overflow-hidden rounded-xl bg-slate-900 ring-1 ring-white/10 transition hover:ring-cyan-300"
-                            onClick={() =>
-                              openImageAlbum({
-                                title: selectedSlot.productName,
-                                images: selectedSlot.images,
-                              })
-                            }
-                          >
-                            <img
-                              src={image.dataUrl}
-                              alt={image.name}
-                              className="h-full w-full object-contain"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-
-                    <div className="mt-2 grid grid-cols-2 gap-2">
+              {activeModal === "slotDetail" ? (
+                selectedAssignedSlot ? (
+                  <section className="grid grid-cols-1 gap-2 xl:grid-cols-[360px_1fr]">
+                    <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
                       <button
                         type="button"
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-300 p-2 text-xs font-black text-slate-950 transition hover:bg-emerald-200"
-                        onClick={() => togglePostedSlot(selectedSlot)}
+                        className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-900"
+                        onClick={() =>
+                          openImageAlbum({
+                            title: selectedAssignedSlot.product.name,
+                            images: selectedAssignedSlot.product.images,
+                          })
+                        }
                       >
-                        <FiCheck />
-                        {postedIds.has(createSlotPostedKey(selectedSlot))
-                          ? "DONE"
-                          : "Chưa đăng"}
+                        {selectedAssignedSlot.product.images[0] ? (
+                          <img
+                            src={selectedAssignedSlot.product.images[0].dataUrl}
+                            alt={selectedAssignedSlot.product.name}
+                            className="h-full w-full object-contain"
+                          />
+                        ) : (
+                          <FiImage className="text-slate-600" />
+                        )}
                       </button>
 
-                      <button
-                        type="button"
-                        className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
-                        onClick={() => handleDownloadSlotImages(selectedSlot)}
-                      >
-                        <FiDownload />
-                        Tải ảnh
-                      </button>
-                    </div>
-                  </article>
-
-                  <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="rounded-2xl bg-cyan-300 px-3 py-1 text-xs font-black text-slate-950">
-                          {selectedSlot.time}
+                      {selectedAssignedSlot.product.images.length > 1 ? (
+                        <div className="mt-2 grid grid-cols-5 gap-2">
+                          {selectedAssignedSlot.product.images.slice(0, 10).map((image) => (
+                            <button
+                              key={image.id}
+                              type="button"
+                              className="aspect-square overflow-hidden rounded-xl bg-slate-900 ring-1 ring-white/10 transition hover:ring-cyan-300"
+                              onClick={() =>
+                                openImageAlbum({
+                                  title: selectedAssignedSlot.product.name,
+                                  images: selectedAssignedSlot.product.images,
+                                })
+                              }
+                            >
+                              <img
+                                src={image.dataUrl}
+                                alt={image.name}
+                                className="h-full w-full object-contain"
+                              />
+                            </button>
+                          ))}
                         </div>
-                        <h3 className="mt-2 text-base font-black text-white">
-                          {selectedSlot.productName}
-                        </h3>
-                        <p className="mt-1 text-xs text-slate-400">
-                          {selectedSlot.category || "Chưa có danh mục"}
-                        </p>
-                        <p className="mt-1 text-sm font-black text-cyan-200">
-                          {selectedSlot.priceText || "Chưa có giá"}
-                        </p>
+                      ) : null}
+
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          className={`flex items-center justify-center gap-2 rounded-2xl p-2 text-xs font-black transition ${selectedAssignedSlot.done
+                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                            : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
+                            }`}
+                          onClick={() =>
+                            togglePostedSlot(
+                              selectedAssignedSlot.date,
+                              selectedAssignedSlot.slotIndex,
+                              selectedAssignedSlot.taskIndex,
+                            )
+                          }
+                        >
+                          <FiCheck />
+                          {selectedAssignedSlot.done ? "DONE" : "Chưa đăng"}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
+                          onClick={() => handleDownloadProductImages(selectedAssignedSlot.product)}
+                        >
+                          <FiDownload />
+                          Tải ảnh
+                        </button>
                       </div>
-                    </div>
+                    </article>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
-                        onClick={() =>
-                          void handleCopyField(
-                            `slot-name-${selectedSlot.id}`,
-                            "tên sản phẩm",
-                            selectedSlot.productName,
-                          )
-                        }
-                      >
-                        {renderCopyIcon(`slot-name-${selectedSlot.id}`)}
-                        Copy tên
-                      </button>
+                    <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="inline-flex rounded-2xl bg-cyan-300 px-3 py-1 text-xs font-black text-slate-950">
+                            {selectedAssignedSlot.date} · {selectedAssignedSlot.time} · {selectedAssignedSlot.taskName} · Bài {selectedAssignedSlot.slotIndex + 1}
+                          </div>
+                          <h3 className="mt-2 text-base font-black text-white">
+                            {selectedAssignedSlot.product.name}
+                          </h3>
+                          <p className="mt-1 text-xs text-slate-400">
+                            {selectedAssignedSlot.product.category || "Chưa có danh mục"}
+                          </p>
+                          <p className="mt-1 text-sm font-black text-cyan-200">
+                            {selectedAssignedSlot.product.priceText || "Chưa có giá"}
+                          </p>
+                        </div>
+                      </div>
 
-                      <button
-                        type="button"
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
-                        onClick={() =>
-                          void handleCopyField(
-                            `slot-desc-${selectedSlot.id}`,
-                            "mô tả",
-                            selectedSlot.description,
-                          )
-                        }
-                      >
-                        {renderCopyIcon(`slot-desc-${selectedSlot.id}`)}
-                        Copy mô tả
-                      </button>
-                    </div>
+                      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
+                          onClick={() =>
+                            void handleCopyField(
+                              `slot-name-${selectedAssignedSlot.key}`,
+                              "tên sản phẩm",
+                              selectedAssignedSlot.product.name,
+                            )
+                          }
+                        >
+                          {renderCopyIcon(`slot-name-${selectedAssignedSlot.key}`)}
+                          Copy tên
+                        </button>
 
-                    <pre className="mt-2 max-h-[50dvh] overflow-y-auto whitespace-pre-wrap rounded-2xl border border-white/10 bg-black/30 p-2 text-sm leading-6 text-slate-200">
-                      {selectedSlot.description || "Chưa có mô tả"}
-                    </pre>
-                  </article>
-                </section>
+
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
+                          onClick={() =>
+                            void handleCopyField(
+                              `slot-desc-${selectedAssignedSlot.key}`,
+                              "mô tả",
+                              selectedAssignedSlot.description,
+                            )
+                          }
+                        >
+                          {renderCopyIcon(`slot-desc-${selectedAssignedSlot.key}`)}
+                          Copy mô tả
+                        </button>
+
+
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
+                          onClick={() =>
+                            void handleCopyField(
+                              `slot-post-${selectedAssignedSlot.key}`,
+                              "bài viết",
+                              selectedAssignedSlot.postText,
+                            )
+                          }
+                        >
+                          {renderCopyIcon(`slot-post-${selectedAssignedSlot.key}`)}
+                          Copy bài
+                        </button>
+
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
+                          onClick={() => handleEdit(selectedAssignedSlot.product)}
+                        >
+                          <FiEdit3 />
+                          Sửa
+                        </button>
+                      </div>
+
+                      <pre className="mt-2 max-h-[50dvh] overflow-y-auto whitespace-pre-wrap rounded-2xl border border-white/10 bg-black/30 p-2 text-sm leading-6 text-slate-200">
+                        {selectedAssignedSlot.postText || "Chưa có nội dung bài viết"}
+                      </pre>
+                    </article>
+                  </section>
+                ) : (
+                  <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-6 text-center text-sm text-slate-400">
+                    Chưa tìm thấy bài đã xếp trong lịch.
+                  </div>
+                )
               ) : null}
 
               {activeModal === "imageAlbum" && albumSource ? (
@@ -3876,8 +4138,8 @@ export default function LocalProductsPage() {
                             key={image.id}
                             type="button"
                             className={`group relative aspect-square overflow-hidden rounded-2xl bg-slate-900 ring-1 transition ${active
-                                ? "ring-2 ring-cyan-300"
-                                : "ring-white/10 hover:ring-cyan-300/60"
+                              ? "ring-2 ring-cyan-300"
+                              : "ring-white/10 hover:ring-cyan-300/60"
                               }`}
                             onClick={() => setSelectedAlbumImageId(image.id)}
                             title={`Ảnh ${index + 1}`}
