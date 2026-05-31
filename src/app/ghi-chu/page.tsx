@@ -263,6 +263,26 @@ const normalizeCategoryName = (value: string): string => {
   return value.trim().replace(/\s+/g, " ");
 };
 
+const DONE_PRODUCT_PREFIX = "✅";
+
+const hasDoneProductPrefix = (name: string): boolean => {
+  return name.trim().startsWith(DONE_PRODUCT_PREFIX);
+};
+
+const removeDoneProductPrefix = (name: string): string => {
+  return name.replace(/^✅\s*/u, "").trim();
+};
+
+const addDoneProductPrefix = (name: string): string => {
+  const cleanName = removeDoneProductPrefix(name);
+
+  return cleanName ? `${DONE_PRODUCT_PREFIX} ${cleanName}` : DONE_PRODUCT_PREFIX;
+};
+
+const normalizeDoneProductName = (name: string, isDone: boolean): string => {
+  return isDone ? addDoneProductPrefix(name) : removeDoneProductPrefix(name);
+};
+
 const getTaskName = (config: ScheduleConfig, taskIndex: number): string => {
   const name = config.taskNames[taskIndex]?.trim();
 
@@ -565,7 +585,7 @@ const loadScheduleConfig = (): ScheduleConfig => {
       taskCount:
         typeof record.taskCount === "number" &&
           Number.isFinite(record.taskCount)
-          ? Math.max(1, Math.min(8, Math.round(record.taskCount)))
+          ? Math.max(1, Math.min(64, Math.round(record.taskCount)))
           : defaultScheduleConfig.taskCount,
       taskNames,
       selectedCategories,
@@ -721,10 +741,11 @@ const normalizeProduct = (value: unknown): LocalProduct | null => {
   const description =
     typeof record.description === "string" ? record.description : "";
   const category = typeof record.category === "string" ? record.category : "";
+  const isDone = typeof record.isDone === "boolean" ? record.isDone : hasDoneProductPrefix(record.name);
 
   return {
     id: record.id,
-    name: record.name,
+    name: normalizeDoneProductName(record.name, isDone),
     description,
     price:
       typeof record.price === "number"
@@ -733,7 +754,7 @@ const normalizeProduct = (value: unknown): LocalProduct | null => {
     priceText,
     category,
     images: normalizeImages(record.images),
-    isDone: typeof record.isDone === "boolean" ? record.isDone : false,
+    isDone,
     doneAt: typeof record.doneAt === "string" ? record.doneAt : "",
     createdAt:
       typeof record.createdAt === "string"
@@ -1041,12 +1062,52 @@ const shuffleProducts = <T,>(items: T[]): T[] => {
   return cloned;
 };
 
+const createCategoryBalancedProducts = (items: LocalProduct[]): LocalProduct[] => {
+  const groupedProducts = new Map<string, LocalProduct[]>();
+
+  shuffleProducts(items).forEach((product) => {
+    const categoryKey = normalizeTextKey(product.category || "Chưa phân loại");
+    const currentProducts = groupedProducts.get(categoryKey) ?? [];
+
+    groupedProducts.set(categoryKey, [...currentProducts, product]);
+  });
+
+  const categoryQueues = Array.from(groupedProducts.entries()).map(([categoryKey, products]) => ({
+    categoryKey,
+    products: shuffleProducts(products),
+  }));
+  const result: LocalProduct[] = [];
+  let previousCategoryKey = "";
+
+  while (categoryQueues.some((item) => item.products.length > 0)) {
+    const availableQueues = categoryQueues
+      .filter((item) => item.products.length > 0)
+      .sort((first, second) => second.products.length - first.products.length);
+    const preferredQueue =
+      availableQueues.find((item) => item.categoryKey !== previousCategoryKey) ??
+      availableQueues[0];
+
+    if (!preferredQueue) break;
+
+    const product = preferredQueue.products.shift();
+
+    if (!product) continue;
+
+    result.push(product);
+    previousCategoryKey = preferredQueue.categoryKey;
+  }
+
+  return result;
+};
+
 const buildRandomSchedule = (
   products: LocalProduct[],
   config: ScheduleConfig,
   commonDescription: string,
 ): BuildScheduleResult => {
-  if (products.length === 0) {
+  const activeProducts = products.filter((product) => !product.isDone);
+
+  if (activeProducts.length === 0) {
     return {
       slots: [],
       warnings: [],
@@ -1061,8 +1122,8 @@ const buildRandomSchedule = (
 
   const usableProducts =
     config.selectedCategories.length === 0
-      ? products
-      : products.filter((product) =>
+      ? activeProducts
+      : activeProducts.filter((product) =>
         selectedCategoryKeys.has(normalizeTextKey(product.category)),
       );
 
@@ -1341,7 +1402,9 @@ export default function LocalProductsPage() {
   }, [albumSource, selectedAlbumImageId]);
 
   const scheduleProducts = useMemo(() => {
-    if (scheduleConfig.selectedCategories.length === 0) return products;
+    const activeProducts = products.filter((product) => !product.isDone);
+
+    if (scheduleConfig.selectedCategories.length === 0) return activeProducts;
 
     const selectedCategoryKeys = new Set(
       scheduleConfig.selectedCategories.map((category) =>
@@ -1349,7 +1412,7 @@ export default function LocalProductsPage() {
       ),
     );
 
-    return products.filter((product) =>
+    return activeProducts.filter((product) =>
       selectedCategoryKeys.has(normalizeTextKey(product.category)),
     );
   }, [products, scheduleConfig.selectedCategories]);
@@ -1612,6 +1675,36 @@ export default function LocalProductsPage() {
     });
   }, [categories]);
 
+  useEffect(() => {
+    const activeScheduleProductIds = new Set(scheduleProducts.map((product) => product.id));
+    const removedAssignmentKeys: string[] = [];
+    const nextAssignments: ScheduleAssignmentMap = {};
+
+    Object.entries(scheduleAssignments).forEach(([key, value]) => {
+      if (activeScheduleProductIds.has(value)) {
+        nextAssignments[key] = value;
+        return;
+      }
+
+      removedAssignmentKeys.push(key);
+    });
+
+    if (removedAssignmentKeys.length === 0) return;
+
+    setScheduleAssignments(nextAssignments);
+
+    setPostedRecords((current) => {
+      const removedKeySet = new Set(removedAssignmentKeys);
+      const nextRecords = current.filter((record) => !removedKeySet.has(record.slotId));
+
+      if (nextRecords.length !== current.length) {
+        savePostedRecords(nextRecords);
+      }
+
+      return nextRecords;
+    });
+  }, [scheduleAssignments, scheduleProducts]);
+
   const updateDraftField = <Key extends keyof ProductDraft>(
     key: Key,
     value: ProductDraft[Key],
@@ -1795,17 +1888,18 @@ export default function LocalProductsPage() {
     event.preventDefault();
 
     const now = new Date().toISOString();
-    const name = draft.name.trim();
+    const rawName = draft.name.trim();
     const description = draft.description.trim();
     const priceText = draft.priceText.trim();
     const category = draft.category.trim();
 
-    if (!name) {
+    if (!rawName) {
       Toastify("Vui lòng nhập tên sản phẩm", 400);
       return;
     }
 
     const currentProduct = products.find((product) => product.id === editingId);
+    const name = normalizeDoneProductName(rawName, currentProduct?.isDone ?? false);
 
     const product: LocalProduct = {
       id: currentProduct?.id ?? crypto.randomUUID(),
@@ -1900,9 +1994,11 @@ export default function LocalProductsPage() {
       return;
     }
 
+    const nextIsDone = !product.isDone;
     const nextProduct: LocalProduct = {
       ...product,
-      isDone: !product.isDone,
+      name: normalizeDoneProductName(product.name, nextIsDone),
+      isDone: nextIsDone,
       doneAt: product.isDone ? "" : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -2236,7 +2332,7 @@ export default function LocalProductsPage() {
       scheduleAssignments[assignmentKey] ??
       scheduleAssignments[legacyAssignmentKey];
 
-    return products.find((product) => product.id === productId);
+    return products.find((product) => product.id === productId && !product.isDone);
   };
 
   const assignProductToSchedule = (
@@ -2253,6 +2349,20 @@ export default function LocalProductsPage() {
       taskIndex,
     );
     const postedKey = createPostedKey(date, slotIndex, taskIndex);
+
+    if (productId) {
+      const selectedProduct = products.find((product) => product.id === productId);
+
+      if (!selectedProduct) {
+        Toastify("Không tìm thấy sản phẩm để xếp lịch", 400);
+        return;
+      }
+
+      if (selectedProduct.isDone) {
+        Toastify("Sản phẩm đã DONE nên không thể đưa vào lịch", 300);
+        return;
+      }
+    }
 
     const currentProductId =
       scheduleAssignments[assignmentKey] ??
@@ -2281,15 +2391,27 @@ export default function LocalProductsPage() {
         return nextAssignments;
       }
 
-      const duplicated = Object.entries(nextAssignments).some(([key, value]) => {
+      const duplicatedInSameTask = Object.entries(nextAssignments).some(([key, value]) => {
         if (key === assignmentKey) return false;
         if (value !== productId) return false;
 
         return key.startsWith(`${date}::task${taskIndex + 1}::`);
       });
 
-      if (duplicated) {
+      if (duplicatedInSameTask) {
         Toastify("Sản phẩm này đã có trong task này hôm nay", 300);
+        return current;
+      }
+
+      const duplicatedInSameTime = Object.entries(nextAssignments).some(([key, value]) => {
+        if (key === assignmentKey) return false;
+        if (value !== productId) return false;
+
+        return key.match(new RegExp(`^${date}::task\\d+::slot${slotIndex + 1}$`)) !== null;
+      });
+
+      if (duplicatedInSameTime) {
+        Toastify("Sản phẩm này đã có ở task khác trong cùng khung giờ", 300);
         return current;
       }
 
@@ -2334,7 +2456,7 @@ export default function LocalProductsPage() {
 
   const addScheduleTask = (): void => {
     setScheduleConfig((current) => {
-      const nextTaskCount = Math.min(8, current.taskCount + 1);
+      const nextTaskCount = Math.min(64, current.taskCount + 1);
 
       return {
         ...current,
@@ -2427,30 +2549,83 @@ export default function LocalProductsPage() {
       return;
     }
 
-    setScheduleAssignments((current) => {
-      const nextAssignments: ScheduleAssignmentMap = { ...current };
+    Toastify("Không nên nhân bản task vì dễ trùng sản phẩm cùng khung giờ. Hãy dùng Tự rải lịch.", 300);
+  };
 
-      scheduleTimes.forEach((time, slotIndex) => {
-        const sourceKey = createScheduleAssignmentKey(today, slotIndex, 0);
-        const legacySourceKey = createLegacyScheduleAssignmentKey(today, time, 0);
-        const value = current[sourceKey] ?? current[legacySourceKey];
+  const autoFillScheduleAssignments = (): void => {
+    const targetDate = today;
+    const targetPrefix = `${targetDate}::task`;
+    const slotCount = scheduleTimes.length;
 
-        if (!value) return;
+    if (slotCount === 0) {
+      Toastify("Khung giờ chưa hợp lệ để tự rải lịch", 400);
+      return;
+    }
 
-        for (
-          let taskIndex = 1;
-          taskIndex < scheduleConfig.taskCount;
-          taskIndex += 1
-        ) {
-          nextAssignments[createScheduleAssignmentKey(today, slotIndex, taskIndex)] =
-            value;
-        }
-      });
+    const availableProducts = scheduleProducts.filter((product) => !product.isDone);
 
-      return nextAssignments;
+    if (availableProducts.length === 0) {
+      Toastify("Không có sản phẩm khả dụng để tự rải lịch", 400);
+      return;
+    }
+
+    const orderedProducts = createCategoryBalancedProducts(availableProducts);
+    const requiredTaskCount = Math.max(1, Math.ceil(orderedProducts.length / slotCount));
+    const nextTaskNames = Array.from(
+      { length: requiredTaskCount },
+      (_, index) => scheduleConfig.taskNames[index] || `Task ${index + 1}`,
+    );
+    const nextAssignments: ScheduleAssignmentMap = {};
+
+    Object.entries(scheduleAssignments).forEach(([key, value]) => {
+      if (!key.startsWith(targetPrefix)) {
+        nextAssignments[key] = value;
+      }
     });
 
-    Toastify("Đã nhân bản task 1 sang các task còn lại", 200);
+    let productIndex = 0;
+
+    for (let taskIndex = 0; taskIndex < requiredTaskCount; taskIndex += 1) {
+      const usedProductIdsInTask = new Set<string>();
+
+      for (let slotIndex = 0; slotIndex < slotCount; slotIndex += 1) {
+        const product = orderedProducts[productIndex];
+
+        if (!product) break;
+
+        if (usedProductIdsInTask.has(product.id)) {
+          continue;
+        }
+
+        const assignmentKey = createScheduleAssignmentKey(targetDate, slotIndex, taskIndex);
+        nextAssignments[assignmentKey] = product.id;
+        usedProductIdsInTask.add(product.id);
+        productIndex += 1;
+      }
+    }
+
+    const nextConfig: ScheduleConfig = {
+      ...scheduleConfig,
+      dateFrom: targetDate,
+      dateTo: targetDate,
+      taskCount: requiredTaskCount,
+      taskNames: nextTaskNames,
+    };
+
+    const nextRecords = postedRecords.filter((record) => !record.slotId.startsWith(targetPrefix));
+
+    setScheduleConfig(nextConfig);
+    saveScheduleConfig(nextConfig);
+    setActiveScheduleTaskIndex(0);
+    setScheduleAssignments(nextAssignments);
+    saveScheduleAssignments(nextAssignments);
+    setPostedRecords(nextRecords);
+    savePostedRecords(nextRecords);
+
+    Toastify(
+      `Đã rải đúng ${productIndex}/${orderedProducts.length} sản phẩm vào ${requiredTaskCount} task`,
+      productIndex === orderedProducts.length ? 200 : 300,
+    );
   };
 
   const resetActiveScheduleTaskAssignments = (): void => {
@@ -3337,6 +3512,19 @@ export default function LocalProductsPage() {
 
                     <button
                       type="button"
+                      className="rounded-xl border border-violet-300/30 bg-violet-300/10 p-1 text-left transition hover:bg-violet-300/20"
+                      onClick={autoFillScheduleAssignments}
+                    >
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-violet-200">
+                        Tự động
+                      </div>
+                      <div className="text-xs font-black text-white">
+                        Rải lịch
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
                       className="rounded-xl border border-white/10 bg-white/5 p-1 text-left transition hover:bg-white/10"
                       onClick={resetActiveScheduleTaskAssignments}
                     >
@@ -3486,6 +3674,14 @@ export default function LocalProductsPage() {
                           onClick={addScheduleTask}
                         >
                           Thêm task
+                        </button>
+
+                        <button
+                          type="button"
+                          className="rounded-2xl border border-violet-300/30 bg-violet-300/10 px-3 py-1.5 text-[11px] font-black text-violet-100 transition hover:bg-violet-300/20"
+                          onClick={autoFillScheduleAssignments}
+                        >
+                          Tự rải đầy task
                         </button>
 
                         <button
@@ -3688,20 +3884,25 @@ export default function LocalProductsPage() {
                                     >
                                       <option value="">Chọn sản phẩm</option>
                                       {scheduleProducts.map((product) => {
+                                        const currentAssignmentKey = createScheduleAssignmentKey(
+                                          today,
+                                          timeIndex,
+                                          activeScheduleTaskIndex,
+                                        );
+                                        const sameTimePattern = new RegExp(
+                                          `^${today}::task\\d+::slot${timeIndex + 1}$`,
+                                        );
                                         const usedProductIds = new Set(
                                           Object.entries(scheduleAssignments)
-                                            .filter(
-                                              ([key]) =>
+                                            .filter(([key]) => {
+                                              if (key === currentAssignmentKey) return false;
+
+                                              return (
                                                 key.startsWith(
                                                   `${today}::task${activeScheduleTaskIndex + 1}::`,
-                                                ) &&
-                                                key !==
-                                                createScheduleAssignmentKey(
-                                                  today,
-                                                  timeIndex,
-                                                  activeScheduleTaskIndex,
-                                                ),
-                                            )
+                                                ) || sameTimePattern.test(key)
+                                              );
+                                            })
                                             .map(([, value]) => value),
                                         );
 
