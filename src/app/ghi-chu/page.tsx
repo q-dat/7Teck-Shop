@@ -145,6 +145,7 @@ type AlbumSource = {
 
 type ModalName =
   | "product"
+  | "productList"
   | "schedule"
   | "global"
   | "importExport"
@@ -1288,7 +1289,8 @@ export default function LocalProductsPage() {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isProcessingImages, setIsProcessingImages] = useState<boolean>(false);
   const [isSettingsReady, setIsSettingsReady] = useState<boolean>(false);
-  const [activeModal, setActiveModal] = useState<ModalName>("");
+  const [modalStack, setModalStack] = useState<ModalName[]>([]);
+  const activeModal = modalStack[modalStack.length - 1] ?? "";
   const [selectedSlotId, setSelectedSlotId] = useState<string>("");
   const [selectedAlbumImageId, setSelectedAlbumImageId] = useState<string>("");
   const [albumSource, setAlbumSource] = useState<AlbumSource | null>(null);
@@ -1332,6 +1334,59 @@ export default function LocalProductsPage() {
       return matchesCategory && matchesKeyword;
     });
   }, [activeCategoryTab, products, query]);
+
+  const groupedProductsByCategory = useMemo(() => {
+    const getSortablePrice = (product: LocalProduct): number => {
+      if (product.price > 0) return product.price;
+
+      return Number.MAX_SAFE_INTEGER;
+    };
+
+    const groupedMap = new Map<string, LocalProduct[]>();
+
+    [...filteredProducts]
+      .sort((firstProduct, secondProduct) => {
+        const priceDiff = getSortablePrice(firstProduct) - getSortablePrice(secondProduct);
+
+        if (priceDiff !== 0) return priceDiff;
+
+        return normalizeTextKey(firstProduct.name).localeCompare(
+          normalizeTextKey(secondProduct.name),
+          "vi",
+        );
+      })
+      .forEach((product) => {
+        const category = normalizeCategoryName(product.category) || "Chưa phân loại";
+        const currentProducts = groupedMap.get(category) ?? [];
+
+        groupedMap.set(category, [...currentProducts, product]);
+      });
+
+    return Array.from(groupedMap.entries())
+      .map(([category, categoryProducts]) => ({
+        category,
+        products: categoryProducts,
+        lowestPrice: Math.min(...categoryProducts.map(getSortablePrice)),
+      }))
+      .sort((firstGroup, secondGroup) => {
+        const priceDiff = firstGroup.lowestPrice - secondGroup.lowestPrice;
+
+        if (priceDiff !== 0) return priceDiff;
+
+        return normalizeTextKey(firstGroup.category).localeCompare(
+          normalizeTextKey(secondGroup.category),
+          "vi",
+        );
+      });
+  }, [filteredProducts]);
+
+  const soldProductCount = useMemo(() => {
+    return filteredProducts.filter((product) => product.isDone).length;
+  }, [filteredProducts]);
+
+  const activeProductCount = useMemo(() => {
+    return filteredProducts.filter((product) => !product.isDone).length;
+  }, [filteredProducts]);
 
   const totalImages = useMemo(() => {
     return products.reduce(
@@ -1735,17 +1790,41 @@ export default function LocalProductsPage() {
     }));
   };
 
-  const openProductModalForCreate = (): void => {
-    setEditingId("");
-    setDraft(emptyDraft);
-    setActiveModal("product");
+  const openModal = (modalName: Exclude<ModalName, "">): void => {
+    setModalStack((current) => {
+      const currentTopModal = current[current.length - 1];
+
+      if (currentTopModal === modalName) return current;
+
+      return [...current, modalName];
+    });
   };
 
   const closeModal = (): void => {
-    setActiveModal("");
-    setSelectedSlotId("");
-    setSelectedAlbumImageId("");
-    setAlbumSource(null);
+    setModalStack((current) => {
+      const closingModal = current[current.length - 1] ?? "";
+
+      if (closingModal === "slotDetail") {
+        setSelectedSlotId("");
+      }
+
+      if (closingModal === "imageAlbum") {
+        setSelectedAlbumImageId("");
+        setAlbumSource(null);
+      }
+
+      return current.slice(0, -1);
+    });
+  };
+
+  const closeAllProductModals = (): void => {
+    setModalStack((current) => current.filter((modalName) => modalName !== "product"));
+  };
+
+  const openProductModalForCreate = (): void => {
+    setEditingId("");
+    setDraft(emptyDraft);
+    openModal("product");
   };
 
   const appendImagesToDraft = async (files: File[]): Promise<void> => {
@@ -1919,7 +1998,7 @@ export default function LocalProductsPage() {
     await loadProducts();
 
     resetForm();
-    setActiveModal("");
+    closeAllProductModals();
     Toastify(editingId ? "Đã cập nhật sản phẩm" : "Đã thêm sản phẩm", 200);
   };
 
@@ -1933,7 +2012,7 @@ export default function LocalProductsPage() {
       images: product.images,
     });
 
-    setActiveModal("product");
+    openModal("product");
   };
 
   const handleDelete = async (id: string): Promise<void> => {
@@ -2242,7 +2321,7 @@ export default function LocalProductsPage() {
 
     setAlbumSource(source);
     setSelectedAlbumImageId(source.images[0]?.id ?? "");
-    setActiveModal("imageAlbum");
+    openModal("imageAlbum");
   };
 
   const handleDownloadSelectedAlbumImage = (): void => {
@@ -2836,7 +2915,7 @@ export default function LocalProductsPage() {
 
   const openSlotModal = (slot: ScheduleSlot): void => {
     setSelectedSlotId(slot.id);
-    setActiveModal("slotDetail");
+    openModal("slotDetail");
   };
 
   const openAssignedSlotModal = (
@@ -2845,7 +2924,7 @@ export default function LocalProductsPage() {
     taskIndex: number,
   ): void => {
     setSelectedSlotId(createScheduleAssignmentKey(date, slotIndex, taskIndex));
-    setActiveModal("slotDetail");
+    openModal("slotDetail");
   };
 
   const selectedAssignedSlot = useMemo(() => {
@@ -2942,7 +3021,7 @@ export default function LocalProductsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-5 gap-1">
+            <div className="grid grid-cols-6 gap-1">
               <button
                 type="button"
                 className="flex items-center justify-center gap-2 rounded-xl bg-cyan-300 px-2 py-1 text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
@@ -2955,7 +3034,16 @@ export default function LocalProductsPage() {
               <button
                 type="button"
                 className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
-                onClick={() => setActiveModal("schedule")}
+                onClick={() => openModal("productList")}
+              >
+                <FiDatabase />
+                List
+              </button>
+
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                onClick={() => openModal("schedule")}
               >
                 <FiCalendar />
                 Lịch
@@ -2964,7 +3052,7 @@ export default function LocalProductsPage() {
               <button
                 type="button"
                 className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
-                onClick={() => setActiveModal("global")}
+                onClick={() => openModal("global")}
               >
                 <FiFileText />
                 Nội dung
@@ -2973,7 +3061,7 @@ export default function LocalProductsPage() {
               <button
                 type="button"
                 className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
-                onClick={() => setActiveModal("importExport")}
+                onClick={() => openModal("importExport")}
               >
                 <FiArchive />
                 Data
@@ -3064,7 +3152,10 @@ export default function LocalProductsPage() {
                       ? "border-cyan-300/70 bg-cyan-300/10 ring-1 ring-cyan-300/30"
                       : "border-white/10 bg-slate-950/80"
                       }`}
-                    onClick={() => setSelectedProductId(product.id)}
+                    onClick={() => {
+                      setSelectedProductId(product.id);
+                      handleEdit(product);
+                    }}
                   >
                     <button
                       type="button"
@@ -3145,23 +3236,25 @@ export default function LocalProductsPage() {
                       </div>
 
 
-                      <button
-                        type="button"
-                        className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void handleCopyField(
-                            `desc-${product.id}`,
-                            "mô tả",
-                            descriptionPreview,
-                          );
-                        }}
-                      >
-                        {renderCopyIcon(`desc-${product.id}`)}
-                        Mô tả
-                      </button>
+
 
                       <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleCopyField(
+                              `desc-${product.id}`,
+                              "mô tả",
+                              descriptionPreview,
+                            );
+                          }}
+                        >
+                          {renderCopyIcon(`desc-${product.id}`)}
+                          Mô tả
+                        </button>
+
                         <button
                           type="button"
                           className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
@@ -3192,18 +3285,6 @@ export default function LocalProductsPage() {
                           <FiCheckCircle />
                           {productDone ? "DONE" : "Chưa bán"}
                         </button>
-                        <button
-                          type="button"
-                          className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleEdit(product);
-                          }}
-                        >
-                          <FiEdit3 />
-                          Sửa
-                        </button>
-
                         <button
                           type="button"
                           className="flex items-center justify-center gap-1 rounded-2xl bg-cyan-300 p-1.5 text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
@@ -3245,6 +3326,7 @@ export default function LocalProductsPage() {
               <div className="flex min-w-0 items-center gap-2">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-200">
                   {activeModal === "product" ? <FiPlus /> : null}
+                  {activeModal === "productList" ? <FiDatabase /> : null}
                   {activeModal === "schedule" ? <FiCalendar /> : null}
                   {activeModal === "global" ? <FiFileText /> : null}
                   {activeModal === "importExport" ? <FiArchive /> : null}
@@ -3259,6 +3341,7 @@ export default function LocalProductsPage() {
                         ? "Sửa sản phẩm"
                         : "Thêm sản phẩm"
                       : null}
+                    {activeModal === "productList" ? "Danh sách sản phẩm" : null}
                     {activeModal === "schedule" ? "Cấu hình lịch đăng" : null}
                     {activeModal === "global" ? "Global Content" : null}
                     {activeModal === "importExport"
@@ -3280,8 +3363,228 @@ export default function LocalProductsPage() {
             </div>
 
             <div
-              className={`h-[calc(90dvh-58px)] p-2 ${activeModal === "imageAlbum" ? "overflow-hidden" : "overflow-y-auto"}`}
+              className={`h-[calc(90dvh-58px)] p-2 ${activeModal === "imageAlbum" || activeModal === "productList" ? "overflow-hidden" : "overflow-y-auto"}`}
             >
+              {activeModal === "productList" ? (
+                <section className="flex h-full flex-col gap-2">
+                  <div className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-center">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-black text-white">
+                        Danh sách sản phẩm
+                      </h3>
+
+                      <p className="mt-1 text-[10px] leading-4 text-slate-400">
+                        Dạng danh sách tổng quan, nhóm theo danh mục, sắp xếp theo giá tăng dần. Bấm trực tiếp vào tên sản phẩm để sửa.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
+                        <p className="text-[9px] font-black uppercase tracking-wide text-slate-500">
+                          Tổng
+                        </p>
+                        <p className="mt-1 text-base font-black text-white">
+                          {filteredProducts.length}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-2">
+                        <p className="text-[9px] font-black uppercase tracking-wide text-emerald-200/80">
+                          Đã bán
+                        </p>
+                        <p className="mt-1 text-base font-black text-emerald-100">
+                          {soldProductCount}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-2">
+                        <p className="text-[9px] font-black uppercase tracking-wide text-cyan-200/80">
+                          Chưa bán
+                        </p>
+                        <p className="mt-1 text-base font-black text-cyan-100">
+                          {activeProductCount}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_220px]">
+                    <label className="flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1.5 text-slate-400">
+                      <FiSearch className="shrink-0" />
+
+                      <input
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        onKeyDown={(event) => event.stopPropagation()}
+                        className="w-full bg-transparent text-xs text-white outline-none placeholder:text-slate-600"
+                        placeholder="Tìm tên, giá hoặc danh mục"
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      className="flex items-center justify-center gap-2 rounded-xl bg-cyan-300 px-2 py-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                      onClick={openProductModalForCreate}
+                    >
+                      <FiPlus />
+                      Thêm sản phẩm
+                    </button>
+                  </div>
+
+                  <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-white/10 bg-slate-950">
+                    {groupedProductsByCategory.length > 0 ? (
+                      <div className="min-w-[860px]">
+                        <div className="sticky top-0 z-10 grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-white/10 bg-slate-900 text-[10px] font-black uppercase tracking-wide text-slate-400">
+                          <div className="border-r border-white/10 px-2 py-2">
+                            Danh mục
+                          </div>
+
+                          <div className="border-r border-white/10 px-2 py-2">
+                            Sản phẩm / Giá
+                          </div>
+
+                          <div className="border-r border-white/10 px-2 py-2">
+                            Trạng thái
+                          </div>
+
+                          <div className="border-r border-white/10 px-2 py-2">
+                            Ảnh
+                          </div>
+
+                          <div className="px-2 py-2">
+                            Cập nhật
+                          </div>
+                        </div>
+
+                        {groupedProductsByCategory.map((group) => {
+                          const groupSoldCount = group.products.filter((product) => product.isDone).length;
+                          const groupActiveCount = group.products.length - groupSoldCount;
+
+                          return (
+                            <div key={group.category}>
+                              <div className="grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-cyan-400/20 bg-cyan-400/10 text-xs font-black text-cyan-100">
+                                <div className="border-r border-cyan-400/20 px-2 py-2">
+                                  {group.category}
+                                </div>
+
+                                <div className="border-r border-cyan-400/20 px-2 py-2">
+                                  {group.products.length} sản phẩm
+                                </div>
+
+                                <div className="border-r border-cyan-400/20 px-2 py-2">
+                                  {groupSoldCount} bán / {groupActiveCount} còn
+                                </div>
+
+                                <div className="border-r border-cyan-400/20 px-2 py-2" />
+
+                                <div className="px-2 py-2" />
+                              </div>
+
+                              {group.products.map((product) => {
+                                const isSelected = selectedProductId === product.id;
+                                const statusLabel = product.isDone ? "Đã bán" : "Chưa bán";
+
+                                return (
+                                  <div
+                                    key={product.id}
+                                    className={`grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-white/10 text-xs transition ${isSelected
+                                      ? "bg-cyan-300/10 text-white"
+                                      : product.isDone
+                                        ? "bg-emerald-400/[0.04] text-slate-300 hover:bg-emerald-400/10"
+                                        : "bg-slate-950 text-slate-300 hover:bg-white/5"
+                                      }`}
+                                    onClick={() => setSelectedProductId(product.id)}
+                                  >
+                                    <div className="flex items-center border-r border-white/10 px-2 py-2 text-[11px] font-bold text-slate-500">
+                                      {group.category}
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      className="min-w-0 border-r border-white/10 px-2 py-2 text-left transition hover:bg-white/5"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        handleEdit(product);
+                                      }}
+                                    >
+                                      <div className="flex min-w-0 items-center gap-2">
+                                        {product.isDone ? (
+                                          <span className="shrink-0 rounded-lg bg-emerald-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950">
+                                            Đã bán
+                                          </span>
+                                        ) : null}
+
+                                        <p className="line-clamp-1 text-sm font-black leading-5 text-white xl:text-base xl:leading-6">
+                                          {product.name}
+                                        </p>
+                                      </div>
+
+                                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                                        <span className="rounded-xl bg-cyan-300 px-2 py-1 text-xs font-black text-slate-950">
+                                          {product.priceText || "Chưa có giá"}
+                                        </span>
+
+                                        <span className="text-[10px] font-bold text-slate-500">
+                                          Bấm vào tên để sửa
+                                        </span>
+                                      </div>
+                                    </button>
+
+                                    <div className="flex items-center border-r border-white/10 px-2 py-2">
+                                      <button
+                                        type="button"
+                                        className={`w-full rounded-xl px-2 py-1.5 text-[10px] font-black transition active:scale-[0.98] ${product.isDone
+                                          ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                                          : "border border-slate-500/40 bg-white/5 text-slate-300 hover:bg-white/10"
+                                          }`}
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          void toggleProductDone(product.id);
+                                        }}
+                                      >
+                                        {statusLabel}
+                                      </button>
+                                    </div>
+
+                                    <div className="flex items-center border-r border-white/10 px-2 py-2 text-sm font-black text-slate-300">
+                                      {product.images.length}
+                                    </div>
+
+                                    <div className="flex flex-col justify-center px-2 py-2 text-[10px] text-slate-500">
+                                      <span>
+                                        {new Date(product.updatedAt).toLocaleDateString("vi-VN")}
+                                      </span>
+
+                                      {product.doneAt ? (
+                                        <span className="mt-0.5 text-emerald-200/80">
+                                          Bán: {new Date(product.doneAt).toLocaleDateString("vi-VN")}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex h-full min-h-[260px] items-center justify-center p-4 text-center">
+                        <div>
+                          <p className="text-sm font-black text-white">
+                            Chưa có sản phẩm
+                          </p>
+
+                          <p className="mt-1 text-xs text-slate-500">
+                            Thêm sản phẩm hoặc đổi từ khóa tìm kiếm để xem danh sách.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              ) : null}
+
               {activeModal === "product" ? (
                 <form
                   className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
