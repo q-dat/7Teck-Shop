@@ -110,12 +110,7 @@ const SERVICE_POLICIES: ServicePolicy[] = [
   },
 ];
 
-export default function ClientProductDetailPage({
-  product,
-  fieldMap,
-  namePrefix,
-  relatedProducts = [],
-}: ClientProductDetailPageProps) {
+export default function ClientProductDetailPage({ product, fieldMap, namePrefix, relatedProducts = [] }: ClientProductDetailPageProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isAlbumOpen, setIsAlbumOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -183,18 +178,21 @@ export default function ClientProductDetailPage({
     return relatedProducts.filter((item) => item._id !== product._id).slice(0, 6);
   }, [product._id, relatedProducts]);
 
-  const handleScrollTo = useCallback((targetId: string) => (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
-    event.preventDefault();
+  const handleScrollTo = useCallback(
+    (targetId: string) => (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
+      event.preventDefault();
 
-    const target = document.getElementById(targetId);
+      const target = document.getElementById(targetId);
 
-    if (!target) return;
+      if (!target) return;
 
-    const offset = window.innerWidth >= 1280 ? 88 : 68;
-    const y = target.getBoundingClientRect().top + window.scrollY - offset;
+      const offset = window.innerWidth >= 1280 ? 88 : 68;
+      const y = target.getBoundingClientRect().top + window.scrollY - offset;
 
-    window.scrollTo({ top: y, behavior: 'smooth' });
-  }, []);
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    },
+    []
+  );
 
   const handleBuyNow = useCallback(() => {
     if (isExcluded) return;
@@ -343,8 +341,9 @@ function ProductHeader({ productTitle, status, isExcluded }: { productTitle: str
 
         {status && (
           <div
-            className={`flex w-fit shrink-0 items-center gap-2 rounded-md border px-2 py-2 shadow-sm ${isExcluded ? 'border-slate-200 bg-slate-100 text-slate-500' : statusStyle.className
-              }`}
+            className={`flex w-fit shrink-0 items-center gap-2 rounded-md border px-2 py-2 shadow-sm ${
+              isExcluded ? 'border-slate-200 bg-slate-100 text-slate-500' : statusStyle.className
+            }`}
           >
             <MdVerified size={18} />
             <div>
@@ -428,8 +427,9 @@ function ProductGallery({
                       type="button"
                       key={`${image}-${index}`}
                       onClick={() => setSelectedImageIndex(index)}
-                      className={`group relative flex h-[62px] w-[62px] shrink-0 items-center justify-center overflow-hidden rounded-md border bg-white transition-all xl:h-20 xl:w-20 ${isActive ? 'border-secondary ring-2 ring-secondary/25' : 'border-slate-200 hover:border-secondary/60'
-                        }`}
+                      className={`group relative flex h-[62px] w-[62px] shrink-0 items-center justify-center overflow-hidden rounded-md border bg-white transition-all xl:h-20 xl:w-20 ${
+                        isActive ? 'border-secondary ring-2 ring-secondary/25' : 'border-slate-200 hover:border-secondary/60'
+                      }`}
                     >
                       <Image
                         width={96}
@@ -652,8 +652,8 @@ function ProductAlbumModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <div className="flex h-full flex-col  gap-2 py-[60px] xl:py-0">
-            <header className="border-b border-white/10 bg-black/40 p-2  backdrop-blur-xl ">
+          <div className="flex h-full flex-col gap-2 py-[60px] xl:py-0">
+            <header className="border-b border-white/10 bg-black/40 p-2 backdrop-blur-xl">
               <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold uppercase tracking-wide text-secondary">Album Sản Phẩm</p>
@@ -720,7 +720,7 @@ function ProductAlbumModal({
                   <button
                     type="button"
                     onClick={goPrev}
-                    className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-md border border-white/10 bg-white text-primary hover:text-white backdrop-blur transition-colors hover:bg-primary xl:left-4"
+                    className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-md border border-white/10 bg-white text-primary backdrop-blur transition-colors hover:bg-primary hover:text-white xl:left-4"
                   >
                     <MdKeyboardArrowLeft size={30} />
                   </button>
@@ -728,7 +728,7 @@ function ProductAlbumModal({
                   <button
                     type="button"
                     onClick={goNext}
-                    className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-md border border-white/10 bg-white text-primary hover:text-white backdrop-blur transition-colors hover:bg-primary xl:right-4"
+                    className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-md border border-white/10 bg-white text-primary backdrop-blur transition-colors hover:bg-primary hover:text-white xl:right-4"
                   >
                     <MdKeyboardArrowRight size={30} />
                   </button>
@@ -747,15 +747,16 @@ function ProductAlbumModal({
                         type="button"
                         key={`${image}-${index}`}
                         onClick={() => setSelectedImageIndex(index)}
-                        className={`flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-transparent transition-colors xl:h-20 xl:w-20 ${isActive ? 'border-2 border-white border-dashed ' : 'border-white/10 opacity-30 hover:opacity-100'
-                          }`}
+                        className={`flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-transparent transition-colors xl:h-20 xl:w-20 ${
+                          isActive ? 'border-2 border-dashed border-white' : 'border-white/10 opacity-30 hover:opacity-100'
+                        }`}
                       >
                         <Image
                           src={image || fallbackSrc}
                           alt={`${productTitle} album ${index + 1}`}
                           width={96}
                           height={96}
-                          className="max-h-full max-w-full object-cover rounded-md p-1"
+                          className="max-h-full max-w-full rounded-md object-cover p-1"
                         />
                       </button>
                     );
@@ -786,7 +787,7 @@ function ProductBuyBox({
   handleScrollTo: (targetId: string) => (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void;
 }) {
   return (
-    <aside className="xl:sticky xl:top-[130px] xl:self-start ">
+    <aside className="xl:sticky xl:top-[130px] xl:self-start">
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 bg-white p-2">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Giá bán tại 7Teck</p>
@@ -832,9 +833,13 @@ function ProductBuyBox({
 
             {product?.des ? (
               <div className="mt-1">
-                <p className="whitespace-pre-line text-xs leading-relaxed text-slate-700 line-clamp-6">{product?.des.trim()}</p>
+                <p className="line-clamp-6 whitespace-pre-line text-xs leading-relaxed text-slate-700">{product?.des.trim()}</p>
 
-                <Link href="#noi-dung-san-pham" onClick={handleScrollTo('noi-dung-san-pham')} className="mt-1 inline-block text-xs font-bold text-secondary hover:underline">
+                <Link
+                  href="#noi-dung-san-pham"
+                  onClick={handleScrollTo('noi-dung-san-pham')}
+                  className="mt-1 inline-block text-xs font-bold text-secondary hover:underline"
+                >
                   Xem nội dung chi tiết
                 </Link>
               </div>
@@ -848,8 +853,9 @@ function ProductBuyBox({
               type="button"
               disabled={isExcluded}
               onClick={handleBuyNow}
-              className={`h-11 rounded-md text-sm font-bold uppercase tracking-wide transition-colors ${isExcluded ? 'cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-primary text-white hover:bg-primary/90'
-                }`}
+              className={`h-11 rounded-md text-sm font-bold uppercase tracking-wide transition-colors ${
+                isExcluded ? 'cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-primary text-white hover:bg-primary/90'
+              }`}
             >
               {isExcluded ? 'Tạm hết hàng' : 'Mua ngay'}
             </button>
@@ -907,7 +913,9 @@ function ProductBuyBox({
 
                 <div className="mt-1">
                   <p className="line-clamp-1 text-xs font-bold text-slate-700 group-hover:text-secondary">{item.color || item.ram || item.name}</p>
-                  <p className="mt-0.5 text-sm xl:text-2xl font-semibold leading-5 text-price">{item.price === 0 ? 'Liên hệ' : formatCurrency(item.price)}</p>
+                  <p className="mt-0.5 text-sm font-semibold leading-5 text-price xl:text-2xl">
+                    {item.price === 0 ? 'Liên hệ' : formatCurrency(item.price)}
+                  </p>
                 </div>
               </Link>
             ))}
@@ -923,8 +931,9 @@ function ProductStatusBadge({ status, isExcluded }: { status: string; isExcluded
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-black uppercase tracking-wide ${isExcluded ? 'border-slate-200 bg-slate-100 text-slate-500' : statusStyle.className
-        }`}
+      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-black uppercase tracking-wide ${
+        isExcluded ? 'border-slate-200 bg-slate-100 text-slate-500' : statusStyle.className
+      }`}
     >
       <MdVerified size={15} />
       {isExcluded ? status : statusStyle.label}
@@ -939,9 +948,7 @@ function SpecHighlight({ label, value }: { label: string; value: CatalogFieldVal
     <div className="rounded-md border border-slate-200 bg-white p-2 transition-colors hover:border-secondary/30 hover:bg-primary-white">
       <p className="line-clamp-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">{label}</p>
 
-      <p className="mt-0.5 line-clamp-2 text-xs font-bold leading-5 text-black">
-        {renderCatalogValue(value)}
-      </p>
+      <p className="mt-0.5 line-clamp-2 text-xs font-bold leading-5 text-black">{renderCatalogValue(value)}</p>
     </div>
   );
 }
@@ -976,7 +983,7 @@ function ProductDescriptionSection({ des }: { des?: string }) {
 
       {des?.trim() ? (
         <div className="mt-3 rounded-md bg-[#f5f5f7] p-2">
-          <p className="whitespace-pre-line text-sm font-sem leading-relaxed  text-slate-700">{des}</p>
+          <p className="font-sem whitespace-pre-line text-sm leading-relaxed text-slate-700">{des}</p>
         </div>
       ) : (
         <EmptyState title="Chưa có mô tả sản phẩm" desc="Nội dung mô tả cho sản phẩm này đang được cập nhật." />
@@ -992,7 +999,7 @@ function ProductArticleSection({ catalogContent }: { catalogContent?: string }) 
 
       {catalogContent?.trim() ? (
         <article
-          className="prose prose-slate mt-3 max-w-none prose-headings:font-bold prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2 prose-p:text-[15px] prose-p:leading-8 prose-p:text-slate-700 prose-li:text-[15px] prose-li:leading-8 prose-img:rounded-md prose-img:border prose-img:border-slate-200 prose-table:overflow-hidden prose-th:bg-[#f5f5f7] prose-th:p-2 prose-td:p-2"
+          className="prose-slate prose-headings:font-bold prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2 prose-p:text-[15px] prose-p:leading-8 prose-p:text-slate-700 prose-li:text-[15px] prose-li:leading-8 prose-img:rounded-md prose-img:border prose-img:border-slate-200 prose-table:overflow-hidden prose-th:bg-[#f5f5f7] prose-th:p-2 prose-td:p-2 prose mt-3 max-w-none"
           dangerouslySetInnerHTML={{ __html: catalogContent }}
         />
       ) : (
@@ -1076,8 +1083,9 @@ function MobileBottomCTA({ isExcluded, handleBuyNow }: { isExcluded: boolean; ha
           type="button"
           disabled={isExcluded}
           onClick={handleBuyNow}
-          className={`h-11 rounded-md text-sm font-bold uppercase ${isExcluded ? 'cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-secondary text-white'
-            }`}
+          className={`h-11 rounded-md text-sm font-bold uppercase ${
+            isExcluded ? 'cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-secondary text-white'
+          }`}
         >
           {isExcluded ? 'Tạm hết hàng' : 'Mua ngay'}
         </button>

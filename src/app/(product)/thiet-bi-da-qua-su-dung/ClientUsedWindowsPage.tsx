@@ -17,9 +17,7 @@
 // }
 
 'use client';
-import ClientUsedProductCatalogPage, {
-  UsedProduct,
-} from '@/components/userPage/page/(danh-muc-da-qua-su-dung)/ClientUsedProductCatalogPage';
+import ClientUsedProductCatalogPage, { UsedProduct } from '@/components/userPage/page/(danh-muc-da-qua-su-dung)/ClientUsedProductCatalogPage';
 import { IWindows } from '@/types/type/products/windows/windows';
 
 export default function ClientUsedWindowsPage({ windows }: { windows: IWindows[] }) {

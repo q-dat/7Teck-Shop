@@ -17,9 +17,7 @@
 // }
 
 'use client';
-import ClientUsedProductCatalogPage, {
-  UsedProduct,
-} from '@/components/userPage/page/(danh-muc-da-qua-su-dung)/ClientUsedProductCatalogPage';
+import ClientUsedProductCatalogPage, { UsedProduct } from '@/components/userPage/page/(danh-muc-da-qua-su-dung)/ClientUsedProductCatalogPage';
 import { IPhone } from '@/types/type/products/phone/phone';
 
 export default function ClientUsedPhonePage({ phones }: { phones: IPhone[] }) {

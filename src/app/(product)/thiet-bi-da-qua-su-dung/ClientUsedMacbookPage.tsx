@@ -17,9 +17,7 @@
 // }
 
 'use client';
-import ClientUsedProductCatalogPage, {
-  UsedProduct,
-} from '@/components/userPage/page/(danh-muc-da-qua-su-dung)/ClientUsedProductCatalogPage';
+import ClientUsedProductCatalogPage, { UsedProduct } from '@/components/userPage/page/(danh-muc-da-qua-su-dung)/ClientUsedProductCatalogPage';
 import { IMacbook } from '@/types/type/products/macbook/macbook';
 
 export default function ClientUsedMacbookPage({ macbooks }: { macbooks: IMacbook[] }) {

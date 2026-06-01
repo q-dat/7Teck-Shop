@@ -63,12 +63,7 @@ export default function ClientUsedProductCatalogPage({ data, title }: ClientUsed
 
   return (
     <div className="my-5 rounded-md bg-white p-2">
-      {title && (
-        <h1 className="bg-white/50 text-start text-xl font-bold uppercase text-primary backdrop-blur-md md:text-xl py-2">
-          {title}
-        </h1>
-
-      )}
+      {title && <h1 className="bg-white/50 py-2 text-start text-xl font-bold uppercase text-primary backdrop-blur-md md:text-xl">{title}</h1>}
       <p className="flex w-full flex-col items-start gap-1 rounded-md bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-2 text-xs text-gray-700 xl:flex-row xl:gap-3">
         <span className="font-medium">Hàng chuẩn, giá mềm - An tâm mua sắm.</span>
         <Link href={hotlineUrl}>

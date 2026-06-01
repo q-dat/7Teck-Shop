@@ -32,8 +32,9 @@ const CategoryMenuComponent = ({ categories, isOpen, toggleMenu, selectedCategor
   return (
     <div
       onClick={toggleMenu}
-      className={`fixed left-0 top-1/3 z-[999] mx-1 w-auto overflow-hidden rounded-r-[50%] border-2 border-b-0 border-l-0 border-t-0 border-primary bg-gradient-to-r from-transparent to-white py-[25px] text-primary transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'ml-4 -translate-x-full'
-        }`}
+      className={`fixed left-0 top-1/3 z-[999] mx-1 w-auto overflow-hidden rounded-r-[50%] border-2 border-b-0 border-l-0 border-t-0 border-primary bg-gradient-to-r from-transparent to-white py-[25px] text-primary transition-transform duration-300 ${
+        isOpen ? 'translate-x-0' : 'ml-4 -translate-x-full'
+      }`}
     >
       <div className="flex h-full cursor-pointer flex-row items-center justify-center gap-1">
         <nav className="flex w-full flex-col items-start justify-center gap-2">
@@ -41,8 +42,9 @@ const CategoryMenuComponent = ({ categories, isOpen, toggleMenu, selectedCategor
             <button
               key={id}
               type="button"
-              className={`w-full rounded-sm border border-primary bg-primary px-1 py-2 text-start text-sm hover:scale-105 hover:outline hover:outline-offset-1 hover:outline-primary ${selectedCategory === id ? 'bg-white text-primary' : 'text-white'
-                }`}
+              className={`w-full rounded-sm border border-primary bg-primary px-1 py-2 text-start text-sm hover:scale-105 hover:outline hover:outline-offset-1 hover:outline-primary ${
+                selectedCategory === id ? 'bg-white text-primary' : 'text-white'
+              }`}
               onClick={(event) => {
                 event.stopPropagation();
                 scrollToSection(id);
@@ -75,18 +77,16 @@ interface CategorySectionProps {
 const CategorySectionComponent = ({ isOpen, shouldMergeLaptop, phones, tablets, macbooks, windows }: CategorySectionProps) => {
   return (
     <div className={`px-2 transition-all duration-300 xl:px-desktop-padding ${isOpen ? 'ml-20 xl:ml-5' : 'ml-0'}`}>
-      {
-        phones.length > 0 &&
+      {phones.length > 0 && (
         <div id="used-phone">
           <ClientUsedPhonePage phones={phones} />
         </div>
-      }
-      {
-        tablets.length > 0 &&
+      )}
+      {tablets.length > 0 && (
         <div id="used-tablet">
           <ClientUsedTabletPage tablets={tablets} />
         </div>
-      }
+      )}
 
       {shouldMergeLaptop ? (
         <div id="used-laptop">

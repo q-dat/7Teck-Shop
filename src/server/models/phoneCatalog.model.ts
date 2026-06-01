@@ -39,11 +39,10 @@ const PhoneCatalogSchema = new Schema<IPhoneCatalogDocument>(
   {
     timestamps: true,
     collection: 'phonecatalogs',
-  },
+  }
 );
 
 const PhoneCatalogModel =
-  (mongoose.models.PhoneCatalog as Model<IPhoneCatalogDocument>) ||
-  mongoose.model<IPhoneCatalogDocument>('PhoneCatalog', PhoneCatalogSchema);
+  (mongoose.models.PhoneCatalog as Model<IPhoneCatalogDocument>) || mongoose.model<IPhoneCatalogDocument>('PhoneCatalog', PhoneCatalogSchema);
 
 export default PhoneCatalogModel;

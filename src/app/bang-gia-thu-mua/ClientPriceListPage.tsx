@@ -132,32 +132,34 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
 
               return (
                 <section key={categoryType}>
-                  <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-200 pb-6">
-                  {/* Category Title */}
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-2xl text-white shadow-xl">
-                      {getIcon(categoryType)}
+                  <div className="mb-8 flex flex-col justify-between gap-6 border-b border-slate-200 pb-6 md:flex-row md:items-end">
+                    {/* Category Title */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-2xl text-white shadow-xl">
+                        {getIcon(categoryType)}
+                      </div>
+                      <div>
+                        <h2 className="text-3xl font-black uppercase tracking-tighter">{label}</h2>
+                        <p className="mt-1 text-xs font-bold uppercase tracking-widest text-slate-400">Chọn dòng máy bạn đang sở hữu</p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-3xl font-black uppercase tracking-tighter">{label}</h2>
-                      <p className="mt-1 text-xs font-bold uppercase tracking-widest text-slate-400">Chọn dòng máy bạn đang sở hữu</p>
-                    </div>
-                  </div>
 
-                  {/* TABS - Custom Pill Design */}
-                  <div className="flex flex-wrap gap-2">
-                    {tabs.map((catalog) => (
-                      <button
-                        key={catalog}
-                        onClick={() => setActiveTabs({ ...activeTabs, [categoryType]: catalog })}
-                        className={`rounded-full px-6 py-2 text-[11px] font-bold uppercase tracking-widest transition-all ${
-                          active === catalog ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                        }`}
-                      >
-                        {catalog}
-                      </button>
-                    ))}
-                  </div>
+                    {/* TABS - Custom Pill Design */}
+                    <div className="flex flex-wrap gap-2">
+                      {tabs.map((catalog) => (
+                        <button
+                          key={catalog}
+                          onClick={() => setActiveTabs({ ...activeTabs, [categoryType]: catalog })}
+                          className={`rounded-full px-6 py-2 text-[11px] font-bold uppercase tracking-widest transition-all ${
+                            active === catalog
+                              ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                          }`}
+                        >
+                          {catalog}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* PRICE TABLE - Commercial Style */}

@@ -127,7 +127,7 @@ export async function loadCache() {
         allItems.push({
           _id: String(item._id),
           name: rawName,
-          
+
           image,
           color: typeof color === 'string' ? color : undefined,
           price: typeof price === 'number' ? price : undefined,

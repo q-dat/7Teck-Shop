@@ -26,11 +26,11 @@ const specsToShow: ReadonlyArray<{
   key: SpecKey;
   icon: IconType;
 }> = [
-    { key: 'ram', icon: MdMemory },
-    { key: 'cpu', icon: FaMicrochip },
-    { key: 'lcd', icon: MdMonitor },
-    { key: 'gpu', icon: FaDesktop },
-  ];
+  { key: 'ram', icon: MdMemory },
+  { key: 'cpu', icon: FaMicrochip },
+  { key: 'lcd', icon: MdMonitor },
+  { key: 'gpu', icon: FaDesktop },
+];
 
 const EXCLUDED_STATUSES = ['hết hàng', 'ngừng kinh doanh', 'ngưng bán'];
 
@@ -113,9 +113,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                                 return (
                                   <div key={key} className="flex items-center">
                                     <Icon size={16} className="text-gray-600" />
-                                    <span className="text-xs font-light">
-                                      {typeof value === 'string' || typeof value === 'number' ? value : ''}
-                                    </span>
+                                    <span className="text-xs font-light">{typeof value === 'string' || typeof value === 'number' ? value : ''}</span>
                                   </div>
                                 );
                               })}
@@ -159,10 +157,9 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                         <Button
                           disabled={isExcluded}
                           size="xs"
-                          className={`mt-1 w-full rounded-md border border-primary/20 ${isExcluded
-                              ? 'cursor-not-allowed'
-                              : 'bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20'
-                            }`}
+                          className={`mt-1 w-full rounded-md border border-primary/20 ${
+                            isExcluded ? 'cursor-not-allowed' : 'bg-primary bg-opacity-10 text-primary hover:bg-primary hover:bg-opacity-20'
+                          }`}
                           onClick={() => {
                             if (isExcluded) {
                               return;

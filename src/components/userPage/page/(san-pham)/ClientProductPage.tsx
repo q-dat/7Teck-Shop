@@ -177,8 +177,8 @@ export default function ClientProductPage({ products, title, basePath, brands = 
           </ul>
         </div>
 
-   {/* Filter Btn & Brands */}
-   <div className="my-3 px-2 xl:px-desktop-padding">
+        {/* Filter Btn & Brands */}
+        <div className="my-3 px-2 xl:px-desktop-padding">
           <div className="flex flex-wrap items-center gap-2">
             {/* Sort & Filter Component (PhoneFilterBar) */}
             {filterNode}
@@ -217,12 +217,8 @@ export default function ClientProductPage({ products, title, basePath, brands = 
 
             {/* Title & Slogan (Đẩy sát về lề phải trên Desktop) */}
             <div className="ml-auto hidden items-center gap-2 md:flex">
-              <span className="rounded-[4px] bg-primary/5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
-                7teck.vn
-              </span>
-              <span className="text-[11px] font-medium italic text-black/40">
-                Chất lượng bạn tin - Giá trị bạn giữ.
-              </span>
+              <span className="rounded-[4px] bg-primary/5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">7teck.vn</span>
+              <span className="text-[11px] font-medium italic text-black/40">Chất lượng bạn tin - Giá trị bạn giữ.</span>
             </div>
           </div>
         </div>

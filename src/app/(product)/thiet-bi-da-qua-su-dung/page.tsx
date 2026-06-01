@@ -26,12 +26,7 @@ import { getAllUsedWindows } from '@/services/products/windowsService';
 import ClientUsedProductsPage from './ClientUsedProductsPage';
 
 export default async function UsedPage() {
-  const [phones, tablets, macbooks, windows] = await Promise.all([
-    getAllUsedPhones(),
-    getAllUsedTablets(),
-    getAllUsedMacbook(),
-    getAllUsedWindows(),
-  ]);
+  const [phones, tablets, macbooks, windows] = await Promise.all([getAllUsedPhones(), getAllUsedTablets(), getAllUsedMacbook(), getAllUsedWindows()]);
 
   return <ClientUsedProductsPage phones={phones} tablets={tablets} macbooks={macbooks} windows={windows} />;
 }

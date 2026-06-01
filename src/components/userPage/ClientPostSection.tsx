@@ -82,7 +82,7 @@ export default function ClientPostSection({ news, tricks }: ClientPostSectionPro
 
       <div className="relative z-10 py-10">
         {/* MAIN HEADER */}
-        <header className="flex flex-col items-center px-2 text-cen">
+        <header className="text-cen flex flex-col items-center px-2">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}

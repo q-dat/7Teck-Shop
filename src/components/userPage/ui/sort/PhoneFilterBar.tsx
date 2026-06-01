@@ -70,9 +70,7 @@ export default function PhoneFilterBar({
         <button
           onClick={() => setOpen((prev) => !prev)}
           className={`flex h-8 items-center gap-1.5 rounded-[4px] border px-3 text-[11px] font-semibold tracking-wide shadow-sm transition-all ${
-            open
-              ? 'border-primary bg-primary/5 text-primary'
-              : 'border-black/10 bg-white text-black/70 hover:border-primary/40 hover:text-primary'
+            open ? 'border-primary bg-primary/5 text-primary' : 'border-black/10 bg-white text-black/70 hover:border-primary/40 hover:text-primary'
           }`}
         >
           <FaFilter size={12} />
@@ -184,7 +182,7 @@ export default function PhoneFilterBar({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 pt-2 border-t border-black/5">
+              <div className="flex items-center gap-2 border-t border-black/5 pt-2">
                 <button
                   onClick={handleReset}
                   title="Đặt lại"

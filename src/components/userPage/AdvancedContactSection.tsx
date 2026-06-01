@@ -1,17 +1,6 @@
 'use client';
 
-import {
-  fanpageUrl,
-  messengerUrl,
-  zaloUrl,
-  hotlineUrl,
-  mailUrl,
-  mail,
-  address,
-  contact,
-  ggMapEmbedUrl,
-  instagramUrl,
-} from '@/utils/socialLinks';
+import { fanpageUrl, messengerUrl, zaloUrl, hotlineUrl, mailUrl, mail, address, contact, ggMapEmbedUrl, instagramUrl } from '@/utils/socialLinks';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
@@ -49,8 +38,7 @@ const contactChannels: ContactChannel[] = [
     title: 'Facebook',
     desc: 'Tư vấn qua Messenger',
     url: messengerUrl,
-    className:
-      'border-secondary/20 bg-secondary-lighter text-secondary hover:border-secondary/40 hover:bg-secondary-lighter/80',
+    className: 'border-secondary/20 bg-secondary-lighter text-secondary hover:border-secondary/40 hover:bg-secondary-lighter/80',
     icon: <FaFacebookMessenger size={18} />,
   },
   {
@@ -58,8 +46,7 @@ const contactChannels: ContactChannel[] = [
     title: 'Zalo',
     desc: 'Chat nhanh với 7Teck',
     url: zaloUrl,
-    className:
-      'border-secondary/20 bg-secondary-lighter text-secondary hover:border-secondary/40 hover:bg-secondary-lighter/80',
+    className: 'border-secondary/20 bg-secondary-lighter text-secondary hover:border-secondary/40 hover:bg-secondary-lighter/80',
     icon: <span className="text-sm font-black leading-none">Zalo</span>,
   },
   {
@@ -67,8 +54,7 @@ const contactChannels: ContactChannel[] = [
     title: 'Fanpage',
     desc: 'Theo dõi sản phẩm mới',
     url: fanpageUrl,
-    className:
-      'border-info/20 bg-info/5 text-info hover:border-info/40 hover:bg-info/10',
+    className: 'border-info/20 bg-info/5 text-info hover:border-info/40 hover:bg-info/10',
     icon: <FaFacebook size={18} />,
   },
   {
@@ -76,8 +62,7 @@ const contactChannels: ContactChannel[] = [
     title: 'Instagram',
     desc: 'Hình ảnh và cập nhật',
     url: instagramUrl,
-    className:
-      'border-primary/20 bg-primary-lighter text-primary hover:border-primary/40 hover:bg-primary-lighter/80',
+    className: 'border-primary/20 bg-primary-lighter text-primary hover:border-primary/40 hover:bg-primary-lighter/80',
     icon: <FaInstagram size={18} />,
   },
 ];
@@ -138,9 +123,7 @@ export default function AdvancedContactSection() {
                   <span className="text-[10px] font-bold uppercase tracking-wide text-white/75">Hỗ trợ</span>
                 </div>
 
-                <h2 className="mt-3 text-2xl font-black leading-tight tracking-tight xl:text-4xl">
-                  Cần tư vấn thêm trước khi mua?
-                </h2>
+                <h2 className="mt-3 text-2xl font-black leading-tight tracking-tight xl:text-4xl">Cần tư vấn thêm trước khi mua?</h2>
 
                 <p className="mt-2 text-sm leading-6 text-white/70">
                   7Teck hỗ trợ kiểm tra thông tin sản phẩm, tình trạng máy, cấu hình phù hợp và hình thức nhận hàng.
@@ -150,7 +133,10 @@ export default function AdvancedContactSection() {
               <div className="rounded-lg border border-white/10 bg-white/10 p-2 shadow-2xl shadow-default/20 backdrop-blur">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-white/50">Hotline tư vấn</p>
 
-                <Link href={hotlineUrl} className="mt-1 block text-3xl font-black tracking-tight text-white transition-colors hover:text-primary-lighter">
+                <Link
+                  href={hotlineUrl}
+                  className="mt-1 block text-3xl font-black tracking-tight text-white transition-colors hover:text-primary-lighter"
+                >
                   {contact}
                 </Link>
 
@@ -192,7 +178,10 @@ export default function AdvancedContactSection() {
             </div>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="grid min-w-0 grid-cols-1 gap-2 bg-primary-white p-2 xl:grid-cols-[minmax(0,7fr)_minmax(320px,5fr)] xl:p-2">
+          <motion.div
+            variants={itemVariants}
+            className="grid min-w-0 grid-cols-1 gap-2 bg-primary-white p-2 xl:grid-cols-[minmax(0,7fr)_minmax(320px,5fr)] xl:p-2"
+          >
             <div className="relative min-h-[340px] overflow-hidden rounded-lg border border-btn-section-border bg-white shadow-sm xl:min-h-[500px]">
               <iframe
                 src={ggMapEmbedUrl}

@@ -17,9 +17,7 @@
 // }
 
 'use client';
-import ClientUsedProductCatalogPage, {
-  UsedProduct,
-} from '@/components/userPage/page/(danh-muc-da-qua-su-dung)/ClientUsedProductCatalogPage';
+import ClientUsedProductCatalogPage, { UsedProduct } from '@/components/userPage/page/(danh-muc-da-qua-su-dung)/ClientUsedProductCatalogPage';
 import { ITablet } from '@/types/type/products/tablet/tablet';
 
 export default function ClientUsedTabletPage({ tablets }: { tablets: ITablet[] }) {
