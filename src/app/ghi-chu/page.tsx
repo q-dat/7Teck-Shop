@@ -3094,7 +3094,10 @@ export default function LocalProductsPage() {
             <label className="flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1.5 text-slate-400">
               <FiSearch className="shrink-0" />
               <input
+                autoFocus
+                type="text"
                 value={query}
+                onFocus={(event) => event.currentTarget.select()}
                 onChange={(event) => setQuery(event.target.value)}
                 onKeyDown={(event) => event.stopPropagation()}
                 className="w-full bg-transparent text-xs text-white outline-none placeholder:text-slate-600"
@@ -3413,6 +3416,7 @@ export default function LocalProductsPage() {
                       <FiSearch className="shrink-0" />
 
                       <input
+                        autoFocus
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         onKeyDown={(event) => event.stopPropagation()}
