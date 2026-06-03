@@ -1,5 +1,4 @@
 'use client';
-import Zoom from '@/lib/Zoom';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ClipboardEvent, type DragEvent, type FormEvent } from 'react';
 import {
   FiArchive,
@@ -174,6 +173,18 @@ const defaultScheduleConfig: ScheduleConfig = {
   taskCount: 1,
   taskNames: ['Task 1'],
   selectedCategories: [],
+};
+
+
+
+const iconClassName = 'h-4 w-4 shrink-0';
+
+const isTypingTarget = (target: EventTarget | null): boolean => {
+  if (!(target instanceof HTMLElement)) return false;
+
+  const tagName = target.tagName.toLowerCase();
+
+  return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || target.isContentEditable;
 };
 
 const Toastify = (message: string | Record<string, string>, statusCode: number): void => {
@@ -497,12 +508,12 @@ const loadScheduleConfig = (): ScheduleConfig => {
     const record = parsed as Record<string, unknown>;
     const selectedCategories = Array.isArray(record.selectedCategories)
       ? Array.from(
-          new Map(
-            record.selectedCategories
-              .filter((item): item is string => typeof item === 'string')
-              .map((item) => [normalizeTextKey(item), normalizeCategoryName(item)])
-          ).values()
-        ).filter(Boolean)
+        new Map(
+          record.selectedCategories
+            .filter((item): item is string => typeof item === 'string')
+            .map((item) => [normalizeTextKey(item), normalizeCategoryName(item)])
+        ).values()
+      ).filter(Boolean)
       : [];
     const taskNames = Array.isArray(record.taskNames) ? record.taskNames.filter((item): item is string => typeof item === 'string') : [];
 
@@ -756,7 +767,7 @@ const convertDataUrlToJpeg = async (dataUrl: string): Promise<string> => {
   }
 
   return new Promise((resolve, reject) => {
-    const image = new Image();
+    const image = document.createElement('img');
 
     image.onload = () => {
       const canvas = document.createElement('canvas');
@@ -1113,6 +1124,7 @@ const buildRandomSchedule = (products: LocalProduct[], config: ScheduleConfig, c
 
 export default function LocalProductsPage() {
   const fileImportRef = useRef<HTMLInputElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [products, setProducts] = useState<LocalProduct[]>([]);
   const [draft, setDraft] = useState<ProductDraft>(emptyDraft);
   const [settings, setSettings] = useState<GlobalSettings>(defaultSettings);
@@ -1438,6 +1450,13 @@ export default function LocalProductsPage() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.code === 'Space' && !activeModal && !pendingDownload && !pendingConfirm && !isTypingTarget(event.target)) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+        return;
+      }
+
       if (event.key !== 'Escape') return;
 
       if (pendingDownload) {
@@ -1511,7 +1530,7 @@ export default function LocalProductsPage() {
 
     Object.entries(scheduleAssignments).forEach(([key, value]) => {
       if (activeScheduleProductIds.has(value)) {
-        nextAssignments[key] = value;
+        nextAssignments[key] = value as string;
         return;
       }
 
@@ -2235,7 +2254,7 @@ export default function LocalProductsPage() {
 
     Object.entries(scheduleAssignments).forEach(([key, value]) => {
       if (!key.startsWith(targetPrefix)) {
-        nextAssignments[key] = value;
+        nextAssignments[key] = value as string;
       }
     });
 
@@ -2433,12 +2452,12 @@ export default function LocalProductsPage() {
       const nextRecords = exists
         ? current.filter((record) => record.slotId !== postedKey)
         : [
-            ...current,
-            {
-              slotId: postedKey,
-              postedAt: new Date().toISOString(),
-            },
-          ];
+          ...current,
+          {
+            slotId: postedKey,
+            postedAt: new Date().toISOString(),
+          },
+        ];
 
       savePostedRecords(nextRecords);
       Toastify(exists ? 'Đã chuyển về chưa đăng' : 'Đã đánh dấu DONE', 200);
@@ -2507,7 +2526,7 @@ export default function LocalProductsPage() {
   };
 
   const renderCopyIcon = (key: string) => {
-    return copiedKey === key ? <FiCheckCircle /> : <FiCopy />;
+    return copiedKey === key ? <FiCheckCircle aria-hidden="true" className={iconClassName} /> : <FiCopy aria-hidden="true" className={iconClassName} />;
   };
 
   return (
@@ -2524,7 +2543,7 @@ export default function LocalProductsPage() {
           <div className="grid grid-cols-1 gap-1 xl:grid-cols-[1fr_auto] xl:items-center">
             <div className="flex min-w-0 items-center gap-2">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-200">
-                <FiDatabase />
+                <FiDatabase aria-hidden="true" className={iconClassName} />
               </div>
 
               <div className="min-w-0">
@@ -2538,55 +2557,67 @@ export default function LocalProductsPage() {
             <div className="grid grid-cols-6 gap-1">
               <button
                 type="button"
+                title="Thêm sản phẩm"
+                aria-label="Thêm sản phẩm"
                 className="flex items-center justify-center gap-2 rounded-xl bg-cyan-300 px-2 py-1 text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
                 onClick={openProductModalForCreate}
               >
-                <FiPlus />
+                <FiPlus aria-hidden="true" className={iconClassName} />
                 Thêm
               </button>
 
               <button
                 type="button"
+                title="Danh sách dạng bảng"
+                aria-label="Danh sách dạng bảng"
                 className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                 onClick={() => openModal('productList')}
               >
-                <FiDatabase />
+                <FiDatabase aria-hidden="true" className={iconClassName} />
                 List
               </button>
 
               <button
                 type="button"
+                title="Lịch đăng"
+                aria-label="Lịch đăng"
                 className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                 onClick={() => openModal('schedule')}
               >
-                <FiCalendar />
+                <FiCalendar aria-hidden="true" className={iconClassName} />
                 Lịch
               </button>
 
               <button
                 type="button"
+                title="Nội dung chung"
+                aria-label="Nội dung chung"
                 className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                 onClick={() => openModal('global')}
               >
-                <FiFileText />
+                <FiFileText aria-hidden="true" className={iconClassName} />
                 Nội dung
               </button>
 
               <button
                 type="button"
+                title="Import Export dữ liệu"
+                aria-label="Import Export dữ liệu"
                 className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                 onClick={() => openModal('importExport')}
               >
-                <FiArchive />
+                <FiArchive aria-hidden="true" className={iconClassName} />
                 Data
               </button>
 
               <button
                 type="button"
+                title="Tải toàn bộ ảnh"
+                aria-label="Tải toàn bộ ảnh"
                 className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                 onClick={handleDownloadAllImages}
               >
-                <FiDownload />
+                <FiDownload aria-hidden="true" className={iconClassName} />
                 Ảnh
               </button>
             </div>
@@ -2597,12 +2628,13 @@ export default function LocalProductsPage() {
           <div className="mb-1 grid grid-cols-1 gap-1 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-center">
             <div className="min-w-0">
               <h2 className="text-xs font-black text-white">Danh sách sản phẩm</h2>
-              <p className="text-[10px] text-slate-400">Click vào sản phẩm để active. Mô tả mặc định đã thu gọn để nhìn được nhiều sản phẩm hơn.</p>
+              <p className="text-[10px] text-slate-400">Bấm vùng ngoài ảnh và mô tả để mở sửa. Bấm ảnh để mở album. Mô tả bấm bình thường, không mở modal.</p>
             </div>
 
             <label className="flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1.5 text-slate-400">
-              <FiSearch className="shrink-0" />
+              <FiSearch aria-hidden="true" className={`${iconClassName} shrink-0`} />
               <input
+                ref={searchInputRef}
                 autoFocus
                 type="text"
                 value={query}
@@ -2618,11 +2650,10 @@ export default function LocalProductsPage() {
           <div className="mb-1 flex gap-1 overflow-x-auto pb-1">
             <button
               type="button"
-              className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${
-                activeCategoryTab === 'all'
+              className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${activeCategoryTab === 'all'
                   ? 'border-cyan-300/50 bg-cyan-300 text-slate-950'
                   : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-              }`}
+                }`}
               onClick={() => setActiveCategoryTab('all')}
             >
               Tất cả
@@ -2632,11 +2663,10 @@ export default function LocalProductsPage() {
               <button
                 key={category}
                 type="button"
-                className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${
-                  normalizeTextKey(activeCategoryTab) === normalizeTextKey(category)
+                className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${normalizeTextKey(activeCategoryTab) === normalizeTextKey(category)
                     ? 'border-cyan-300/50 bg-cyan-300 text-slate-950'
                     : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                }`}
+                  }`}
                 onClick={() => setActiveCategoryTab(category)}
               >
                 {category}
@@ -2657,9 +2687,8 @@ export default function LocalProductsPage() {
                 return (
                   <article
                     key={product.id}
-                    className={`overflow-hidden rounded-xl border shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-slate-900 ${
-                      active ? 'border-cyan-300/70 bg-cyan-300/10 ring-1 ring-cyan-300/30' : 'border-white/10 bg-slate-950/80'
-                    }`}
+                    className={`overflow-hidden rounded-xl border shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-slate-900 ${active ? 'border-cyan-300/70 bg-cyan-300/10 ring-1 ring-cyan-300/30' : 'border-white/10 bg-slate-950/80'
+                      }`}
                     onClick={() => {
                       setSelectedProductId(product.id);
                       handleEdit(product);
@@ -2678,13 +2707,13 @@ export default function LocalProductsPage() {
                       }}
                     >
                       {product.images[0] ? (
-                        <img src={product.images[0].dataUrl} alt={product.name} className="h-full w-full object-contain" />
+                        <img src={product.images[0].dataUrl} alt={product.name} width={1200} height={1200} className="h-full w-full object-contain" />
                       ) : (
-                        <FiImage className="text-slate-600" />
+                        <FiImage aria-hidden="true" className={`${iconClassName} text-slate-600`} />
                       )}
 
                       <div className="absolute left-1 top-1 flex items-center gap-1 rounded-2xl bg-black/70 px-2 py-1 text-[10px] font-bold text-white">
-                        <FiImage />
+                        <FiImage aria-hidden="true" className={iconClassName} />
                         {product.images.length}
                       </div>
 
@@ -2707,7 +2736,10 @@ export default function LocalProductsPage() {
                         <div className="mt-0.5 truncate text-xs font-black text-cyan-200">{product.priceText || 'Chưa có giá'}</div>
                       </div>
 
-                      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-1">
+                      <div
+                        className="rounded-xl border border-white/10 bg-white/[0.03] p-1"
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         <p className={`${expanded ? 'line-clamp-none' : 'line-clamp-3'} whitespace-pre-line text-[10px] leading-4 text-slate-300`}>
                           {descriptionPreview || 'Chưa có mô tả'}
                         </p>
@@ -2728,6 +2760,8 @@ export default function LocalProductsPage() {
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
+                          title="Copy tên sản phẩm"
+                          aria-label="Copy tên sản phẩm"
                           className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
                           onClick={(event) => {
                             event.stopPropagation();
@@ -2752,41 +2786,46 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className={`flex w-full items-center justify-center gap-1 rounded-2xl p-1.5 text-[10px] font-black transition active:scale-[0.98] ${
-                            productDone
+                          title={productDone ? 'Bỏ DONE' : 'Đánh dấu DONE'}
+                          aria-label={productDone ? 'Bỏ DONE' : 'Đánh dấu DONE'}
+                          className={`flex w-full items-center justify-center gap-1 rounded-2xl p-1.5 text-[10px] font-black transition active:scale-[0.98] ${productDone
                               ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
                               : 'border border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20'
-                          }`}
+                            }`}
                           onClick={(event) => {
                             event.stopPropagation();
                             void toggleProductDone(product.id);
                           }}
                         >
-                          <FiCheckCircle />
+                          <FiCheckCircle aria-hidden="true" className={iconClassName} />
                           {productDone ? 'DONE' : 'Chưa bán'}
                         </button>
                         <button
                           type="button"
+                          title="Tải ảnh sản phẩm"
+                          aria-label="Tải ảnh sản phẩm"
                           className="flex items-center justify-center gap-1 rounded-2xl bg-cyan-300 p-1.5 text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
                           onClick={(event) => {
                             event.stopPropagation();
                             handleDownloadProductImages(product);
                           }}
                         >
-                          <FiDownload />
+                          <FiDownload aria-hidden="true" className={iconClassName} />
                           Ảnh
                         </button>
                       </div>
 
                       <button
                         type="button"
+                        title="Xóa sản phẩm"
+                        aria-label="Xóa sản phẩm"
                         className="flex w-full items-center justify-center gap-1 rounded-2xl border border-rose-400/30 bg-rose-400/10 p-1.5 text-[10px] font-black text-rose-100 transition hover:bg-rose-400/20 active:scale-[0.98]"
                         onClick={(event) => {
                           event.stopPropagation();
                           void handleDelete(product.id);
                         }}
                       >
-                        <FiTrash2 />
+                        <FiTrash2 aria-hidden="true" className={iconClassName} />
                         Xóa vĩnh viễn
                       </button>
                     </div>
@@ -2804,13 +2843,13 @@ export default function LocalProductsPage() {
             <div className="flex items-center justify-between gap-2 border-b border-white/10 p-2">
               <div className="flex min-w-0 items-center gap-2">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-200">
-                  {activeModal === 'product' ? <FiPlus /> : null}
-                  {activeModal === 'productList' ? <FiDatabase /> : null}
-                  {activeModal === 'schedule' ? <FiCalendar /> : null}
-                  {activeModal === 'global' ? <FiFileText /> : null}
-                  {activeModal === 'importExport' ? <FiArchive /> : null}
-                  {activeModal === 'slotDetail' ? <FiClipboard /> : null}
-                  {activeModal === 'imageAlbum' ? <FiImage /> : null}
+                  {activeModal === 'product' ? <FiPlus aria-hidden="true" className={iconClassName} /> : null}
+                  {activeModal === 'productList' ? <FiDatabase aria-hidden="true" className={iconClassName} /> : null}
+                  {activeModal === 'schedule' ? <FiCalendar aria-hidden="true" className={iconClassName} /> : null}
+                  {activeModal === 'global' ? <FiFileText aria-hidden="true" className={iconClassName} /> : null}
+                  {activeModal === 'importExport' ? <FiArchive aria-hidden="true" className={iconClassName} /> : null}
+                  {activeModal === 'slotDetail' ? <FiClipboard aria-hidden="true" className={iconClassName} /> : null}
+                  {activeModal === 'imageAlbum' ? <FiImage aria-hidden="true" className={iconClassName} /> : null}
                 </div>
 
                 <div className="min-w-0">
@@ -2831,7 +2870,7 @@ export default function LocalProductsPage() {
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
                 onClick={closeModal}
               >
-                <FiX />
+                <FiX aria-hidden="true" className={iconClassName} />
               </button>
             </div>
 
@@ -2869,7 +2908,7 @@ export default function LocalProductsPage() {
 
                   <div className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_220px]">
                     <label className="flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1.5 text-slate-400">
-                      <FiSearch className="shrink-0" />
+                      <FiSearch aria-hidden="true" className={`${iconClassName} shrink-0`} />
 
                       <input
                         autoFocus
@@ -2886,8 +2925,7 @@ export default function LocalProductsPage() {
                       className="flex items-center justify-center gap-2 rounded-xl bg-cyan-300 px-2 py-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
                       onClick={openProductModalForCreate}
                     >
-                      <FiPlus />
-                      Thêm sản phẩm
+                      <FiPlus aria-hidden="true" className={iconClassName} />
                     </button>
                   </div>
 
@@ -2933,13 +2971,12 @@ export default function LocalProductsPage() {
                                 return (
                                   <div
                                     key={product.id}
-                                    className={`grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-white/10 text-xs transition ${
-                                      isSelected
+                                    className={`grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-white/10 text-xs transition ${isSelected
                                         ? 'bg-cyan-300/10 text-white'
                                         : product.isDone
                                           ? 'bg-emerald-400/[0.04] text-slate-300 hover:bg-emerald-400/10'
                                           : 'bg-slate-950 text-slate-300 hover:bg-white/5'
-                                    }`}
+                                      }`}
                                     onClick={() => setSelectedProductId(product.id)}
                                   >
                                     <div className="flex items-center border-r border-white/10 px-2 py-2 text-[11px] font-bold text-slate-500">
@@ -2978,11 +3015,10 @@ export default function LocalProductsPage() {
                                     <div className="flex items-center border-r border-white/10 px-2 py-2">
                                       <button
                                         type="button"
-                                        className={`w-full rounded-xl px-2 py-1.5 text-[10px] font-black transition active:scale-[0.98] ${
-                                          product.isDone
+                                        className={`w-full rounded-xl px-2 py-1.5 text-[10px] font-black transition active:scale-[0.98] ${product.isDone
                                             ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
                                             : 'border border-slate-500/40 bg-white/5 text-slate-300 hover:bg-white/10'
-                                        }`}
+                                          }`}
                                         onClick={(event) => {
                                           event.stopPropagation();
                                           void toggleProductDone(product.id);
@@ -3027,10 +3063,10 @@ export default function LocalProductsPage() {
 
               {activeModal === 'product' ? (
                 <form
-                  className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
+                  className="grid h-full min-h-0 grid-cols-1 gap-2 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
                   onSubmit={(event) => void handleSubmit(event)}
                 >
-                  <section className="flex flex-col gap-2">
+                  <section className="flex min-h-0 flex-col gap-2">
                     <label className="flex flex-col gap-2">
                       <span className="text-xs font-bold text-slate-300">Tên sản phẩm</span>
                       <input
@@ -3063,13 +3099,13 @@ export default function LocalProductsPage() {
                       </label>
                     </div>
 
-                    <label className="flex flex-col gap-2">
+                    <label className="flex min-h-0 flex-1 flex-col gap-2">
                       <span className="text-xs font-bold text-slate-300">Mô tả sản phẩm</span>
                       <textarea
                         value={draft.description}
                         onChange={(event) => updateDraftField('description', event.target.value)}
                         rows={8}
-                        className="min-h-[34dvh] rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
+                        className="h-full min-h-[45dvh] w-full flex-1 resize-none rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
                         placeholder="Để trống nếu muốn dùng mô tả chung..."
                       />
                     </label>
@@ -3078,28 +3114,25 @@ export default function LocalProductsPage() {
                       type="submit"
                       className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
                     >
-                      {editingId ? <FiRefreshCcw /> : <FiPlus />}
-                      {editingId ? 'Cập nhật' : 'Lưu sản phẩm'}
+                      {editingId ? <FiRefreshCcw aria-hidden="true" className={iconClassName} /> : <FiPlus aria-hidden="true" className={iconClassName} />}
                     </button>
                   </section>
 
                   <section className="flex flex-col gap-2">
                     <label
-                      className={`cursor-pointer rounded-2xl border border-dashed p-2 text-center transition ${
-                        isDragging
+                      className={`cursor-pointer rounded-2xl border border-dashed p-2 text-center transition ${isDragging
                           ? 'border-cyan-300/80 bg-cyan-300/10'
                           : 'border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5'
-                      }`}
+                        }`}
                       onDrop={(event) => void handleDrop(event)}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                     >
                       <div className="flex items-center justify-center gap-2 text-sm font-black text-white">
-                        <FiUploadCloud />
-                        {isProcessingImages ? 'Đang xử lý ảnh...' : 'Chọn / kéo thả / paste ảnh'}
+                        <FiUploadCloud aria-hidden="true" className={iconClassName} />
                       </div>
                       <div className="mt-1 text-[11px] leading-4 text-slate-400">
-                        Hỗ trợ nhiều ảnh, tự nén JPG. Kéo ảnh trong danh sách để đổi thứ tự.
+                        {isProcessingImages ? 'Đang xử lý ảnh...' : 'Chọn, kéo thả hoặc paste ảnh. Hỗ trợ nhiều ảnh, tự nén JPG.'}
                       </div>
                       <input type="file" accept="image/*" multiple className="hidden" onChange={(event) => void handleImageInput(event)} />
                     </label>
@@ -3108,7 +3141,7 @@ export default function LocalProductsPage() {
                       <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
                         <div className="mb-1 flex items-center justify-between gap-1">
                           <span className="flex items-center gap-2 text-xs font-black text-white">
-                            <FiImage />
+                            <FiImage aria-hidden="true" className={iconClassName} />
                             {draft.images.length} ảnh
                           </span>
 
@@ -3117,8 +3150,7 @@ export default function LocalProductsPage() {
                             className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-slate-300 transition hover:bg-white/10"
                             onClick={() => updateDraftField('images', [])}
                           >
-                            <FiTrash2 />
-                            Xóa hết
+                            <FiTrash2 aria-hidden="true" className={iconClassName} />
                           </button>
                         </div>
 
@@ -3130,9 +3162,8 @@ export default function LocalProductsPage() {
                               <div
                                 key={image.id}
                                 draggable
-                                className={`group relative cursor-grab overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:cursor-grabbing ${
-                                  isDraggingImage ? 'scale-95 opacity-60 ring-cyan-300' : 'ring-white/10 hover:ring-cyan-300/70'
-                                }`}
+                                className={`group relative cursor-grab overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:cursor-grabbing ${isDraggingImage ? 'scale-95 opacity-60 ring-cyan-300' : 'ring-white/10 hover:ring-cyan-300/70'
+                                  }`}
                                 onDragStart={(event) => {
                                   event.dataTransfer.setData('text/plain', image.id);
                                   setDraggingDraftImageId(image.id);
@@ -3147,7 +3178,7 @@ export default function LocalProductsPage() {
                                 }}
                                 onDragEnd={() => setDraggingDraftImageId('')}
                               >
-                                <img src={image.dataUrl} alt={image.name} className="aspect-square w-full object-contain" />
+                                <img src={image.dataUrl} alt={image.name} width={1200} height={1200} className="aspect-square w-full object-contain" />
 
                                 <div className="absolute left-1 top-1 rounded-lg bg-black/70 px-1.5 py-0.5 text-[10px] font-black text-white">
                                   {index + 1}
@@ -3158,7 +3189,7 @@ export default function LocalProductsPage() {
                                   className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-xs text-white opacity-100 transition hover:bg-rose-400 xl:opacity-0 xl:group-hover:opacity-100"
                                   onClick={() => removeDraftImage(image.id)}
                                 >
-                                  <FiX />
+                                  <FiX aria-hidden="true" className={iconClassName} />
                                 </button>
                               </div>
                             );
@@ -3350,11 +3381,10 @@ export default function LocalProductsPage() {
                                 <button
                                   key={category}
                                   type="button"
-                                  className={`rounded-2xl border px-3 py-1.5 text-[11px] font-black transition ${
-                                    active
+                                  className={`rounded-2xl border px-3 py-1.5 text-[11px] font-black transition ${active
                                       ? 'border-cyan-300/50 bg-cyan-300 text-slate-950'
                                       : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                                  }`}
+                                    }`}
                                   onClick={() => toggleScheduleCategory(category)}
                                 >
                                   {category}
@@ -3384,9 +3414,8 @@ export default function LocalProductsPage() {
                           return (
                             <div
                               key={taskIndex}
-                              className={`flex min-w-44 shrink-0 items-center gap-1 rounded-xl border p-1 ${
-                                active ? 'border-cyan-300/60 bg-cyan-300/10' : 'border-white/10 bg-white/[0.03]'
-                              }`}
+                              className={`flex min-w-44 shrink-0 items-center gap-1 rounded-xl border p-1 ${active ? 'border-cyan-300/60 bg-cyan-300/10' : 'border-white/10 bg-white/[0.03]'
+                                }`}
                             >
                               <button
                                 type="button"
@@ -3408,7 +3437,7 @@ export default function LocalProductsPage() {
                                 onClick={() => requestRemoveScheduleTask(taskIndex)}
                                 title="Xoá task này"
                               >
-                                <FiTrash2 />
+                                <FiTrash2 aria-hidden="true" className={iconClassName} />
                               </button>
                             </div>
                           );
@@ -3432,13 +3461,12 @@ export default function LocalProductsPage() {
                                 <article
                                   key={`${time}-${activeScheduleTaskIndex}`}
                                   draggable={Boolean(assignedProduct)}
-                                  className={`rounded-xl border p-1 transition ${assignedProduct ? 'cursor-grab active:cursor-grabbing' : ''} ${
-                                    done
+                                  className={`rounded-xl border p-1 transition ${assignedProduct ? 'cursor-grab active:cursor-grabbing' : ''} ${done
                                       ? 'border-emerald-400/30 bg-emerald-400/10'
                                       : assignedProduct
                                         ? 'border-cyan-300/30 bg-cyan-300/10'
                                         : 'border-white/10 bg-slate-950/80'
-                                  }`}
+                                    }`}
                                   onDragStart={(event) => {
                                     if (!assignedProduct) return;
 
@@ -3495,21 +3523,17 @@ export default function LocalProductsPage() {
                                         onClick={() =>
                                           assignedProduct
                                             ? openImageAlbum({
-                                                title: assignedProduct.name,
-                                                description: assignedProduct.description.trim() || settings.commonDescription.trim(),
-                                                images: assignedProduct.images,
-                                              })
+                                              title: assignedProduct.name,
+                                              description: assignedProduct.description.trim() || settings.commonDescription.trim(),
+                                              images: assignedProduct.images,
+                                            })
                                             : undefined
                                         }
                                       >
                                         {assignedProduct?.images[0] ? (
-                                          <img
-                                            src={assignedProduct.images[0].dataUrl}
-                                            alt={assignedProduct.name}
-                                            className="h-full w-full object-contain"
-                                          />
+                                          <img src={assignedProduct.images[0].dataUrl} alt={assignedProduct.name} width={1200} height={1200} className="h-full w-full object-contain" />
                                         ) : (
-                                          <FiImage className="text-slate-600" />
+                                          <FiImage aria-hidden="true" className={`${iconClassName} text-slate-600`} />
                                         )}
                                       </button>
 
@@ -3529,14 +3553,15 @@ export default function LocalProductsPage() {
                                     <div className="col-span-2 grid grid-cols-2 gap-1 xl:col-span-1 xl:grid-cols-1">
                                       <button
                                         type="button"
+                                        title="Xem chi tiết lịch"
+                                        aria-label="Xem chi tiết lịch"
                                         disabled={!assignedProduct}
-                                        className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${
-                                          done
+                                        className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${done
                                             ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
                                             : assignedProduct
                                               ? 'border border-white/10 bg-white/5 text-white hover:bg-white/10'
                                               : 'cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600'
-                                        }`}
+                                          }`}
                                         onClick={() => assignedProduct && togglePostedProduct(today, timeIndex, activeScheduleTaskIndex)}
                                       >
                                         {done ? 'DONE' : 'Chưa đăng'}
@@ -3544,16 +3569,16 @@ export default function LocalProductsPage() {
 
                                       <button
                                         type="button"
+                                        title="Xem chi tiết lịch"
+                                        aria-label="Xem chi tiết lịch"
                                         disabled={!assignedProduct}
-                                        className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${
-                                          assignedProduct
+                                        className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${assignedProduct
                                             ? 'border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20'
                                             : 'cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600'
-                                        }`}
+                                          }`}
                                         onClick={() => assignedProduct && openAssignedSlotModal(today, timeIndex, activeScheduleTaskIndex)}
                                       >
-                                        <FiClipboard />
-                                        Chi tiết
+                                        <FiClipboard aria-hidden="true" className={iconClassName} />
                                       </button>
                                     </div>
                                   </div>
@@ -3577,7 +3602,7 @@ export default function LocalProductsPage() {
                       </div>
 
                       <label className="mb-1 flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1.5 text-slate-400">
-                        <FiSearch className="shrink-0" />
+                        <FiSearch aria-hidden="true" className={`${iconClassName} shrink-0`} />
                         <input
                           value={scheduleQuery}
                           onChange={(event) => setScheduleQuery(event.target.value)}
@@ -3605,11 +3630,10 @@ export default function LocalProductsPage() {
                               }}
                               onDragEnd={() => setDraggingProductId('')}
                               onClick={() => setSelectedProductId(product.id)}
-                              className={`cursor-grab rounded-xl border p-1 transition active:cursor-grabbing ${
-                                active
+                              className={`cursor-grab rounded-xl border p-1 transition active:cursor-grabbing ${active
                                   ? 'border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30'
                                   : 'border-white/10 bg-slate-950/80 hover:border-cyan-300/30'
-                              }`}
+                                }`}
                             >
                               <div className="flex gap-2">
                                 <button
@@ -3625,9 +3649,9 @@ export default function LocalProductsPage() {
                                   }}
                                 >
                                   {product.images[0] ? (
-                                    <img src={product.images[0].dataUrl} alt={product.name} className="h-full w-full object-contain" />
+                                    <img src={product.images[0].dataUrl} alt={product.name} width={1200} height={1200} className="h-full w-full object-contain" />
                                   ) : (
-                                    <FiImage className="text-slate-600" />
+                                    <FiImage aria-hidden="true" className={`${iconClassName} text-slate-600`} />
                                   )}
                                 </button>
 
@@ -3666,7 +3690,7 @@ export default function LocalProductsPage() {
                     <textarea
                       value={settings.commonDescription}
                       onChange={(event) => updateSettingField('commonDescription', event.target.value)}
-                      className="min-h-[34dvh] w-full resize-y rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-fuchsia-300/60"
+                      className="h-full min-h-[42dvh] w-full flex-1 resize-none rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-fuchsia-300/60"
                       placeholder="Dùng khi sản phẩm không có mô tả riêng..."
                     />
 
@@ -3685,7 +3709,7 @@ export default function LocalProductsPage() {
                     <textarea
                       value={settings.globalNote}
                       onChange={(event) => updateSettingField('globalNote', event.target.value)}
-                      className="min-h-[34dvh] w-full resize-y rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-fuchsia-300/60"
+                      className="h-full min-h-[42dvh] w-full flex-1 resize-none rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-fuchsia-300/60"
                       placeholder="Ghi chú ngoài từng bài..."
                     />
 
@@ -3719,8 +3743,7 @@ export default function LocalProductsPage() {
                       className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-3 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
                       onClick={handleExportJson}
                     >
-                      <FiDownload />
-                      Tải file backup tổng
+                      <FiDownload aria-hidden="true" className={iconClassName} />
                     </button>
                   </article>
 
@@ -3748,8 +3771,7 @@ export default function LocalProductsPage() {
                       className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300/40 bg-amber-300/15 p-3 text-sm font-black text-amber-50 transition hover:bg-amber-300/25"
                       onClick={() => fileImportRef.current?.click()}
                     >
-                      <FiUploadCloud />
-                      Chọn file để import
+                      <FiUploadCloud aria-hidden="true" className={iconClassName} />
                     </button>
                   </article>
                 </section>
@@ -3771,13 +3793,9 @@ export default function LocalProductsPage() {
                         }
                       >
                         {selectedAssignedSlot.product.images[0] ? (
-                          <img
-                            src={selectedAssignedSlot.product.images[0].dataUrl}
-                            alt={selectedAssignedSlot.product.name}
-                            className="h-full w-full object-contain"
-                          />
+                          <img src={selectedAssignedSlot.product.images[0].dataUrl} alt={selectedAssignedSlot.product.name} width={1200} height={1200} className="h-full w-full object-contain" />
                         ) : (
-                          <FiImage className="text-slate-600" />
+                          <FiImage aria-hidden="true" className={`${iconClassName} text-slate-600`} />
                         )}
                       </button>
 
@@ -3796,7 +3814,7 @@ export default function LocalProductsPage() {
                                 })
                               }
                             >
-                              <img src={image.dataUrl} alt={image.name} className="h-full w-full object-contain" />
+                              <img src={image.dataUrl} alt={image.name} width={1200} height={1200} className="h-full w-full object-contain" />
                             </button>
                           ))}
                         </div>
@@ -3805,15 +3823,13 @@ export default function LocalProductsPage() {
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         <button
                           type="button"
-                          className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${
-                            selectedAssignedSlot.done
+                          className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${selectedAssignedSlot.done
                               ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
                               : 'border border-white/10 bg-white/5 text-white hover:bg-white/10'
-                          }`}
+                            }`}
                           onClick={() => togglePostedSlot(selectedAssignedSlot.date, selectedAssignedSlot.slotIndex, selectedAssignedSlot.taskIndex)}
                         >
-                          <FiCheck />
-                          {selectedAssignedSlot.done ? 'DONE' : 'Chưa đăng'}
+                          <FiCheck aria-hidden="true" className={iconClassName} />
                         </button>
 
                         <button
@@ -3821,8 +3837,7 @@ export default function LocalProductsPage() {
                           className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
                           onClick={() => handleDownloadProductImages(selectedAssignedSlot.product)}
                         >
-                          <FiDownload />
-                          Tải ảnh
+                          <FiDownload aria-hidden="true" className={iconClassName} />
                         </button>
                       </div>
                     </article>
@@ -3875,8 +3890,7 @@ export default function LocalProductsPage() {
                           className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
                           onClick={() => handleEdit(selectedAssignedSlot.product)}
                         >
-                          <FiEdit3 />
-                          Sửa
+                          <FiEdit3 aria-hidden="true" className={iconClassName} />
                         </button>
                       </div>
 
@@ -3916,8 +3930,7 @@ export default function LocalProductsPage() {
                           className="flex items-center justify-center gap-1 rounded-xl bg-cyan-300 px-2 py-1.5 text-[10px] font-black text-slate-950 transition hover:bg-cyan-200"
                           onClick={handleDownloadSelectedAlbumImage}
                         >
-                          <FiDownload />
-                          Ảnh
+                          <FiDownload aria-hidden="true" className={iconClassName} />
                         </button>
 
                         <button
@@ -3925,23 +3938,23 @@ export default function LocalProductsPage() {
                           className="flex items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/10"
                           onClick={handleDownloadAlbumImages}
                         >
-                          <FiArchive />
-                          Album
+                          <FiArchive aria-hidden="true" className={iconClassName} />
                         </button>
                       </div>
                     </div>
 
                     <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl bg-slate-900">
                       {selectedAlbumImage ? (
-                        <Zoom>
-                          <img
-                            src={selectedAlbumImage.dataUrl}
-                            alt={selectedAlbumImage.name}
-                            className="max-h-[calc(90dvh-132px)] w-full object-contain"
-                          />
-                        </Zoom>
+                        <img
+
+                          src={selectedAlbumImage.dataUrl}
+                          alt={selectedAlbumImage.name}
+                          width={1600}
+                          height={1600}
+                          className="max-h-[calc(90dvh-132px)] w-full object-contain"
+                        />
                       ) : (
-                        <FiImage className="text-slate-600" />
+                        <FiImage aria-hidden="true" className={`${iconClassName} text-slate-600`} />
                       )}
                     </div>
                   </article>
@@ -3964,13 +3977,12 @@ export default function LocalProductsPage() {
                           <button
                             key={image.id}
                             type="button"
-                            className={`group relative aspect-square overflow-hidden rounded-xl bg-slate-900 ring-1 transition ${
-                              active ? 'ring-2 ring-cyan-300' : 'ring-white/10 hover:ring-cyan-300/60'
-                            }`}
+                            className={`group relative aspect-square overflow-hidden rounded-xl bg-slate-900 ring-1 transition ${active ? 'ring-2 ring-cyan-300' : 'ring-white/10 hover:ring-cyan-300/60'
+                              }`}
                             onClick={() => setSelectedAlbumImageId(image.id)}
                             title={`Ảnh ${index + 1}`}
                           >
-                            <img src={image.dataUrl} alt={image.name} className="h-full w-full object-contain" />
+                            <img src={image.dataUrl} alt={image.name} width={1200} height={1200} className="h-full w-full object-contain" />
                             <span className="absolute left-1 top-1 rounded-lg bg-black/70 px-1.5 py-0.5 text-[10px] font-black text-white">
                               {index + 1}
                             </span>
@@ -3999,7 +4011,7 @@ export default function LocalProductsPage() {
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
                 onClick={closeConfirm}
               >
-                <FiX />
+                <FiX aria-hidden="true" className={iconClassName} />
               </button>
             </div>
 
@@ -4014,13 +4026,12 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
-                className={`rounded-2xl p-2 text-sm font-black transition ${
-                  pendingConfirm.tone === 'danger'
+                className={`rounded-2xl p-2 text-sm font-black transition ${pendingConfirm.tone === 'danger'
                     ? 'bg-rose-500 text-white hover:bg-rose-400'
                     : pendingConfirm.tone === 'warning'
                       ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
                       : 'bg-cyan-300 text-slate-950 hover:bg-cyan-200'
-                }`}
+                  }`}
                 onClick={() => void executeConfirm()}
               >
                 {pendingConfirm.confirmLabel}
@@ -4071,7 +4082,7 @@ export default function LocalProductsPage() {
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
                   onClick={() => setPendingDownload(null)}
                 >
-                  <FiX />
+                  <FiX aria-hidden="true" className={iconClassName} />
                 </button>
               </div>
 
