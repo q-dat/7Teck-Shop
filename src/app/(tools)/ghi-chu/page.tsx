@@ -2651,8 +2651,8 @@ export default function LocalProductsPage() {
             <button
               type="button"
               className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${activeCategoryTab === 'all'
-                  ? 'border-cyan-300/50 bg-cyan-300 text-slate-950'
-                  : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                ? 'border-cyan-300/50 bg-cyan-300 text-slate-950'
+                : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
                 }`}
               onClick={() => setActiveCategoryTab('all')}
             >
@@ -2664,8 +2664,8 @@ export default function LocalProductsPage() {
                 key={category}
                 type="button"
                 className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${normalizeTextKey(activeCategoryTab) === normalizeTextKey(category)
-                    ? 'border-cyan-300/50 bg-cyan-300 text-slate-950'
-                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                  ? 'border-cyan-300/50 bg-cyan-300 text-slate-950'
+                  : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
                   }`}
                 onClick={() => setActiveCategoryTab(category)}
               >
@@ -2789,8 +2789,8 @@ export default function LocalProductsPage() {
                           title={productDone ? 'Bỏ DONE' : 'Đánh dấu DONE'}
                           aria-label={productDone ? 'Bỏ DONE' : 'Đánh dấu DONE'}
                           className={`flex w-full items-center justify-center gap-1 rounded-2xl p-1.5 text-[10px] font-black transition active:scale-[0.98] ${productDone
-                              ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
-                              : 'border border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20'
+                            ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
+                            : 'border border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20'
                             }`}
                           onClick={(event) => {
                             event.stopPropagation();
@@ -2972,10 +2972,10 @@ export default function LocalProductsPage() {
                                   <div
                                     key={product.id}
                                     className={`grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-white/10 text-xs transition ${isSelected
-                                        ? 'bg-cyan-300/10 text-white'
-                                        : product.isDone
-                                          ? 'bg-emerald-400/[0.04] text-slate-300 hover:bg-emerald-400/10'
-                                          : 'bg-slate-950 text-slate-300 hover:bg-white/5'
+                                      ? 'bg-cyan-300/10 text-white'
+                                      : product.isDone
+                                        ? 'bg-emerald-400/[0.04] text-slate-300 hover:bg-emerald-400/10'
+                                        : 'bg-slate-950 text-slate-300 hover:bg-white/5'
                                       }`}
                                     onClick={() => setSelectedProductId(product.id)}
                                   >
@@ -3016,8 +3016,8 @@ export default function LocalProductsPage() {
                                       <button
                                         type="button"
                                         className={`w-full rounded-xl px-2 py-1.5 text-[10px] font-black transition active:scale-[0.98] ${product.isDone
-                                            ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
-                                            : 'border border-slate-500/40 bg-white/5 text-slate-300 hover:bg-white/10'
+                                          ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
+                                          : 'border border-slate-500/40 bg-white/5 text-slate-300 hover:bg-white/10'
                                           }`}
                                         onClick={(event) => {
                                           event.stopPropagation();
@@ -3121,8 +3121,8 @@ export default function LocalProductsPage() {
                   <section className="flex flex-col gap-2">
                     <label
                       className={`cursor-pointer rounded-2xl border border-dashed p-2 text-center transition ${isDragging
-                          ? 'border-cyan-300/80 bg-cyan-300/10'
-                          : 'border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5'
+                        ? 'border-cyan-300/80 bg-cyan-300/10'
+                        : 'border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5'
                         }`}
                       onDrop={(event) => void handleDrop(event)}
                       onDragOver={handleDragOver}
@@ -3382,8 +3382,8 @@ export default function LocalProductsPage() {
                                   key={category}
                                   type="button"
                                   className={`rounded-2xl border px-3 py-1.5 text-[11px] font-black transition ${active
-                                      ? 'border-cyan-300/50 bg-cyan-300 text-slate-950'
-                                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                    ? 'border-cyan-300/50 bg-cyan-300 text-slate-950'
+                                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
                                     }`}
                                   onClick={() => toggleScheduleCategory(category)}
                                 >
@@ -3462,10 +3462,10 @@ export default function LocalProductsPage() {
                                   key={`${time}-${activeScheduleTaskIndex}`}
                                   draggable={Boolean(assignedProduct)}
                                   className={`rounded-xl border p-1 transition ${assignedProduct ? 'cursor-grab active:cursor-grabbing' : ''} ${done
-                                      ? 'border-emerald-400/30 bg-emerald-400/10'
-                                      : assignedProduct
-                                        ? 'border-cyan-300/30 bg-cyan-300/10'
-                                        : 'border-white/10 bg-slate-950/80'
+                                    ? 'border-emerald-400/30 bg-emerald-400/10'
+                                    : assignedProduct
+                                      ? 'border-cyan-300/30 bg-cyan-300/10'
+                                      : 'border-white/10 bg-slate-950/80'
                                     }`}
                                   onDragStart={(event) => {
                                     if (!assignedProduct) return;
@@ -3557,10 +3557,10 @@ export default function LocalProductsPage() {
                                         aria-label="Xem chi tiết lịch"
                                         disabled={!assignedProduct}
                                         className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${done
-                                            ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
-                                            : assignedProduct
-                                              ? 'border border-white/10 bg-white/5 text-white hover:bg-white/10'
-                                              : 'cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600'
+                                          ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
+                                          : assignedProduct
+                                            ? 'border border-white/10 bg-white/5 text-white hover:bg-white/10'
+                                            : 'cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600'
                                           }`}
                                         onClick={() => assignedProduct && togglePostedProduct(today, timeIndex, activeScheduleTaskIndex)}
                                       >
@@ -3573,8 +3573,8 @@ export default function LocalProductsPage() {
                                         aria-label="Xem chi tiết lịch"
                                         disabled={!assignedProduct}
                                         className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${assignedProduct
-                                            ? 'border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20'
-                                            : 'cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600'
+                                          ? 'border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20'
+                                          : 'cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600'
                                           }`}
                                         onClick={() => assignedProduct && openAssignedSlotModal(today, timeIndex, activeScheduleTaskIndex)}
                                       >
@@ -3631,8 +3631,8 @@ export default function LocalProductsPage() {
                               onDragEnd={() => setDraggingProductId('')}
                               onClick={() => setSelectedProductId(product.id)}
                               className={`cursor-grab rounded-xl border p-1 transition active:cursor-grabbing ${active
-                                  ? 'border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30'
-                                  : 'border-white/10 bg-slate-950/80 hover:border-cyan-300/30'
+                                ? 'border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30'
+                                : 'border-white/10 bg-slate-950/80 hover:border-cyan-300/30'
                                 }`}
                             >
                               <div className="flex gap-2">
@@ -3824,8 +3824,8 @@ export default function LocalProductsPage() {
                         <button
                           type="button"
                           className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${selectedAssignedSlot.done
-                              ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
-                              : 'border border-white/10 bg-white/5 text-white hover:bg-white/10'
+                            ? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200'
+                            : 'border border-white/10 bg-white/5 text-white hover:bg-white/10'
                             }`}
                           onClick={() => togglePostedSlot(selectedAssignedSlot.date, selectedAssignedSlot.slotIndex, selectedAssignedSlot.taskIndex)}
                         >
@@ -3969,7 +3969,7 @@ export default function LocalProductsPage() {
                       </span>
                     </div>
 
-                    <div className="grid min-h-0 grid-cols-4 gap-2 overflow-y-auto xl:grid-cols-2">
+                    <div className="flex flex-wrap gap-2 overflow-y-auto w-full items-center justify-center">
                       {albumSource.images.map((image, index) => {
                         const active = image.id === selectedAlbumImage?.id;
 
@@ -4027,10 +4027,10 @@ export default function LocalProductsPage() {
               <button
                 type="button"
                 className={`rounded-2xl p-2 text-sm font-black transition ${pendingConfirm.tone === 'danger'
-                    ? 'bg-rose-500 text-white hover:bg-rose-400'
-                    : pendingConfirm.tone === 'warning'
-                      ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
-                      : 'bg-cyan-300 text-slate-950 hover:bg-cyan-200'
+                  ? 'bg-rose-500 text-white hover:bg-rose-400'
+                  : pendingConfirm.tone === 'warning'
+                    ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
+                    : 'bg-cyan-300 text-slate-950 hover:bg-cyan-200'
                   }`}
                 onClick={() => void executeConfirm()}
               >
