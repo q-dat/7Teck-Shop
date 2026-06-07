@@ -19,6 +19,7 @@ import {
   FiUploadCloud,
   FiX,
 } from 'react-icons/fi';
+import JSZip from 'jszip';
 import { toast, ToastContainer, type ToastOptions } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -831,6 +832,47 @@ const downloadBlob = (blob: Blob, filename: string): void => {
   link.remove();
 
   URL.revokeObjectURL(url);
+};
+
+const isAppleMobileDevice = (): boolean => {
+  if (typeof window === 'undefined') return false;
+
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  const platform = window.navigator.platform.toLowerCase();
+  const hasTouchPoints = window.navigator.maxTouchPoints > 1;
+  const isIphoneOrIpod = /iphone|ipod/.test(userAgent);
+  const isIpad = /ipad/.test(userAgent) || (platform === 'macintel' && hasTouchPoints);
+
+  return isIphoneOrIpod || isIpad;
+};
+
+const createDownloadZipName = (request: DownloadRequest): string => {
+  return request.mode === 'single' ? 'sanpham.zip' : 'album-sanpham.zip';
+};
+
+const downloadImagesAsZip = async (request: DownloadRequest): Promise<void> => {
+  const zip = new JSZip();
+
+  for (let index = 0; index < request.images.length; index += 1) {
+    const image = request.images[index];
+
+    if (!image) continue;
+
+    const jpegDataUrl = await convertDataUrlToJpeg(image.dataUrl);
+    const blob = await dataUrlToBlob(jpegDataUrl);
+
+    zip.file(createSystemImageFilename(request.startIndex + index), blob);
+  }
+
+  const zipBlob = await zip.generateAsync({
+    type: 'blob',
+    compression: 'DEFLATE',
+    compressionOptions: {
+      level: 6,
+    },
+  });
+
+  downloadBlob(zipBlob, createDownloadZipName(request));
 };
 
 type DirectoryPickerWindow = Window & {
@@ -1953,6 +1995,18 @@ export default function LocalProductsPage() {
       setPendingDownload(null);
     } catch {
       Toastify('Trình duyệt chưa cho phép chọn thư mục hoặc thao tác đã bị hủy', 400);
+    }
+  };
+
+  const executeDownloadZipForIphone = async (): Promise<void> => {
+    if (!pendingDownload) return;
+
+    try {
+      await downloadImagesAsZip(pendingDownload);
+      Toastify(`Đã tạo file ZIP gồm ${pendingDownload.images.length} ảnh`, 200);
+      setPendingDownload(null);
+    } catch {
+      Toastify('Không thể tạo file ZIP để tải ảnh', 400);
     }
   };
 
@@ -4104,6 +4158,16 @@ export default function LocalProductsPage() {
                     onClick={() => void executeDownloadToFolder()}
                   >
                     Chọn thư mục & lưu ảnh
+                  </button>
+                ) : null}
+
+                {isAppleMobileDevice() ? (
+                  <button
+                    type="button"
+                    className="rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-2 text-sm font-black text-cyan-100 transition hover:bg-cyan-300/20"
+                    onClick={() => void executeDownloadZipForIphone()}
+                  >
+                    Tải ZIP cho iPhone
                   </button>
                 ) : null}
 
