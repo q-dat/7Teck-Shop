@@ -2780,7 +2780,7 @@ export default function LocalProductsPage() {
                       </div>
                     </button>
 
-                    <div className="flex flex-col gap-2 p-4">
+                    <div className="flex flex-col gap-2 p-2">
                       <div className="min-w-0">
                         {product.category ? (
                           <div className="truncate text-[10px] font-black uppercase tracking-wide text-cyan-200">{product.category}</div>
@@ -2794,9 +2794,12 @@ export default function LocalProductsPage() {
                         className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
                         onClick={(event) => event.stopPropagation()}
                       >
-                        <p className={`${expanded ? 'line-clamp-none' : 'line-clamp-3'} whitespace-pre-line text-[10px] leading-4 text-slate-300`}>
+                        <div onClick={(event) => {
+                          event.stopPropagation();
+                          toggleExpandedProduct(product.id);
+                        }} className={`${expanded ? 'line-clamp-none' : 'line-clamp-3'} whitespace-pre-line text-[10px] leading-4 text-slate-300`}>
                           {descriptionPreview || 'Chưa có mô tả'}
-                        </p>
+                        </div>
                         {descriptionPreview.length > 90 ? (
                           <button
                             type="button"
