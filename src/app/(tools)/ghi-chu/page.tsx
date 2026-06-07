@@ -2677,7 +2677,7 @@ export default function LocalProductsPage() {
           {filteredProducts.length === 0 ? (
             <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-6 text-center text-sm text-slate-400">Chưa có sản phẩm phù hợp.</div>
           ) : (
-            <div className="grid grid-cols-3 gap-1 xl:grid-cols-8">
+            <div className="grid grid-cols-2 gap-2 xl:grid-cols-8">
               {filteredProducts.map((product) => {
                 const descriptionPreview = product.description.trim() || settings.commonDescription.trim();
                 const active = selectedProductId === product.id;
@@ -2726,7 +2726,7 @@ export default function LocalProductsPage() {
                       </div>
                     </button>
 
-                    <div className="flex flex-col gap-1 p-1">
+                    <div className="flex flex-col gap-2 p-4">
                       <div className="min-w-0">
                         {product.category ? (
                           <div className="truncate text-[10px] font-black uppercase tracking-wide text-cyan-200">{product.category}</div>
@@ -2737,7 +2737,7 @@ export default function LocalProductsPage() {
                       </div>
 
                       <div
-                        className="rounded-xl border border-white/10 bg-white/[0.03] p-1"
+                        className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
                         onClick={(event) => event.stopPropagation()}
                       >
                         <p className={`${expanded ? 'line-clamp-none' : 'line-clamp-3'} whitespace-pre-line text-[10px] leading-4 text-slate-300`}>
@@ -3203,7 +3203,7 @@ export default function LocalProductsPage() {
 
               {activeModal === 'schedule' ? (
                 <section className="flex min-h-full flex-col gap-2">
-                  <div className="grid grid-cols-3 gap-1 xl:grid-cols-8">
+                  <div className="grid grid-cols-2 gap-2 xl:grid-cols-8">
                     <div className="rounded-xl border border-white/10 bg-white/[0.04] p-1">
                       <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Khung giờ</div>
                       <div className="text-xs font-black text-white">{scheduleTimes.length}</div>
@@ -3263,7 +3263,7 @@ export default function LocalProductsPage() {
 
                   {!compactScheduleConfig ? (
                     <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                      <div className="grid grid-cols-3 gap-1 xl:grid-cols-8">
+                      <div className="grid grid-cols-2 gap-2 xl:grid-cols-8">
                         <label className="flex flex-col gap-1">
                           <span className="text-[11px] font-bold text-slate-300">Từ ngày</span>
                           <input
@@ -3907,18 +3907,24 @@ export default function LocalProductsPage() {
               ) : null}
 
               {activeModal === 'imageAlbum' && albumSource ? (
-                <section className="grid h-full min-w-0 grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_220px]">
+                <section className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_minmax(170px,34dvh)] gap-2 overflow-hidden md:grid-rows-[minmax(0,1fr)_minmax(190px,32dvh)] xl:grid-cols-[minmax(0,1fr)_280px] xl:grid-rows-1">
                   <article className="flex min-h-0 min-w-0 flex-col rounded-xl border border-white/10 bg-slate-950/70 p-1">
-                    <div className="mb-1 flex min-w-0 flex-col gap-1 xl:flex-row xl:items-center xl:justify-between">
-                      <div className="min-w-0">
+                    <div className="mb-1 grid min-w-0 grid-cols-1 gap-1 xl:grid-cols-[minmax(0,1fr)_260px] xl:items-center">
+                      <div className="min-w-0 rounded-xl bg-black/20 px-2 py-1">
                         <h3 className="truncate text-xs font-black text-white">{albumSource.title}</h3>
-                        <p className="text-[10px] text-slate-400">{albumSource.images.length} ảnh trong album · bấm ảnh để zoom</p>
+                        <p className="truncate text-[10px] text-slate-400">
+                          {albumSource.images.length} ảnh trong album · ảnh đang chọn{' '}
+                          {selectedAlbumImage
+                            ? albumSource.images.findIndex((image) => image.id === selectedAlbumImage.id) + 1
+                            : 0}
+                          /{albumSource.images.length}
+                        </p>
                       </div>
 
                       <div className="grid shrink-0 grid-cols-3 gap-1">
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/10"
+                          className="flex min-h-9 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                           onClick={() => void handleCopyField(`album-desc-${albumSource.title}`, 'mô tả sản phẩm', albumSource.description)}
                         >
                           {renderCopyIcon(`album-desc-${albumSource.title}`)}
@@ -3927,31 +3933,34 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-1 rounded-xl bg-cyan-300 px-2 py-1.5 text-[10px] font-black text-slate-950 transition hover:bg-cyan-200"
+                          className="flex min-h-9 items-center justify-center gap-1 rounded-xl bg-cyan-300 px-2 py-1.5 text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
                           onClick={handleDownloadSelectedAlbumImage}
+                          title="Tải ảnh đang chọn"
+                          aria-label="Tải ảnh đang chọn"
                         >
                           <FiDownload aria-hidden="true" className={iconClassName} />
                         </button>
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/10"
+                          className="flex min-h-9 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                           onClick={handleDownloadAlbumImages}
+                          title="Tải toàn bộ album"
+                          aria-label="Tải toàn bộ album"
                         >
                           <FiArchive aria-hidden="true" className={iconClassName} />
                         </button>
                       </div>
                     </div>
 
-                    <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl bg-slate-900">
+                    <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
                       {selectedAlbumImage ? (
                         <img
-
                           src={selectedAlbumImage.dataUrl}
                           alt={selectedAlbumImage.name}
                           width={1600}
                           height={1600}
-                          className="max-h-[calc(90dvh-132px)] w-full object-contain"
+                          className="h-full max-h-full w-full object-contain"
                         />
                       ) : (
                         <FiImage aria-hidden="true" className={`${iconClassName} text-slate-600`} />
@@ -3960,8 +3969,8 @@ export default function LocalProductsPage() {
                   </article>
 
                   <aside className="flex min-h-0 min-w-0 flex-col rounded-xl border border-white/10 bg-slate-950/70 p-1">
-                    <div className="mb-1 flex items-center justify-between gap-1">
-                      <h3 className="text-xs font-black text-white">Ảnh</h3>
+                    <div className="mb-1 flex items-center justify-between gap-1 rounded-xl bg-black/20 px-2 py-1">
+                      <h3 className="text-xs font-black text-white">Tất cả ảnh</h3>
                       <span className="text-[10px] font-bold text-slate-400">
                         {selectedAlbumImage
                           ? `${albumSource.images.findIndex((image) => image.id === selectedAlbumImage.id) + 1}/${albumSource.images.length}`
@@ -3969,7 +3978,7 @@ export default function LocalProductsPage() {
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 overflow-y-auto w-full items-center justify-center">
+                    <div className="grid min-h-0 flex-1 auto-rows-[88px] grid-cols-3 content-start gap-1.5 overflow-y-auto overscroll-contain pr-1 sm:auto-rows-[96px] sm:grid-cols-4 md:auto-rows-[104px] md:grid-cols-5 xl:auto-rows-[118px] xl:grid-cols-2">
                       {albumSource.images.map((image, index) => {
                         const active = image.id === selectedAlbumImage?.id;
 
@@ -3977,13 +3986,14 @@ export default function LocalProductsPage() {
                           <button
                             key={image.id}
                             type="button"
-                            className={`group relative aspect-square overflow-hidden rounded-xl bg-slate-900 ring-1 transition ${active ? 'ring-2 ring-cyan-300' : 'ring-white/10 hover:ring-cyan-300/60'
+                            className={`group relative h-full min-h-0 w-full overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:scale-[0.98] ${active ? 'ring-2 ring-cyan-300' : 'ring-white/10 hover:ring-cyan-300/60'
                               }`}
                             onClick={() => setSelectedAlbumImageId(image.id)}
                             title={`Ảnh ${index + 1}`}
                           >
-                            <img src={image.dataUrl} alt={image.name} width={1200} height={1200} className="h-full w-full object-contain" />
-                            <span className="absolute left-1 top-1 rounded-lg bg-black/70 px-1.5 py-0.5 text-[10px] font-black text-white">
+                            <img src={image.dataUrl} alt={image.name} width={1200} height={1200} className="h-full w-full object-cover" />
+                            <span className={`absolute left-1 top-1 rounded-lg px-1.5 py-0.5 text-[10px] font-black ${active ? 'bg-cyan-300 text-slate-950' : 'bg-black/70 text-white'
+                              }`}>
                               {index + 1}
                             </span>
                           </button>
