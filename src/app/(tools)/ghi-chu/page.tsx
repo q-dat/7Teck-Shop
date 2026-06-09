@@ -630,11 +630,12 @@ const convertFilesToImages = async (files: File[]): Promise<ProductImage[]> => {
   return Promise.all(
     validFiles.map(async (file, index) => {
       const now = new Date().toISOString();
+      const id = crypto.randomUUID();
       const dataUrl = await fileToCompressedDataUrl(file);
 
       return {
-        id: crypto.randomUUID(),
-        name: createSystemImageFilename(index),
+        id,
+        name: createSystemImageFilename(index, id),
         dataUrl,
         size: file.size,
         type: 'image/jpeg',
@@ -758,8 +759,23 @@ const buildPostText = (product: LocalProduct, commonDescription: string): string
   return lines.join('\n');
 };
 
-const createSystemImageFilename = (index: number): string => {
-  return `sanpham${index + 1}.jpg`;
+const createImageFilenameSuffix = (imageId: string): string => {
+  const normalizedId = imageId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8);
+
+  if (normalizedId) return normalizedId;
+
+  return String(Math.floor(Math.random() * 900) + 100);
+};
+
+const createSystemImageFilename = (index: number, imageId: string): string => {
+  return `sanpham${index + 1}-${createImageFilenameSuffix(imageId)}.jpg`;
+};
+
+const renameImagesByOrder = (images: ProductImage[]): ProductImage[] => {
+  return images.map((image, index) => ({
+    ...image,
+    name: createSystemImageFilename(index, image.id),
+  }));
 };
 
 const convertDataUrlToJpeg = async (dataUrl: string): Promise<string> => {
@@ -814,10 +830,10 @@ const downloadDataUrl = (dataUrl: string, filename: string): void => {
   link.remove();
 };
 
-const downloadImageAsJpg = async (dataUrl: string, index: number): Promise<void> => {
-  const jpegDataUrl = await convertDataUrlToJpeg(dataUrl);
+const downloadImageAsJpg = async (image: ProductImage, index: number): Promise<void> => {
+  const jpegDataUrl = await convertDataUrlToJpeg(image.dataUrl);
 
-  downloadDataUrl(jpegDataUrl, createSystemImageFilename(index));
+  downloadDataUrl(jpegDataUrl, createSystemImageFilename(index, image.id));
 };
 
 const downloadBlob = (blob: Blob, filename: string): void => {
@@ -861,7 +877,7 @@ const downloadImagesAsZip = async (request: DownloadRequest): Promise<void> => {
     const jpegDataUrl = await convertDataUrlToJpeg(image.dataUrl);
     const blob = await dataUrlToBlob(jpegDataUrl);
 
-    zip.file(createSystemImageFilename(request.startIndex + index), blob);
+    zip.file(createSystemImageFilename(request.startIndex + index, image.id), blob);
   }
 
   const zipBlob = await zip.generateAsync({
@@ -911,7 +927,7 @@ const saveImagesToChosenFolder = async (request: DownloadRequest): Promise<void>
 
     const jpegDataUrl = await convertDataUrlToJpeg(image.dataUrl);
     const blob = await dataUrlToBlob(jpegDataUrl);
-    const fileHandle = await directoryHandle.getFileHandle(createSystemImageFilename(request.startIndex + index), { create: true });
+    const fileHandle = await directoryHandle.getFileHandle(createSystemImageFilename(request.startIndex + index, image.id), { create: true });
     const writable = await fileHandle.createWritable();
 
     await writable.write(blob);
@@ -1668,7 +1684,7 @@ export default function LocalProductsPage() {
 
       setDraft((current) => ({
         ...current,
-        images: [...current.images, ...images],
+        images: renameImagesByOrder([...images, ...current.images]),
       }));
 
       Toastify(`Đã thêm ${images.length} ảnh`, 200);
@@ -1717,7 +1733,7 @@ export default function LocalProductsPage() {
   const removeDraftImage = (imageId: string): void => {
     setDraft((current) => ({
       ...current,
-      images: current.images.filter((image) => image.id !== imageId),
+      images: renameImagesByOrder(current.images.filter((image) => image.id !== imageId)),
     }));
   };
 
@@ -1739,7 +1755,7 @@ export default function LocalProductsPage() {
 
       return {
         ...current,
-        images: nextImages,
+        images: renameImagesByOrder(nextImages),
       };
     });
   };
@@ -1978,7 +1994,7 @@ export default function LocalProductsPage() {
 
     pendingDownload.images.forEach((image, index) => {
       window.setTimeout(() => {
-        void downloadImageAsJpg(image.dataUrl, pendingDownload.startIndex + index);
+        void downloadImageAsJpg(image, pendingDownload.startIndex + index);
       }, index * 180);
     });
 
