@@ -3120,141 +3120,148 @@ export default function LocalProductsPage() {
 
               {activeModal === 'product' ? (
                 <form
-                  className="grid h-full min-h-0 grid-cols-1 gap-2 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
+                  className="flex h-full min-h-0 flex-col overflow-hidden"
                   onSubmit={(event) => void handleSubmit(event)}
                 >
-                  <section className="flex min-h-0 flex-col gap-2">
-                    <label className="flex flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">Tên sản phẩm</span>
-                      <input
-                        value={draft.name}
-                        onChange={(event) => updateDraftField('name', event.target.value)}
-                        className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
-                        placeholder="Dell Latitude 7440 i5 13th"
-                      />
-                    </label>
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+                    <div className="grid min-h-full grid-cols-1 gap-2 pb-24 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:pb-2">
+                      <section className="order-2 flex min-h-0 flex-col gap-2 xl:order-1">
+                        <label className="flex flex-col gap-1.5">
+                          <span className="text-xs font-bold text-slate-300">Tên sản phẩm</span>
+                          <input
+                            value={draft.name}
+                            onChange={(event) => updateDraftField('name', event.target.value)}
+                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
+                            placeholder="Dell Latitude 7440 i5 13th"
+                          />
+                        </label>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <label className="flex flex-col gap-2">
-                        <span className="text-xs font-bold text-slate-300">Giá</span>
-                        <input
-                          value={draft.priceText}
-                          onChange={(event) => updateDraftField('priceText', event.target.value)}
-                          className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
-                          placeholder="13tr8"
-                        />
-                      </label>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          <label className="flex flex-col gap-1.5">
+                            <span className="text-xs font-bold text-slate-300">Giá</span>
+                            <input
+                              value={draft.priceText}
+                              onChange={(event) => updateDraftField('priceText', event.target.value)}
+                              className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
+                              placeholder="13tr8"
+                            />
+                          </label>
 
-                      <label className="flex flex-col gap-2">
-                        <span className="text-xs font-bold text-slate-300">Danh mục</span>
-                        <input
-                          value={draft.category}
-                          onChange={(event) => updateDraftField('category', event.target.value)}
-                          className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
-                          placeholder="Laptop Dell"
-                        />
-                      </label>
+                          <label className="flex flex-col gap-1.5">
+                            <span className="text-xs font-bold text-slate-300">Danh mục</span>
+                            <input
+                              value={draft.category}
+                              onChange={(event) => updateDraftField('category', event.target.value)}
+                              className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
+                              placeholder="Laptop Dell"
+                            />
+                          </label>
+                        </div>
+
+                        <label className="flex min-h-0 flex-col gap-1.5">
+                          <span className="text-xs font-bold text-slate-300">Mô tả sản phẩm</span>
+                          <textarea
+                            value={draft.description}
+                            onChange={(event) => updateDraftField('description', event.target.value)}
+                            rows={8}
+                            className="min-h-[220px] w-full resize-y rounded-2xl border border-white/10 bg-slate-950/80 p-3 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60 sm:min-h-[260px] xl:min-h-[calc(90dvh-260px)] xl:resize-none"
+                            placeholder="Để trống nếu muốn dùng mô tả chung..."
+                          />
+                        </label>
+                      </section>
+
+                      <section className="order-1 flex min-h-0 flex-col gap-2 xl:order-2">
+                        <label
+                          className={`cursor-pointer rounded-2xl border border-dashed p-2 text-center transition ${isDragging
+                            ? 'border-cyan-300/80 bg-cyan-300/10'
+                            : 'border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5'
+                            }`}
+                          onDrop={(event) => void handleDrop(event)}
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                        >
+                          <div className="flex items-center justify-center gap-2 text-sm font-black text-white">
+                            <FiUploadCloud aria-hidden="true" className={iconClassName} />
+                          </div>
+                          <div className="mt-1 text-[11px] leading-4 text-slate-400">
+                            {isProcessingImages ? 'Đang xử lý ảnh...' : 'Chọn, kéo thả hoặc paste ảnh. Hỗ trợ nhiều ảnh, tự nén JPG.'}
+                          </div>
+                          <input type="file" accept="image/*" multiple className="hidden" onChange={(event) => void handleImageInput(event)} />
+                        </label>
+
+                        {draft.images.length > 0 ? (
+                          <div className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                              <span className="flex items-center gap-2 text-xs font-black text-white">
+                                <FiImage aria-hidden="true" className={iconClassName} />
+                                {draft.images.length} ảnh
+                              </span>
+
+                              <button
+                                type="button"
+                                className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-slate-300 transition hover:bg-white/10"
+                                onClick={() => updateDraftField('images', [])}
+                              >
+                                <FiTrash2 aria-hidden="true" className={iconClassName} />
+                              </button>
+                            </div>
+
+                            <div className="grid max-h-[260px] grid-cols-3 gap-1.5 overflow-y-auto overscroll-contain pr-1 sm:max-h-[320px] sm:grid-cols-4 md:grid-cols-5 xl:max-h-[calc(90dvh-190px)] xl:grid-cols-4 2xl:grid-cols-5">
+                              {draft.images.map((image, index) => {
+                                const isDraggingImage = draggingDraftImageId === image.id;
+
+                                return (
+                                  <div
+                                    key={image.id}
+                                    draggable
+                                    className={`group relative h-[88px] cursor-grab overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:cursor-grabbing sm:h-[96px] xl:h-[108px] ${isDraggingImage ? 'scale-95 opacity-60 ring-cyan-300' : 'ring-white/10 hover:ring-cyan-300/70'
+                                      }`}
+                                    onDragStart={(event) => {
+                                      event.dataTransfer.setData('text/plain', image.id);
+                                      setDraggingDraftImageId(image.id);
+                                    }}
+                                    onDragOver={(event) => event.preventDefault()}
+                                    onDrop={(event) => {
+                                      event.preventDefault();
+                                      const sourceImageId = event.dataTransfer.getData('text/plain') || draggingDraftImageId;
+
+                                      reorderDraftImage(sourceImageId, image.id);
+                                      setDraggingDraftImageId('');
+                                    }}
+                                    onDragEnd={() => setDraggingDraftImageId('')}
+                                  >
+                                    <img src={image.dataUrl} alt={image.name} width={1200} height={1200} className="h-full w-full object-contain" />
+
+                                    <div className="absolute left-1 top-1 rounded-lg bg-black/70 px-1.5 py-0.5 text-[10px] font-black text-white">
+                                      {index + 1}
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-xs text-white opacity-100 transition hover:bg-rose-400 xl:opacity-0 xl:group-hover:opacity-100"
+                                      onClick={() => removeDraftImage(image.id)}
+                                    >
+                                      <FiX aria-hidden="true" className={iconClassName} />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : null}
+                      </section>
                     </div>
+                  </div>
 
-                    <label className="flex min-h-0 flex-1 flex-col gap-2">
-                      <span className="text-xs font-bold text-slate-300">Mô tả sản phẩm</span>
-                      <textarea
-                        value={draft.description}
-                        onChange={(event) => updateDraftField('description', event.target.value)}
-                        rows={8}
-                        className="h-full min-h-[45dvh] w-full flex-1 resize-none rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
-                        placeholder="Để trống nếu muốn dùng mô tả chung..."
-                      />
-                    </label>
-
+                  <div className="shrink-0 border-t border-white/10 bg-slate-950/95 p-2">
                     <button
                       type="submit"
-                      className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
                     >
                       {editingId ? <FiRefreshCcw aria-hidden="true" className={iconClassName} /> : <FiPlus aria-hidden="true" className={iconClassName} />}
+                      {editingId ? 'Lưu thay đổi' : 'Thêm sản phẩm'}
                     </button>
-                  </section>
-
-                  <section className="flex flex-col gap-2">
-                    <label
-                      className={`cursor-pointer rounded-2xl border border-dashed p-2 text-center transition ${isDragging
-                        ? 'border-cyan-300/80 bg-cyan-300/10'
-                        : 'border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5'
-                        }`}
-                      onDrop={(event) => void handleDrop(event)}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                    >
-                      <div className="flex items-center justify-center gap-2 text-sm font-black text-white">
-                        <FiUploadCloud aria-hidden="true" className={iconClassName} />
-                      </div>
-                      <div className="mt-1 text-[11px] leading-4 text-slate-400">
-                        {isProcessingImages ? 'Đang xử lý ảnh...' : 'Chọn, kéo thả hoặc paste ảnh. Hỗ trợ nhiều ảnh, tự nén JPG.'}
-                      </div>
-                      <input type="file" accept="image/*" multiple className="hidden" onChange={(event) => void handleImageInput(event)} />
-                    </label>
-
-                    {draft.images.length > 0 ? (
-                      <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
-                        <div className="mb-1 flex items-center justify-between gap-1">
-                          <span className="flex items-center gap-2 text-xs font-black text-white">
-                            <FiImage aria-hidden="true" className={iconClassName} />
-                            {draft.images.length} ảnh
-                          </span>
-
-                          <button
-                            type="button"
-                            className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-slate-300 transition hover:bg-white/10"
-                            onClick={() => updateDraftField('images', [])}
-                          >
-                            <FiTrash2 aria-hidden="true" className={iconClassName} />
-                          </button>
-                        </div>
-
-                        <div className="grid max-h-[66dvh] grid-cols-4 gap-1 overflow-y-auto pr-1 xl:grid-cols-8">
-                          {draft.images.map((image, index) => {
-                            const isDraggingImage = draggingDraftImageId === image.id;
-
-                            return (
-                              <div
-                                key={image.id}
-                                draggable
-                                className={`group relative cursor-grab overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:cursor-grabbing ${isDraggingImage ? 'scale-95 opacity-60 ring-cyan-300' : 'ring-white/10 hover:ring-cyan-300/70'
-                                  }`}
-                                onDragStart={(event) => {
-                                  event.dataTransfer.setData('text/plain', image.id);
-                                  setDraggingDraftImageId(image.id);
-                                }}
-                                onDragOver={(event) => event.preventDefault()}
-                                onDrop={(event) => {
-                                  event.preventDefault();
-                                  const sourceImageId = event.dataTransfer.getData('text/plain') || draggingDraftImageId;
-
-                                  reorderDraftImage(sourceImageId, image.id);
-                                  setDraggingDraftImageId('');
-                                }}
-                                onDragEnd={() => setDraggingDraftImageId('')}
-                              >
-                                <img src={image.dataUrl} alt={image.name} width={1200} height={1200} className="aspect-square w-full object-contain" />
-
-                                <div className="absolute left-1 top-1 rounded-lg bg-black/70 px-1.5 py-0.5 text-[10px] font-black text-white">
-                                  {index + 1}
-                                </div>
-
-                                <button
-                                  type="button"
-                                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-xs text-white opacity-100 transition hover:bg-rose-400 xl:opacity-0 xl:group-hover:opacity-100"
-                                  onClick={() => removeDraftImage(image.id)}
-                                >
-                                  <FiX aria-hidden="true" className={iconClassName} />
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : null}
-                  </section>
+                  </div>
                 </form>
               ) : null}
 
