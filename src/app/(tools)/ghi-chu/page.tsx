@@ -1367,6 +1367,9 @@ export default function LocalProductsPage() {
   const activeModal = modalStack[modalStack.length - 1] ?? "";
   const [selectedSlotId, setSelectedSlotId] = useState<string>("");
   const [selectedAlbumImageId, setSelectedAlbumImageId] = useState<string>("");
+  const [selectedAlbumImageIds, setSelectedAlbumImageIds] = useState<Set<string>>(
+    () => new Set<string>(),
+  );
   const [albumSource, setAlbumSource] = useState<AlbumSource | null>(null);
   const [copiedKey, setCopiedKey] = useState<string>("");
   const [postedRecords, setPostedRecords] = useState<PostedRecord[]>([]);
@@ -1911,6 +1914,7 @@ export default function LocalProductsPage() {
 
       if (closingModal === "imageAlbum") {
         setSelectedAlbumImageId("");
+        setSelectedAlbumImageIds(new Set<string>());
         setAlbumSource(null);
       }
 
@@ -2348,29 +2352,66 @@ export default function LocalProductsPage() {
       return;
     }
 
+    const firstImageId = source.images[0]?.id ?? "";
+
     setAlbumSource(source);
-    setSelectedAlbumImageId(source.images[0]?.id ?? "");
+    setSelectedAlbumImageId(firstImageId);
+    setSelectedAlbumImageIds(
+      firstImageId ? new Set<string>([firstImageId]) : new Set<string>(),
+    );
     openModal("imageAlbum");
   };
 
-  const handleDownloadSelectedAlbumImage = (): void => {
-    if (!albumSource || !selectedAlbumImage) {
+  const toggleSelectedAlbumImage = (imageId: string): void => {
+    setSelectedAlbumImageId(imageId);
+
+    setSelectedAlbumImageIds((current) => {
+      const nextIds = new Set(current);
+
+      if (nextIds.has(imageId)) {
+        nextIds.delete(imageId);
+        return nextIds;
+      }
+
+      nextIds.add(imageId);
+      return nextIds;
+    });
+  };
+
+  const handleDownloadSelectedAlbumImages = (): void => {
+    if (!albumSource) {
+      Toastify("Chưa có album để tải", 300);
+      return;
+    }
+
+    const selectedImages = albumSource.images.filter((image) =>
+      selectedAlbumImageIds.has(image.id),
+    );
+
+    if (selectedImages.length === 0) {
       Toastify("Chưa chọn ảnh để tải", 300);
       return;
     }
 
-    const selectedIndex = albumSource.images.findIndex(
-      (image) => image.id === selectedAlbumImage.id,
-    );
-    const safeIndex = selectedIndex >= 0 ? selectedIndex : 0;
-
     requestDownload({
-      title: "Tải ảnh đang chọn",
-      description: `Bạn có muốn tải ảnh số ${safeIndex + 1} về máy không?`,
-      mode: "single",
-      images: [selectedAlbumImage],
-      startIndex: safeIndex,
+      title: "Tải ảnh đã chọn",
+      description: `Bạn có muốn tải ${selectedImages.length} ảnh đã chọn về máy không?`,
+      mode: selectedImages.length === 1 ? "single" : "multiple",
+      images: selectedImages,
+      startIndex: 0,
     });
+  };
+
+  const handleSelectAllAlbumImages = (): void => {
+    if (!albumSource) return;
+
+    setSelectedAlbumImageIds(
+      new Set<string>(albumSource.images.map((image) => image.id)),
+    );
+  };
+
+  const handleClearSelectedAlbumImages = (): void => {
+    setSelectedAlbumImageIds(new Set<string>());
   };
 
   const handleDownloadAlbumImages = (): void => {
@@ -3237,6 +3278,8 @@ export default function LocalProductsPage() {
                   <article
                     key={product.id}
                     className={`overflow-hidden rounded-xl border shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-slate-900 ${
+                      productDone ? "opacity-70" : ""
+                    } ${
                       active
                         ? "border-cyan-300/70 bg-cyan-300/10 ring-1 ring-cyan-300/30"
                         : "border-white/10 bg-slate-950/80"
@@ -3248,7 +3291,9 @@ export default function LocalProductsPage() {
                   >
                     <button
                       type="button"
-                      className="relative flex aspect-square w-full items-center justify-center bg-slate-900"
+                      className={`relative flex aspect-square w-full items-center justify-center bg-slate-900 ${
+                        productDone ? "after:absolute after:inset-0 after:bg-slate-950/30" : ""
+                      }`}
                       onClick={(event) => {
                         event.stopPropagation();
                         openImageAlbum({
@@ -3264,7 +3309,9 @@ export default function LocalProductsPage() {
                           alt={product.name}
                           width={1200}
                           height={1200}
-                          className="h-full w-full object-contain"
+                          className={`h-full w-full object-contain transition duration-300 ${
+                            productDone ? "blur-[2px] grayscale opacity-40" : ""
+                          }`}
                         />
                       ) : (
                         <FiImage
@@ -5042,18 +5089,17 @@ export default function LocalProductsPage() {
                           {albumSource.title}
                         </h3>
                         <p className="truncate text-[10px] text-slate-400">
-                          {albumSource.images.length} ảnh trong album · ảnh đang
-                          chọn{" "}
+                          {albumSource.images.length} ảnh trong album · đang xem{" "}
                           {selectedAlbumImage
                             ? albumSource.images.findIndex(
                                 (image) => image.id === selectedAlbumImage.id,
                               ) + 1
                             : 0}
-                          /{albumSource.images.length}
+                          /{albumSource.images.length} · đã chọn {selectedAlbumImageIds.size}
                         </p>
                       </div>
 
-                      <div className="grid shrink-0 grid-cols-3 gap-1">
+                      <div className="grid shrink-0 grid-cols-5 gap-1">
                         <button
                           type="button"
                           className="flex min-h-9 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
@@ -5072,14 +5118,35 @@ export default function LocalProductsPage() {
                         <button
                           type="button"
                           className="flex min-h-9 items-center justify-center gap-1 rounded-xl bg-cyan-300 px-2 py-1.5 text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
-                          onClick={handleDownloadSelectedAlbumImage}
-                          title="Tải ảnh đang chọn"
-                          aria-label="Tải ảnh đang chọn"
+                          onClick={handleDownloadSelectedAlbumImages}
+                          title="Tải ảnh đã chọn"
+                          aria-label="Tải ảnh đã chọn"
                         >
                           <FiDownload
                             aria-hidden="true"
                             className={iconClassName}
                           />
+                          {selectedAlbumImageIds.size}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="flex min-h-9 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                          onClick={handleSelectAllAlbumImages}
+                          title="Chọn tất cả ảnh"
+                          aria-label="Chọn tất cả ảnh"
+                        >
+                          Tất cả
+                        </button>
+
+                        <button
+                          type="button"
+                          className="flex min-h-9 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                          onClick={handleClearSelectedAlbumImages}
+                          title="Bỏ chọn ảnh"
+                          aria-label="Bỏ chọn ảnh"
+                        >
+                          Bỏ
                         </button>
 
                         <button
@@ -5130,17 +5197,20 @@ export default function LocalProductsPage() {
                     <div className="grid min-h-0 flex-1 auto-rows-[88px] grid-cols-3 content-start gap-1.5 overflow-y-auto overscroll-contain pr-1 sm:auto-rows-[96px] sm:grid-cols-4 md:auto-rows-[104px] md:grid-cols-5 xl:auto-rows-[118px] xl:grid-cols-2">
                       {albumSource.images.map((image, index) => {
                         const active = image.id === selectedAlbumImage?.id;
+                        const checked = selectedAlbumImageIds.has(image.id);
 
                         return (
                           <button
                             key={image.id}
                             type="button"
                             className={`group relative h-full min-h-0 w-full overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:scale-[0.98] ${
-                              active
+                              checked
                                 ? "ring-2 ring-cyan-300"
-                                : "ring-white/10 hover:ring-cyan-300/60"
+                                : active
+                                  ? "ring-2 ring-white/60"
+                                  : "ring-white/10 hover:ring-cyan-300/60"
                             }`}
-                            onClick={() => setSelectedAlbumImageId(image.id)}
+                            onClick={() => toggleSelectedAlbumImage(image.id)}
                             title={`Ảnh ${index + 1}`}
                           >
                             <img
@@ -5159,6 +5229,15 @@ export default function LocalProductsPage() {
                             >
                               {index + 1}
                             </span>
+
+                            {checked ? (
+                              <span className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-cyan-300 text-slate-950 shadow-lg shadow-black/30">
+                                <FiCheck
+                                  aria-hidden="true"
+                                  className="h-3.5 w-3.5"
+                                />
+                              </span>
+                            ) : null}
                           </button>
                         );
                       })}
