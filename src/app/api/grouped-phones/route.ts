@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import PhoneModel from '@/server/models/phone.model';
 import '@/server/models/registerCatalogModels';
 import { connectDB } from '@/lib/mongodb';
-import { filterPhoneItems, getModelErrorMessage } from '@/server/utils/api/productFilters';
-import { paginateArray } from '@/server/utils/api/pagination';
+import { filterPhoneItems, getModelErrorMessage, groupByCatalog } from '@/server/utils/api/productFilters';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,34 +24,28 @@ export async function GET(request: NextRequest) {
     const filterQuery = buildPhoneFilter(searchParams);
 
     const phones = await PhoneModel.find(filterQuery)
+      .select('-thumbnail -__v -createdAt -updatedAt')
       .populate({
         path: 'phone_catalog_id',
-        select: 'phone_catalog_id name img price status content configuration_and_memory design_and_material',
+        select: 'name img price status content configuration_and_memory phone_catalog_id',
       })
       .lean();
 
     const filteredItems = filterPhoneItems(phones, searchParams);
-    const paginatedResult = paginateArray(filteredItems, searchParams, {
-      defaultPage: 1,
-      defaultLimit: 20,
-      maxLimit: 100,
-    });
-    const totalCount = await PhoneModel.countDocuments(filterQuery);
+    const count = await PhoneModel.countDocuments();
 
     return NextResponse.json({
       message: 'Lấy danh sách điện thoại thành công!',
-      count: totalCount,
+      count,
       visibleCount: filteredItems.length,
-      pageCount: paginatedResult.items.length,
-      pagination: paginatedResult.pagination,
-      phones: paginatedResult.items,
+      groupedPhones: groupByCatalog(filteredItems, ['phone_catalog_id']),
     });
   } catch (error) {
     return NextResponse.json(
       {
         message: 'Lỗi máy chủ!',
         error: getModelErrorMessage(error),
-        phones: [],
+        groupedPhones: [],
       },
       { status: 500 },
     );
