@@ -1,28 +1,27 @@
 import { NextResponse } from 'next/server';
-import MacbookModel from '@/server/models/macbook.model';
-import '@/server/models/registerCatalogModels';
-import { connectDB } from '@/lib/mongodb';
-import { getModelErrorMessage } from '@/server/utils/api/productFilters';
+import { getMacbookByIdData } from '@/server/repositories/macbook.repository';
 
 export const dynamic = 'force-dynamic';
 
-type RouteContext = { params: Promise<{ id: string }> };
+type RouteContext = {
+  params: Promise<{
+    id: string;
+  }>;
+};
 
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
-    await connectDB();
+    const data = await getMacbookByIdData(id);
 
-    const macbook = await MacbookModel.findById(id)
-      .populate({ path: 'macbook_catalog_id', select: '-createdAt -updatedAt -__v' })
-      .lean();
-
-    if (!macbook) {
+    if (!data) {
       return NextResponse.json({ message: 'Sản phẩm Macbook không tồn tại!' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Lấy sản phẩm Macbook theo id thành công!', macbook });
+    return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ message: 'Lỗi máy chủ!', error: getModelErrorMessage(error) }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Unknown error';
+
+    return NextResponse.json({ message: 'Lỗi máy chủ!', error: message }, { status: 500 });
   }
 }

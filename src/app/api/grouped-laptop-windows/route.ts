@@ -1,46 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import WindowsModel from '@/server/models/windows.model';
-import '@/server/models/registerCatalogModels';
-import { connectDB } from '@/lib/mongodb';
-import { filterByCatalogStatus, getModelErrorMessage, groupByCatalog } from '@/server/utils/api/productFilters';
+import { getGroupedWindowsData } from '@/server/repositories/windows.repository';
 
 export const dynamic = 'force-dynamic';
 
-function buildGroupedWindowsFilter(searchParams: URLSearchParams) {
-  const catalogID = searchParams.get('catalogID');
-  const name = searchParams.get('name');
-
-  return {
-    ...(catalogID ? { windows_catalog_id: catalogID } : {}),
-    ...(name ? { name: { $regex: name, $options: 'i' } } : {}),
-  };
-}
-
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
+    const params = request.nextUrl.searchParams;
 
-    const searchParams = request.nextUrl.searchParams;
-    const status = searchParams.get('status') ?? searchParams.get('w_cat_status');
-    const filterQuery = buildGroupedWindowsFilter(searchParams);
-
-    const windows = await WindowsModel.find(filterQuery)
-      .populate({ path: 'windows_catalog_id', select: '-createdAt -updatedAt -__v' })
-      .lean();
-
-    const filteredItems = filterByCatalogStatus(windows, status, ['windows_catalog_id', 'w_cat_status']);
-    const count = await WindowsModel.countDocuments();
-
-    return NextResponse.json({
-      message: 'Lấy danh sách Windows thành công!',
-      count,
-      visibleCount: filteredItems.length,
-      groupedWindows: groupByCatalog(filteredItems, ['windows_catalog_id']),
+    const data = await getGroupedWindowsData({
+      catalogID: params.get('catalogID') ?? undefined,
+      name: params.get('name') ?? undefined,
+      status: params.get('status') ?? undefined,
+      w_cat_status: params.get('w_cat_status') ?? undefined,
     });
+
+    return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json(
-      { message: 'Lỗi máy chủ!', error: getModelErrorMessage(error), groupedWindows: [] },
-      { status: 500 },
-    );
+    const message = error instanceof Error ? error.message : 'Unknown error';
+
+    return NextResponse.json({ message: 'Lỗi máy chủ!', error: message, groupedWindows: [] }, { status: 500 });
   }
 }

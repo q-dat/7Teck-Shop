@@ -1,60 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import PhoneModel from '@/server/models/phone.model';
-import '@/server/models/registerCatalogModels';
-import { connectDB } from '@/lib/mongodb';
-import { filterPhoneItems, getModelErrorMessage } from '@/server/utils/api/productFilters';
-import { paginateArray } from '@/server/utils/api/pagination';
+import { getPhonesData, PhoneSort } from '@/server/repositories/phone.repository';
 
 export const dynamic = 'force-dynamic';
 
-function buildPhoneFilter(searchParams: URLSearchParams) {
-  const catalogID = searchParams.get('catalogID');
-  const name = searchParams.get('name');
-
-  return {
-    ...(catalogID ? { phone_catalog_id: catalogID } : {}),
-    ...(name ? { name: { $regex: name, $options: 'i' } } : {}),
-  };
-}
-
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
+    const params = request.nextUrl.searchParams;
 
-    const searchParams = request.nextUrl.searchParams;
-    const filterQuery = buildPhoneFilter(searchParams);
-
-    const phones = await PhoneModel.find(filterQuery)
-      .populate({
-        path: 'phone_catalog_id',
-        select: 'phone_catalog_id name img price status content configuration_and_memory design_and_material',
-      })
-      .lean();
-
-    const filteredItems = filterPhoneItems(phones, searchParams);
-    const paginatedResult = paginateArray(filteredItems, searchParams, {
-      defaultPage: 1,
-      defaultLimit: 20,
-      maxLimit: 100,
+    const data = await getPhonesData({
+      catalogID: params.get('catalogID') ?? undefined,
+      name: params.get('name') ?? undefined,
+      status: params.get('status') ?? undefined,
+      hasProduct: params.get('hasProduct') ?? undefined,
+      price: params.get('price') ?? undefined,
+      minPrice: params.get('minPrice') ?? undefined,
+      maxPrice: params.get('maxPrice') ?? undefined,
+      color: params.get('color') ?? undefined,
+      ram: params.get('ram') ?? undefined,
+      storage: params.get('storage') ?? undefined,
+      sort: (params.get('sort') as PhoneSort | null) ?? undefined,
+      page: params.get('page') ?? undefined,
+      limit: params.get('limit') ?? undefined,
     });
-    const totalCount = await PhoneModel.countDocuments(filterQuery);
 
-    return NextResponse.json({
-      message: 'Lấy danh sách điện thoại thành công!',
-      count: totalCount,
-      visibleCount: filteredItems.length,
-      pageCount: paginatedResult.items.length,
-      pagination: paginatedResult.pagination,
-      phones: paginatedResult.items,
-    });
+    return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json(
-      {
-        message: 'Lỗi máy chủ!',
-        error: getModelErrorMessage(error),
-        phones: [],
-      },
-      { status: 500 },
-    );
+    const message = error instanceof Error ? error.message : 'Unknown error';
+
+    return NextResponse.json({ message: 'Lỗi máy chủ!', error: message, phones: [] }, { status: 500 });
   }
 }

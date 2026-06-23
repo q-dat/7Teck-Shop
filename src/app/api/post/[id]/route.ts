@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTabletByIdData } from '@/server/repositories/tablet.repository';
+import { getPostByIdData } from '@/server/repositories/post.repository';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,10 +12,10 @@ type RouteContext = {
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
-    const data = await getTabletByIdData(id);
+    const data = await getPostByIdData(id);
 
     if (!data) {
-      return NextResponse.json({ message: 'Máy tính bảng không tồn tại!' }, { status: 404 });
+      return NextResponse.json({ message: 'Bài viết không tồn tại!' }, { status: 404 });
     }
 
     return NextResponse.json(data);

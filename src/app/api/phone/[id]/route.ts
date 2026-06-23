@@ -1,30 +1,27 @@
 import { NextResponse } from 'next/server';
-import PhoneModel from '@/server/models/phone.model';
-import '@/server/models/registerCatalogModels';
-import { connectDB } from '@/lib/mongodb';
-import { getModelErrorMessage } from '@/server/utils/api/productFilters';
+import { getPhoneByIdData } from '@/server/repositories/phone.repository';
 
 export const dynamic = 'force-dynamic';
 
-type RouteContext = { params: Promise<{ id: string }> };
+type RouteContext = {
+  params: Promise<{
+    id: string;
+  }>;
+};
 
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
-    await connectDB();
+    const data = await getPhoneByIdData(id);
 
-    const phone = await PhoneModel.findById(id)
-      .populate({ path: 'phone_catalog_id', select: '-createdAt -updatedAt -__v' })
-      .lean();
-
-    if (!phone) {
+    if (!data) {
       return NextResponse.json({ message: 'Điện thoại không tồn tại!' }, { status: 404 });
     }
 
-    PhoneModel.updateOne({ _id: phone._id }, { $inc: { view: 1 } }).exec();
-
-    return NextResponse.json({ message: 'Lấy điện thoại theo id thành công!', phone });
+    return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ message: 'Lỗi máy chủ!', error: getModelErrorMessage(error) }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Unknown error';
+
+    return NextResponse.json({ message: 'Lỗi máy chủ!', error: message }, { status: 500 });
   }
 }

@@ -1,53 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import PhoneModel from '@/server/models/phone.model';
-import '@/server/models/registerCatalogModels';
-import { connectDB } from '@/lib/mongodb';
-import { filterPhoneItems, getModelErrorMessage, groupByCatalog } from '@/server/utils/api/productFilters';
+import { getGroupedPhonesData, PhoneSort } from '@/server/repositories/phone.repository';
 
 export const dynamic = 'force-dynamic';
 
-function buildPhoneFilter(searchParams: URLSearchParams) {
-  const catalogID = searchParams.get('catalogID');
-  const name = searchParams.get('name');
-
-  return {
-    ...(catalogID ? { phone_catalog_id: catalogID } : {}),
-    ...(name ? { name: { $regex: name, $options: 'i' } } : {}),
-  };
-}
-
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
+    const params = request.nextUrl.searchParams;
 
-    const searchParams = request.nextUrl.searchParams;
-    const filterQuery = buildPhoneFilter(searchParams);
-
-    const phones = await PhoneModel.find(filterQuery)
-      .select('-thumbnail -__v -createdAt -updatedAt')
-      .populate({
-        path: 'phone_catalog_id',
-        select: 'name img price status content configuration_and_memory phone_catalog_id',
-      })
-      .lean();
-
-    const filteredItems = filterPhoneItems(phones, searchParams);
-    const count = await PhoneModel.countDocuments();
-
-    return NextResponse.json({
-      message: 'Lấy danh sách điện thoại thành công!',
-      count,
-      visibleCount: filteredItems.length,
-      groupedPhones: groupByCatalog(filteredItems, ['phone_catalog_id']),
+    const data = await getGroupedPhonesData({
+      catalogID: params.get('catalogID') ?? undefined,
+      name: params.get('name') ?? undefined,
+      status: params.get('status') ?? undefined,
+      hasProduct: params.get('hasProduct') ?? undefined,
+      price: params.get('price') ?? undefined,
+      minPrice: params.get('minPrice') ?? undefined,
+      maxPrice: params.get('maxPrice') ?? undefined,
+      color: params.get('color') ?? undefined,
+      ram: params.get('ram') ?? undefined,
+      storage: params.get('storage') ?? undefined,
+      sort: (params.get('sort') as PhoneSort | null) ?? undefined,
     });
+
+    return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json(
-      {
-        message: 'Lỗi máy chủ!',
-        error: getModelErrorMessage(error),
-        groupedPhones: [],
-      },
-      { status: 500 },
-    );
+    const message = error instanceof Error ? error.message : 'Unknown error';
+
+    return NextResponse.json({ message: 'Lỗi máy chủ!', error: message, groupedPhones: [] }, { status: 500 });
   }
 }

@@ -1,44 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import MacbookModel from '@/server/models/macbook.model';
-import '@/server/models/registerCatalogModels';
-import { connectDB } from '@/lib/mongodb';
-import { filterByCatalogStatus, getModelErrorMessage } from '@/server/utils/api/productFilters';
+import { getMacbookData } from '@/server/repositories/macbook.repository';
 
 export const dynamic = 'force-dynamic';
 
-function buildMacbookFilter(searchParams: URLSearchParams) {
-  const catalogID = searchParams.get('catalogID');
-  const name = searchParams.get('name');
-
-  return {
-    ...(catalogID ? { macbook_catalog_id: catalogID } : {}),
-    ...(name ? { macbook_name: { $regex: name, $options: 'i' } } : {}),
-  };
-}
-
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
+    const params = request.nextUrl.searchParams;
 
-    const searchParams = request.nextUrl.searchParams;
-    const mCatStatus = searchParams.get('m_cat_status') ?? searchParams.get('status');
-    const filterQuery = buildMacbookFilter(searchParams);
-
-    const macbook = await MacbookModel.find(filterQuery)
-      .sort({ updatedAt: -1 })
-      .populate({ path: 'macbook_catalog_id', select: '-createdAt -updatedAt -__v' })
-      .lean();
-
-    const filteredItems = filterByCatalogStatus(macbook, mCatStatus, ['macbook_catalog_id', 'm_cat_status']);
-    const count = await MacbookModel.countDocuments(filterQuery);
-
-    return NextResponse.json({
-      message: 'Lấy danh sách macbook thành công!',
-      count,
-      visibleCount: filteredItems.length,
-      macbook: filteredItems,
+    const data = await getMacbookData({
+      catalogID: params.get('catalogID') ?? undefined,
+      name: params.get('name') ?? undefined,
+      status: params.get('status') ?? undefined,
+      m_cat_status: params.get('m_cat_status') ?? undefined,
     });
+
+    return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ message: 'Lỗi máy chủ!', error: getModelErrorMessage(error), macbook: [] }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Unknown error';
+
+    return NextResponse.json({ message: 'Lỗi máy chủ!', error: message, macbook: [] }, { status: 500 });
   }
 }
