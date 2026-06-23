@@ -117,11 +117,11 @@ type ScheduleSlot = {
 
 type ScheduleWarning = {
   type:
-    | "emptyProducts"
-    | "emptyCategory"
-    | "notEnoughProducts"
-    | "overflow"
-    | "invalidTime";
+  | "emptyProducts"
+  | "emptyCategory"
+  | "notEnoughProducts"
+  | "overflow"
+  | "invalidTime";
   message: string;
 };
 
@@ -164,6 +164,7 @@ type DownloadRequest = {
   mode: DownloadMode;
   images: ProductImage[];
   startIndex: number;
+  textToCopy?: string;
 };
 
 const DB_NAME = "local_product_store";
@@ -562,20 +563,20 @@ const loadScheduleConfig = (): ScheduleConfig => {
     const record = parsed as Record<string, unknown>;
     const selectedCategories = Array.isArray(record.selectedCategories)
       ? Array.from(
-          new Map(
-            record.selectedCategories
-              .filter((item): item is string => typeof item === "string")
-              .map((item) => [
-                normalizeTextKey(item),
-                normalizeCategoryName(item),
-              ]),
-          ).values(),
-        ).filter(Boolean)
+        new Map(
+          record.selectedCategories
+            .filter((item): item is string => typeof item === "string")
+            .map((item) => [
+              normalizeTextKey(item),
+              normalizeCategoryName(item),
+            ]),
+        ).values(),
+      ).filter(Boolean)
       : [];
     const taskNames = Array.isArray(record.taskNames)
       ? record.taskNames.filter(
-          (item): item is string => typeof item === "string",
-        )
+        (item): item is string => typeof item === "string",
+      )
       : [];
 
     return {
@@ -601,7 +602,7 @@ const loadScheduleConfig = (): ScheduleConfig => {
           : defaultScheduleConfig.gapHours,
       taskCount:
         typeof record.taskCount === "number" &&
-        Number.isFinite(record.taskCount)
+          Number.isFinite(record.taskCount)
           ? Math.max(1, Math.min(64, Math.round(record.taskCount)))
           : defaultScheduleConfig.taskCount,
       taskNames,
@@ -678,6 +679,143 @@ const parsePriceNumber = (priceText: string): number => {
 
   const value = Number(normalized.replace(/[^\d.]/g, ""));
   return Number.isFinite(value) ? value : 0;
+};
+
+
+const getSortablePrice = (product: LocalProduct): number => {
+  if (product.price > 0) return product.price;
+
+  return Number.MAX_SAFE_INTEGER;
+};
+
+const sortProductsByDoneThenUpdated = (
+  items: LocalProduct[],
+): LocalProduct[] => {
+  return [...items].sort((firstProduct, secondProduct) => {
+    const doneDiff =
+      Number(firstProduct.isDone) - Number(secondProduct.isDone);
+
+    if (doneDiff !== 0) return doneDiff;
+
+    const updatedDiff =
+      new Date(secondProduct.updatedAt).getTime() -
+      new Date(firstProduct.updatedAt).getTime();
+
+    if (updatedDiff !== 0) return updatedDiff;
+
+    return normalizeTextKey(firstProduct.name).localeCompare(
+      normalizeTextKey(secondProduct.name),
+      "vi",
+    );
+  });
+};
+
+const sortProductsByDoneThenPrice = (
+  items: LocalProduct[],
+): LocalProduct[] => {
+  return [...items].sort((firstProduct, secondProduct) => {
+    const doneDiff =
+      Number(firstProduct.isDone) - Number(secondProduct.isDone);
+
+    if (doneDiff !== 0) return doneDiff;
+
+    const priceDiff =
+      getSortablePrice(firstProduct) - getSortablePrice(secondProduct);
+
+    if (priceDiff !== 0) return priceDiff;
+
+    return normalizeTextKey(firstProduct.name).localeCompare(
+      normalizeTextKey(secondProduct.name),
+      "vi",
+    );
+  });
+};
+
+const createGroupedProducts = (
+  items: LocalProduct[],
+): {
+  category: string;
+  products: LocalProduct[];
+  lowestPrice: number;
+}[] => {
+  const groupedMap = new Map<string, LocalProduct[]>();
+
+  sortProductsByDoneThenPrice(items).forEach((product) => {
+    const category =
+      normalizeCategoryName(product.category) || "Chưa phân loại";
+    const currentProducts = groupedMap.get(category) ?? [];
+
+    groupedMap.set(category, [...currentProducts, product]);
+  });
+
+  return Array.from(groupedMap.entries())
+    .map(([category, categoryProducts]) => ({
+      category,
+      products: categoryProducts,
+      lowestPrice: Math.min(...categoryProducts.map(getSortablePrice)),
+    }))
+    .sort((firstGroup, secondGroup) => {
+      const priceDiff = firstGroup.lowestPrice - secondGroup.lowestPrice;
+
+      if (priceDiff !== 0) return priceDiff;
+
+      return normalizeTextKey(firstGroup.category).localeCompare(
+        normalizeTextKey(secondGroup.category),
+        "vi",
+      );
+    });
+};
+
+const buildCopyableProductListText = (
+  groups: {
+    category: string;
+    products: LocalProduct[];
+  }[],
+): string => {
+  return groups
+    .map((group) => {
+      const lines = group.products.map((product, index) => {
+        const price = product.priceText.trim();
+
+        return [
+          `${index + 1}. ${removeDoneProductPrefix(product.name)}`,
+          price ? `Giá: ${price}` : "",
+        ]
+          .filter(Boolean)
+          .join(" | ");
+      });
+
+      return [`📌 ${group.category}`, ...lines].join("\n");
+    })
+    .join("\n\n");
+};
+
+const escapeCsvCell = (value: string): string => {
+  return `"${value.replace(/"/g, '""')}"`;
+};
+
+const buildProductsCsvContent = (
+  groups: {
+    category: string;
+    products: LocalProduct[];
+  }[],
+): string => {
+  const rows = [["Danh mục", "STT", "Tên sản phẩm", "Giá"]];
+
+  groups.forEach((group) => {
+    group.products.forEach((product, index) => {
+      rows.push([
+        group.category,
+        String(index + 1),
+        removeDoneProductPrefix(product.name),
+        product.priceText,
+      ]);
+    });
+  });
+
+  return `\ufeffsep=,\n${rows
+    .map((row) => row.map(escapeCsvCell).join(","))
+    .join("\n")}`;
 };
 
 const fileToCompressedDataUrl = async (file: File): Promise<string> => {
@@ -927,6 +1065,62 @@ const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
   const response = await fetch(dataUrl);
 
   return response.blob();
+};
+
+const dataUrlToPngBlob = async (dataUrl: string): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const image = document.createElement("img");
+
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+
+      const context = canvas.getContext("2d");
+
+      if (!context) {
+        reject(new Error("Không thể xử lý ảnh để copy"));
+        return;
+      }
+
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0);
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error("Không thể tạo ảnh PNG để copy"));
+          return;
+        }
+
+        resolve(blob);
+      }, "image/png");
+    };
+
+    image.onerror = () => {
+      reject(new Error("Không thể đọc ảnh để copy"));
+    };
+
+    image.src = dataUrl;
+  });
+};
+
+const copyImageToClipboard = async (image: ProductImage): Promise<void> => {
+  if (typeof window === "undefined") {
+    throw new Error("Clipboard chỉ hoạt động trên trình duyệt");
+  }
+
+  if (!navigator.clipboard || typeof ClipboardItem === "undefined") {
+    throw new Error("Trình duyệt chưa hỗ trợ copy ảnh vào clipboard");
+  }
+
+  const pngBlob = await dataUrlToPngBlob(image.dataUrl);
+
+  await navigator.clipboard.write([
+    new ClipboardItem({
+      "image/png": pngBlob,
+    }),
+  ]);
 };
 
 const downloadDataUrl = (dataUrl: string, filename: string): void => {
@@ -1214,8 +1408,8 @@ const buildRandomSchedule = (
     config.selectedCategories.length === 0
       ? activeProducts
       : activeProducts.filter((product) =>
-          selectedCategoryKeys.has(normalizeTextKey(product.category)),
-        );
+        selectedCategoryKeys.has(normalizeTextKey(product.category)),
+      );
 
   if (usableProducts.length === 0) {
     return {
@@ -1399,7 +1593,7 @@ export default function LocalProductsPage() {
     const keyword = normalizeTextKey(query);
     const activeCategoryKey = normalizeTextKey(activeCategoryTab);
 
-    return products.filter((product) => {
+    const matchedProducts = products.filter((product) => {
       const productCategoryKey = normalizeTextKey(product.category);
       const matchesCategory =
         activeCategoryTab === "all" || productCategoryKey === activeCategoryKey;
@@ -1410,54 +1604,26 @@ export default function LocalProductsPage() {
 
       return matchesCategory && matchesKeyword;
     });
+
+    return sortProductsByDoneThenPrice(matchedProducts);
   }, [activeCategoryTab, products, query]);
 
   const groupedProductsByCategory = useMemo(() => {
-    const getSortablePrice = (product: LocalProduct): number => {
-      if (product.price > 0) return product.price;
-
-      return Number.MAX_SAFE_INTEGER;
-    };
-
-    const groupedMap = new Map<string, LocalProduct[]>();
-
-    [...filteredProducts]
-      .sort((firstProduct, secondProduct) => {
-        const priceDiff =
-          getSortablePrice(firstProduct) - getSortablePrice(secondProduct);
-
-        if (priceDiff !== 0) return priceDiff;
-
-        return normalizeTextKey(firstProduct.name).localeCompare(
-          normalizeTextKey(secondProduct.name),
-          "vi",
-        );
-      })
-      .forEach((product) => {
-        const category =
-          normalizeCategoryName(product.category) || "Chưa phân loại";
-        const currentProducts = groupedMap.get(category) ?? [];
-
-        groupedMap.set(category, [...currentProducts, product]);
-      });
-
-    return Array.from(groupedMap.entries())
-      .map(([category, categoryProducts]) => ({
-        category,
-        products: categoryProducts,
-        lowestPrice: Math.min(...categoryProducts.map(getSortablePrice)),
-      }))
-      .sort((firstGroup, secondGroup) => {
-        const priceDiff = firstGroup.lowestPrice - secondGroup.lowestPrice;
-
-        if (priceDiff !== 0) return priceDiff;
-
-        return normalizeTextKey(firstGroup.category).localeCompare(
-          normalizeTextKey(secondGroup.category),
-          "vi",
-        );
-      });
+    return createGroupedProducts(filteredProducts);
   }, [filteredProducts]);
+
+  const copyableProductGroups = useMemo(() => {
+    return createGroupedProducts(
+      filteredProducts.filter((product) => !product.isDone),
+    );
+  }, [filteredProducts]);
+
+  const copyableProductCount = useMemo(() => {
+    return copyableProductGroups.reduce(
+      (total, group) => total + group.products.length,
+      0,
+    );
+  }, [copyableProductGroups]);
 
   const soldProductCount = useMemo(() => {
     return filteredProducts.filter((product) => product.isDone).length;
@@ -2201,6 +2367,41 @@ export default function LocalProductsPage() {
     }, 1200);
   };
 
+
+  const handleCopyProductList = async (): Promise<void> => {
+    if (copyableProductCount === 0) {
+      Toastify("Không có sản phẩm đang hoạt động để copy", 300);
+      return;
+    }
+
+    const textValue = buildCopyableProductListText(copyableProductGroups);
+
+    await copyText(textValue);
+    setCopiedKey("product-list-copy");
+    Toastify(`Đã copy ${copyableProductCount} sản phẩm đang hoạt động`, 200);
+
+    window.setTimeout(() => {
+      setCopiedKey((current) =>
+        current === "product-list-copy" ? "" : current,
+      );
+    }, 1200);
+  };
+
+  const handleExportProductsCsv = (): void => {
+    if (copyableProductCount === 0) {
+      Toastify("Không có sản phẩm đang hoạt động để xuất Excel", 300);
+      return;
+    }
+
+    const csvContent = buildProductsCsvContent(copyableProductGroups);
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8",
+    });
+
+    downloadBlob(blob, `danh-sach-san-pham-${Date.now()}.csv`);
+    Toastify(`Đã xuất ${copyableProductCount} sản phẩm sang Excel`, 200);
+  };
+
   const handleExportJson = (): void => {
     const payload: ExportPayload = {
       version: 4,
@@ -2288,26 +2489,53 @@ export default function LocalProductsPage() {
     setPendingDownload(request);
   };
 
-  const executeDownloadRequest = (): void => {
+  const copyDownloadTextIfNeeded = async (request: DownloadRequest): Promise<void> => {
+    const textToCopy = request.textToCopy?.trim();
+
+    if (!textToCopy) return;
+
+    try {
+      await copyText(textToCopy);
+      setCopiedKey("download-description");
+      Toastify("Đã tự động copy mô tả sản phẩm", 200);
+
+      window.setTimeout(() => {
+        setCopiedKey((current) =>
+          current === "download-description" ? "" : current,
+        );
+      }, 1200);
+    } catch {
+      Toastify("Không thể tự động copy mô tả", 300);
+    }
+  };
+
+  const executeDownloadRequest = async (): Promise<void> => {
     if (!pendingDownload) return;
 
-    pendingDownload.images.forEach((image, index) => {
+    const request = pendingDownload;
+
+    await copyDownloadTextIfNeeded(request);
+
+    request.images.forEach((image, index) => {
       window.setTimeout(() => {
-        void downloadImageAsJpg(image, pendingDownload.startIndex + index);
+        void downloadImageAsJpg(image, request.startIndex + index);
       }, index * 180);
     });
 
-    Toastify(`Đang tải ${pendingDownload.images.length} ảnh JPG`, 200);
+    Toastify(`Đang tải ${request.images.length} ảnh JPG`, 200);
     setPendingDownload(null);
   };
 
   const executeDownloadToFolder = async (): Promise<void> => {
     if (!pendingDownload) return;
 
+    const request = pendingDownload;
+
     try {
-      await saveImagesToChosenFolder(pendingDownload);
+      await copyDownloadTextIfNeeded(request);
+      await saveImagesToChosenFolder(request);
       Toastify(
-        `Đã lưu ${pendingDownload.images.length} ảnh vào thư mục đã chọn`,
+        `Đã lưu ${request.images.length} ảnh vào thư mục đã chọn`,
         200,
       );
       setPendingDownload(null);
@@ -2322,9 +2550,12 @@ export default function LocalProductsPage() {
   const executeDownloadZipForIphone = async (): Promise<void> => {
     if (!pendingDownload) return;
 
+    const request = pendingDownload;
+
     try {
-      await downloadImagesAsZip(pendingDownload);
-      Toastify(`Đã tạo file ZIP gồm ${pendingDownload.images.length} ảnh`, 200);
+      await copyDownloadTextIfNeeded(request);
+      await downloadImagesAsZip(request);
+      Toastify(`Đã tạo file ZIP gồm ${request.images.length} ảnh`, 200);
       setPendingDownload(null);
     } catch {
       Toastify("Không thể tạo file ZIP để tải ảnh", 400);
@@ -2337,12 +2568,15 @@ export default function LocalProductsPage() {
       return;
     }
 
+    const descriptionText = product.description.trim() || settings.commonDescription.trim();
+
     requestDownload({
       title: "Tải ảnh sản phẩm",
-      description: `Bạn có muốn tải ${product.images.length} ảnh của sản phẩm này về máy không?`,
+      description: `Bạn có muốn tải ${product.images.length} ảnh của sản phẩm này về máy không? Mô tả sản phẩm sẽ được tự động copy trước khi tải.`,
       mode: "multiple",
       images: product.images,
       startIndex: 0,
+      textToCopy: descriptionText,
     });
   };
 
@@ -2378,6 +2612,28 @@ export default function LocalProductsPage() {
     });
   };
 
+  const handleCopySelectedAlbumImage = async (): Promise<void> => {
+    if (!selectedAlbumImage) {
+      Toastify("Chưa chọn ảnh để copy", 300);
+      return;
+    }
+
+    try {
+      await copyImageToClipboard(selectedAlbumImage);
+      setCopiedKey(`album-image-${selectedAlbumImage.id}`);
+      Toastify("Đã copy ảnh vào clipboard", 200);
+
+      window.setTimeout(() => {
+        setCopiedKey((current) =>
+          current === `album-image-${selectedAlbumImage.id}` ? "" : current,
+        );
+      }, 1200);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Không thể copy ảnh";
+      Toastify(message, 400);
+    }
+  };
+
   const handleDownloadSelectedAlbumImages = (): void => {
     if (!albumSource) {
       Toastify("Chưa có album để tải", 300);
@@ -2395,10 +2651,11 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải ảnh đã chọn",
-      description: `Bạn có muốn tải ${selectedImages.length} ảnh đã chọn về máy không?`,
+      description: `Bạn có muốn tải ${selectedImages.length} ảnh đã chọn về máy không? Mô tả sản phẩm sẽ được tự động copy trước khi tải.`,
       mode: selectedImages.length === 1 ? "single" : "multiple",
       images: selectedImages,
       startIndex: 0,
+      textToCopy: albumSource.description,
     });
   };
 
@@ -2422,10 +2679,11 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải toàn bộ album",
-      description: `Bạn có muốn tải ${albumSource.images.length} ảnh trong album về máy không?`,
+      description: `Bạn có muốn tải ${albumSource.images.length} ảnh trong album về máy không? Mô tả sản phẩm sẽ được tự động copy trước khi tải.`,
       mode: "multiple",
       images: albumSource.images,
       startIndex: 0,
+      textToCopy: albumSource.description,
     });
   };
 
@@ -2437,12 +2695,23 @@ export default function LocalProductsPage() {
       return;
     }
 
+    const activeDescriptions = products
+      .filter((product) => !product.isDone)
+      .map((product) => {
+        const description = product.description.trim() || settings.commonDescription.trim();
+
+        return [product.name, description].filter(Boolean).join("\n");
+      })
+      .filter(Boolean)
+      .join("\n\n---\n\n");
+
     requestDownload({
       title: "Tải toàn bộ ảnh",
-      description: `Bạn có muốn tải ${allImages.length} ảnh của tất cả sản phẩm về máy không?`,
+      description: `Bạn có muốn tải ${allImages.length} ảnh của tất cả sản phẩm về máy không? Mô tả của các sản phẩm đang hoạt động sẽ được tự động copy trước khi tải.`,
       mode: "multiple",
       images: allImages,
       startIndex: 0,
+      textToCopy: activeDescriptions,
     });
   };
 
@@ -2457,8 +2726,8 @@ export default function LocalProductsPage() {
         ...current,
         selectedCategories: exists
           ? current.selectedCategories.filter(
-              (item) => normalizeTextKey(item) !== categoryKey,
-            )
+            (item) => normalizeTextKey(item) !== categoryKey,
+          )
           : [...current.selectedCategories, normalizeCategoryName(category)],
       };
     });
@@ -2990,12 +3259,12 @@ export default function LocalProductsPage() {
       const nextRecords = exists
         ? current.filter((record) => record.slotId !== postedKey)
         : [
-            ...current,
-            {
-              slotId: postedKey,
-              postedAt: new Date().toISOString(),
-            },
-          ];
+          ...current,
+          {
+            slotId: postedKey,
+            postedAt: new Date().toISOString(),
+          },
+        ];
 
       savePostedRecords(nextRecords);
       Toastify(exists ? "Đã chuyển về chưa đăng" : "Đã đánh dấu DONE", 200);
@@ -3090,6 +3359,54 @@ export default function LocalProductsPage() {
     );
   };
 
+
+  const renderDescriptionText = (
+    productId: string,
+    description: string,
+    expanded: boolean,
+  ) => {
+    if (!expanded) {
+      return description || "Chưa có mô tả";
+    }
+
+    const lines = description.split("\n");
+
+    return lines.map((line, index) => {
+      const trimmedLine = line.trim();
+      const copyKey = `plus-line-${productId}-${index}`;
+      const isPlusLine = trimmedLine.startsWith("+");
+
+      if (!trimmedLine) {
+        return <br key={`${productId}-empty-${index}`} />;
+      }
+
+      if (!isPlusLine) {
+        return (
+          <span key={`${productId}-line-${index}`} className="block">
+            {line}
+          </span>
+        );
+      }
+
+      return (
+        <button
+          key={`${productId}-plus-${index}`}
+          type="button"
+          className={`my-0.5 block w-full select-text rounded-lg px-1.5 py-1 text-left transition ${copiedKey === copyKey
+            ? "bg-cyan-300 text-slate-950"
+            : "bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
+            }`}
+          onClick={(event) => {
+            event.stopPropagation();
+            void handleCopyField(copyKey, "dòng mô tả", trimmedLine);
+          }}
+        >
+          {trimmedLine}
+        </button>
+      );
+    });
+  };
+
   return (
     <main
       className="min-h-dvh w-full overflow-x-hidden bg-[radial-gradient(circle_at_top_left,#1e293b_0,#020617_34%,#020617_100%)] p-1 text-slate-100 xl:p-0"
@@ -3123,7 +3440,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Thêm sản phẩm"
                 aria-label="Thêm sản phẩm"
-                className="flex items-center justify-center gap-2 rounded-xl bg-cyan-300 px-2 py-1 text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl bg-cyan-300 px-2 py-1 whitespace-nowrap text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
                 onClick={openProductModalForCreate}
               >
                 <FiPlus aria-hidden="true" className={iconClassName} />
@@ -3134,7 +3451,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Danh sách dạng bảng"
                 aria-label="Danh sách dạng bảng"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                 onClick={() => openModal("productList")}
               >
                 <FiDatabase aria-hidden="true" className={iconClassName} />
@@ -3145,7 +3462,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Lịch đăng"
                 aria-label="Lịch đăng"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                 onClick={() => openModal("schedule")}
               >
                 <FiCalendar aria-hidden="true" className={iconClassName} />
@@ -3156,7 +3473,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Ghi chú"
                 aria-label="Ghi chú"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                 onClick={() => openModal("globalNote")}
               >
                 <FiClipboard aria-hidden="true" className={iconClassName} />
@@ -3167,7 +3484,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Mô tả chung"
                 aria-label="Mô tả chung"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                 onClick={() => openModal("globalDescription")}
               >
                 <FiFileText aria-hidden="true" className={iconClassName} />
@@ -3178,7 +3495,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Import Export dữ liệu"
                 aria-label="Import Export dữ liệu"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                 onClick={() => openModal("importExport")}
               >
                 <FiArchive aria-hidden="true" className={iconClassName} />
@@ -3189,7 +3506,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Tải toàn bộ ảnh"
                 aria-label="Tải toàn bộ ảnh"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                 onClick={handleDownloadAllImages}
               >
                 <FiDownload aria-hidden="true" className={iconClassName} />
@@ -3233,11 +3550,10 @@ export default function LocalProductsPage() {
           <div className="mb-1 flex gap-1 overflow-x-auto pb-1">
             <button
               type="button"
-              className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${
-                activeCategoryTab === "all"
-                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-              }`}
+              className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${activeCategoryTab === "all"
+                ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                }`}
               onClick={() => setActiveCategoryTab("all")}
             >
               Tất cả
@@ -3247,12 +3563,11 @@ export default function LocalProductsPage() {
               <button
                 key={category}
                 type="button"
-                className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${
-                  normalizeTextKey(activeCategoryTab) ===
+                className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${normalizeTextKey(activeCategoryTab) ===
                   normalizeTextKey(category)
-                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                }`}
+                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                  }`}
                 onClick={() => setActiveCategoryTab(category)}
               >
                 {category}
@@ -3265,7 +3580,7 @@ export default function LocalProductsPage() {
               Chưa có sản phẩm phù hợp.
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2 xl:grid-cols-8">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-7">
               {filteredProducts.map((product) => {
                 const descriptionPreview =
                   product.description.trim() ||
@@ -3277,13 +3592,11 @@ export default function LocalProductsPage() {
                 return (
                   <article
                     key={product.id}
-                    className={`overflow-hidden rounded-xl border shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-slate-900 ${
-                      productDone ? "opacity-70" : ""
-                    } ${
-                      active
+                    className={`overflow-hidden rounded-xl border shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-slate-900 ${productDone ? "opacity-70" : ""
+                      } ${active
                         ? "border-cyan-300/70 bg-cyan-300/10 ring-1 ring-cyan-300/30"
                         : "border-white/10 bg-slate-950/80"
-                    }`}
+                      }`}
                     onClick={() => {
                       setSelectedProductId(product.id);
                       handleEdit(product);
@@ -3291,9 +3604,8 @@ export default function LocalProductsPage() {
                   >
                     <button
                       type="button"
-                      className={`relative flex aspect-square w-full items-center justify-center bg-slate-900 ${
-                        productDone ? "after:absolute after:inset-0 after:bg-slate-950/30" : ""
-                      }`}
+                      className={`relative flex aspect-square w-full items-center justify-center bg-slate-900 ${productDone ? "after:absolute after:inset-0 after:bg-slate-950/30" : ""
+                        }`}
                       onClick={(event) => {
                         event.stopPropagation();
                         openImageAlbum({
@@ -3309,9 +3621,8 @@ export default function LocalProductsPage() {
                           alt={product.name}
                           width={1200}
                           height={1200}
-                          className={`h-full w-full object-contain transition duration-300 ${
-                            productDone ? "blur-[2px] grayscale opacity-40" : ""
-                          }`}
+                          className={`h-full w-full object-contain transition duration-300 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
+                            }`}
                         />
                       ) : (
                         <FiImage
@@ -3363,11 +3674,17 @@ export default function LocalProductsPage() {
                         <div
                           onClick={(event) => {
                             event.stopPropagation();
-                            toggleExpandedProduct(product.id);
+                            if (!expanded) {
+                              toggleExpandedProduct(product.id);
+                            }
                           }}
                           className={`${expanded ? "line-clamp-none" : "line-clamp-3"} whitespace-pre-line text-[10px] leading-4 text-slate-300`}
                         >
-                          {descriptionPreview || "Chưa có mô tả"}
+                          {renderDescriptionText(
+                            product.id,
+                            descriptionPreview,
+                            expanded,
+                          )}
                         </div>
                         {descriptionPreview.length > 90 ? (
                           <button
@@ -3422,11 +3739,10 @@ export default function LocalProductsPage() {
                           type="button"
                           title={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
                           aria-label={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
-                          className={`flex w-full items-center justify-center gap-1 rounded-2xl p-1.5 text-[10px] font-black transition active:scale-[0.98] ${
-                            productDone
-                              ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                              : "border border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20"
-                          }`}
+                          className={`flex w-full items-center justify-center gap-1 rounded-2xl p-1.5 text-[10px] font-black transition active:scale-[0.98] ${productDone
+                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                            : "border border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20"
+                            }`}
                           onClick={(event) => {
                             event.stopPropagation();
                             void toggleProductDone(product.id);
@@ -3442,7 +3758,7 @@ export default function LocalProductsPage() {
                           type="button"
                           title="Tải ảnh sản phẩm"
                           aria-label="Tải ảnh sản phẩm"
-                          className="flex items-center justify-center gap-1 rounded-2xl bg-cyan-300 p-1.5 text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                          className="flex items-center justify-center gap-1 rounded-2xl bg-cyan-300 p-1.5 whitespace-nowrap text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
                           onClick={(event) => {
                             event.stopPropagation();
                             handleDownloadProductImages(product);
@@ -3592,7 +3908,7 @@ export default function LocalProductsPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_220px]">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_110px_110px_90px]">
                     <label className="flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1.5 text-slate-400">
                       <FiSearch
                         aria-hidden="true"
@@ -3611,7 +3927,29 @@ export default function LocalProductsPage() {
 
                     <button
                       type="button"
-                      className="flex items-center justify-center gap-2 rounded-xl bg-cyan-300 px-2 py-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                      className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-2 whitespace-nowrap text-xs font-black text-white transition hover:bg-white/10 active:scale-[0.98]"
+                      onClick={() => void handleCopyProductList()}
+                    >
+                      {copiedKey === "product-list-copy" ? (
+                        <FiCheck aria-hidden="true" className={iconClassName} />
+                      ) : (
+                        <FiCopy aria-hidden="true" className={iconClassName} />
+                      )}
+                      Copy
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-2 whitespace-nowrap text-xs font-black text-white transition hover:bg-white/10 active:scale-[0.98]"
+                      onClick={handleExportProductsCsv}
+                    >
+                      <FiFileText aria-hidden="true" className={iconClassName} />
+                      Excel
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex items-center justify-center gap-2 rounded-xl bg-cyan-300 px-2 py-2 whitespace-nowrap text-xs font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
                       onClick={openProductModalForCreate}
                     >
                       <FiPlus aria-hidden="true" className={iconClassName} />
@@ -3678,13 +4016,12 @@ export default function LocalProductsPage() {
                                 return (
                                   <div
                                     key={product.id}
-                                    className={`grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-white/10 text-xs transition ${
-                                      isSelected
-                                        ? "bg-cyan-300/10 text-white"
-                                        : product.isDone
-                                          ? "bg-emerald-400/[0.04] text-slate-300 hover:bg-emerald-400/10"
-                                          : "bg-slate-950 text-slate-300 hover:bg-white/5"
-                                    }`}
+                                    className={`grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-white/10 text-xs transition ${isSelected
+                                      ? "bg-cyan-300/10 text-white"
+                                      : product.isDone
+                                        ? "bg-emerald-400/[0.04] text-slate-300 hover:bg-emerald-400/10"
+                                        : "bg-slate-950 text-slate-300 hover:bg-white/5"
+                                      }`}
                                     onClick={() =>
                                       setSelectedProductId(product.id)
                                     }
@@ -3727,11 +4064,10 @@ export default function LocalProductsPage() {
                                     <div className="flex items-center border-r border-white/10 px-2 py-2">
                                       <button
                                         type="button"
-                                        className={`w-full rounded-xl px-2 py-1.5 text-[10px] font-black transition active:scale-[0.98] ${
-                                          product.isDone
-                                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                                            : "border border-slate-500/40 bg-white/5 text-slate-300 hover:bg-white/10"
-                                        }`}
+                                        className={`w-full rounded-xl px-2 py-1.5 text-[10px] font-black transition active:scale-[0.98] ${product.isDone
+                                          ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                                          : "border border-slate-500/40 bg-white/5 text-slate-300 hover:bg-white/10"
+                                          }`}
                                         onClick={(event) => {
                                           event.stopPropagation();
                                           void toggleProductDone(product.id);
@@ -3862,11 +4198,10 @@ export default function LocalProductsPage() {
 
                       <section className="order-1 flex min-h-0 flex-col gap-2 xl:order-2">
                         <label
-                          className={`cursor-pointer rounded-2xl border border-dashed p-2 text-center transition ${
-                            isDragging
-                              ? "border-cyan-300/80 bg-cyan-300/10"
-                              : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
-                          }`}
+                          className={`cursor-pointer rounded-2xl border border-dashed p-2 text-center transition ${isDragging
+                            ? "border-cyan-300/80 bg-cyan-300/10"
+                            : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
+                            }`}
                           onDrop={(event) => void handleDrop(event)}
                           onDragOver={handleDragOver}
                           onDragLeave={handleDragLeave}
@@ -3923,11 +4258,10 @@ export default function LocalProductsPage() {
                                   <div
                                     key={image.id}
                                     draggable
-                                    className={`group relative h-[88px] cursor-grab overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:cursor-grabbing sm:h-[96px] xl:h-[108px] ${
-                                      isDraggingImage
-                                        ? "scale-95 opacity-60 ring-cyan-300"
-                                        : "ring-white/10 hover:ring-cyan-300/70"
-                                    }`}
+                                    className={`group relative h-[88px] cursor-grab overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:cursor-grabbing sm:h-[96px] xl:h-[108px] ${isDraggingImage
+                                      ? "scale-95 opacity-60 ring-cyan-300"
+                                      : "ring-white/10 hover:ring-cyan-300/70"
+                                      }`}
                                     onDragStart={(event) => {
                                       event.dataTransfer.setData(
                                         "text/plain",
@@ -3963,7 +4297,7 @@ export default function LocalProductsPage() {
                                       className="h-full w-full object-contain"
                                     />
 
-                                    <div className="absolute left-1 top-1 rounded-lg bg-black/70 px-1.5 py-0.5 text-[10px] font-black text-white">
+                                    <div className="absolute left-1 top-1 rounded-lg bg-black/70 px-1.5 py-0.5 whitespace-nowrap text-[10px] font-black text-white">
                                       {index + 1}
                                     </div>
 
@@ -4265,11 +4599,10 @@ export default function LocalProductsPage() {
                                 <button
                                   key={category}
                                   type="button"
-                                  className={`rounded-2xl border px-3 py-1.5 text-[11px] font-black transition ${
-                                    active
-                                      ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                                      : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-                                  }`}
+                                  className={`rounded-2xl border px-3 py-1.5 text-[11px] font-black transition ${active
+                                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                                    }`}
                                   onClick={() =>
                                     toggleScheduleCategory(category)
                                   }
@@ -4301,15 +4634,14 @@ export default function LocalProductsPage() {
                           return (
                             <div
                               key={taskIndex}
-                              className={`flex min-w-44 shrink-0 items-center gap-1 rounded-xl border p-1 ${
-                                active
-                                  ? "border-cyan-300/60 bg-cyan-300/10"
-                                  : "border-white/10 bg-white/[0.03]"
-                              }`}
+                              className={`flex min-w-44 shrink-0 items-center gap-1 rounded-xl border p-1 ${active
+                                ? "border-cyan-300/60 bg-cyan-300/10"
+                                : "border-white/10 bg-white/[0.03]"
+                                }`}
                             >
                               <button
                                 type="button"
-                                className="shrink-0 rounded-xl bg-white/5 px-2 py-1 text-[10px] font-black text-white"
+                                className="shrink-0 rounded-xl bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-black text-white"
                                 onClick={() =>
                                   setActiveScheduleTaskIndex(taskIndex)
                                 }
@@ -4376,13 +4708,12 @@ export default function LocalProductsPage() {
                                 <article
                                   key={`${time}-${activeScheduleTaskIndex}`}
                                   draggable={Boolean(assignedProduct)}
-                                  className={`rounded-xl border p-1 transition ${assignedProduct ? "cursor-grab active:cursor-grabbing" : ""} ${
-                                    done
-                                      ? "border-emerald-400/30 bg-emerald-400/10"
-                                      : assignedProduct
-                                        ? "border-cyan-300/30 bg-cyan-300/10"
-                                        : "border-white/10 bg-slate-950/80"
-                                  }`}
+                                  className={`rounded-xl border p-1 transition ${assignedProduct ? "cursor-grab active:cursor-grabbing" : ""} ${done
+                                    ? "border-emerald-400/30 bg-emerald-400/10"
+                                    : assignedProduct
+                                      ? "border-cyan-300/30 bg-cyan-300/10"
+                                      : "border-white/10 bg-slate-950/80"
+                                    }`}
                                   onDragStart={(event) => {
                                     if (!assignedProduct) return;
 
@@ -4491,12 +4822,12 @@ export default function LocalProductsPage() {
                                         onClick={() =>
                                           assignedProduct
                                             ? openImageAlbum({
-                                                title: assignedProduct.name,
-                                                description:
-                                                  assignedProduct.description.trim() ||
-                                                  settings.commonDescription.trim(),
-                                                images: assignedProduct.images,
-                                              })
+                                              title: assignedProduct.name,
+                                              description:
+                                                assignedProduct.description.trim() ||
+                                                settings.commonDescription.trim(),
+                                              images: assignedProduct.images,
+                                            })
                                             : undefined
                                         }
                                       >
@@ -4540,13 +4871,12 @@ export default function LocalProductsPage() {
                                         title="Xem chi tiết lịch"
                                         aria-label="Xem chi tiết lịch"
                                         disabled={!assignedProduct}
-                                        className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${
-                                          done
-                                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                                            : assignedProduct
-                                              ? "border border-white/10 bg-white/5 text-white hover:bg-white/10"
-                                              : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
-                                        }`}
+                                        className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${done
+                                          ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                                          : assignedProduct
+                                            ? "border border-white/10 bg-white/5 text-white hover:bg-white/10"
+                                            : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
+                                          }`}
                                         onClick={() =>
                                           assignedProduct &&
                                           togglePostedProduct(
@@ -4564,11 +4894,10 @@ export default function LocalProductsPage() {
                                         title="Xem chi tiết lịch"
                                         aria-label="Xem chi tiết lịch"
                                         disabled={!assignedProduct}
-                                        className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${
-                                          assignedProduct
-                                            ? "border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
-                                            : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
-                                        }`}
+                                        className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${assignedProduct
+                                          ? "border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
+                                          : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
+                                          }`}
                                         onClick={() =>
                                           assignedProduct &&
                                           openAssignedSlotModal(
@@ -4649,11 +4978,10 @@ export default function LocalProductsPage() {
                               }}
                               onDragEnd={() => setDraggingProductId("")}
                               onClick={() => setSelectedProductId(product.id)}
-                              className={`cursor-grab rounded-xl border p-1 transition active:cursor-grabbing ${
-                                active
-                                  ? "border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30"
-                                  : "border-white/10 bg-slate-950/80 hover:border-cyan-300/30"
-                              }`}
+                              className={`cursor-grab rounded-xl border p-1 transition active:cursor-grabbing ${active
+                                ? "border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30"
+                                : "border-white/10 bg-slate-950/80 hover:border-cyan-300/30"
+                                }`}
                             >
                               <div className="flex gap-2">
                                 <button
@@ -4739,7 +5067,7 @@ export default function LocalProductsPage() {
 
                     <button
                       type="button"
-                      className="flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-white transition hover:bg-white/10 active:scale-[0.98]"
+                      className="flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 whitespace-nowrap text-xs font-black text-white transition hover:bg-white/10 active:scale-[0.98]"
                       onClick={() =>
                         void handleCopyField(
                           "global-note",
@@ -4779,7 +5107,7 @@ export default function LocalProductsPage() {
 
                     <button
                       type="button"
-                      className="flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-white transition hover:bg-white/10 active:scale-[0.98]"
+                      className="flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 whitespace-nowrap text-xs font-black text-white transition hover:bg-white/10 active:scale-[0.98]"
                       onClick={() =>
                         void handleCopyField(
                           "global-description",
@@ -4942,11 +5270,10 @@ export default function LocalProductsPage() {
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         <button
                           type="button"
-                          className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${
-                            selectedAssignedSlot.done
-                              ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                              : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
-                          }`}
+                          className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${selectedAssignedSlot.done
+                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                            : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
+                            }`}
                           onClick={() =>
                             togglePostedSlot(
                               selectedAssignedSlot.date,
@@ -4963,7 +5290,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
+                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-white/10"
                           onClick={() =>
                             handleDownloadProductImages(
                               selectedAssignedSlot.product,
@@ -5004,7 +5331,7 @@ export default function LocalProductsPage() {
                       <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
+                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-white/10"
                           onClick={() =>
                             void handleCopyField(
                               `slot-name-${selectedAssignedSlot.key}`,
@@ -5021,7 +5348,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
+                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-white/10"
                           onClick={() =>
                             void handleCopyField(
                               `slot-post-${selectedAssignedSlot.key}`,
@@ -5038,7 +5365,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
+                          className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 whitespace-nowrap text-xs font-black text-slate-950 transition hover:bg-cyan-200"
                           onClick={() =>
                             void handleCopyField(
                               `slot-desc-${selectedAssignedSlot.key}`,
@@ -5055,7 +5382,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-white transition hover:bg-white/10"
+                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-white/10"
                           onClick={() =>
                             handleEdit(selectedAssignedSlot.product)
                           }
@@ -5083,26 +5410,26 @@ export default function LocalProductsPage() {
               {activeModal === "imageAlbum" && albumSource ? (
                 <section className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_minmax(170px,34dvh)] gap-2 overflow-hidden md:grid-rows-[minmax(0,1fr)_minmax(190px,32dvh)] xl:grid-cols-[minmax(0,1fr)_280px] xl:grid-rows-1">
                   <article className="flex min-h-0 min-w-0 flex-col rounded-xl border border-white/10 bg-slate-950/70 p-1">
-                    <div className="mb-1 grid min-w-0 grid-cols-1 gap-1 xl:grid-cols-[minmax(0,1fr)_260px] xl:items-center">
+                    <div className="mb-1 grid min-w-0 grid-cols-1 gap-1 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
                       <div className="min-w-0 rounded-xl bg-black/20 px-2 py-1">
-                        <h3 className="truncate text-xs font-black text-white">
+                        <h3 className="truncate whitespace-nowrap text-xs font-black text-white">
                           {albumSource.title}
                         </h3>
-                        <p className="truncate text-[10px] text-slate-400">
+                        <p className="truncate whitespace-nowrap text-[10px] text-slate-400">
                           {albumSource.images.length} ảnh trong album · đang xem{" "}
                           {selectedAlbumImage
                             ? albumSource.images.findIndex(
-                                (image) => image.id === selectedAlbumImage.id,
-                              ) + 1
+                              (image) => image.id === selectedAlbumImage.id,
+                            ) + 1
                             : 0}
                           /{albumSource.images.length} · đã chọn {selectedAlbumImageIds.size}
                         </p>
                       </div>
 
-                      <div className="grid shrink-0 grid-cols-5 gap-1">
+                      <div className="flex shrink-0 gap-1 overflow-x-auto pb-1 xl:justify-end xl:overflow-visible xl:pb-0">
                         <button
                           type="button"
-                          className="flex min-h-9 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                           onClick={() =>
                             void handleCopyField(
                               `album-desc-${albumSource.title}`,
@@ -5117,7 +5444,20 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-9 items-center justify-center gap-1 rounded-xl bg-cyan-300 px-2 py-1.5 text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-cyan-300/50 bg-cyan-300/10 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
+                          onClick={() => void handleCopySelectedAlbumImage()}
+                          title="Copy ảnh đang xem vào clipboard"
+                          aria-label="Copy ảnh đang xem vào clipboard"
+                        >
+                          {selectedAlbumImage
+                            ? renderCopyIcon(`album-image-${selectedAlbumImage.id}`)
+                            : <FiCopy aria-hidden="true" className={iconClassName} />}
+                          Ảnh
+                        </button>
+
+                        <button
+                          type="button"
+                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl bg-cyan-300 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
                           onClick={handleDownloadSelectedAlbumImages}
                           title="Tải ảnh đã chọn"
                           aria-label="Tải ảnh đã chọn"
@@ -5131,7 +5471,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-9 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                           onClick={handleSelectAllAlbumImages}
                           title="Chọn tất cả ảnh"
                           aria-label="Chọn tất cả ảnh"
@@ -5141,7 +5481,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-9 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                           onClick={handleClearSelectedAlbumImages}
                           title="Bỏ chọn ảnh"
                           aria-label="Bỏ chọn ảnh"
@@ -5151,7 +5491,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-9 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                           onClick={handleDownloadAlbumImages}
                           title="Tải toàn bộ album"
                           aria-label="Tải toàn bộ album"
@@ -5203,13 +5543,12 @@ export default function LocalProductsPage() {
                           <button
                             key={image.id}
                             type="button"
-                            className={`group relative h-full min-h-0 w-full overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:scale-[0.98] ${
-                              checked
-                                ? "ring-2 ring-cyan-300"
-                                : active
-                                  ? "ring-2 ring-white/60"
-                                  : "ring-white/10 hover:ring-cyan-300/60"
-                            }`}
+                            className={`group relative h-full min-h-0 w-full overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:scale-[0.98] ${checked
+                              ? "ring-2 ring-cyan-300"
+                              : active
+                                ? "ring-2 ring-white/60"
+                                : "ring-white/10 hover:ring-cyan-300/60"
+                              }`}
                             onClick={() => toggleSelectedAlbumImage(image.id)}
                             title={`Ảnh ${index + 1}`}
                           >
@@ -5221,11 +5560,10 @@ export default function LocalProductsPage() {
                               className="h-full w-full object-cover"
                             />
                             <span
-                              className={`absolute left-1 top-1 rounded-lg px-1.5 py-0.5 text-[10px] font-black ${
-                                active
-                                  ? "bg-cyan-300 text-slate-950"
-                                  : "bg-black/70 text-white"
-                              }`}
+                              className={`absolute left-1 top-1 rounded-lg px-1.5 py-0.5 text-[10px] font-black ${active
+                                ? "bg-cyan-300 text-slate-950"
+                                : "bg-black/70 text-white"
+                                }`}
                             >
                               {index + 1}
                             </span>
@@ -5282,13 +5620,12 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
-                className={`rounded-2xl p-2 text-sm font-black transition ${
-                  pendingConfirm.tone === "danger"
-                    ? "bg-rose-500 text-white hover:bg-rose-400"
-                    : pendingConfirm.tone === "warning"
-                      ? "bg-amber-300 text-slate-950 hover:bg-amber-200"
-                      : "bg-cyan-300 text-slate-950 hover:bg-cyan-200"
-                }`}
+                className={`rounded-2xl p-2 text-sm font-black transition ${pendingConfirm.tone === "danger"
+                  ? "bg-rose-500 text-white hover:bg-rose-400"
+                  : pendingConfirm.tone === "warning"
+                    ? "bg-amber-300 text-slate-950 hover:bg-amber-200"
+                    : "bg-cyan-300 text-slate-950 hover:bg-cyan-200"
+                  }`}
                 onClick={() => void executeConfirm()}
               >
                 {pendingConfirm.confirmLabel}
@@ -5382,7 +5719,7 @@ export default function LocalProductsPage() {
                   <button
                     type="button"
                     className="rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
-                    onClick={executeDownloadRequest}
+                    onClick={() => void executeDownloadRequest()}
                   >
                     Tải mặc định
                   </button>
