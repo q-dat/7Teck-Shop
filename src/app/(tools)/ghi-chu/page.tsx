@@ -681,19 +681,29 @@ const parsePriceNumber = (priceText: string): number => {
   return Number.isFinite(value) ? value : 0;
 };
 
-
 const getSortablePrice = (product: LocalProduct): number => {
   if (product.price > 0) return product.price;
 
   return Number.MAX_SAFE_INTEGER;
 };
 
+const getProductDoneSortValue = (
+  product: LocalProduct,
+  pendingDoneProductIds: Set<string>,
+): number => {
+  if (!product.isDone) return 0;
+
+  return pendingDoneProductIds.has(product.id) ? 0 : 1;
+};
+
 const sortProductsByDoneThenUpdated = (
   items: LocalProduct[],
+  pendingDoneProductIds: Set<string> = new Set<string>(),
 ): LocalProduct[] => {
   return [...items].sort((firstProduct, secondProduct) => {
     const doneDiff =
-      Number(firstProduct.isDone) - Number(secondProduct.isDone);
+      getProductDoneSortValue(firstProduct, pendingDoneProductIds) -
+      getProductDoneSortValue(secondProduct, pendingDoneProductIds);
 
     if (doneDiff !== 0) return doneDiff;
 
@@ -712,10 +722,44 @@ const sortProductsByDoneThenUpdated = (
 
 const sortProductsByDoneThenPrice = (
   items: LocalProduct[],
+  pendingDoneProductIds: Set<string> = new Set<string>(),
 ): LocalProduct[] => {
   return [...items].sort((firstProduct, secondProduct) => {
     const doneDiff =
-      Number(firstProduct.isDone) - Number(secondProduct.isDone);
+      getProductDoneSortValue(firstProduct, pendingDoneProductIds) -
+      getProductDoneSortValue(secondProduct, pendingDoneProductIds);
+
+    if (doneDiff !== 0) return doneDiff;
+
+    const priceDiff =
+      getSortablePrice(firstProduct) - getSortablePrice(secondProduct);
+
+    if (priceDiff !== 0) return priceDiff;
+
+    return normalizeTextKey(firstProduct.name).localeCompare(
+      normalizeTextKey(secondProduct.name),
+      "vi",
+    );
+  });
+};
+
+const sortProductsByCategoryThenDoneThenPrice = (
+  items: LocalProduct[],
+  pendingDoneProductIds: Set<string> = new Set<string>(),
+): LocalProduct[] => {
+  return [...items].sort((firstProduct, secondProduct) => {
+    const categoryDiff = normalizeTextKey(
+      firstProduct.category || "Chưa phân loại",
+    ).localeCompare(
+      normalizeTextKey(secondProduct.category || "Chưa phân loại"),
+      "vi",
+    );
+
+    if (categoryDiff !== 0) return categoryDiff;
+
+    const doneDiff =
+      getProductDoneSortValue(firstProduct, pendingDoneProductIds) -
+      getProductDoneSortValue(secondProduct, pendingDoneProductIds);
 
     if (doneDiff !== 0) return doneDiff;
 
@@ -733,37 +777,53 @@ const sortProductsByDoneThenPrice = (
 
 const createGroupedProducts = (
   items: LocalProduct[],
+  pendingDoneProductIds: Set<string> = new Set<string>(),
 ): {
   category: string;
   products: LocalProduct[];
   lowestPrice: number;
 }[] => {
-  const groupedMap = new Map<string, LocalProduct[]>();
+  const groupedMap = new Map<
+    string,
+    { category: string; products: LocalProduct[] }
+  >();
 
-  sortProductsByDoneThenPrice(items).forEach((product) => {
+  items.forEach((product) => {
     const category =
       normalizeCategoryName(product.category) || "Chưa phân loại";
-    const currentProducts = groupedMap.get(category) ?? [];
+    const categoryKey = normalizeTextKey(category);
+    const currentGroup = groupedMap.get(categoryKey);
 
-    groupedMap.set(category, [...currentProducts, product]);
+    if (!currentGroup) {
+      groupedMap.set(categoryKey, {
+        category,
+        products: [product],
+      });
+      return;
+    }
+
+    currentGroup.products.push(product);
   });
 
-  return Array.from(groupedMap.entries())
-    .map(([category, categoryProducts]) => ({
-      category,
-      products: categoryProducts,
-      lowestPrice: Math.min(...categoryProducts.map(getSortablePrice)),
-    }))
-    .sort((firstGroup, secondGroup) => {
-      const priceDiff = firstGroup.lowestPrice - secondGroup.lowestPrice;
+  return Array.from(groupedMap.values())
+    .map((group) => {
+      const sortedProducts = sortProductsByDoneThenPrice(
+        group.products,
+        pendingDoneProductIds,
+      );
 
-      if (priceDiff !== 0) return priceDiff;
-
-      return normalizeTextKey(firstGroup.category).localeCompare(
+      return {
+        category: group.category,
+        products: sortedProducts,
+        lowestPrice: Math.min(...sortedProducts.map(getSortablePrice)),
+      };
+    })
+    .sort((firstGroup, secondGroup) =>
+      normalizeTextKey(firstGroup.category).localeCompare(
         normalizeTextKey(secondGroup.category),
         "vi",
-      );
-    });
+      ),
+    );
 };
 
 const buildCopyableProductListText = (
@@ -1561,11 +1621,14 @@ export default function LocalProductsPage() {
   const activeModal = modalStack[modalStack.length - 1] ?? "";
   const [selectedSlotId, setSelectedSlotId] = useState<string>("");
   const [selectedAlbumImageId, setSelectedAlbumImageId] = useState<string>("");
-  const [selectedAlbumImageIds, setSelectedAlbumImageIds] = useState<Set<string>>(
-    () => new Set<string>(),
-  );
+  const [selectedAlbumImageIds, setSelectedAlbumImageIds] = useState<
+    Set<string>
+  >(() => new Set<string>());
   const [albumSource, setAlbumSource] = useState<AlbumSource | null>(null);
   const [copiedKey, setCopiedKey] = useState<string>("");
+  const [pendingDoneProductIds, setPendingDoneProductIds] = useState<
+    Set<string>
+  >(() => new Set<string>());
   const [postedRecords, setPostedRecords] = useState<PostedRecord[]>([]);
   const [nowTick, setNowTick] = useState<Date>(new Date());
   const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>(() =>
@@ -1605,18 +1668,22 @@ export default function LocalProductsPage() {
       return matchesCategory && matchesKeyword;
     });
 
-    return sortProductsByDoneThenPrice(matchedProducts);
-  }, [activeCategoryTab, products, query]);
+    return sortProductsByCategoryThenDoneThenPrice(
+      matchedProducts,
+      pendingDoneProductIds,
+    );
+  }, [activeCategoryTab, pendingDoneProductIds, products, query]);
 
   const groupedProductsByCategory = useMemo(() => {
-    return createGroupedProducts(filteredProducts);
-  }, [filteredProducts]);
+    return createGroupedProducts(filteredProducts, pendingDoneProductIds);
+  }, [filteredProducts, pendingDoneProductIds]);
 
   const copyableProductGroups = useMemo(() => {
     return createGroupedProducts(
       filteredProducts.filter((product) => !product.isDone),
+      pendingDoneProductIds,
     );
-  }, [filteredProducts]);
+  }, [filteredProducts, pendingDoneProductIds]);
 
   const copyableProductCount = useMemo(() => {
     return copyableProductGroups.reduce(
@@ -2328,13 +2395,43 @@ export default function LocalProductsPage() {
     }
 
     const nextIsDone = !product.isDone;
+    const now = new Date().toISOString();
     const nextProduct: LocalProduct = {
       ...product,
       name: normalizeDoneProductName(product.name, nextIsDone),
       isDone: nextIsDone,
-      doneAt: product.isDone ? "" : new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      doneAt: nextIsDone ? now : "",
+      updatedAt: now,
     };
+
+    if (nextIsDone) {
+      setPendingDoneProductIds((current) => {
+        const nextIds = new Set(current);
+        nextIds.add(productId);
+
+        return nextIds;
+      });
+
+      window.setTimeout(() => {
+        setPendingDoneProductIds((current) => {
+          if (!current.has(productId)) return current;
+
+          const nextIds = new Set(current);
+          nextIds.delete(productId);
+
+          return nextIds;
+        });
+      }, 2000);
+    } else {
+      setPendingDoneProductIds((current) => {
+        if (!current.has(productId)) return current;
+
+        const nextIds = new Set(current);
+        nextIds.delete(productId);
+
+        return nextIds;
+      });
+    }
 
     await saveProductToDb(nextProduct);
 
@@ -2343,7 +2440,9 @@ export default function LocalProductsPage() {
     );
 
     Toastify(
-      product.isDone ? "Đã bỏ trạng thái DONE" : "Đã đánh dấu DONE",
+      product.isDone
+        ? "Đã bỏ trạng thái DONE"
+        : "Đã đánh dấu DONE, sản phẩm sẽ tự xuống cuối sau 2 giây",
       200,
     );
   };
@@ -2366,7 +2465,6 @@ export default function LocalProductsPage() {
       setCopiedKey((current) => (current === key ? "" : current));
     }, 1200);
   };
-
 
   const handleCopyProductList = async (): Promise<void> => {
     if (copyableProductCount === 0) {
@@ -2489,7 +2587,9 @@ export default function LocalProductsPage() {
     setPendingDownload(request);
   };
 
-  const copyDownloadTextIfNeeded = async (request: DownloadRequest): Promise<void> => {
+  const copyDownloadTextIfNeeded = async (
+    request: DownloadRequest,
+  ): Promise<void> => {
     const textToCopy = request.textToCopy?.trim();
 
     if (!textToCopy) return;
@@ -2534,10 +2634,7 @@ export default function LocalProductsPage() {
     try {
       await copyDownloadTextIfNeeded(request);
       await saveImagesToChosenFolder(request);
-      Toastify(
-        `Đã lưu ${request.images.length} ảnh vào thư mục đã chọn`,
-        200,
-      );
+      Toastify(`Đã lưu ${request.images.length} ảnh vào thư mục đã chọn`, 200);
       setPendingDownload(null);
     } catch {
       Toastify(
@@ -2568,7 +2665,8 @@ export default function LocalProductsPage() {
       return;
     }
 
-    const descriptionText = product.description.trim() || settings.commonDescription.trim();
+    const descriptionText =
+      product.description.trim() || settings.commonDescription.trim();
 
     requestDownload({
       title: "Tải ảnh sản phẩm",
@@ -2629,7 +2727,8 @@ export default function LocalProductsPage() {
         );
       }, 1200);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Không thể copy ảnh";
+      const message =
+        error instanceof Error ? error.message : "Không thể copy ảnh";
       Toastify(message, 400);
     }
   };
@@ -2698,7 +2797,8 @@ export default function LocalProductsPage() {
     const activeDescriptions = products
       .filter((product) => !product.isDone)
       .map((product) => {
-        const description = product.description.trim() || settings.commonDescription.trim();
+        const description =
+          product.description.trim() || settings.commonDescription.trim();
 
         return [product.name, description].filter(Boolean).join("\n");
       })
@@ -3359,7 +3459,6 @@ export default function LocalProductsPage() {
     );
   };
 
-
   const renderDescriptionText = (
     productId: string,
     description: string,
@@ -3604,7 +3703,9 @@ export default function LocalProductsPage() {
                   >
                     <button
                       type="button"
-                      className={`relative flex aspect-square w-full items-center justify-center bg-slate-900 ${productDone ? "after:absolute after:inset-0 after:bg-slate-950/30" : ""
+                      className={`relative flex aspect-square w-full items-center justify-center bg-slate-900 ${productDone
+                        ? "after:absolute after:inset-0 after:bg-slate-950/30"
+                        : ""
                         }`}
                       onClick={(event) => {
                         event.stopPropagation();
@@ -3943,7 +4044,10 @@ export default function LocalProductsPage() {
                       className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-2 whitespace-nowrap text-xs font-black text-white transition hover:bg-white/10 active:scale-[0.98]"
                       onClick={handleExportProductsCsv}
                     >
-                      <FiFileText aria-hidden="true" className={iconClassName} />
+                      <FiFileText
+                        aria-hidden="true"
+                        className={iconClassName}
+                      />
                       Excel
                     </button>
 
@@ -5422,7 +5526,8 @@ export default function LocalProductsPage() {
                               (image) => image.id === selectedAlbumImage.id,
                             ) + 1
                             : 0}
-                          /{albumSource.images.length} · đã chọn {selectedAlbumImageIds.size}
+                          /{albumSource.images.length} · đã chọn{" "}
+                          {selectedAlbumImageIds.size}
                         </p>
                       </div>
 
@@ -5449,9 +5554,16 @@ export default function LocalProductsPage() {
                           title="Copy ảnh đang xem vào clipboard"
                           aria-label="Copy ảnh đang xem vào clipboard"
                         >
-                          {selectedAlbumImage
-                            ? renderCopyIcon(`album-image-${selectedAlbumImage.id}`)
-                            : <FiCopy aria-hidden="true" className={iconClassName} />}
+                          {selectedAlbumImage ? (
+                            renderCopyIcon(
+                              `album-image-${selectedAlbumImage.id}`,
+                            )
+                          ) : (
+                            <FiCopy
+                              aria-hidden="true"
+                              className={iconClassName}
+                            />
+                          )}
                           Ảnh
                         </button>
 
