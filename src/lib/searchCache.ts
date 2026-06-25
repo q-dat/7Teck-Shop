@@ -1,10 +1,11 @@
-import { connectDB } from './mongodb';
-import Phone from '@/app/models/phone';
-import Tablet from '@/app/models/tablet';
-import Macbook from '@/app/models/macbook';
-import Windows from '@/app/models/windows';
+import type { Model, Types } from 'mongoose';
 
-// Bảng ánh xạ từ khóa mở rộng để hỗ trợ viết tắt phổ biến
+import PhoneModel from '@/server/models/phone.model';
+import TabletModel from '@/server/models/tablet.model';
+import MacbookModel from '@/server/models/macbook.model';
+import WindowsModel from '@/server/models/windows.model';
+import { connectDB } from './mongodb';
+
 export const keywordMap: Record<string, string> = {
   ip: 'iphone',
   ip14: 'iphone 14',
@@ -36,18 +37,56 @@ export type CachedItem = {
   catalogId?: string;
 };
 
-interface RawItem {
-  _id: string | { toString(): string };
+type RawId = string | Types.ObjectId | { toString(): string };
+
+type RawItem = {
+  _id: RawId;
   [key: string]: unknown;
-}
+};
+
+type CollectionConfig = {
+  nameField: string;
+  url: string;
+  imageField: string;
+  colorField: string;
+  priceField: string;
+  saleField: string;
+  statusField: string;
+  catalogField: string;
+  findItems: () => Promise<RawItem[]>;
+};
 
 let CACHE: CachedItem[] = [];
 let lastLoaded = 0;
-const CACHE_TTL = 60 * 1000; // 1 phút
 
-const COLLECTIONS = [
-  {
-    model: Phone,
+const CACHE_TTL = 60 * 1000;
+
+function getSelectFields(config: Omit<CollectionConfig, 'findItems'>): string {
+  return [
+    config.nameField,
+    config.imageField,
+    config.colorField,
+    config.priceField,
+    config.saleField,
+    config.statusField,
+    config.catalogField,
+    '_id',
+  ].join(' ');
+}
+
+function createCollectionConfig<TSchema extends object>(model: Model<TSchema>, config: Omit<CollectionConfig, 'findItems'>): CollectionConfig {
+  return {
+    ...config,
+    findItems: async () => {
+      const items = await model.find({}).select(getSelectFields(config)).lean().exec();
+
+      return items as unknown as RawItem[];
+    },
+  };
+}
+
+const COLLECTIONS: CollectionConfig[] = [
+  createCollectionConfig(PhoneModel, {
     nameField: 'name',
     url: '/dien-thoai',
     imageField: 'img',
@@ -56,9 +95,9 @@ const COLLECTIONS = [
     saleField: 'sale',
     statusField: 'status',
     catalogField: 'phone_catalog_id',
-  },
-  {
-    model: Tablet,
+  }),
+
+  createCollectionConfig(TabletModel, {
     nameField: 'tablet_name',
     url: '/may-tinh-bang',
     imageField: 'tablet_img',
@@ -67,9 +106,9 @@ const COLLECTIONS = [
     saleField: 'tablet_sale',
     statusField: 'tablet_status',
     catalogField: 'tablet_catalog_id',
-  },
-  {
-    model: Macbook,
+  }),
+
+  createCollectionConfig(MacbookModel, {
     nameField: 'macbook_name',
     url: '/macbook',
     imageField: 'macbook_img',
@@ -78,9 +117,9 @@ const COLLECTIONS = [
     saleField: 'macbook_sale',
     statusField: 'macbook_status',
     catalogField: 'macbook_catalog_id',
-  },
-  {
-    model: Windows,
+  }),
+
+  createCollectionConfig(WindowsModel, {
     nameField: 'windows_name',
     url: '/windows',
     imageField: 'windows_img',
@@ -89,64 +128,100 @@ const COLLECTIONS = [
     saleField: 'windows_sale',
     statusField: 'windows_status',
     catalogField: 'windows_catalog_id',
-  },
+  }),
 ];
 
-function getNestedValue(obj: unknown, path: string): string {
+function getNestedValue(obj: unknown, path: string): unknown {
   const keys = path.split('.');
   let current: unknown = obj;
+
   for (const key of keys) {
-    if (typeof current === 'object' && current !== null && key in current) {
-      current = (current as Record<string, unknown>)[key];
-    } else return '';
+    if (typeof current !== 'object' || current === null || !(key in current)) {
+      return undefined;
+    }
+
+    current = (current as Record<string, unknown>)[key];
   }
-  return typeof current === 'string' ? current : '';
+
+  return current;
 }
 
-export async function loadCache() {
+function getStringValue(obj: RawItem, field: string): string | undefined {
+  const value = getNestedValue(obj, field);
+
+  return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
+}
+
+function getNumberValue(obj: RawItem, field: string): number | undefined {
+  const value = getNestedValue(obj, field);
+
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function getIdValue(obj: RawItem, field: string): string | undefined {
+  const value = getNestedValue(obj, field);
+
+  if (!value) {
+    return undefined;
+  }
+
+  return String(value);
+}
+
+function createProductLink(url: string, name: string, id: RawId): string {
+  return `${url}/${encodeURIComponent(name)}/${String(id)}`;
+}
+
+export async function loadCache(): Promise<void> {
   await connectDB();
+
   const allItems: CachedItem[] = [];
 
-  for (const { model, nameField, url, imageField, colorField, priceField, saleField, statusField, catalogField } of COLLECTIONS) {
-    const items = (await model
-      .find()
-      .select(`${nameField} ${imageField} ${colorField} ${priceField} ${saleField} ${statusField} ${catalogField} _id`)
-      .lean()) as RawItem[];
+  for (const collection of COLLECTIONS) {
+    const items = await collection.findItems();
 
-    items.forEach((item) => {
-      const rawName = item[nameField];
-      if (typeof rawName === 'string') {
-        const name = rawName;
-        const image = getNestedValue(item, imageField);
-        const color = getNestedValue(item, colorField);
-        const price = item[priceField];
-        const sale = item[saleField];
-        const status = item[statusField] ? String(item[statusField]) : undefined;
-        const catalogId = item[catalogField] ? String(item[catalogField]) : undefined;
+    for (const item of items) {
+      const name = getStringValue(item, collection.nameField);
 
-        allItems.push({
-          _id: String(item._id),
-          name: rawName,
-
-          image,
-          color: typeof color === 'string' ? color : undefined,
-          price: typeof price === 'number' ? price : undefined,
-          sale: typeof sale === 'number' ? sale : undefined,
-          status,
-          catalogId,
-          link: `${url}/${name}/${item._id}`,
-        });
+      if (!name) {
+        continue;
       }
-    });
+
+      const image = getStringValue(item, collection.imageField) ?? '';
+      const color = getStringValue(item, collection.colorField);
+      const price = getNumberValue(item, collection.priceField);
+      const sale = getNumberValue(item, collection.saleField);
+      const status = getStringValue(item, collection.statusField);
+      const catalogId = getIdValue(item, collection.catalogField);
+
+      allItems.push({
+        _id: String(item._id),
+        name,
+        link: createProductLink(collection.url, name, item._id),
+        image,
+        color,
+        price,
+        sale,
+        status,
+        catalogId,
+      });
+    }
   }
 
   CACHE = allItems;
   lastLoaded = Date.now();
-  console.log(`✅ Cache loaded: ${CACHE.length} items`);
+
+  console.log(`Cache loaded: ${CACHE.length} items`);
 }
 
 export async function getCache(): Promise<CachedItem[]> {
-  if (Date.now() - lastLoaded < CACHE_TTL && CACHE.length > 0) return CACHE;
+  const isCacheValid = Date.now() - lastLoaded < CACHE_TTL;
+
+  if (isCacheValid && CACHE.length > 0) {
+    return CACHE;
+  }
+
   await loadCache();
+
   return CACHE;
 }
