@@ -1,72 +1,5 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
-
-export interface IPhoneCatalog extends Document {
-  _id: mongoose.Types.ObjectId;
-  name: string;
-  slug?: string;
-  img: string;
-  price: number;
-  status: number;
-  content?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  configuration_and_memory?: {
-    operating_system?: string;
-    cpu_chip?: string;
-    cpu_speed?: string;
-    gpu?: string;
-    ram?: string;
-    storage_capacity?: string;
-    remaining_capacity?: string;
-    memory_card?: string;
-    contacts?: string;
-  };
-  camera_and_screen?: {
-    rear_camera_resolution?: string;
-    rear_camera_video?: string[];
-    rear_camera_flash?: string;
-    rear_camera_features?: string[];
-    front_camera_resolution?: string;
-    front_camera_features?: string[];
-    screen_technology?: string;
-    screen_resolution?: string;
-    screen_size?: string;
-    max_brightness?: string;
-    touchscreen_glass?: string;
-  };
-  battery_and_charging?: {
-    battery_capacity?: string;
-    battery_type?: string;
-    max_charging_support?: string;
-    battery_technology?: string[];
-  };
-  features?: {
-    advanced_security?: string[];
-    special_features?: string[];
-    water_dust_resistant?: string;
-    voice_recording?: string[];
-    radio?: string[];
-    video_playback?: string;
-    music_playback?: string[];
-  };
-  connectivity?: {
-    mobile_network?: string;
-    sim?: string;
-    wifi?: string[];
-    gps?: string[];
-    bluetooth?: string;
-    charging_connection_port?: string;
-    headphone_jack?: string;
-    other_connectivity?: string;
-  };
-  design_and_material?: {
-    design?: string;
-    material?: string;
-    dimensions_and_weight?: string;
-    release_date?: string;
-    brand?: string;
-  };
-}
+import { IPhoneCatalog } from '@/types/type/catalogs/phone-catalog/phone-catalog';
+import mongoose, { Schema, Model } from 'mongoose';
 
 const PhoneCatalogSchema = new Schema<IPhoneCatalog>(
   {
@@ -133,11 +66,10 @@ const PhoneCatalogSchema = new Schema<IPhoneCatalog>(
       brand: { type: String },
     },
   },
-  { timestamps: true, collection: 'phonecatalogs' },
+  { collection: 'phonecatalogs' }
 );
 
 const PhoneCatalogModel =
-  (mongoose.models.PhoneCatalog as Model<IPhoneCatalog> | undefined) ??
-  mongoose.model<IPhoneCatalog>('PhoneCatalog', PhoneCatalogSchema);
+  (mongoose.models.PhoneCatalog as Model<IPhoneCatalog> | undefined) ?? mongoose.model<IPhoneCatalog>('PhoneCatalog', PhoneCatalogSchema);
 
 export default PhoneCatalogModel;

@@ -1,56 +1,5 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
-
-export interface IMacbookCatalog extends Document {
-  _id: mongoose.Types.ObjectId;
-  m_cat_name: string;
-  m_cat_slug: string;
-  m_cat_img: string;
-  m_cat_price: number;
-  m_cat_status: number;
-  m_cat_content?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  m_cat_processor?: {
-    m_cat_cpu_technology?: string;
-    m_cat_core_count?: number;
-    m_cat_thread_count?: number;
-    m_cat_cpu_speed?: string;
-    m_cat_max_speed?: string;
-  };
-  m_cat_memory_and_storage?: {
-    m_cat_ram?: string;
-    m_cat_ram_type?: string;
-    m_cat_ram_bus_speed?: string;
-    m_cat_max_ram_support?: string;
-    m_cat_hard_drive?: string[];
-  };
-  m_cat_display?: {
-    m_cat_screen_size?: string;
-    m_cat_resolution?: string;
-    m_cat_refresh_rate?: string;
-    m_cat_color_coverage?: string;
-    m_cat_screen_technology?: string[];
-  };
-  m_cat_graphics_and_audio?: {
-    m_cat_gpu?: string;
-    m_cat_audio_technology?: string;
-  };
-  m_cat_connectivity_and_ports?: {
-    m_cat_ports?: string[];
-    m_cat_wireless_connectivity?: string[];
-    m_cat_card_reader?: string;
-    m_cat_webcam?: string;
-    m_cat_other_features?: string[];
-    m_cat_keyboard_backlight?: string;
-  };
-  m_cat_dimensions_weight_battery?: {
-    m_cat_dimensions?: string[];
-    m_cat_material?: string;
-    m_cat_battery_info?: string;
-    m_cat_operating_system?: string;
-    m_cat_release_date?: string;
-  };
-}
+import { IMacbookCatalog } from '@/types/type/catalogs/macbook-catalog/macbook-catalog';
+import mongoose, { Schema, Model } from 'mongoose';
 
 const MacbookCatalogSchema = new Schema<IMacbookCatalog>(
   {
@@ -101,11 +50,10 @@ const MacbookCatalogSchema = new Schema<IMacbookCatalog>(
       m_cat_release_date: { type: String },
     },
   },
-  { timestamps: true, collection: 'macbookcatalogs' },
+  { collection: 'macbookcatalogs' }
 );
 
 const MacbookCatalogModel =
-  (mongoose.models.MacbookCatalog as Model<IMacbookCatalog> | undefined) ??
-  mongoose.model<IMacbookCatalog>('MacbookCatalog', MacbookCatalogSchema);
+  (mongoose.models.MacbookCatalog as Model<IMacbookCatalog> | undefined) ?? mongoose.model<IMacbookCatalog>('MacbookCatalog', MacbookCatalogSchema);
 
 export default MacbookCatalogModel;

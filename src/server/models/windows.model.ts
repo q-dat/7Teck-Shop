@@ -1,4 +1,4 @@
-import mongoose, { Schema, type Document, type Model } from 'mongoose';
+import mongoose, { Schema, type Model } from 'mongoose';
 
 export interface IWindows extends Document {
   _id: mongoose.Types.ObjectId;
@@ -32,13 +32,10 @@ const WindowsSchema = new Schema<IWindows>(
     windows_status: { type: String, required: true },
     windows_des: { type: String },
     windows_note: { type: String },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true, collection: 'windows' },
+  { collection: 'windows' }
 );
 
-const WindowsModel =
-  (mongoose.models.Windows as Model<IWindows> | undefined) ?? mongoose.model<IWindows>('Windows', WindowsSchema);
+const WindowsModel = (mongoose.models.Windows as Model<IWindows> | undefined) ?? mongoose.model<IWindows>('Windows', WindowsSchema);
 
 export default WindowsModel;

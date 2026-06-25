@@ -1,22 +1,5 @@
-import mongoose, { Schema, type Document, type Model } from 'mongoose';
-
-export interface IMacbook extends Document {
-  _id: mongoose.Types.ObjectId;
-  macbook_catalog_id: mongoose.Types.ObjectId;
-  macbook_name: string;
-  macbook_slug?: string;
-  macbook_view?: number;
-  macbook_color: string;
-  macbook_img: string;
-  macbook_thumbnail?: string[];
-  macbook_price: number;
-  macbook_sale: number;
-  macbook_status: string;
-  macbook_des?: string;
-  macbook_note?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import { IMacbook } from '@/types/type/products/macbook/macbook';
+import mongoose, { Schema, type Model } from 'mongoose';
 
 const MacbookSchema = new Schema<IMacbook>(
   {
@@ -32,13 +15,10 @@ const MacbookSchema = new Schema<IMacbook>(
     macbook_status: { type: String, required: true },
     macbook_des: { type: String },
     macbook_note: { type: String },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true, collection: 'macbook' },
+  { collection: 'macbook' }
 );
 
-const MacbookModel =
-  (mongoose.models.Macbook as Model<IMacbook> | undefined) ?? mongoose.model<IMacbook>('Macbook', MacbookSchema);
+const MacbookModel = (mongoose.models.Macbook as Model<IMacbook> | undefined) ?? mongoose.model<IMacbook>('Macbook', MacbookSchema);
 
 export default MacbookModel;

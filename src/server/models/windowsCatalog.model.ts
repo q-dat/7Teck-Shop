@@ -1,56 +1,5 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
-
-export interface IWindowsCatalog extends Document {
-  _id: mongoose.Types.ObjectId;
-  w_cat_name: string;
-  w_cat_slug: string;
-  w_cat_img: string;
-  w_cat_price: number;
-  w_cat_status: number;
-  w_cat_content?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  w_cat_processor?: {
-    w_cat_cpu_technology?: string;
-    w_cat_core_count?: number;
-    w_cat_thread_count?: number;
-    w_cat_cpu_speed?: string;
-    w_cat_max_speed?: string;
-  };
-  w_cat_memory_and_storage?: {
-    w_cat_ram?: string;
-    w_cat_ram_type?: string;
-    w_cat_ram_bus_speed?: string;
-    w_cat_max_ram_support?: string;
-    w_cat_hard_drive?: string[];
-  };
-  w_cat_display?: {
-    w_cat_screen_size?: string;
-    w_cat_resolution?: string;
-    w_cat_refresh_rate?: string;
-    w_cat_color_coverage?: string;
-    w_cat_screen_technology?: string[];
-  };
-  w_cat_graphics_and_audio?: {
-    w_cat_gpu?: string;
-    w_cat_audio_technology?: string;
-  };
-  w_cat_connectivity_and_ports?: {
-    w_cat_ports?: string[];
-    w_cat_wireless_connectivity?: string[];
-    w_cat_card_reader?: string;
-    w_cat_webcam?: string;
-    w_cat_other_features?: string[];
-    w_cat_keyboard_backlight?: string;
-  };
-  w_cat_dimensions_weight_battery?: {
-    w_cat_dimensions?: string[];
-    w_cat_material?: string;
-    w_cat_battery_info?: string;
-    w_cat_operating_system?: string;
-    w_cat_release_date?: string;
-  };
-}
+import { IWindowsCatalog } from '@/types/type/catalogs/windows-catalog/windows-catalog';
+import mongoose, { Schema, Model } from 'mongoose';
 
 const WindowsCatalogSchema = new Schema<IWindowsCatalog>(
   {
@@ -101,11 +50,10 @@ const WindowsCatalogSchema = new Schema<IWindowsCatalog>(
       w_cat_release_date: { type: String },
     },
   },
-  { timestamps: true, collection: 'windowscatalogs' },
+  { collection: 'windowscatalogs' }
 );
 
 const WindowsCatalogModel =
-  (mongoose.models.WindowsCatalog as Model<IWindowsCatalog> | undefined) ??
-  mongoose.model<IWindowsCatalog>('WindowsCatalog', WindowsCatalogSchema);
+  (mongoose.models.WindowsCatalog as Model<IWindowsCatalog> | undefined) ?? mongoose.model<IWindowsCatalog>('WindowsCatalog', WindowsCatalogSchema);
 
 export default WindowsCatalogModel;
