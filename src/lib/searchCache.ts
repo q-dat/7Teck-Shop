@@ -28,6 +28,7 @@ export const keywordMap: Record<string, string> = {
 export type CachedItem = {
   _id: string;
   name: string;
+  slug: string;
   link: string;
   image: string;
   color?: string;
@@ -46,6 +47,7 @@ type RawItem = {
 
 type CollectionConfig = {
   nameField: string;
+  slugField: string;
   url: string;
   imageField: string;
   colorField: string;
@@ -64,6 +66,7 @@ const CACHE_TTL = 60 * 1000;
 function getSelectFields(config: Omit<CollectionConfig, 'findItems'>): string {
   return [
     config.nameField,
+    config.slugField,
     config.imageField,
     config.colorField,
     config.priceField,
@@ -88,6 +91,7 @@ function createCollectionConfig<TSchema extends object>(model: Model<TSchema>, c
 const COLLECTIONS: CollectionConfig[] = [
   createCollectionConfig(PhoneModel, {
     nameField: 'name',
+    slugField: 'slug',
     url: '/dien-thoai',
     imageField: 'img',
     colorField: 'color',
@@ -99,6 +103,7 @@ const COLLECTIONS: CollectionConfig[] = [
 
   createCollectionConfig(TabletModel, {
     nameField: 'tablet_name',
+    slugField: 'tablet_slug',
     url: '/may-tinh-bang',
     imageField: 'tablet_img',
     colorField: 'tablet_color',
@@ -110,6 +115,7 @@ const COLLECTIONS: CollectionConfig[] = [
 
   createCollectionConfig(MacbookModel, {
     nameField: 'macbook_name',
+    slugField: 'macbook_slug',
     url: '/macbook',
     imageField: 'macbook_img',
     colorField: 'macbook_color',
@@ -121,6 +127,7 @@ const COLLECTIONS: CollectionConfig[] = [
 
   createCollectionConfig(WindowsModel, {
     nameField: 'windows_name',
+    slugField: 'windows_slug',
     url: '/windows',
     imageField: 'windows_img',
     colorField: 'windows_color',
@@ -149,7 +156,7 @@ function getNestedValue(obj: unknown, path: string): unknown {
 function getStringValue(obj: RawItem, field: string): string | undefined {
   const value = getNestedValue(obj, field);
 
-  return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
 }
 
 function getNumberValue(obj: RawItem, field: string): number | undefined {
@@ -168,8 +175,8 @@ function getIdValue(obj: RawItem, field: string): string | undefined {
   return String(value);
 }
 
-function createProductLink(url: string, name: string, id: RawId): string {
-  return `${url}/${encodeURIComponent(name)}/${String(id)}`;
+function createProductLink(url: string, slug: string, id: RawId): string {
+  return `${url}/${encodeURIComponent(slug)}/${String(id)}`;
 }
 
 export async function loadCache(): Promise<void> {
@@ -182,8 +189,9 @@ export async function loadCache(): Promise<void> {
 
     for (const item of items) {
       const name = getStringValue(item, collection.nameField);
+      const slug = getStringValue(item, collection.slugField);
 
-      if (!name) {
+      if (!name || !slug) {
         continue;
       }
 
@@ -197,7 +205,8 @@ export async function loadCache(): Promise<void> {
       allItems.push({
         _id: String(item._id),
         name,
-        link: createProductLink(collection.url, name, item._id),
+        slug,
+        link: createProductLink(collection.url, slug, item._id),
         image,
         color,
         price,
