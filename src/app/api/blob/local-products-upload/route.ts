@@ -6,6 +6,12 @@ type ClientPayload = {
   uploadKey: string;
 };
 
+const BLOB_BACKUP_PATHNAME = 'local-products/backups/local-products-current.json.gz';
+
+const allowedContentTypes = ['application/gzip', 'application/x-gzip', 'application/octet-stream'];
+
+const maximumSizeInBytes = 200 * 1024 * 1024;
+
 const parseClientPayload = (value: string | null | undefined): ClientPayload | null => {
   if (!value) return null;
 
@@ -26,10 +32,6 @@ const parseClientPayload = (value: string | null | undefined): ClientPayload | n
   }
 };
 
-const allowedContentTypes = ['application/gzip', 'application/x-gzip', 'application/octet-stream'];
-
-const maximumSizeInBytes = 200 * 1024 * 1024;
-
 export async function POST(request: Request): Promise<NextResponse> {
   const body = (await request.json()) as HandleUploadPresignedBody;
 
@@ -45,17 +47,13 @@ export async function POST(request: Request): Promise<NextResponse> {
           throw new Error('Mật khẩu upload không đúng');
         }
 
-        if (!pathname.startsWith('local-products/backups/')) {
+        if (pathname !== BLOB_BACKUP_PATHNAME) {
           throw new Error('Đường dẫn upload không hợp lệ');
-        }
-
-        if (!pathname.endsWith('.json.gz')) {
-          throw new Error('Chỉ cho phép upload file .json.gz');
         }
 
         return {
           token: await issueSignedToken({
-            pathname,
+            pathname: BLOB_BACKUP_PATHNAME,
             operations: ['put'],
             allowedContentTypes,
             maximumSizeInBytes,
@@ -66,13 +64,13 @@ export async function POST(request: Request): Promise<NextResponse> {
             maximumSizeInBytes,
             validUntil: Date.now() + 10 * 60 * 1000,
             addRandomSuffix: false,
-            allowOverwrite: false,
+            allowOverwrite: true,
             cacheControlMaxAge: 60,
           },
         };
       },
       onUploadCompleted: async ({ blob }) => {
-        console.log('Local products backup uploaded:', {
+        console.log('Local products backup replaced:', {
           pathname: blob.pathname,
           url: blob.url,
         });

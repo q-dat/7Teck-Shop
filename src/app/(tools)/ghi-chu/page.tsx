@@ -226,6 +226,9 @@ const defaultScheduleConfig: ScheduleConfig = {
   selectedCategories: [],
 };
 
+const BLOB_BACKUP_PATHNAME = "local-products/backups/local-products-current.json.gz";
+const BLOB_BACKUP_FILENAME = "local-products-current.json.gz";
+
 const iconClassName = "h-4 w-4 shrink-0";
 
 const isTypingTarget = (target: EventTarget | null): boolean => {
@@ -1395,6 +1398,16 @@ const parseJsonTextToPayload = (text: string): ParsedImportPayload | null => {
   return parseImportPayload(parsed);
 };
 
+const createDefaultScheduleConfigForRestore = (): ScheduleConfig => {
+  const today = getTodayString();
+
+  return {
+    ...defaultScheduleConfig,
+    dateFrom: today,
+    dateTo: today,
+  };
+};
+
 const restorePayloadToLocal = async (
   payload: ParsedImportPayload,
   params: {
@@ -1405,31 +1418,33 @@ const restorePayloadToLocal = async (
     loadProducts: () => Promise<void>;
   },
 ): Promise<void> => {
+  const nextSettings: GlobalSettings = payload.settings ?? {
+    ...defaultSettings,
+    updatedAt: new Date().toISOString(),
+  };
+  const nextScheduleConfig: ScheduleConfig =
+    payload.scheduleConfig ?? createDefaultScheduleConfigForRestore();
+  const nextScheduleAssignments: ScheduleAssignmentMap =
+    payload.scheduleAssignments ?? {};
+  const nextPostedRecords: PostedRecord[] = payload.postedRecords ?? [];
+
   await clearProductsDb();
 
   for (const product of payload.products) {
     await saveProductToDb(product);
   }
 
-  if (payload.settings) {
-    params.setSettings(payload.settings);
-    saveGlobalSettings(payload.settings);
-  }
+  params.setSettings(nextSettings);
+  saveGlobalSettings(nextSettings);
 
-  if (payload.scheduleConfig) {
-    params.setScheduleConfig(payload.scheduleConfig);
-    saveScheduleConfig(payload.scheduleConfig);
-  }
+  params.setScheduleConfig(nextScheduleConfig);
+  saveScheduleConfig(nextScheduleConfig);
 
-  if (payload.scheduleAssignments) {
-    params.setScheduleAssignments(payload.scheduleAssignments);
-    saveScheduleAssignments(payload.scheduleAssignments);
-  }
+  params.setScheduleAssignments(nextScheduleAssignments);
+  saveScheduleAssignments(nextScheduleAssignments);
 
-  if (payload.postedRecords) {
-    params.setPostedRecords(payload.postedRecords);
-    savePostedRecords(payload.postedRecords);
-  }
+  params.setPostedRecords(nextPostedRecords);
+  savePostedRecords(nextPostedRecords);
 
   await params.loadProducts();
 };
@@ -2883,9 +2898,8 @@ export default function LocalProductsPage() {
 
       const content = JSON.stringify(payload);
       const gzipBlob = await textToGzipBlob(content);
-      const fileName = createBackupFileName("json.gz");
-      const pathname = `local-products/backups/${fileName}`;
-      const file = new File([gzipBlob], fileName, {
+      const pathname = BLOB_BACKUP_PATHNAME;
+      const file = new File([gzipBlob], BLOB_BACKUP_FILENAME, {
         type: "application/gzip",
       });
 
@@ -2899,7 +2913,7 @@ export default function LocalProductsPage() {
       });
 
       await copyText(pathname);
-      Toastify("Đã upload JSON.GZ lên Blob và copy pathname", 200);
+      Toastify("Đã thay thế file JSON.GZ hiện tại trên Blob", 200);
     } catch (error) {
       const message =
         error instanceof Error
@@ -2915,7 +2929,7 @@ export default function LocalProductsPage() {
     setPendingBlobUpload({
       title: "Xác thực upload Blob",
       description:
-        "Nhập mật khẩu backup. Mật khẩu phải trùng value của BLOB_BACKUP_UPLOAD_KEY trên Vercel thì hệ thống mới cho phép upload JSON.GZ lên Blob.",
+        "Nhập mật khẩu backup. File JSON.GZ mới sẽ thay thế hoàn toàn file backup hiện tại trên Vercel Blob.",
       confirmLabel: "Xác thực và upload",
       cancelLabel: "Hủy upload",
       onConfirm: uploadJsonGzipToBlobWithPassword,
@@ -2926,7 +2940,7 @@ export default function LocalProductsPage() {
     requestConfirm({
       title: "Tải backup online về local?",
       description:
-        "Hệ thống sẽ tải bản JSON.GZ mới nhất từ Vercel Blob, giải nén và thay thế toàn bộ dữ liệu hiện tại trong IndexedDB.",
+        "Hệ thống sẽ tải file JSON.GZ hiện tại từ Vercel Blob, giải nén và thay thế 100% dữ liệu local hiện tại. Không cộng dồn, không merge, không ghi thêm.",
       confirmLabel: "Tải về local",
       tone: "warning",
       onConfirm: async () => {
