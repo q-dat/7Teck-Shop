@@ -29,7 +29,6 @@ import {
   FiX,
 } from "react-icons/fi";
 import JSZip from "jszip";
-import { uploadPresigned } from "@vercel/blob/client";
 import { toast, ToastContainer, type ToastOptions } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -227,7 +226,6 @@ const defaultScheduleConfig: ScheduleConfig = {
 };
 
 const BLOB_BACKUP_PATHNAME = "local-products/backups/local-products-current.json.gz";
-const BLOB_BACKUP_FILENAME = "local-products-current.json.gz";
 
 const iconClassName = "h-4 w-4 shrink-0";
 
@@ -1398,16 +1396,6 @@ const parseJsonTextToPayload = (text: string): ParsedImportPayload | null => {
   return parseImportPayload(parsed);
 };
 
-const createDefaultScheduleConfigForRestore = (): ScheduleConfig => {
-  const today = getTodayString();
-
-  return {
-    ...defaultScheduleConfig,
-    dateFrom: today,
-    dateTo: today,
-  };
-};
-
 const restorePayloadToLocal = async (
   payload: ParsedImportPayload,
   params: {
@@ -1418,33 +1406,31 @@ const restorePayloadToLocal = async (
     loadProducts: () => Promise<void>;
   },
 ): Promise<void> => {
-  const nextSettings: GlobalSettings = payload.settings ?? {
-    ...defaultSettings,
-    updatedAt: new Date().toISOString(),
-  };
-  const nextScheduleConfig: ScheduleConfig =
-    payload.scheduleConfig ?? createDefaultScheduleConfigForRestore();
-  const nextScheduleAssignments: ScheduleAssignmentMap =
-    payload.scheduleAssignments ?? {};
-  const nextPostedRecords: PostedRecord[] = payload.postedRecords ?? [];
-
   await clearProductsDb();
 
   for (const product of payload.products) {
     await saveProductToDb(product);
   }
 
-  params.setSettings(nextSettings);
-  saveGlobalSettings(nextSettings);
+  if (payload.settings) {
+    params.setSettings(payload.settings);
+    saveGlobalSettings(payload.settings);
+  }
 
-  params.setScheduleConfig(nextScheduleConfig);
-  saveScheduleConfig(nextScheduleConfig);
+  if (payload.scheduleConfig) {
+    params.setScheduleConfig(payload.scheduleConfig);
+    saveScheduleConfig(payload.scheduleConfig);
+  }
 
-  params.setScheduleAssignments(nextScheduleAssignments);
-  saveScheduleAssignments(nextScheduleAssignments);
+  if (payload.scheduleAssignments) {
+    params.setScheduleAssignments(payload.scheduleAssignments);
+    saveScheduleAssignments(payload.scheduleAssignments);
+  }
 
-  params.setPostedRecords(nextPostedRecords);
-  savePostedRecords(nextPostedRecords);
+  if (payload.postedRecords) {
+    params.setPostedRecords(payload.postedRecords);
+    savePostedRecords(payload.postedRecords);
+  }
 
   await params.loadProducts();
 };
@@ -2898,21 +2884,48 @@ export default function LocalProductsPage() {
 
       const content = JSON.stringify(payload);
       const gzipBlob = await textToGzipBlob(content);
-      const pathname = BLOB_BACKUP_PATHNAME;
-      const file = new File([gzipBlob], BLOB_BACKUP_FILENAME, {
-        type: "application/gzip",
-      });
+      const contentType = "application/gzip";
 
-      const uploadedBlob = await uploadPresigned(pathname, file, {
-        access: "private",
-        handleUploadUrl: "/api/blob/local-products-upload",
-        multipart: true,
-        clientPayload: JSON.stringify({
+      const presignResponse = await fetch("/api/blob/local-products-upload", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
           uploadKey: cleanUploadKey,
+          contentType,
+          size: gzipBlob.size,
         }),
       });
 
-      await copyText(pathname);
+      if (!presignResponse.ok) {
+        const errorPayload = (await presignResponse.json().catch(() => null)) as
+          | { message?: string }
+          | null;
+
+        Toastify(errorPayload?.message ?? "Không thể tạo link upload Blob", 400);
+        return;
+      }
+
+      const presignPayload = (await presignResponse.json()) as {
+        pathname: string;
+        presignedUrl: string;
+      };
+
+      const uploadResponse = await fetch(presignPayload.presignedUrl, {
+        method: "PUT",
+        headers: {
+          "content-type": contentType,
+        },
+        body: gzipBlob,
+      });
+
+      if (!uploadResponse.ok) {
+        Toastify("Upload JSON.GZ lên Blob thất bại", 400);
+        return;
+      }
+
+      await copyText(presignPayload.pathname);
       Toastify("Đã thay thế file JSON.GZ hiện tại trên Blob", 200);
     } catch (error) {
       const message =
@@ -2940,7 +2953,7 @@ export default function LocalProductsPage() {
     requestConfirm({
       title: "Tải backup online về local?",
       description:
-        "Hệ thống sẽ tải file JSON.GZ hiện tại từ Vercel Blob, giải nén và thay thế 100% dữ liệu local hiện tại. Không cộng dồn, không merge, không ghi thêm.",
+        "Hệ thống sẽ tải bản JSON.GZ mới nhất từ Vercel Blob, giải nén và thay thế toàn bộ dữ liệu hiện tại trong IndexedDB.",
       confirmLabel: "Tải về local",
       tone: "warning",
       onConfirm: async () => {
