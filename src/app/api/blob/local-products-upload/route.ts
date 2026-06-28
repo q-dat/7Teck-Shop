@@ -1,91 +1,120 @@
-import { issueSignedToken } from '@vercel/blob';
-import { handleUploadPresigned, type HandleUploadPresignedBody } from '@vercel/blob/client';
-import { NextResponse } from 'next/server';
+import { issueSignedToken, presignUrl } from "@vercel/blob";
+import { NextResponse } from "next/server";
 
-type ClientPayload = {
+type UploadRequestBody = {
   uploadKey: string;
+  contentType: string;
+  size: number;
 };
 
-const BLOB_BACKUP_PATHNAME = 'local-products/backups/local-products-current.json.gz';
+const BLOB_BACKUP_PATHNAME = "local-products/backups/local-products-current.json.gz";
 
-const allowedContentTypes = ['application/gzip', 'application/x-gzip', 'application/octet-stream'];
+const allowedContentTypes = [
+  "application/gzip",
+  "application/x-gzip",
+  "application/octet-stream",
+];
 
 const maximumSizeInBytes = 200 * 1024 * 1024;
 
-const parseClientPayload = (value: string | null | undefined): ClientPayload | null => {
-  if (!value) return null;
+const isUploadRequestBody = (value: unknown): value is UploadRequestBody => {
+  if (typeof value !== "object" || value === null) return false;
 
-  try {
-    const parsed: unknown = JSON.parse(value);
+  const record = value as Record<string, unknown>;
 
-    if (typeof parsed !== 'object' || parsed === null) return null;
-
-    const record = parsed as Record<string, unknown>;
-
-    if (typeof record.uploadKey !== 'string') return null;
-
-    return {
-      uploadKey: record.uploadKey,
-    };
-  } catch {
-    return null;
-  }
+  return (
+    typeof record.uploadKey === "string" &&
+    typeof record.contentType === "string" &&
+    typeof record.size === "number" &&
+    Number.isFinite(record.size)
+  );
 };
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const body = (await request.json()) as HandleUploadPresignedBody;
-
   try {
-    const jsonResponse = await handleUploadPresigned({
-      body,
-      request,
-      getSignedToken: async (pathname, clientPayload) => {
-        const payload = parseClientPayload(clientPayload);
-        const uploadKey = process.env.BLOB_BACKUP_UPLOAD_KEY;
+    const parsed: unknown = await request.json();
 
-        if (!uploadKey || payload?.uploadKey !== uploadKey) {
-          throw new Error('Mật khẩu upload không đúng');
-        }
+    if (!isUploadRequestBody(parsed)) {
+      return NextResponse.json(
+        {
+          message: "Payload upload không hợp lệ",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
 
-        if (pathname !== BLOB_BACKUP_PATHNAME) {
-          throw new Error('Đường dẫn upload không hợp lệ');
-        }
+    const uploadKey = process.env.BLOB_BACKUP_UPLOAD_KEY;
 
-        return {
-          token: await issueSignedToken({
-            pathname: BLOB_BACKUP_PATHNAME,
-            operations: ['put'],
-            allowedContentTypes,
-            maximumSizeInBytes,
-            validUntil: Date.now() + 60 * 60 * 1000,
-          }),
-          urlOptions: {
-            allowedContentTypes,
-            maximumSizeInBytes,
-            validUntil: Date.now() + 10 * 60 * 1000,
-            addRandomSuffix: false,
-            allowOverwrite: true,
-            cacheControlMaxAge: 60,
-          },
-        };
-      },
-      onUploadCompleted: async ({ blob }) => {
-        console.log('Local products backup replaced:', {
-          pathname: blob.pathname,
-          url: blob.url,
-        });
-      },
+    if (!uploadKey || parsed.uploadKey.trim() !== uploadKey) {
+      return NextResponse.json(
+        {
+          message: "Mật khẩu upload không đúng",
+        },
+        {
+          status: 401,
+        },
+      );
+    }
+
+    if (!allowedContentTypes.includes(parsed.contentType)) {
+      return NextResponse.json(
+        {
+          message: "Định dạng file upload không hợp lệ",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (parsed.size <= 0 || parsed.size > maximumSizeInBytes) {
+      return NextResponse.json(
+        {
+          message: "Dung lượng file upload không hợp lệ",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const token = await issueSignedToken({
+      pathname: BLOB_BACKUP_PATHNAME,
+      operations: ["put"],
+      allowedContentTypes,
+      maximumSizeInBytes,
+      validUntil: Date.now() + 60 * 60 * 1000,
     });
 
-    return NextResponse.json(jsonResponse);
+    const { presignedUrl } = await presignUrl(token, {
+      operation: "put",
+      pathname: BLOB_BACKUP_PATHNAME,
+      access: "private",
+      allowedContentTypes,
+      maximumSizeInBytes,
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      cacheControlMaxAge: 60,
+      validUntil: Date.now() + 10 * 60 * 1000,
+    });
+
+    return NextResponse.json({
+      pathname: BLOB_BACKUP_PATHNAME,
+      presignedUrl,
+    });
   } catch (error) {
     return NextResponse.json(
       {
-        message: error instanceof Error ? error.message : 'Không thể tạo link upload Blob',
+        message:
+          error instanceof Error
+            ? error.message
+            : "Không thể tạo link upload Blob",
       },
       {
         status: 400,
-      }
+      },
     );
   }
 }

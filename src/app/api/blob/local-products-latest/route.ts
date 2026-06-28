@@ -1,28 +1,10 @@
-import { issueSignedToken, list, presignUrl } from '@vercel/blob';
+import { issueSignedToken, presignUrl } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 
 const BLOB_BACKUP_PATHNAME = 'local-products/backups/local-products-current.json.gz';
 
 export async function GET(): Promise<NextResponse> {
   try {
-    const { blobs } = await list({
-      prefix: 'local-products/backups/',
-      limit: 1000,
-    });
-
-    const currentBlob = blobs.find((blob) => blob.pathname === BLOB_BACKUP_PATHNAME);
-
-    if (!currentBlob) {
-      return NextResponse.json(
-        {
-          message: 'Chưa có file backup online hiện tại',
-        },
-        {
-          status: 404,
-        }
-      );
-    }
-
     const token = await issueSignedToken({
       pathname: BLOB_BACKUP_PATHNAME,
       operations: ['get'],
@@ -37,16 +19,16 @@ export async function GET(): Promise<NextResponse> {
     });
 
     return NextResponse.json({
-      pathname: currentBlob.pathname,
+      pathname: BLOB_BACKUP_PATHNAME,
       downloadUrl: presignedUrl,
-      size: currentBlob.size,
-      uploadedAt: currentBlob.uploadedAt,
-      etag: currentBlob.etag,
+      size: 0,
+      uploadedAt: new Date().toISOString(),
+      etag: '',
     });
   } catch (error) {
     return NextResponse.json(
       {
-        message: error instanceof Error ? error.message : 'Không thể lấy backup online hiện tại',
+        message: error instanceof Error ? error.message : 'Không thể lấy backup hiện tại',
       },
       {
         status: 400,
