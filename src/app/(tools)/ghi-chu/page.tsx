@@ -2466,6 +2466,33 @@ export default function LocalProductsPage() {
     }, 1200);
   };
 
+  const handleCopyProductRepresentativeImage = async (
+    product: LocalProduct,
+  ): Promise<void> => {
+    const representativeImage = product.images[0];
+
+    if (!representativeImage) {
+      Toastify("Sản phẩm chưa có ảnh đại diện để copy", 300);
+      return;
+    }
+
+    const copyKey = `cover-${product.id}`;
+
+    try {
+      await copyImageToClipboard(representativeImage);
+      setCopiedKey(copyKey);
+      Toastify("Đã copy ảnh đại diện", 200);
+
+      window.setTimeout(() => {
+        setCopiedKey((current) => (current === copyKey ? "" : current));
+      }, 1200);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Không thể copy ảnh đại diện";
+      Toastify(message, 400);
+    }
+  };
+
   const handleCopyProductList = async (): Promise<void> => {
     if (copyableProductCount === 0) {
       Toastify("Không có sản phẩm đang hoạt động để copy", 300);
@@ -3703,7 +3730,7 @@ export default function LocalProductsPage() {
                   >
                     <button
                       type="button"
-                      className={`relative flex aspect-square w-full items-center justify-center bg-slate-900 ${productDone
+                      className={`relative flex aspect-square w-full items-center justify-center overflow-hidden bg-slate-900 ${productDone
                         ? "after:absolute after:inset-0 after:bg-slate-950/30"
                         : ""
                         }`}
@@ -3722,7 +3749,7 @@ export default function LocalProductsPage() {
                           alt={product.name}
                           width={1200}
                           height={1200}
-                          className={`h-full w-full object-contain transition duration-300 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
+                          className={`h-full w-full object-cover transition duration-300 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
                             }`}
                         />
                       ) : (
@@ -3804,8 +3831,22 @@ export default function LocalProductsPage() {
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
-                          title="Copy tên sản phẩm"
-                          aria-label="Copy tên sản phẩm"
+                          title="Copy ảnh đại diện"
+                          aria-label="Copy ảnh đại diện"
+                          className="col-span-2 flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleCopyProductRepresentativeImage(product);
+                          }}
+                        >
+                          {renderCopyIcon(`cover-${product.id}`)}
+                          Copy ảnh đại diện
+                        </button>
+
+                        <button
+                          type="button"
+                          title="Copy mô tả sản phẩm"
+                          aria-label="Copy mô tả sản phẩm"
                           className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
                           onClick={(event) => {
                             event.stopPropagation();
@@ -3822,6 +3863,8 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
+                          title="Copy tên sản phẩm"
+                          aria-label="Copy tên sản phẩm"
                           className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
                           onClick={(event) => {
                             event.stopPropagation();
@@ -3877,7 +3920,7 @@ export default function LocalProductsPage() {
                         type="button"
                         title="Xóa sản phẩm"
                         aria-label="Xóa sản phẩm"
-                        className="flex w-full items-center justify-center gap-1 rounded-2xl border border-rose-400/30 bg-rose-400/10 p-1.5 text-[10px] font-black text-rose-100 transition hover:bg-rose-400/20 active:scale-[0.98]"
+                        className="mt-2 flex w-full items-center justify-center gap-1 rounded-2xl border border-rose-400/30 bg-rose-400/10 p-1.5 text-[10px] font-black text-rose-100 transition hover:bg-rose-400/20 active:scale-[0.98]"
                         onClick={(event) => {
                           event.stopPropagation();
                           void handleDelete(product.id);
