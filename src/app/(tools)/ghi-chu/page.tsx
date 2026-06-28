@@ -29,6 +29,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import JSZip from "jszip";
+import { upload } from "@vercel/blob/client";
 import { toast, ToastContainer, type ToastOptions } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -78,6 +79,23 @@ type ExportPayload = {
   postedRecords: PostedRecord[];
 };
 
+type ParsedImportPayload = {
+  settings?: GlobalSettings;
+  products: LocalProduct[];
+  scheduleConfig?: ScheduleConfig;
+  scheduleAssignments?: ScheduleAssignmentMap;
+  postedRecords?: PostedRecord[];
+};
+
+type LatestBlobBackup = {
+  pathname: string;
+  url: string;
+  downloadUrl: string;
+  size: number;
+  uploadedAt: string;
+  etag: string;
+};
+
 type ConfirmTone = "default" | "danger" | "warning";
 
 type ConfirmRequest = {
@@ -87,6 +105,15 @@ type ConfirmRequest = {
   cancelLabel?: string;
   tone?: ConfirmTone;
   onConfirm: () => void | Promise<void>;
+  onCancel?: () => void;
+};
+
+type BlobUploadRequest = {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  cancelLabel?: string;
+  onConfirm: (uploadKey: string) => void | Promise<void>;
   onCancel?: () => void;
 };
 
@@ -994,17 +1021,115 @@ const normalizeProductsArray = (value: unknown): LocalProduct[] => {
     .filter((item): item is LocalProduct => item !== null);
 };
 
-const parseImportPayload = (
+const normalizeGlobalSettings = (
   value: unknown,
-): {
-  settings?: GlobalSettings;
-  products: LocalProduct[];
-  scheduleConfig?: ScheduleConfig;
-  scheduleAssignments?: ScheduleAssignmentMap;
-  postedRecords?: PostedRecord[];
-} | null => {
+): GlobalSettings | undefined => {
+  if (typeof value !== "object" || value === null) return undefined;
+
+  const record = value as Record<string, unknown>;
+
+  return {
+    commonDescription:
+      typeof record.commonDescription === "string"
+        ? record.commonDescription
+        : "",
+    globalNote: typeof record.globalNote === "string" ? record.globalNote : "",
+    updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : "",
+  };
+};
+
+const normalizeScheduleConfig = (
+  value: unknown,
+): ScheduleConfig | undefined => {
+  if (typeof value !== "object" || value === null) return undefined;
+
+  const record = value as Record<string, unknown>;
+  const taskNames = Array.isArray(record.taskNames)
+    ? record.taskNames.filter(
+      (item): item is string => typeof item === "string",
+    )
+    : defaultScheduleConfig.taskNames;
+  const selectedCategories = Array.isArray(record.selectedCategories)
+    ? Array.from(
+      new Map(
+        record.selectedCategories
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => [
+            normalizeTextKey(item),
+            normalizeCategoryName(item),
+          ]),
+      ).values(),
+    ).filter(Boolean)
+    : [];
+
+  return {
+    dateFrom:
+      typeof record.dateFrom === "string" && record.dateFrom
+        ? record.dateFrom
+        : getTodayString(),
+    dateTo:
+      typeof record.dateTo === "string" && record.dateTo
+        ? record.dateTo
+        : getTodayString(),
+    startTime:
+      typeof record.startTime === "string" && record.startTime
+        ? record.startTime
+        : defaultScheduleConfig.startTime,
+    endTime:
+      typeof record.endTime === "string" && record.endTime
+        ? record.endTime
+        : defaultScheduleConfig.endTime,
+    gapHours:
+      typeof record.gapHours === "number" && Number.isFinite(record.gapHours)
+        ? record.gapHours
+        : defaultScheduleConfig.gapHours,
+    taskCount:
+      typeof record.taskCount === "number" && Number.isFinite(record.taskCount)
+        ? Math.max(1, Math.min(64, Math.round(record.taskCount)))
+        : defaultScheduleConfig.taskCount,
+    taskNames,
+    selectedCategories,
+  };
+};
+
+const normalizeScheduleAssignments = (
+  value: unknown,
+): ScheduleAssignmentMap | undefined => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const record = value as Record<string, unknown>;
+  const result: ScheduleAssignmentMap = {};
+
+  Object.entries(record).forEach(([key, assignmentValue]) => {
+    if (typeof assignmentValue === "string") {
+      result[key] = assignmentValue;
+    }
+  });
+
+  return result;
+};
+
+const normalizePostedRecords = (value: unknown): PostedRecord[] | undefined => {
+  if (!Array.isArray(value)) return undefined;
+
+  return value.filter((item): item is PostedRecord => {
+    if (typeof item !== "object" || item === null) return false;
+
+    const record = item as Record<string, unknown>;
+
+    return (
+      typeof record.slotId === "string" && typeof record.postedAt === "string"
+    );
+  });
+};
+
+const parseImportPayload = (value: unknown): ParsedImportPayload | null => {
   if (Array.isArray(value)) {
     const products = normalizeProductsArray(value);
+
+    if (products.length === 0) return null;
 
     return {
       products,
@@ -1018,32 +1143,14 @@ const parseImportPayload = (
 
   if (products.length === 0) return null;
 
-  const settingsRecord = record.settings;
-
-  if (typeof settingsRecord !== "object" || settingsRecord === null) {
-    return {
-      products,
-    };
-  }
-
-  const settingsSource = settingsRecord as Record<string, unknown>;
-
   return {
-    settings: {
-      commonDescription:
-        typeof settingsSource.commonDescription === "string"
-          ? settingsSource.commonDescription
-          : "",
-      globalNote:
-        typeof settingsSource.globalNote === "string"
-          ? settingsSource.globalNote
-          : "",
-      updatedAt:
-        typeof settingsSource.updatedAt === "string"
-          ? settingsSource.updatedAt
-          : "",
-    },
+    settings: normalizeGlobalSettings(record.settings),
     products,
+    scheduleConfig: normalizeScheduleConfig(record.scheduleConfig),
+    scheduleAssignments: normalizeScheduleAssignments(
+      record.scheduleAssignments,
+    ),
+    postedRecords: normalizePostedRecords(record.postedRecords),
   };
 };
 
@@ -1215,6 +1322,117 @@ const downloadBlob = (blob: Blob, filename: string): void => {
   link.remove();
 
   URL.revokeObjectURL(url);
+};
+
+const createExportPayload = (params: {
+  settings: GlobalSettings;
+  products: LocalProduct[];
+  scheduleConfig: ScheduleConfig;
+  scheduleAssignments: ScheduleAssignmentMap;
+  postedRecords: PostedRecord[];
+}): ExportPayload => {
+  return {
+    version: 4,
+    settings: params.settings,
+    products: params.products,
+    scheduleConfig: params.scheduleConfig,
+    scheduleAssignments: params.scheduleAssignments,
+    postedRecords: params.postedRecords,
+  };
+};
+
+const createBackupFileName = (extension: "json" | "json.gz"): string => {
+  const safeDate = new Date().toISOString().replace(/[:.]/g, "-");
+
+  return `local-products-${safeDate}.${extension}`;
+};
+
+const textToGzipBlob = async (text: string): Promise<Blob> => {
+  if (typeof CompressionStream === "undefined") {
+    throw new Error("Trình duyệt chưa hỗ trợ nén gzip");
+  }
+
+  const stream = new Blob([text], {
+    type: "application/json;charset=utf-8",
+  })
+    .stream()
+    .pipeThrough(new CompressionStream("gzip"));
+
+  return new Response(stream).blob();
+};
+
+const gzipBlobToText = async (blob: Blob): Promise<string> => {
+  if (typeof DecompressionStream === "undefined") {
+    throw new Error("Trình duyệt chưa hỗ trợ giải nén gzip");
+  }
+
+  const stream = blob.stream().pipeThrough(new DecompressionStream("gzip"));
+
+  return new Response(stream).text();
+};
+
+const isGzipFile = (file: File): boolean => {
+  const fileName = file.name.toLowerCase();
+
+  return (
+    fileName.endsWith(".gz") ||
+    fileName.endsWith(".json.gz") ||
+    file.type === "application/gzip" ||
+    file.type === "application/x-gzip"
+  );
+};
+
+const readJsonOrGzipFileText = async (file: File): Promise<string> => {
+  if (isGzipFile(file)) {
+    return gzipBlobToText(file);
+  }
+
+  return file.text();
+};
+
+const parseJsonTextToPayload = (text: string): ParsedImportPayload | null => {
+  const parsed: unknown = JSON.parse(text);
+
+  return parseImportPayload(parsed);
+};
+
+const restorePayloadToLocal = async (
+  payload: ParsedImportPayload,
+  params: {
+    setSettings: (settings: GlobalSettings) => void;
+    setScheduleConfig: (config: ScheduleConfig) => void;
+    setScheduleAssignments: (assignments: ScheduleAssignmentMap) => void;
+    setPostedRecords: (records: PostedRecord[]) => void;
+    loadProducts: () => Promise<void>;
+  },
+): Promise<void> => {
+  await clearProductsDb();
+
+  for (const product of payload.products) {
+    await saveProductToDb(product);
+  }
+
+  if (payload.settings) {
+    params.setSettings(payload.settings);
+    saveGlobalSettings(payload.settings);
+  }
+
+  if (payload.scheduleConfig) {
+    params.setScheduleConfig(payload.scheduleConfig);
+    saveScheduleConfig(payload.scheduleConfig);
+  }
+
+  if (payload.scheduleAssignments) {
+    params.setScheduleAssignments(payload.scheduleAssignments);
+    saveScheduleAssignments(payload.scheduleAssignments);
+  }
+
+  if (payload.postedRecords) {
+    params.setPostedRecords(payload.postedRecords);
+    savePostedRecords(payload.postedRecords);
+  }
+
+  await params.loadProducts();
 };
 
 const isAppleMobileDevice = (): boolean => {
@@ -1612,6 +1830,9 @@ export default function LocalProductsPage() {
   const [pendingConfirm, setPendingConfirm] = useState<ConfirmRequest | null>(
     null,
   );
+  const [pendingBlobUpload, setPendingBlobUpload] =
+    useState<BlobUploadRequest | null>(null);
+  const [blobUploadPassword, setBlobUploadPassword] = useState<string>("");
   const [scheduleAssignments, setScheduleAssignments] =
     useState<ScheduleAssignmentMap>(() => loadScheduleAssignments());
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -1977,6 +2198,7 @@ export default function LocalProductsPage() {
         !activeModal &&
         !pendingDownload &&
         !pendingConfirm &&
+        !pendingBlobUpload &&
         !isTypingTarget(event.target)
       ) {
         event.preventDefault();
@@ -1998,6 +2220,13 @@ export default function LocalProductsPage() {
         return;
       }
 
+      if (pendingBlobUpload) {
+        pendingBlobUpload.onCancel?.();
+        setPendingBlobUpload(null);
+        setBlobUploadPassword("");
+        return;
+      }
+
       if (activeModal) {
         closeModal();
       }
@@ -2008,7 +2237,7 @@ export default function LocalProductsPage() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activeModal, pendingDownload, pendingConfirm]);
+  }, [activeModal, pendingDownload, pendingConfirm, pendingBlobUpload]);
 
   useEffect(() => {
     if (!isSettingsReady) return;
@@ -2528,22 +2757,62 @@ export default function LocalProductsPage() {
   };
 
   const handleExportJson = (): void => {
-    const payload: ExportPayload = {
-      version: 4,
-      settings,
-      products,
-      scheduleConfig,
-      scheduleAssignments,
-      postedRecords,
-    };
+    requestConfirm({
+      title: "Export JSON?",
+      description:
+        "File JSON sẽ được tải về máy hiện tại. Dữ liệu local không bị thay đổi.",
+      confirmLabel: "Export JSON",
+      tone: "default",
+      onConfirm: () => {
+        const payload = createExportPayload({
+          settings,
+          products,
+          scheduleConfig,
+          scheduleAssignments,
+          postedRecords,
+        });
 
-    const content = JSON.stringify(payload, null, 2);
-    const blob = new Blob([content], {
-      type: "application/json",
+        const content = JSON.stringify(payload, null, 2);
+        const blob = new Blob([content], {
+          type: "application/json;charset=utf-8",
+        });
+
+        downloadBlob(blob, createBackupFileName("json"));
+        Toastify("Đã export JSON", 200);
+      },
     });
+  };
 
-    downloadBlob(blob, `local-products-${Date.now()}.json`);
-    Toastify("Đã export JSON", 200);
+  const handleExportJsonGzip = async (): Promise<void> => {
+    requestConfirm({
+      title: "Export JSON.GZ?",
+      description:
+        "File JSON sẽ được nén gzip rồi tải về máy hiện tại. Dữ liệu sau khi giải nén vẫn giữ nguyên.",
+      confirmLabel: "Export JSON.GZ",
+      tone: "default",
+      onConfirm: async () => {
+        try {
+          const payload = createExportPayload({
+            settings,
+            products,
+            scheduleConfig,
+            scheduleAssignments,
+            postedRecords,
+          });
+
+          const content = JSON.stringify(payload);
+          const blob = await textToGzipBlob(content);
+
+          downloadBlob(blob, createBackupFileName("json.gz"));
+          Toastify("Đã export JSON.GZ", 200);
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Không thể export JSON.GZ";
+
+          Toastify(message, 400);
+        }
+      },
+    });
   };
 
   const handleImportJson = async (
@@ -2554,60 +2823,159 @@ export default function LocalProductsPage() {
     if (!file) return;
 
     try {
-      const text = await file.text();
-      const parsed: unknown = JSON.parse(text);
-      const payload = parseImportPayload(parsed);
+      const text = await readJsonOrGzipFileText(file);
+      const payload = parseJsonTextToPayload(text);
 
       if (!payload || payload.products.length === 0) {
-        Toastify("File JSON không đúng cấu trúc", 400);
+        Toastify("File backup không đúng cấu trúc", 400);
         event.target.value = "";
         return;
       }
 
       requestConfirm({
-        title: "Import dữ liệu JSON?",
+        title: isGzipFile(file)
+          ? "Import dữ liệu JSON.GZ?"
+          : "Import dữ liệu JSON?",
         description:
-          "Import JSON sẽ thay thế toàn bộ dữ liệu sản phẩm hiện tại trong IndexedDB. Dữ liệu lịch trong file tổng cũng sẽ được khôi phục nếu có.",
+          "Import sẽ thay thế toàn bộ dữ liệu sản phẩm hiện tại trong IndexedDB. File .json.gz sẽ được tự giải nén và đọc như JSON thường.",
         confirmLabel: "Import dữ liệu",
         tone: "warning",
         onCancel: () => {
           event.target.value = "";
         },
         onConfirm: async () => {
-          await clearProductsDb();
+          await restorePayloadToLocal(payload, {
+            setSettings,
+            setScheduleConfig,
+            setScheduleAssignments,
+            setPostedRecords,
+            loadProducts,
+          });
 
-          for (const product of payload.products) {
-            await saveProductToDb(product);
-          }
-
-          if (payload.settings) {
-            setSettings(payload.settings);
-          }
-
-          if (payload.scheduleConfig) {
-            setScheduleConfig(payload.scheduleConfig);
-          }
-
-          if (payload.scheduleAssignments) {
-            setScheduleAssignments(payload.scheduleAssignments);
-            saveScheduleAssignments(payload.scheduleAssignments);
-          }
-
-          if (payload.postedRecords) {
-            setPostedRecords(payload.postedRecords);
-            savePostedRecords(payload.postedRecords);
-          }
-
-          await loadProducts();
           event.target.value = "";
-          Toastify("Đã import JSON", 200);
+          Toastify("Đã import dữ liệu vào local", 200);
         },
       });
     } catch {
-      Toastify("Không thể import file JSON", 400);
+      Toastify("Không thể import file backup", 400);
     } finally {
       event.target.value = "";
     }
+  };
+
+  const uploadJsonGzipToBlobWithPassword = async (
+    uploadKey: string,
+  ): Promise<void> => {
+    try {
+      const payload = createExportPayload({
+        settings,
+        products,
+        scheduleConfig,
+        scheduleAssignments,
+        postedRecords,
+      });
+
+      const content = JSON.stringify(payload);
+      const gzipBlob = await textToGzipBlob(content);
+      const fileName = createBackupFileName("json.gz");
+      const pathname = `local-products/backups/${fileName}`;
+      const file = new File([gzipBlob], fileName, {
+        type: "application/gzip",
+      });
+
+      const uploadedBlob = await upload(pathname, file, {
+        access: "public",
+        handleUploadUrl: "/api/blob/local-products-upload",
+        multipart: true,
+        clientPayload: JSON.stringify({
+          uploadKey,
+        }),
+      });
+
+      await copyText(uploadedBlob.url);
+      Toastify("Đã upload JSON.GZ lên Blob và copy link", 200);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Không thể upload JSON.GZ lên Blob";
+
+      Toastify(message, 400);
+    }
+  };
+
+  const handleUploadJsonGzipToBlob = async (): Promise<void> => {
+    setBlobUploadPassword("");
+    setPendingBlobUpload({
+      title: "Xác thực upload Blob",
+      description:
+        "Nhập mật khẩu backup. Mật khẩu phải trùng value của BLOB_BACKUP_UPLOAD_KEY trên Vercel thì hệ thống mới cho phép upload JSON.GZ lên Blob.",
+      confirmLabel: "Xác thực và upload",
+      cancelLabel: "Hủy upload",
+      onConfirm: uploadJsonGzipToBlobWithPassword,
+    });
+  };
+
+  const handleRestoreLatestBackupFromBlob = async (): Promise<void> => {
+    requestConfirm({
+      title: "Tải backup online về local?",
+      description:
+        "Hệ thống sẽ tải bản JSON.GZ mới nhất từ Vercel Blob, giải nén và thay thế toàn bộ dữ liệu hiện tại trong IndexedDB.",
+      confirmLabel: "Tải về local",
+      tone: "warning",
+      onConfirm: async () => {
+        try {
+          const latestResponse = await fetch(
+            `/api/blob/local-products-latest?t=${Date.now()}`,
+            {
+              cache: "no-store",
+            },
+          );
+
+          if (!latestResponse.ok) {
+            Toastify("Chưa tìm thấy bản backup online", 400);
+            return;
+          }
+
+          const latest = (await latestResponse.json()) as LatestBlobBackup;
+
+          const fileResponse = await fetch(`${latest.url}?t=${Date.now()}`, {
+            cache: "no-store",
+          });
+
+          if (!fileResponse.ok) {
+            Toastify("Không thể tải file backup từ Blob", 400);
+            return;
+          }
+
+          const gzipBlob = await fileResponse.blob();
+          const text = await gzipBlobToText(gzipBlob);
+          const payload = parseJsonTextToPayload(text);
+
+          if (!payload || payload.products.length === 0) {
+            Toastify("File backup online không đúng cấu trúc", 400);
+            return;
+          }
+
+          await restorePayloadToLocal(payload, {
+            setSettings,
+            setScheduleConfig,
+            setScheduleAssignments,
+            setPostedRecords,
+            loadProducts,
+          });
+
+          Toastify("Đã tải backup online về local", 200);
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Không thể tải backup online";
+
+          Toastify(message, 400);
+        }
+      },
+    });
   };
 
   const requestDownload = (request: DownloadRequest): void => {
@@ -3478,6 +3846,29 @@ export default function LocalProductsPage() {
     await action();
   };
 
+  const closeBlobUploadConfirm = (): void => {
+    pendingBlobUpload?.onCancel?.();
+    setPendingBlobUpload(null);
+    setBlobUploadPassword("");
+  };
+
+  const executeBlobUploadConfirm = async (): Promise<void> => {
+    if (!pendingBlobUpload) return;
+
+    const uploadKey = blobUploadPassword.trim();
+
+    if (!uploadKey) {
+      Toastify("Vui lòng nhập mật khẩu upload Blob", 400);
+      return;
+    }
+
+    const action = pendingBlobUpload.onConfirm;
+
+    setPendingBlobUpload(null);
+    setBlobUploadPassword("");
+    await action(uploadKey);
+  };
+
   const renderCopyIcon = (key: string) => {
     return copiedKey === key ? (
       <FiCheckCircle aria-hidden="true" className={iconClassName} />
@@ -3519,8 +3910,8 @@ export default function LocalProductsPage() {
           key={`${productId}-plus-${index}`}
           type="button"
           className={`my-0.5 block w-full select-text rounded-lg px-1.5 py-1 text-left transition ${copiedKey === copyKey
-            ? "bg-cyan-300 text-slate-950"
-            : "bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
+              ? "bg-cyan-300 text-slate-950"
+              : "bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
             }`}
           onClick={(event) => {
             event.stopPropagation();
@@ -3677,8 +4068,8 @@ export default function LocalProductsPage() {
             <button
               type="button"
               className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${activeCategoryTab === "all"
-                ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
                 }`}
               onClick={() => setActiveCategoryTab("all")}
             >
@@ -3690,9 +4081,9 @@ export default function LocalProductsPage() {
                 key={category}
                 type="button"
                 className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${normalizeTextKey(activeCategoryTab) ===
-                  normalizeTextKey(category)
-                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                    normalizeTextKey(category)
+                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
                   }`}
                 onClick={() => setActiveCategoryTab(category)}
               >
@@ -3731,8 +4122,8 @@ export default function LocalProductsPage() {
                     <button
                       type="button"
                       className={`relative flex aspect-square w-full items-center justify-center overflow-hidden bg-slate-900 ${productDone
-                        ? "after:absolute after:inset-0 after:bg-slate-950/30"
-                        : ""
+                          ? "after:absolute after:inset-0 after:bg-slate-950/30"
+                          : ""
                         }`}
                       onClick={(event) => {
                         event.stopPropagation();
@@ -3884,8 +4275,8 @@ export default function LocalProductsPage() {
                           title={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
                           aria-label={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
                           className={`flex w-full items-center justify-center gap-1 rounded-2xl p-1.5 text-[10px] font-black transition active:scale-[0.98] ${productDone
-                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                            : "border border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20"
+                              ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                              : "border border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20"
                             }`}
                           onClick={(event) => {
                             event.stopPropagation();
@@ -4164,10 +4555,10 @@ export default function LocalProductsPage() {
                                   <div
                                     key={product.id}
                                     className={`grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-white/10 text-xs transition ${isSelected
-                                      ? "bg-cyan-300/10 text-white"
-                                      : product.isDone
-                                        ? "bg-emerald-400/[0.04] text-slate-300 hover:bg-emerald-400/10"
-                                        : "bg-slate-950 text-slate-300 hover:bg-white/5"
+                                        ? "bg-cyan-300/10 text-white"
+                                        : product.isDone
+                                          ? "bg-emerald-400/[0.04] text-slate-300 hover:bg-emerald-400/10"
+                                          : "bg-slate-950 text-slate-300 hover:bg-white/5"
                                       }`}
                                     onClick={() =>
                                       setSelectedProductId(product.id)
@@ -4212,8 +4603,8 @@ export default function LocalProductsPage() {
                                       <button
                                         type="button"
                                         className={`w-full rounded-xl px-2 py-1.5 text-[10px] font-black transition active:scale-[0.98] ${product.isDone
-                                          ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                                          : "border border-slate-500/40 bg-white/5 text-slate-300 hover:bg-white/10"
+                                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                                            : "border border-slate-500/40 bg-white/5 text-slate-300 hover:bg-white/10"
                                           }`}
                                         onClick={(event) => {
                                           event.stopPropagation();
@@ -4346,8 +4737,8 @@ export default function LocalProductsPage() {
                       <section className="order-1 flex min-h-0 flex-col gap-2 xl:order-2">
                         <label
                           className={`cursor-pointer rounded-2xl border border-dashed p-2 text-center transition ${isDragging
-                            ? "border-cyan-300/80 bg-cyan-300/10"
-                            : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
+                              ? "border-cyan-300/80 bg-cyan-300/10"
+                              : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
                             }`}
                           onDrop={(event) => void handleDrop(event)}
                           onDragOver={handleDragOver}
@@ -4406,8 +4797,8 @@ export default function LocalProductsPage() {
                                     key={image.id}
                                     draggable
                                     className={`group relative h-[88px] cursor-grab overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:cursor-grabbing sm:h-[96px] xl:h-[108px] ${isDraggingImage
-                                      ? "scale-95 opacity-60 ring-cyan-300"
-                                      : "ring-white/10 hover:ring-cyan-300/70"
+                                        ? "scale-95 opacity-60 ring-cyan-300"
+                                        : "ring-white/10 hover:ring-cyan-300/70"
                                       }`}
                                     onDragStart={(event) => {
                                       event.dataTransfer.setData(
@@ -4747,8 +5138,8 @@ export default function LocalProductsPage() {
                                   key={category}
                                   type="button"
                                   className={`rounded-2xl border px-3 py-1.5 text-[11px] font-black transition ${active
-                                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                                      ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                                      : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
                                     }`}
                                   onClick={() =>
                                     toggleScheduleCategory(category)
@@ -4782,8 +5173,8 @@ export default function LocalProductsPage() {
                             <div
                               key={taskIndex}
                               className={`flex min-w-44 shrink-0 items-center gap-1 rounded-xl border p-1 ${active
-                                ? "border-cyan-300/60 bg-cyan-300/10"
-                                : "border-white/10 bg-white/[0.03]"
+                                  ? "border-cyan-300/60 bg-cyan-300/10"
+                                  : "border-white/10 bg-white/[0.03]"
                                 }`}
                             >
                               <button
@@ -4856,10 +5247,10 @@ export default function LocalProductsPage() {
                                   key={`${time}-${activeScheduleTaskIndex}`}
                                   draggable={Boolean(assignedProduct)}
                                   className={`rounded-xl border p-1 transition ${assignedProduct ? "cursor-grab active:cursor-grabbing" : ""} ${done
-                                    ? "border-emerald-400/30 bg-emerald-400/10"
-                                    : assignedProduct
-                                      ? "border-cyan-300/30 bg-cyan-300/10"
-                                      : "border-white/10 bg-slate-950/80"
+                                      ? "border-emerald-400/30 bg-emerald-400/10"
+                                      : assignedProduct
+                                        ? "border-cyan-300/30 bg-cyan-300/10"
+                                        : "border-white/10 bg-slate-950/80"
                                     }`}
                                   onDragStart={(event) => {
                                     if (!assignedProduct) return;
@@ -5019,10 +5410,10 @@ export default function LocalProductsPage() {
                                         aria-label="Xem chi tiết lịch"
                                         disabled={!assignedProduct}
                                         className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${done
-                                          ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                                          : assignedProduct
-                                            ? "border border-white/10 bg-white/5 text-white hover:bg-white/10"
-                                            : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
+                                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                                            : assignedProduct
+                                              ? "border border-white/10 bg-white/5 text-white hover:bg-white/10"
+                                              : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
                                           }`}
                                         onClick={() =>
                                           assignedProduct &&
@@ -5042,8 +5433,8 @@ export default function LocalProductsPage() {
                                         aria-label="Xem chi tiết lịch"
                                         disabled={!assignedProduct}
                                         className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${assignedProduct
-                                          ? "border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
-                                          : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
+                                            ? "border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
+                                            : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
                                           }`}
                                         onClick={() =>
                                           assignedProduct &&
@@ -5126,8 +5517,8 @@ export default function LocalProductsPage() {
                               onDragEnd={() => setDraggingProductId("")}
                               onClick={() => setSelectedProductId(product.id)}
                               className={`cursor-grab rounded-xl border p-1 transition active:cursor-grabbing ${active
-                                ? "border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30"
-                                : "border-white/10 bg-slate-950/80 hover:border-cyan-300/30"
+                                  ? "border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30"
+                                  : "border-white/10 bg-slate-950/80 hover:border-cyan-300/30"
                                 }`}
                             >
                               <div className="flex gap-2">
@@ -5303,16 +5694,33 @@ export default function LocalProductsPage() {
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-3 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
-                      onClick={handleExportJson}
-                    >
-                      <FiDownload
-                        aria-hidden="true"
-                        className={iconClassName}
-                      />
-                    </button>
+                    <div className="mt-3 grid grid-cols-1 gap-2">
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-3 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
+                        onClick={handleExportJson}
+                        title="Export JSON"
+                      >
+                        <FiDownload
+                          aria-hidden="true"
+                          className={iconClassName}
+                        />
+                        <span>Export JSON</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-cyan-300/30 bg-cyan-300/10 p-3 text-sm font-black text-cyan-100 transition hover:bg-cyan-300/20"
+                        onClick={() => void handleExportJsonGzip()}
+                        title="Export JSON.GZ"
+                      >
+                        <FiArchive
+                          aria-hidden="true"
+                          className={iconClassName}
+                        />
+                        <span>Export JSON.GZ</span>
+                      </button>
+                    </div>
                   </article>
 
                   <article className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-2">
@@ -5334,21 +5742,78 @@ export default function LocalProductsPage() {
                     <input
                       ref={fileImportRef}
                       type="file"
-                      accept="application/json,.json"
+                      accept="application/json,.json,.json.gz,.gz,application/gzip,application/x-gzip"
                       className="hidden"
                       onChange={(event) => void handleImportJson(event)}
                     />
 
-                    <button
-                      type="button"
-                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300/40 bg-amber-300/15 p-3 text-sm font-black text-amber-50 transition hover:bg-amber-300/25"
-                      onClick={() => fileImportRef.current?.click()}
-                    >
-                      <FiUploadCloud
-                        aria-hidden="true"
-                        className={iconClassName}
-                      />
-                    </button>
+                    <div className="mt-3 grid grid-cols-1 gap-2">
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300/40 bg-amber-300/15 p-3 text-sm font-black text-amber-50 transition hover:bg-amber-300/25"
+                        onClick={() => fileImportRef.current?.click()}
+                        title="Import JSON hoặc JSON.GZ"
+                      >
+                        <FiUploadCloud
+                          aria-hidden="true"
+                          className={iconClassName}
+                        />
+                        <span>Import file</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/10 p-3 text-sm font-black text-white transition hover:bg-white/15"
+                        onClick={() => void handleRestoreLatestBackupFromBlob()}
+                        title="Tải backup online mới nhất về local"
+                      >
+                        <FiRefreshCcw
+                          aria-hidden="true"
+                          className={iconClassName}
+                        />
+                        <span>Tải từ Blob</span>
+                      </button>
+                    </div>
+                  </article>
+
+                  <article className="rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-2 xl:col-span-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-black text-white">
+                          Upload backup online
+                        </h3>
+                        <p className="mt-1 text-xs leading-5 text-emerald-100/90">
+                          Tạo file JSON.GZ từ dữ liệu local hiện tại rồi upload
+                          lên Vercel Blob. Trước khi upload phải nhập mật khẩu
+                          khớp với BLOB_BACKUP_UPLOAD_KEY trên Vercel.
+                        </p>
+                      </div>
+                      <span className="rounded-xl bg-emerald-300 px-2 py-1 text-[10px] font-black text-slate-950">
+                        Mật khẩu
+                      </span>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_220px]">
+                      <div className="rounded-2xl border border-emerald-300/20 bg-slate-950/40 p-3 text-xs leading-5 text-emerald-50/90">
+                        Dữ liệu upload là bản backup tổng gồm sản phẩm, ảnh, mô
+                        tả, ghi chú, lịch và trạng thái đã đăng. File cũ trên
+                        Blob không bị ghi đè vì mỗi lần upload sẽ tạo tên mới
+                        theo thời gian.
+                      </div>
+
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-300/30 bg-emerald-300/10 p-3 text-sm font-black text-emerald-100 transition hover:bg-emerald-300/20"
+                        onClick={() => void handleUploadJsonGzipToBlob()}
+                        title="Upload JSON.GZ lên Blob"
+                      >
+                        <FiUploadCloud
+                          aria-hidden="true"
+                          className={iconClassName}
+                        />
+                        <span>Upload Blob</span>
+                      </button>
+                    </div>
                   </article>
                 </section>
               ) : null}
@@ -5418,8 +5883,8 @@ export default function LocalProductsPage() {
                         <button
                           type="button"
                           className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${selectedAssignedSlot.done
-                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                            : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
+                              ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                              : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
                             }`}
                           onClick={() =>
                             togglePostedSlot(
@@ -5699,10 +6164,10 @@ export default function LocalProductsPage() {
                             key={image.id}
                             type="button"
                             className={`group relative h-full min-h-0 w-full overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:scale-[0.98] ${checked
-                              ? "ring-2 ring-cyan-300"
-                              : active
-                                ? "ring-2 ring-white/60"
-                                : "ring-white/10 hover:ring-cyan-300/60"
+                                ? "ring-2 ring-cyan-300"
+                                : active
+                                  ? "ring-2 ring-white/60"
+                                  : "ring-white/10 hover:ring-cyan-300/60"
                               }`}
                             onClick={() => toggleSelectedAlbumImage(image.id)}
                             title={`Ảnh ${index + 1}`}
@@ -5716,8 +6181,8 @@ export default function LocalProductsPage() {
                             />
                             <span
                               className={`absolute left-1 top-1 rounded-lg px-1.5 py-0.5 text-[10px] font-black ${active
-                                ? "bg-cyan-300 text-slate-950"
-                                : "bg-black/70 text-white"
+                                  ? "bg-cyan-300 text-slate-950"
+                                  : "bg-black/70 text-white"
                                 }`}
                             >
                               {index + 1}
@@ -5740,6 +6205,74 @@ export default function LocalProductsPage() {
               ) : null}
             </div>
           </div>
+        </div>
+      ) : null}
+
+      {pendingBlobUpload ? (
+        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/75 p-2 backdrop-blur">
+          <form
+            className="w-full max-w-md rounded-3xl border border-emerald-300/20 bg-slate-950 p-3 shadow-2xl"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void executeBlobUploadConfirm();
+            }}
+          >
+            <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2">
+              <div className="min-w-0">
+                <h3 className="text-sm font-black text-white">
+                  {pendingBlobUpload.title}
+                </h3>
+                <p className="mt-2 text-xs leading-5 text-slate-400">
+                  {pendingBlobUpload.description}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
+                onClick={closeBlobUploadConfirm}
+              >
+                <FiX aria-hidden="true" className={iconClassName} />
+              </button>
+            </div>
+
+            <label
+              htmlFor="blob-upload-password"
+              className="mt-3 block text-xs font-black uppercase tracking-[0.2em] text-emerald-100/80"
+            >
+              Mật khẩu upload Blob
+            </label>
+            <input
+              id="blob-upload-password"
+              type="password"
+              value={blobUploadPassword}
+              onChange={(event) => setBlobUploadPassword(event.target.value)}
+              autoFocus
+              className="mt-2 w-full rounded-2xl border border-emerald-300/20 bg-slate-900/80 p-3 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-300/50"
+              placeholder="Nhập BLOB_BACKUP_UPLOAD_KEY"
+            />
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              Mật khẩu được gửi tới API upload để so khớp với biến server
+              BLOB_BACKUP_UPLOAD_KEY. Không cần dùng NEXT_PUBLIC key cho bước
+              upload này.
+            </p>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="rounded-2xl border border-white/10 bg-white/5 p-2 text-sm font-bold text-white transition hover:bg-white/10"
+                onClick={closeBlobUploadConfirm}
+              >
+                {pendingBlobUpload.cancelLabel ?? "Hủy"}
+              </button>
+
+              <button
+                type="submit"
+                className="rounded-2xl bg-emerald-300 p-2 text-sm font-black text-slate-950 transition hover:bg-emerald-200"
+              >
+                {pendingBlobUpload.confirmLabel}
+              </button>
+            </div>
+          </form>
         </div>
       ) : null}
 
@@ -5776,10 +6309,10 @@ export default function LocalProductsPage() {
               <button
                 type="button"
                 className={`rounded-2xl p-2 text-sm font-black transition ${pendingConfirm.tone === "danger"
-                  ? "bg-rose-500 text-white hover:bg-rose-400"
-                  : pendingConfirm.tone === "warning"
-                    ? "bg-amber-300 text-slate-950 hover:bg-amber-200"
-                    : "bg-cyan-300 text-slate-950 hover:bg-cyan-200"
+                    ? "bg-rose-500 text-white hover:bg-rose-400"
+                    : pendingConfirm.tone === "warning"
+                      ? "bg-amber-300 text-slate-950 hover:bg-amber-200"
+                      : "bg-cyan-300 text-slate-950 hover:bg-cyan-200"
                   }`}
                 onClick={() => void executeConfirm()}
               >
