@@ -29,7 +29,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import JSZip from "jszip";
-import { upload } from "@vercel/blob/client";
+import { uploadPresigned } from "@vercel/blob/client";
 import { toast, ToastContainer, type ToastOptions } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -89,7 +89,6 @@ type ParsedImportPayload = {
 
 type LatestBlobBackup = {
   pathname: string;
-  url: string;
   downloadUrl: string;
   size: number;
   uploadedAt: string;
@@ -2866,6 +2865,13 @@ export default function LocalProductsPage() {
   const uploadJsonGzipToBlobWithPassword = async (
     uploadKey: string,
   ): Promise<void> => {
+    const cleanUploadKey = uploadKey.trim();
+
+    if (!cleanUploadKey) {
+      Toastify("Vui lòng nhập mật khẩu upload", 400);
+      return;
+    }
+
     try {
       const payload = createExportPayload({
         settings,
@@ -2883,17 +2889,17 @@ export default function LocalProductsPage() {
         type: "application/gzip",
       });
 
-      const uploadedBlob = await upload(pathname, file, {
-        access: "public",
+      const uploadedBlob = await uploadPresigned(pathname, file, {
+        access: "private",
         handleUploadUrl: "/api/blob/local-products-upload",
         multipart: true,
         clientPayload: JSON.stringify({
-          uploadKey,
+          uploadKey: cleanUploadKey,
         }),
       });
 
-      await copyText(uploadedBlob.url);
-      Toastify("Đã upload JSON.GZ lên Blob và copy link", 200);
+      await copyText(pathname);
+      Toastify("Đã upload JSON.GZ lên Blob và copy pathname", 200);
     } catch (error) {
       const message =
         error instanceof Error
@@ -2939,7 +2945,7 @@ export default function LocalProductsPage() {
 
           const latest = (await latestResponse.json()) as LatestBlobBackup;
 
-          const fileResponse = await fetch(`${latest.url}?t=${Date.now()}`, {
+          const fileResponse = await fetch(latest.downloadUrl, {
             cache: "no-store",
           });
 
@@ -3910,8 +3916,8 @@ export default function LocalProductsPage() {
           key={`${productId}-plus-${index}`}
           type="button"
           className={`my-0.5 block w-full select-text rounded-lg px-1.5 py-1 text-left transition ${copiedKey === copyKey
-              ? "bg-cyan-300 text-slate-950"
-              : "bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
+            ? "bg-cyan-300 text-slate-950"
+            : "bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
             }`}
           onClick={(event) => {
             event.stopPropagation();
@@ -4068,8 +4074,8 @@ export default function LocalProductsPage() {
             <button
               type="button"
               className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${activeCategoryTab === "all"
-                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
                 }`}
               onClick={() => setActiveCategoryTab("all")}
             >
@@ -4081,9 +4087,9 @@ export default function LocalProductsPage() {
                 key={category}
                 type="button"
                 className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${normalizeTextKey(activeCategoryTab) ===
-                    normalizeTextKey(category)
-                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                  normalizeTextKey(category)
+                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
                   }`}
                 onClick={() => setActiveCategoryTab(category)}
               >
@@ -4122,8 +4128,8 @@ export default function LocalProductsPage() {
                     <button
                       type="button"
                       className={`relative flex aspect-square w-full items-center justify-center overflow-hidden bg-slate-900 ${productDone
-                          ? "after:absolute after:inset-0 after:bg-slate-950/30"
-                          : ""
+                        ? "after:absolute after:inset-0 after:bg-slate-950/30"
+                        : ""
                         }`}
                       onClick={(event) => {
                         event.stopPropagation();
@@ -4275,8 +4281,8 @@ export default function LocalProductsPage() {
                           title={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
                           aria-label={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
                           className={`flex w-full items-center justify-center gap-1 rounded-2xl p-1.5 text-[10px] font-black transition active:scale-[0.98] ${productDone
-                              ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                              : "border border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20"
+                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                            : "border border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20"
                             }`}
                           onClick={(event) => {
                             event.stopPropagation();
@@ -4555,10 +4561,10 @@ export default function LocalProductsPage() {
                                   <div
                                     key={product.id}
                                     className={`grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-white/10 text-xs transition ${isSelected
-                                        ? "bg-cyan-300/10 text-white"
-                                        : product.isDone
-                                          ? "bg-emerald-400/[0.04] text-slate-300 hover:bg-emerald-400/10"
-                                          : "bg-slate-950 text-slate-300 hover:bg-white/5"
+                                      ? "bg-cyan-300/10 text-white"
+                                      : product.isDone
+                                        ? "bg-emerald-400/[0.04] text-slate-300 hover:bg-emerald-400/10"
+                                        : "bg-slate-950 text-slate-300 hover:bg-white/5"
                                       }`}
                                     onClick={() =>
                                       setSelectedProductId(product.id)
@@ -4603,8 +4609,8 @@ export default function LocalProductsPage() {
                                       <button
                                         type="button"
                                         className={`w-full rounded-xl px-2 py-1.5 text-[10px] font-black transition active:scale-[0.98] ${product.isDone
-                                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                                            : "border border-slate-500/40 bg-white/5 text-slate-300 hover:bg-white/10"
+                                          ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                                          : "border border-slate-500/40 bg-white/5 text-slate-300 hover:bg-white/10"
                                           }`}
                                         onClick={(event) => {
                                           event.stopPropagation();
@@ -4737,8 +4743,8 @@ export default function LocalProductsPage() {
                       <section className="order-1 flex min-h-0 flex-col gap-2 xl:order-2">
                         <label
                           className={`cursor-pointer rounded-2xl border border-dashed p-2 text-center transition ${isDragging
-                              ? "border-cyan-300/80 bg-cyan-300/10"
-                              : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
+                            ? "border-cyan-300/80 bg-cyan-300/10"
+                            : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
                             }`}
                           onDrop={(event) => void handleDrop(event)}
                           onDragOver={handleDragOver}
@@ -4797,8 +4803,8 @@ export default function LocalProductsPage() {
                                     key={image.id}
                                     draggable
                                     className={`group relative h-[88px] cursor-grab overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:cursor-grabbing sm:h-[96px] xl:h-[108px] ${isDraggingImage
-                                        ? "scale-95 opacity-60 ring-cyan-300"
-                                        : "ring-white/10 hover:ring-cyan-300/70"
+                                      ? "scale-95 opacity-60 ring-cyan-300"
+                                      : "ring-white/10 hover:ring-cyan-300/70"
                                       }`}
                                     onDragStart={(event) => {
                                       event.dataTransfer.setData(
@@ -5138,8 +5144,8 @@ export default function LocalProductsPage() {
                                   key={category}
                                   type="button"
                                   className={`rounded-2xl border px-3 py-1.5 text-[11px] font-black transition ${active
-                                      ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                                      : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
+                                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
                                     }`}
                                   onClick={() =>
                                     toggleScheduleCategory(category)
@@ -5173,8 +5179,8 @@ export default function LocalProductsPage() {
                             <div
                               key={taskIndex}
                               className={`flex min-w-44 shrink-0 items-center gap-1 rounded-xl border p-1 ${active
-                                  ? "border-cyan-300/60 bg-cyan-300/10"
-                                  : "border-white/10 bg-white/[0.03]"
+                                ? "border-cyan-300/60 bg-cyan-300/10"
+                                : "border-white/10 bg-white/[0.03]"
                                 }`}
                             >
                               <button
@@ -5247,10 +5253,10 @@ export default function LocalProductsPage() {
                                   key={`${time}-${activeScheduleTaskIndex}`}
                                   draggable={Boolean(assignedProduct)}
                                   className={`rounded-xl border p-1 transition ${assignedProduct ? "cursor-grab active:cursor-grabbing" : ""} ${done
-                                      ? "border-emerald-400/30 bg-emerald-400/10"
-                                      : assignedProduct
-                                        ? "border-cyan-300/30 bg-cyan-300/10"
-                                        : "border-white/10 bg-slate-950/80"
+                                    ? "border-emerald-400/30 bg-emerald-400/10"
+                                    : assignedProduct
+                                      ? "border-cyan-300/30 bg-cyan-300/10"
+                                      : "border-white/10 bg-slate-950/80"
                                     }`}
                                   onDragStart={(event) => {
                                     if (!assignedProduct) return;
@@ -5410,10 +5416,10 @@ export default function LocalProductsPage() {
                                         aria-label="Xem chi tiết lịch"
                                         disabled={!assignedProduct}
                                         className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${done
-                                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                                            : assignedProduct
-                                              ? "border border-white/10 bg-white/5 text-white hover:bg-white/10"
-                                              : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
+                                          ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                                          : assignedProduct
+                                            ? "border border-white/10 bg-white/5 text-white hover:bg-white/10"
+                                            : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
                                           }`}
                                         onClick={() =>
                                           assignedProduct &&
@@ -5433,8 +5439,8 @@ export default function LocalProductsPage() {
                                         aria-label="Xem chi tiết lịch"
                                         disabled={!assignedProduct}
                                         className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${assignedProduct
-                                            ? "border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
-                                            : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
+                                          ? "border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
+                                          : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
                                           }`}
                                         onClick={() =>
                                           assignedProduct &&
@@ -5517,8 +5523,8 @@ export default function LocalProductsPage() {
                               onDragEnd={() => setDraggingProductId("")}
                               onClick={() => setSelectedProductId(product.id)}
                               className={`cursor-grab rounded-xl border p-1 transition active:cursor-grabbing ${active
-                                  ? "border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30"
-                                  : "border-white/10 bg-slate-950/80 hover:border-cyan-300/30"
+                                ? "border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30"
+                                : "border-white/10 bg-slate-950/80 hover:border-cyan-300/30"
                                 }`}
                             >
                               <div className="flex gap-2">
@@ -5883,8 +5889,8 @@ export default function LocalProductsPage() {
                         <button
                           type="button"
                           className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${selectedAssignedSlot.done
-                              ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                              : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
+                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
+                            : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
                             }`}
                           onClick={() =>
                             togglePostedSlot(
@@ -6164,10 +6170,10 @@ export default function LocalProductsPage() {
                             key={image.id}
                             type="button"
                             className={`group relative h-full min-h-0 w-full overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:scale-[0.98] ${checked
-                                ? "ring-2 ring-cyan-300"
-                                : active
-                                  ? "ring-2 ring-white/60"
-                                  : "ring-white/10 hover:ring-cyan-300/60"
+                              ? "ring-2 ring-cyan-300"
+                              : active
+                                ? "ring-2 ring-white/60"
+                                : "ring-white/10 hover:ring-cyan-300/60"
                               }`}
                             onClick={() => toggleSelectedAlbumImage(image.id)}
                             title={`Ảnh ${index + 1}`}
@@ -6181,8 +6187,8 @@ export default function LocalProductsPage() {
                             />
                             <span
                               className={`absolute left-1 top-1 rounded-lg px-1.5 py-0.5 text-[10px] font-black ${active
-                                  ? "bg-cyan-300 text-slate-950"
-                                  : "bg-black/70 text-white"
+                                ? "bg-cyan-300 text-slate-950"
+                                : "bg-black/70 text-white"
                                 }`}
                             >
                               {index + 1}
@@ -6309,10 +6315,10 @@ export default function LocalProductsPage() {
               <button
                 type="button"
                 className={`rounded-2xl p-2 text-sm font-black transition ${pendingConfirm.tone === "danger"
-                    ? "bg-rose-500 text-white hover:bg-rose-400"
-                    : pendingConfirm.tone === "warning"
-                      ? "bg-amber-300 text-slate-950 hover:bg-amber-200"
-                      : "bg-cyan-300 text-slate-950 hover:bg-cyan-200"
+                  ? "bg-rose-500 text-white hover:bg-rose-400"
+                  : pendingConfirm.tone === "warning"
+                    ? "bg-amber-300 text-slate-950 hover:bg-amber-200"
+                    : "bg-cyan-300 text-slate-950 hover:bg-cyan-200"
                   }`}
                 onClick={() => void executeConfirm()}
               >
