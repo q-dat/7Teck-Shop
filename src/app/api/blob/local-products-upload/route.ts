@@ -1,126 +1,85 @@
-import { issueSignedToken, presignUrl } from '@vercel/blob';
+import { issueSignedToken } from '@vercel/blob';
+import { handleUploadPresigned, type HandleUploadPresignedBody } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
 
-type UploadRequestBody = {
-  pathname: string;
+type ClientPayload = {
   uploadKey: string;
-  contentType: string;
-  size: number;
 };
 
-const isUploadRequestBody = (value: unknown): value is UploadRequestBody => {
-  if (typeof value !== 'object' || value === null) return false;
+const parseClientPayload = (value: string | null | undefined): ClientPayload | null => {
+  if (!value) return null;
 
-  const record = value as Record<string, unknown>;
+  try {
+    const parsed: unknown = JSON.parse(value);
 
-  return (
-    typeof record.pathname === 'string' &&
-    typeof record.uploadKey === 'string' &&
-    typeof record.contentType === 'string' &&
-    typeof record.size === 'number'
-  );
+    if (typeof parsed !== 'object' || parsed === null) return null;
+
+    const record = parsed as Record<string, unknown>;
+
+    if (typeof record.uploadKey !== 'string') return null;
+
+    return {
+      uploadKey: record.uploadKey,
+    };
+  } catch {
+    return null;
+  }
 };
+
+const allowedContentTypes = ['application/gzip', 'application/x-gzip', 'application/octet-stream'];
+
+const maximumSizeInBytes = 200 * 1024 * 1024;
 
 export async function POST(request: Request): Promise<NextResponse> {
+  const body = (await request.json()) as HandleUploadPresignedBody;
+
   try {
-    const parsed: unknown = await request.json();
+    const jsonResponse = await handleUploadPresigned({
+      body,
+      request,
+      getSignedToken: async (pathname, clientPayload) => {
+        const payload = parseClientPayload(clientPayload);
+        const uploadKey = process.env.BLOB_BACKUP_UPLOAD_KEY;
 
-    if (!isUploadRequestBody(parsed)) {
-      return NextResponse.json(
-        {
-          message: 'Payload upload không hợp lệ',
-        },
-        {
-          status: 400,
+        if (!uploadKey || payload?.uploadKey !== uploadKey) {
+          throw new Error('Mật khẩu upload không đúng');
         }
-      );
-    }
 
-    const uploadKey = process.env.BLOB_BACKUP_UPLOAD_KEY;
-
-    if (!uploadKey || parsed.uploadKey !== uploadKey) {
-      return NextResponse.json(
-        {
-          message: 'Mật khẩu upload không đúng',
-        },
-        {
-          status: 401,
+        if (!pathname.startsWith('local-products/backups/')) {
+          throw new Error('Đường dẫn upload không hợp lệ');
         }
-      );
-    }
 
-    if (!parsed.pathname.startsWith('local-products/backups/')) {
-      return NextResponse.json(
-        {
-          message: 'Đường dẫn upload không hợp lệ',
-        },
-        {
-          status: 400,
+        if (!pathname.endsWith('.json.gz')) {
+          throw new Error('Chỉ cho phép upload file .json.gz');
         }
-      );
-    }
 
-    if (!parsed.pathname.endsWith('.json.gz')) {
-      return NextResponse.json(
-        {
-          message: 'Chỉ cho phép upload file .json.gz',
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    const allowedContentTypes = ['application/gzip', 'application/x-gzip', 'application/octet-stream'];
-
-    if (!allowedContentTypes.includes(parsed.contentType)) {
-      return NextResponse.json(
-        {
-          message: 'Định dạng file upload không hợp lệ',
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    const maximumSizeInBytes = 200 * 1024 * 1024;
-
-    if (parsed.size <= 0 || parsed.size > maximumSizeInBytes) {
-      return NextResponse.json(
-        {
-          message: 'Dung lượng file upload không hợp lệ',
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    const token = await issueSignedToken({
-      pathname: parsed.pathname,
-      operations: ['put'],
-      allowedContentTypes,
-      maximumSizeInBytes,
-      validUntil: Date.now() + 10 * 60 * 1000,
+        return {
+          token: await issueSignedToken({
+            pathname,
+            operations: ['put'],
+            allowedContentTypes,
+            maximumSizeInBytes,
+            validUntil: Date.now() + 60 * 60 * 1000,
+          }),
+          urlOptions: {
+            allowedContentTypes,
+            maximumSizeInBytes,
+            validUntil: Date.now() + 10 * 60 * 1000,
+            addRandomSuffix: false,
+            allowOverwrite: false,
+            cacheControlMaxAge: 60,
+          },
+        };
+      },
+      onUploadCompleted: async ({ blob }) => {
+        console.log('Local products backup uploaded:', {
+          pathname: blob.pathname,
+          url: blob.url,
+        });
+      },
     });
 
-    const { presignedUrl } = await presignUrl(token, {
-      operation: 'put',
-      pathname: parsed.pathname,
-      access: 'private',
-      allowedContentTypes,
-      maximumSizeInBytes,
-      addRandomSuffix: false,
-      allowOverwrite: false,
-      cacheControlMaxAge: 60,
-      validUntil: Date.now() + 10 * 60 * 1000,
-    });
-
-    return NextResponse.json({
-      pathname: parsed.pathname,
-      presignedUrl,
-    });
+    return NextResponse.json(jsonResponse);
   } catch (error) {
     return NextResponse.json(
       {

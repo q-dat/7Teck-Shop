@@ -30,7 +30,7 @@ export async function GET(): Promise<NextResponse> {
     const token = await issueSignedToken({
       pathname: latestBlob.pathname,
       operations: ["get"],
-      validUntil: Date.now() + 10 * 60 * 1000,
+      validUntil: Date.now() + 60 * 60 * 1000,
     });
 
     const { presignedUrl } = await presignUrl(token, {
