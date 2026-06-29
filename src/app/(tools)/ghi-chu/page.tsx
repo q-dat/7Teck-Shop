@@ -1193,17 +1193,30 @@ const buildPostText = (
   return lines.join("\n");
 };
 
-const buildShareDescriptionText = (
+const buildShareContentText = (
+  title: string,
   description: string,
   priceText: string,
 ): string => {
+  const cleanTitle = title.trim();
+
   const plusLines = description
     .split(/\r?\n/u)
     .map((line) => line.trim())
     .filter((line) => line.startsWith("+"));
-  const priceLine = priceText.trim() ? `Giá: ${priceText.trim()}` : "";
 
-  return [...plusLines, priceLine].filter(Boolean).join("\n");
+  const cleanPrice = priceText
+    .trim()
+    .replace(/^📌?\s*giá\s*:\s*/iu, "")
+    .trim();
+
+  const sections = [
+    cleanTitle,
+    plusLines.length > 0 ? plusLines.join("\n") : "",
+    cleanPrice ? `📌Giá: ${cleanPrice}` : "",
+  ].filter(Boolean);
+
+  return sections.join("\n\n");
 };
 
 const createImageFilenameSuffix = (imageId: string): string => {
@@ -3170,6 +3183,77 @@ export default function LocalProductsPage() {
     });
   };
 
+  const handleShareProduct = async (product: LocalProduct): Promise<void> => {
+    const shareNavigator = getNativeShareNavigator();
+    const shareKey = `share-product-${product.id}`;
+    const descriptionText =
+      product.description.trim() || settings.commonDescription.trim();
+    const textValue = buildShareContentText(
+      product.name,
+      descriptionText,
+      product.priceText,
+    );
+
+    const markShared = (): void => {
+      setCopiedKey(shareKey);
+
+      window.setTimeout(() => {
+        setCopiedKey((current) => (current === shareKey ? "" : current));
+      }, 1200);
+    };
+
+    try {
+      if (shareNavigator?.share) {
+        if (product.images.length > 0) {
+          const files = await Promise.all(
+            product.images.map((image, index) =>
+              dataUrlToShareFile(
+                image.dataUrl,
+                image.name || createSystemImageFilename(index, image.id),
+              ),
+            ),
+          );
+          const shareDataWithFiles: NativeShareData = {
+            title: product.name,
+            text: textValue,
+            files,
+          };
+
+          if (shareNavigator.canShare?.(shareDataWithFiles)) {
+            await shareNavigator.share(shareDataWithFiles);
+            markShared();
+            Toastify("Đã mở bảng chia sẻ sản phẩm", 200);
+            return;
+          }
+        }
+
+        await shareNavigator.share({
+          title: product.name,
+          text: textValue,
+        });
+        markShared();
+        Toastify("Thiết bị chưa hỗ trợ gửi toàn bộ ảnh, đã mở chia sẻ nội dung", 200);
+        return;
+      }
+
+      await copyText(textValue);
+      markShared();
+      Toastify("Trình duyệt chưa hỗ trợ chia sẻ, đã copy nội dung", 200);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
+      try {
+        await copyText(textValue);
+        markShared();
+        Toastify("Không thể mở chia sẻ, đã copy nội dung", 300);
+      } catch {
+        Toastify("Không thể chia sẻ sản phẩm", 400);
+      }
+    }
+  };
+
   const handleShareSelectedAlbumImages = async (): Promise<void> => {
     if (!albumSource) {
       Toastify("Chưa có album để chia sẻ", 300);
@@ -3187,9 +3271,11 @@ export default function LocalProductsPage() {
 
     const shareNavigator = getNativeShareNavigator();
     const shareKey = "album-share-selected";
-    const textValue =
-      buildShareDescriptionText(albumSource.description, albumSource.priceText) ||
-      albumSource.title.trim();
+    const textValue = buildShareContentText(
+      albumSource.title,
+      albumSource.description,
+      albumSource.priceText,
+    );
 
     const markShared = (): void => {
       setCopiedKey(shareKey);
@@ -4187,6 +4273,17 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
+                title="Import Export dữ liệu"
+                aria-label="Import Export dữ liệu"
+                className="flex items-center justify-center gap-2 rounded-xl border border-orange-300/70 bg-orange-300 px-2 py-1 whitespace-nowrap text-[10px] font-black text-slate-950 shadow-lg shadow-orange-950/30 transition hover:bg-orange-200 active:scale-[0.98]"
+                onClick={() => openModal("importExport")}
+              >
+                <FiArchive aria-hidden="true" className={iconClassName} />
+                Data
+              </button>
+
+              <button
+                type="button"
                 title="Danh sách dạng bảng"
                 aria-label="Danh sách dạng bảng"
                 className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
@@ -4229,16 +4326,6 @@ export default function LocalProductsPage() {
                 Mô tả
               </button>
 
-              <button
-                type="button"
-                title="Import Export dữ liệu"
-                aria-label="Import Export dữ liệu"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
-                onClick={() => openModal("importExport")}
-              >
-                <FiArchive aria-hidden="true" className={iconClassName} />
-                Data
-              </button>
 
               <button
                 type="button"
@@ -4493,11 +4580,37 @@ export default function LocalProductsPage() {
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
+
+
+                        <button
+                          type="button"
+                          title="Chia sẻ sản phẩm"
+                          aria-label="Chia sẻ sản phẩm"
+                          className="flex items-center justify-center gap-1 rounded-2xl border border-sky-300/50 bg-sky-300/10 p-1.5 text-[10px] font-black text-sky-100 transition hover:bg-sky-300/20 active:scale-[0.98]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleShareProduct(product);
+                          }}
+                        >
+                          {copiedKey === `share-product-${product.id}` ? (
+                            <FiCheck
+                              aria-hidden="true"
+                              className={iconClassName}
+                            />
+                          ) : (
+                            <FiShare2
+                              aria-hidden="true"
+                              className={iconClassName}
+                            />
+                          )}
+                          Chia sẻ
+                        </button>
+
                         <button
                           type="button"
                           title="Copy ảnh chính"
                           aria-label="Copy ảnh chính"
-                          className="col-span-2 flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
+                          className="flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
                           onClick={(event) => {
                             event.stopPropagation();
                             void handleCopyProductRepresentativeImage(product);
@@ -4509,20 +4622,42 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          title="Copy mô tả sản phẩm"
-                          aria-label="Copy mô tả sản phẩm"
+                          title="Copy nguyên bản mô tả"
+                          aria-label="Copy nguyên bản mô tả"
                           className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
                           onClick={(event) => {
                             event.stopPropagation();
                             void handleCopyField(
-                              `desc-${product.id}`,
-                              "mô tả",
+                              `post-${product.id}`,
+                              "post",
                               descriptionPreview,
                             );
                           }}
                         >
-                          {renderCopyIcon(`desc-${product.id}`)}
-                          Mô tả
+                          {renderCopyIcon(`post-${product.id}`)}
+                          Post
+                        </button>
+
+                        <button
+                          type="button"
+                          title="Copy comment sản phẩm"
+                          aria-label="Copy comment sản phẩm"
+                          className="flex items-center justify-center gap-1 rounded-2xl border border-amber-300/40 bg-amber-300/10 p-1.5 text-[10px] font-black text-amber-100 transition hover:bg-amber-300/20 active:scale-[0.98]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleCopyField(
+                              `cmt-${product.id}`,
+                              "cmt",
+                              buildShareContentText(
+                                product.name,
+                                descriptionPreview,
+                                product.priceText,
+                              ),
+                            );
+                          }}
+                        >
+                          {renderCopyIcon(`cmt-${product.id}`)}
+                          Cmt
                         </button>
 
                         <button
@@ -4564,6 +4699,22 @@ export default function LocalProductsPage() {
                         </button>
                         <button
                           type="button"
+                          title="Xóa sản phẩm"
+                          aria-label="Xóa sản phẩm"
+                          className="flex items-center justify-center gap-1 rounded-2xl bg-red-700 p-1.5 whitespace-nowrap text-[10px] font-black text-white transition hover:bg-red-500 active:scale-[0.98]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleDelete(product.id);
+                          }}
+                        >
+                          <FiTrash2
+                            aria-hidden="true"
+                            className={iconClassName}
+                          />
+                          Xóa vĩnh viễn
+                        </button>
+                        <button
+                          type="button"
                           title="Tải ảnh sản phẩm"
                           aria-label="Tải ảnh sản phẩm"
                           className="flex items-center justify-center gap-1 rounded-2xl bg-cyan-300 p-1.5 whitespace-nowrap text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
@@ -4579,23 +4730,6 @@ export default function LocalProductsPage() {
                           Tải ảnh
                         </button>
                       </div>
-
-                      <button
-                        type="button"
-                        title="Xóa sản phẩm"
-                        aria-label="Xóa sản phẩm"
-                        className="mt-2 flex w-full items-center justify-center gap-1 rounded-2xl border border-rose-400/30 bg-rose-400/10 p-1.5 text-[10px] font-black text-rose-100 transition hover:bg-rose-400/20 active:scale-[0.98]"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void handleDelete(product.id);
-                        }}
-                      >
-                        <FiTrash2
-                          aria-hidden="true"
-                          className={iconClassName}
-                        />
-                        Xóa vĩnh viễn
-                      </button>
                     </div>
                   </article>
                 );
@@ -6317,14 +6451,14 @@ export default function LocalProductsPage() {
                           className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
                           onClick={() =>
                             void handleCopyField(
-                              `album-desc-${albumSource.title}`,
-                              "mô tả sản phẩm",
+                              `album-post-${albumSource.title}`,
+                              "post",
                               albumSource.description,
                             )
                           }
                         >
-                          {renderCopyIcon(`album-desc-${albumSource.title}`)}
-                          Mô tả
+                          {renderCopyIcon(`album-post-${albumSource.title}`)}
+                          Post
                         </button>
 
 
@@ -6361,7 +6495,7 @@ export default function LocalProductsPage() {
                             aria-hidden="true"
                             className={iconClassName}
                           />
-                          Tải về {selectedAlbumImageIds.size} ảnh
+                          Tải đã chọn {selectedAlbumImageIds.size}
                         </button>
 
                         <button
@@ -6371,6 +6505,10 @@ export default function LocalProductsPage() {
                           title="Chọn tất cả ảnh"
                           aria-label="Chọn tất cả ảnh"
                         >
+                          <FiCheckCircle
+                            aria-hidden="true"
+                            className={iconClassName}
+                          />
                           Tất cả
                         </button>
 
@@ -6381,6 +6519,10 @@ export default function LocalProductsPage() {
                           title="Bỏ chọn ảnh"
                           aria-label="Bỏ chọn ảnh"
                         >
+                          <FiX
+                            aria-hidden="true"
+                            className={iconClassName}
+                          />
                           Bỏ
                         </button>
 
@@ -6402,13 +6544,13 @@ export default function LocalProductsPage() {
 
                     <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900 p-2">
                       {selectedAlbumImage ? (
-                        <div className="flex h-full max-h-full min-h-0 w-full min-w-0 items-center justify-center overflow-hidden [&>*]:!flex [&>*]:!h-full [&>*]:!max-h-full [&>*]:!w-full [&>*]:!items-center [&>*]:!justify-center [&>*]:!overflow-hidden [&_img]:!h-full [&_img]:!max-h-full [&_img]:!w-full [&_img]:!max-w-full [&_img]:!object-contain">
+                        <div className="flex h-full min-h-0 w-full min-w-0 items-center justify-center overflow-hidden">
                           <img
                             src={selectedAlbumImage.dataUrl}
                             alt={selectedAlbumImage.name}
                             width={1600}
                             height={1600}
-                            className="h-full  w-full max-w-full object-contain"
+                            className="block h-auto max-h-full w-auto max-w-full object-contain"
                           />
                         </div>
                       ) : (
