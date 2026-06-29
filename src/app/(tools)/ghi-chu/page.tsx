@@ -24,12 +24,14 @@ import {
   FiPlus,
   FiRefreshCcw,
   FiSearch,
+  FiShare2,
   FiTrash2,
   FiUploadCloud,
   FiX,
 } from "react-icons/fi";
 import JSZip from "jszip";
 import LoadingSpinner from "@/components/orther/loading/LoadingSpinner";
+import Zoom from "@/lib/Zoom";
 import { toast, ToastContainer, type ToastOptions } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -191,6 +193,18 @@ type DownloadRequest = {
   images: ProductImage[];
   startIndex: number;
   textToCopy?: string;
+};
+
+type NativeShareData = {
+  title?: string;
+  text?: string;
+  url?: string;
+  files?: File[];
+};
+
+type NativeShareNavigator = Navigator & {
+  share?: (data: NativeShareData) => Promise<void>;
+  canShare?: (data: NativeShareData) => boolean;
 };
 
 const DB_NAME = "local_product_store";
@@ -1233,6 +1247,27 @@ const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
   const response = await fetch(dataUrl);
 
   return response.blob();
+};
+
+const getNativeShareNavigator = (): NativeShareNavigator | null => {
+  if (typeof navigator === "undefined") return null;
+
+  return navigator as NativeShareNavigator;
+};
+
+const dataUrlToShareFile = async (
+  dataUrl: string,
+  fileName: string,
+): Promise<File> => {
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  const fallbackType = dataUrl.startsWith("data:image/png")
+    ? "image/png"
+    : "image/jpeg";
+
+  return new File([blob], fileName || "sanpham.jpg", {
+    type: blob.type || fallbackType,
+  });
 };
 
 const dataUrlToPngBlob = async (dataUrl: string): Promise<Blob> => {
@@ -2744,6 +2779,74 @@ export default function LocalProductsPage() {
     }
   };
 
+  const handleShareProduct = async (product: LocalProduct): Promise<void> => {
+    const shareNavigator = getNativeShareNavigator();
+    const textValue = buildPostText(product, settings.commonDescription);
+    const shareKey = `share-${product.id}`;
+
+    if (!textValue.trim()) {
+      Toastify("Không có nội dung để chia sẻ", 300);
+      return;
+    }
+
+    const markShared = (): void => {
+      setCopiedKey(shareKey);
+
+      window.setTimeout(() => {
+        setCopiedKey((current) => (current === shareKey ? "" : current));
+      }, 1200);
+    };
+
+    try {
+      const representativeImage = product.images[0];
+
+      if (representativeImage && shareNavigator?.share) {
+        const shareFile = await dataUrlToShareFile(
+          representativeImage.dataUrl,
+          representativeImage.name || "sanpham.jpg",
+        );
+        const shareDataWithFile: NativeShareData = {
+          title: removeDoneProductPrefix(product.name),
+          text: textValue,
+          files: [shareFile],
+        };
+
+        if (shareNavigator.canShare?.(shareDataWithFile)) {
+          await shareNavigator.share(shareDataWithFile);
+          markShared();
+          Toastify("Đã mở bảng chia sẻ", 200);
+          return;
+        }
+      }
+
+      if (shareNavigator?.share) {
+        await shareNavigator.share({
+          title: removeDoneProductPrefix(product.name),
+          text: textValue,
+        });
+        markShared();
+        Toastify("Đã mở bảng chia sẻ", 200);
+        return;
+      }
+
+      await copyText(textValue);
+      markShared();
+      Toastify("Trình duyệt chưa hỗ trợ chia sẻ, đã copy nội dung", 200);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
+      try {
+        await copyText(textValue);
+        markShared();
+        Toastify("Không thể mở chia sẻ, đã copy nội dung", 300);
+      } catch {
+        Toastify("Không thể chia sẻ sản phẩm", 400);
+      }
+    }
+  };
+
   const handleCopyProductList = async (): Promise<void> => {
     if (copyableProductCount === 0) {
       Toastify("Không có sản phẩm đang hoạt động để copy", 300);
@@ -4129,7 +4232,7 @@ export default function LocalProductsPage() {
               </h2>
               <p className="text-[10px] text-slate-400">
                 Bấm vùng ngoài ảnh và mô tả để mở sửa. Bấm ảnh để mở album. Mô
-                tả bấm bình thường, không mở modal.
+                tả bấm vào khung để mở rộng hoặc thu gọn, không mở modal.
               </p>
             </div>
 
@@ -4223,14 +4326,16 @@ export default function LocalProductsPage() {
                       }}
                     >
                       {product.images[0] ? (
-                        <img
-                          src={product.images[0].dataUrl}
-                          alt={product.name}
-                          width={1200}
-                          height={1200}
-                          className={`h-full w-full object-cover transition duration-300 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
-                            }`}
-                        />
+                        <Zoom>
+                          <img
+                            src={product.images[0].dataUrl}
+                            alt={product.name}
+                            width={1200}
+                            height={1200}
+                            className={`h-full w-full object-cover transition duration-300 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
+                              }`}
+                          />
+                        </Zoom>
                       ) : (
                         <FiImage
                           aria-hidden="true"
@@ -4275,16 +4380,33 @@ export default function LocalProductsPage() {
                       </div>
 
                       <div
-                        className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
-                        onClick={(event) => event.stopPropagation()}
+                        role={descriptionPreview.length > 90 ? "button" : undefined}
+                        tabIndex={descriptionPreview.length > 90 ? 0 : undefined}
+                        aria-expanded={descriptionPreview.length > 90 ? expanded : undefined}
+                        className={`rounded-xl border border-white/10 bg-white/[0.03] p-4 ${descriptionPreview.length > 90
+                          ? "cursor-pointer transition hover:border-cyan-300/30 hover:bg-white/[0.06]"
+                          : ""
+                          }`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+
+                          if (descriptionPreview.length > 90) {
+                            toggleExpandedProduct(product.id);
+                          }
+                        }}
+                        onKeyDown={(event) => {
+                          event.stopPropagation();
+
+                          if (
+                            descriptionPreview.length > 90 &&
+                            (event.key === "Enter" || event.key === " ")
+                          ) {
+                            event.preventDefault();
+                            toggleExpandedProduct(product.id);
+                          }
+                        }}
                       >
                         <div
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            if (!expanded) {
-                              toggleExpandedProduct(product.id);
-                            }
-                          }}
                           className={`${expanded ? "line-clamp-none" : "line-clamp-3"} whitespace-pre-line text-[10px] leading-4 text-slate-300`}
                         >
                           {renderDescriptionText(
@@ -4308,6 +4430,30 @@ export default function LocalProductsPage() {
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          title="Chia sẻ sản phẩm"
+                          aria-label="Chia sẻ sản phẩm"
+                          className="col-span-2 flex items-center justify-center gap-1 rounded-2xl border border-sky-300/50 bg-sky-300/10 p-1.5 text-[10px] font-black text-sky-100 transition hover:bg-sky-300/20 active:scale-[0.98]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleShareProduct(product);
+                          }}
+                        >
+                          {copiedKey === `share-${product.id}` ? (
+                            <FiCheck
+                              aria-hidden="true"
+                              className={iconClassName}
+                            />
+                          ) : (
+                            <FiShare2
+                              aria-hidden="true"
+                              className={iconClassName}
+                            />
+                          )}
+                          Chia sẻ
+                        </button>
+
                         <button
                           type="button"
                           title="Copy ảnh đại diện"
@@ -4915,13 +5061,15 @@ export default function LocalProductsPage() {
                                       setDraggingDraftImageId("")
                                     }
                                   >
-                                    <img
-                                      src={image.dataUrl}
-                                      alt={image.name}
-                                      width={1200}
-                                      height={1200}
-                                      className="h-full w-full object-contain"
-                                    />
+                                    <Zoom>
+                                      <img
+                                        src={image.dataUrl}
+                                        alt={image.name}
+                                        width={1200}
+                                        height={1200}
+                                        className="h-full w-full object-contain"
+                                      />
+                                    </Zoom>
 
                                     <div className="absolute left-1 top-1 rounded-lg bg-black/70 px-1.5 py-0.5 whitespace-nowrap text-[10px] font-black text-white">
                                       {index + 1}
@@ -5458,15 +5606,17 @@ export default function LocalProductsPage() {
                                         }
                                       >
                                         {assignedProduct?.images[0] ? (
-                                          <img
-                                            src={
-                                              assignedProduct.images[0].dataUrl
-                                            }
-                                            alt={assignedProduct.name}
-                                            width={1200}
-                                            height={1200}
-                                            className="h-full w-full object-contain"
-                                          />
+                                          <Zoom>
+                                            <img
+                                              src={
+                                                assignedProduct.images[0].dataUrl
+                                              }
+                                              alt={assignedProduct.name}
+                                              width={1200}
+                                              height={1200}
+                                              className="h-full w-full object-contain"
+                                            />
+                                          </Zoom>
                                         ) : (
                                           <FiImage
                                             aria-hidden="true"
@@ -5625,13 +5775,15 @@ export default function LocalProductsPage() {
                                   }}
                                 >
                                   {product.images[0] ? (
-                                    <img
-                                      src={product.images[0].dataUrl}
-                                      alt={product.name}
-                                      width={1200}
-                                      height={1200}
-                                      className="h-full w-full object-contain"
-                                    />
+                                    <Zoom>
+                                      <img
+                                        src={product.images[0].dataUrl}
+                                        alt={product.name}
+                                        width={1200}
+                                        height={1200}
+                                        className="h-full w-full object-contain"
+                                      />
+                                    </Zoom>
                                   ) : (
                                     <FiImage
                                       aria-hidden="true"
@@ -5922,13 +6074,15 @@ export default function LocalProductsPage() {
                         }
                       >
                         {selectedAssignedSlot.product.images[0] ? (
-                          <img
-                            src={selectedAssignedSlot.product.images[0].dataUrl}
-                            alt={selectedAssignedSlot.product.name}
-                            width={1200}
-                            height={1200}
-                            className="h-full w-full object-contain"
-                          />
+                          <Zoom>
+                            <img
+                              src={selectedAssignedSlot.product.images[0].dataUrl}
+                              alt={selectedAssignedSlot.product.name}
+                              width={1200}
+                              height={1200}
+                              className="h-full w-full object-contain"
+                            />
+                          </Zoom>
                         ) : (
                           <FiImage
                             aria-hidden="true"
@@ -5955,13 +6109,15 @@ export default function LocalProductsPage() {
                                   })
                                 }
                               >
-                                <img
-                                  src={image.dataUrl}
-                                  alt={image.name}
-                                  width={1200}
-                                  height={1200}
-                                  className="h-full w-full object-contain"
-                                />
+                                <Zoom>
+                                  <img
+                                    src={image.dataUrl}
+                                    alt={image.name}
+                                    width={1200}
+                                    height={1200}
+                                    className="h-full w-full object-contain"
+                                  />
+                                </Zoom>
                               </button>
                             ))}
                         </div>
@@ -6214,13 +6370,15 @@ export default function LocalProductsPage() {
 
                     <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
                       {selectedAlbumImage ? (
-                        <img
-                          src={selectedAlbumImage.dataUrl}
-                          alt={selectedAlbumImage.name}
-                          width={1600}
-                          height={1600}
-                          className="h-full max-h-full w-full object-contain"
-                        />
+                        <Zoom>
+                          <img
+                            src={selectedAlbumImage.dataUrl}
+                            alt={selectedAlbumImage.name}
+                            width={1600}
+                            height={1600}
+                            className="h-full max-h-full w-full object-contain"
+                          />
+                        </Zoom>
                       ) : (
                         <FiImage
                           aria-hidden="true"
@@ -6260,13 +6418,15 @@ export default function LocalProductsPage() {
                             onClick={() => toggleSelectedAlbumImage(image.id)}
                             title={`Ảnh ${index + 1}`}
                           >
-                            <img
-                              src={image.dataUrl}
-                              alt={image.name}
-                              width={1200}
-                              height={1200}
-                              className="h-full w-full object-cover"
-                            />
+                            <Zoom>
+                              <img
+                                src={image.dataUrl}
+                                alt={image.name}
+                                width={1200}
+                                height={1200}
+                                className="h-full w-full object-cover"
+                              />
+                            </Zoom>
                             <span
                               className={`absolute left-1 top-1 rounded-lg px-1.5 py-0.5 text-[10px] font-black ${active
                                 ? "bg-cyan-300 text-slate-950"
