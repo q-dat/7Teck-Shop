@@ -4325,17 +4325,14 @@ export default function LocalProductsPage() {
                         });
                       }}
                     >
-                      {product.images[0] ? (
-                        <Zoom>
-                          <img
-                            src={product.images[0].dataUrl}
-                            alt={product.name}
-                            width={1200}
-                            height={1200}
-                            className={`h-full w-full object-cover transition duration-300 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
-                              }`}
-                          />
-                        </Zoom>
+                      {product.images[0] ? (<img
+                        src={product.images[0].dataUrl}
+                        alt={product.name}
+                        width={1200}
+                        height={1200}
+                        className={`h-full w-full object-cover transition duration-300 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
+                          }`}
+                      />
                       ) : (
                         <FiImage
                           aria-hidden="true"
@@ -5060,16 +5057,13 @@ export default function LocalProductsPage() {
                                     onDragEnd={() =>
                                       setDraggingDraftImageId("")
                                     }
-                                  >
-                                    <Zoom>
-                                      <img
-                                        src={image.dataUrl}
-                                        alt={image.name}
-                                        width={1200}
-                                        height={1200}
-                                        className="h-full w-full object-contain"
-                                      />
-                                    </Zoom>
+                                  >                                      <img
+                                      src={image.dataUrl}
+                                      alt={image.name}
+                                      width={1200}
+                                      height={1200}
+                                      className="h-full w-full object-contain"
+                                    />
 
                                     <div className="absolute left-1 top-1 rounded-lg bg-black/70 px-1.5 py-0.5 whitespace-nowrap text-[10px] font-black text-white">
                                       {index + 1}
@@ -5605,18 +5599,15 @@ export default function LocalProductsPage() {
                                             : undefined
                                         }
                                       >
-                                        {assignedProduct?.images[0] ? (
-                                          <Zoom>
-                                            <img
-                                              src={
-                                                assignedProduct.images[0].dataUrl
-                                              }
-                                              alt={assignedProduct.name}
-                                              width={1200}
-                                              height={1200}
-                                              className="h-full w-full object-contain"
-                                            />
-                                          </Zoom>
+                                        {assignedProduct?.images[0] ? (<img
+                                          src={
+                                            assignedProduct.images[0].dataUrl
+                                          }
+                                          alt={assignedProduct.name}
+                                          width={1200}
+                                          height={1200}
+                                          className="h-full w-full object-contain"
+                                        />
                                         ) : (
                                           <FiImage
                                             aria-hidden="true"
@@ -5774,16 +5765,13 @@ export default function LocalProductsPage() {
                                     });
                                   }}
                                 >
-                                  {product.images[0] ? (
-                                    <Zoom>
-                                      <img
-                                        src={product.images[0].dataUrl}
-                                        alt={product.name}
-                                        width={1200}
-                                        height={1200}
-                                        className="h-full w-full object-contain"
-                                      />
-                                    </Zoom>
+                                  {product.images[0] ? (<img
+                                    src={product.images[0].dataUrl}
+                                    alt={product.name}
+                                    width={1200}
+                                    height={1200}
+                                    className="h-full w-full object-contain"
+                                  />
                                   ) : (
                                     <FiImage
                                       aria-hidden="true"
@@ -6073,16 +6061,13 @@ export default function LocalProductsPage() {
                           })
                         }
                       >
-                        {selectedAssignedSlot.product.images[0] ? (
-                          <Zoom>
-                            <img
-                              src={selectedAssignedSlot.product.images[0].dataUrl}
-                              alt={selectedAssignedSlot.product.name}
-                              width={1200}
-                              height={1200}
-                              className="h-full w-full object-contain"
-                            />
-                          </Zoom>
+                        {selectedAssignedSlot.product.images[0] ? (<img
+                          src={selectedAssignedSlot.product.images[0].dataUrl}
+                          alt={selectedAssignedSlot.product.name}
+                          width={1200}
+                          height={1200}
+                          className="h-full w-full object-contain"
+                        />
                         ) : (
                           <FiImage
                             aria-hidden="true"
@@ -6108,16 +6093,13 @@ export default function LocalProductsPage() {
                                     images: selectedAssignedSlot.product.images,
                                   })
                                 }
-                              >
-                                <Zoom>
-                                  <img
-                                    src={image.dataUrl}
-                                    alt={image.name}
-                                    width={1200}
-                                    height={1200}
-                                    className="h-full w-full object-contain"
-                                  />
-                                </Zoom>
+                              >                                  <img
+                                  src={image.dataUrl}
+                                  alt={image.name}
+                                  width={1200}
+                                  height={1200}
+                                  className="h-full w-full object-contain"
+                                />
                               </button>
                             ))}
                         </div>
@@ -6417,16 +6399,13 @@ export default function LocalProductsPage() {
                               }`}
                             onClick={() => toggleSelectedAlbumImage(image.id)}
                             title={`Ảnh ${index + 1}`}
-                          >
-                            <Zoom>
-                              <img
-                                src={image.dataUrl}
-                                alt={image.name}
-                                width={1200}
-                                height={1200}
-                                className="h-full w-full object-cover"
-                              />
-                            </Zoom>
+                          >                              <img
+                              src={image.dataUrl}
+                              alt={image.name}
+                              width={1200}
+                              height={1200}
+                              className="h-full w-full object-cover"
+                            />
                             <span
                               className={`absolute left-1 top-1 rounded-lg px-1.5 py-0.5 text-[10px] font-black ${active
                                 ? "bg-cyan-300 text-slate-950"
