@@ -29,7 +29,6 @@ import {
   FiUploadCloud,
   FiX,
 } from "react-icons/fi";
-import JSZip from "jszip";
 import LoadingSpinner from "@/components/orther/loading/LoadingSpinner";
 import Zoom from "@/lib/Zoom";
 import { toast, ToastContainer, type ToastOptions } from "react-toastify";
@@ -1476,51 +1475,6 @@ const restorePayloadToLocal = async (
   await params.loadProducts();
 };
 
-const isAppleMobileDevice = (): boolean => {
-  if (typeof window === "undefined") return false;
-
-  const userAgent = window.navigator.userAgent.toLowerCase();
-  const platform = window.navigator.platform.toLowerCase();
-  const hasTouchPoints = window.navigator.maxTouchPoints > 1;
-  const isIphoneOrIpod = /iphone|ipod/.test(userAgent);
-  const isIpad =
-    /ipad/.test(userAgent) || (platform === "macintel" && hasTouchPoints);
-
-  return isIphoneOrIpod || isIpad;
-};
-
-const createDownloadZipName = (request: DownloadRequest): string => {
-  return request.mode === "single" ? "sanpham.zip" : "album-sanpham.zip";
-};
-
-const downloadImagesAsZip = async (request: DownloadRequest): Promise<void> => {
-  const zip = new JSZip();
-
-  for (let index = 0; index < request.images.length; index += 1) {
-    const image = request.images[index];
-
-    if (!image) continue;
-
-    const jpegDataUrl = await convertDataUrlToJpeg(image.dataUrl);
-    const blob = await dataUrlToBlob(jpegDataUrl);
-
-    zip.file(
-      createSystemImageFilename(request.startIndex + index, image.id),
-      blob,
-    );
-  }
-
-  const zipBlob = await zip.generateAsync({
-    type: "blob",
-    compression: "DEFLATE",
-    compressionOptions: {
-      level: 6,
-    },
-  });
-
-  downloadBlob(zipBlob, createDownloadZipName(request));
-};
-
 type DirectoryPickerWindow = Window & {
   showDirectoryPicker?: () => Promise<{
     getFileHandle: (
@@ -2786,74 +2740,6 @@ export default function LocalProductsPage() {
     }
   };
 
-  const handleShareProduct = async (product: LocalProduct): Promise<void> => {
-    const shareNavigator = getNativeShareNavigator();
-    const textValue = buildPostText(product, settings.commonDescription);
-    const shareKey = `share-${product.id}`;
-
-    if (!textValue.trim()) {
-      Toastify("Không có nội dung để chia sẻ", 300);
-      return;
-    }
-
-    const markShared = (): void => {
-      setCopiedKey(shareKey);
-
-      window.setTimeout(() => {
-        setCopiedKey((current) => (current === shareKey ? "" : current));
-      }, 1200);
-    };
-
-    try {
-      const representativeImage = product.images[0];
-
-      if (representativeImage && shareNavigator?.share) {
-        const shareFile = await dataUrlToShareFile(
-          representativeImage.dataUrl,
-          representativeImage.name || "sanpham.jpg",
-        );
-        const shareDataWithFile: NativeShareData = {
-          title: removeDoneProductPrefix(product.name),
-          text: textValue,
-          files: [shareFile],
-        };
-
-        if (shareNavigator.canShare?.(shareDataWithFile)) {
-          await shareNavigator.share(shareDataWithFile);
-          markShared();
-          Toastify("Đã mở bảng chia sẻ", 200);
-          return;
-        }
-      }
-
-      if (shareNavigator?.share) {
-        await shareNavigator.share({
-          title: removeDoneProductPrefix(product.name),
-          text: textValue,
-        });
-        markShared();
-        Toastify("Đã mở bảng chia sẻ", 200);
-        return;
-      }
-
-      await copyText(textValue);
-      markShared();
-      Toastify("Trình duyệt chưa hỗ trợ chia sẻ, đã copy nội dung", 200);
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        return;
-      }
-
-      try {
-        await copyText(textValue);
-        markShared();
-        Toastify("Không thể mở chia sẻ, đã copy nội dung", 300);
-      } catch {
-        Toastify("Không thể chia sẻ sản phẩm", 400);
-      }
-    }
-  };
-
   const handleCopyProductList = async (): Promise<void> => {
     if (copyableProductCount === 0) {
       Toastify("Không có sản phẩm đang hoạt động để copy", 300);
@@ -3217,21 +3103,6 @@ export default function LocalProductsPage() {
         "Trình duyệt chưa cho phép chọn thư mục hoặc thao tác đã bị hủy",
         400,
       );
-    }
-  };
-
-  const executeDownloadZipForIphone = async (): Promise<void> => {
-    if (!pendingDownload) return;
-
-    const request = pendingDownload;
-
-    try {
-      await copyDownloadTextIfNeeded(request);
-      await downloadImagesAsZip(request);
-      Toastify(`Đã tạo file ZIP gồm ${request.images.length} ảnh`, 200);
-      setPendingDownload(null);
-    } catch {
-      Toastify("Không thể tạo file ZIP để tải ảnh", 400);
     }
   };
 
@@ -4498,14 +4369,14 @@ export default function LocalProductsPage() {
                         });
                       }}
                     >
-                      {product.images[0] ? (<img
-                        src={product.images[0].dataUrl}
-                        alt={product.name}
-                        width={1200}
-                        height={1200}
-                        className={`h-full w-full object-cover transition duration-300 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
-                          }`}
-                      />
+                      {product.images[0] ? (                          <img
+                            src={product.images[0].dataUrl}
+                            alt={product.name}
+                            width={1200}
+                            height={1200}
+                            className={`h-full w-full object-cover transition duration-300 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
+                              }`}
+                          />
                       ) : (
                         <FiImage
                           aria-hidden="true"
@@ -4637,33 +4508,9 @@ export default function LocalProductsPage() {
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
-                          title="Chia sẻ sản phẩm"
-                          aria-label="Chia sẻ sản phẩm"
-                          className="flex items-center justify-center gap-1 rounded-2xl border border-sky-300/50 bg-sky-300/10 p-1.5 text-[10px] font-black text-sky-100 transition hover:bg-sky-300/20 active:scale-[0.98]"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void handleShareProduct(product);
-                          }}
-                        >
-                          {copiedKey === `share-${product.id}` ? (
-                            <FiCheck
-                              aria-hidden="true"
-                              className={iconClassName}
-                            />
-                          ) : (
-                            <FiShare2
-                              aria-hidden="true"
-                              className={iconClassName}
-                            />
-                          )}
-                          Chia sẻ
-                        </button>
-
-                        <button
-                          type="button"
                           title="Copy ảnh chính"
                           aria-label="Copy ảnh chính"
-                          className="flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
+                          className="col-span-2 flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
                           onClick={(event) => {
                             event.stopPropagation();
                             void handleCopyProductRepresentativeImage(product);
@@ -4742,7 +4589,7 @@ export default function LocalProductsPage() {
                             aria-hidden="true"
                             className={iconClassName}
                           />
-                          Ảnh
+                          Tải ảnh
                         </button>
                       </div>
 
@@ -5266,12 +5113,12 @@ export default function LocalProductsPage() {
                                       setDraggingDraftImageId("")
                                     }
                                   >                                      <img
-                                      src={image.dataUrl}
-                                      alt={image.name}
-                                      width={1200}
-                                      height={1200}
-                                      className="h-full w-full object-contain"
-                                    />
+                                        src={image.dataUrl}
+                                        alt={image.name}
+                                        width={1200}
+                                        height={1200}
+                                        className="h-full w-full object-contain"
+                                      />
 
                                     <div className="absolute left-1 top-1 rounded-lg bg-black/70 px-1.5 py-0.5 whitespace-nowrap text-[10px] font-black text-white">
                                       {index + 1}
@@ -5807,15 +5654,15 @@ export default function LocalProductsPage() {
                                             : undefined
                                         }
                                       >
-                                        {assignedProduct?.images[0] ? (<img
-                                          src={
-                                            assignedProduct.images[0].dataUrl
-                                          }
-                                          alt={assignedProduct.name}
-                                          width={1200}
-                                          height={1200}
-                                          className="h-full w-full object-contain"
-                                        />
+                                        {assignedProduct?.images[0] ? (                                            <img
+                                              src={
+                                                assignedProduct.images[0].dataUrl
+                                              }
+                                              alt={assignedProduct.name}
+                                              width={1200}
+                                              height={1200}
+                                              className="h-full w-full object-contain"
+                                            />
                                         ) : (
                                           <FiImage
                                             aria-hidden="true"
@@ -5973,13 +5820,13 @@ export default function LocalProductsPage() {
                                     });
                                   }}
                                 >
-                                  {product.images[0] ? (<img
-                                    src={product.images[0].dataUrl}
-                                    alt={product.name}
-                                    width={1200}
-                                    height={1200}
-                                    className="h-full w-full object-contain"
-                                  />
+                                  {product.images[0] ? (                                      <img
+                                        src={product.images[0].dataUrl}
+                                        alt={product.name}
+                                        width={1200}
+                                        height={1200}
+                                        className="h-full w-full object-contain"
+                                      />
                                   ) : (
                                     <FiImage
                                       aria-hidden="true"
@@ -6269,13 +6116,13 @@ export default function LocalProductsPage() {
                           })
                         }
                       >
-                        {selectedAssignedSlot.product.images[0] ? (<img
-                          src={selectedAssignedSlot.product.images[0].dataUrl}
-                          alt={selectedAssignedSlot.product.name}
-                          width={1200}
-                          height={1200}
-                          className="h-full w-full object-contain"
-                        />
+                        {selectedAssignedSlot.product.images[0] ? (                            <img
+                              src={selectedAssignedSlot.product.images[0].dataUrl}
+                              alt={selectedAssignedSlot.product.name}
+                              width={1200}
+                              height={1200}
+                              className="h-full w-full object-contain"
+                            />
                         ) : (
                           <FiImage
                             aria-hidden="true"
@@ -6302,12 +6149,12 @@ export default function LocalProductsPage() {
                                   })
                                 }
                               >                                  <img
-                                  src={image.dataUrl}
-                                  alt={image.name}
-                                  width={1200}
-                                  height={1200}
-                                  className="h-full w-full object-contain"
-                                />
+                                    src={image.dataUrl}
+                                    alt={image.name}
+                                    width={1200}
+                                    height={1200}
+                                    className="h-full w-full object-contain"
+                                  />
                               </button>
                             ))}
                         </div>
@@ -6506,7 +6353,7 @@ export default function LocalProductsPage() {
                               className={iconClassName}
                             />
                           )}
-                          Ảnh
+                          Ảnh chính
                         </button>
 
                         <button
@@ -6542,7 +6389,7 @@ export default function LocalProductsPage() {
                             aria-hidden="true"
                             className={iconClassName}
                           />
-                          {selectedAlbumImageIds.size}
+                          Tải đã chọn {selectedAlbumImageIds.size}
                         </button>
 
                         <button
@@ -6576,20 +6423,21 @@ export default function LocalProductsPage() {
                             aria-hidden="true"
                             className={iconClassName}
                           />
+                          Tải toàn bộ
                         </button>
                       </div>
                     </div>
 
-                    <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900 p-1">
+                    <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900 p-2">
                       {selectedAlbumImage ? (
-                        <div className="absolute inset-1 flex min-h-0 min-w-0 items-center justify-center overflow-hidden">
+                        <div className="flex h-full w-full min-h-0 min-w-0 items-center justify-center overflow-hidden [&>*]:flex [&>*]:h-full [&>*]:w-full [&>*]:items-center [&>*]:justify-center [&_img]:!h-auto [&_img]:!max-h-full [&_img]:!max-w-full [&_img]:!object-contain [&_img]:!w-auto">
                           <Zoom>
                             <img
                               src={selectedAlbumImage.dataUrl}
                               alt={selectedAlbumImage.name}
                               width={1600}
                               height={1600}
-                              className="block h-full w-full object-contain"
+                              className="block h-auto max-h-full w-auto max-w-full object-contain"
                             />
                           </Zoom>
                         </div>
@@ -6632,12 +6480,12 @@ export default function LocalProductsPage() {
                             onClick={() => toggleSelectedAlbumImage(image.id)}
                             title={`Ảnh ${index + 1}`}
                           >                              <img
-                              src={image.dataUrl}
-                              alt={image.name}
-                              width={1200}
-                              height={1200}
-                              className="h-full w-full object-cover"
-                            />
+                                src={image.dataUrl}
+                                alt={image.name}
+                                width={1200}
+                                height={1200}
+                                className="h-full w-full object-cover"
+                              />
                             <span
                               className={`absolute left-1 top-1 rounded-lg px-1.5 py-0.5 text-[10px] font-black ${active
                                 ? "bg-cyan-300 text-slate-950"
@@ -6844,16 +6692,6 @@ export default function LocalProductsPage() {
                   </button>
                 ) : null}
 
-                {isAppleMobileDevice() ? (
-                  <button
-                    type="button"
-                    className="rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-2 text-sm font-black text-cyan-100 transition hover:bg-cyan-300/20"
-                    onClick={() => void executeDownloadZipForIphone()}
-                  >
-                    Tải ZIP cho iPhone
-                  </button>
-                ) : null}
-
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
@@ -6868,7 +6706,7 @@ export default function LocalProductsPage() {
                     className="rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
                     onClick={() => void executeDownloadRequest()}
                   >
-                    Tải mặc định
+                    Tải từng ảnh
                   </button>
                 </div>
               </div>
