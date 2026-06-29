@@ -3309,6 +3309,89 @@ export default function LocalProductsPage() {
     }
   };
 
+  const handleShareSelectedAlbumImages = async (): Promise<void> => {
+    if (!albumSource) {
+      Toastify("Chưa có album để chia sẻ", 300);
+      return;
+    }
+
+    const selectedImages = albumSource.images.filter((image) =>
+      selectedAlbumImageIds.has(image.id),
+    );
+
+    if (selectedImages.length === 0) {
+      Toastify("Chưa chọn ảnh để chia sẻ", 300);
+      return;
+    }
+
+    const shareNavigator = getNativeShareNavigator();
+    const shareKey = "album-share-selected";
+    const textValue = albumSource.description.trim() || albumSource.title.trim();
+
+    const markShared = (): void => {
+      setCopiedKey(shareKey);
+
+      window.setTimeout(() => {
+        setCopiedKey((current) => (current === shareKey ? "" : current));
+      }, 1200);
+    };
+
+    try {
+      if (shareNavigator?.share) {
+        const files = await Promise.all(
+          selectedImages.map((image, index) =>
+            dataUrlToShareFile(
+              image.dataUrl,
+              image.name || createSystemImageFilename(index, image.id),
+            ),
+          ),
+        );
+        const shareDataWithFiles: NativeShareData = {
+          title: albumSource.title,
+          text: textValue,
+          files,
+        };
+
+        if (shareNavigator.canShare?.(shareDataWithFiles)) {
+          await shareNavigator.share(shareDataWithFiles);
+          markShared();
+          Toastify("Đã mở bảng chia sẻ ảnh", 200);
+          return;
+        }
+
+        await shareNavigator.share({
+          title: albumSource.title,
+          text: [
+            albumSource.title,
+            textValue,
+            `Đã chọn ${selectedImages.length} ảnh.`,
+          ]
+            .filter(Boolean)
+            .join("\n"),
+        });
+        markShared();
+        Toastify("Thiết bị chưa hỗ trợ gửi nhiều ảnh, đã mở chia sẻ nội dung", 200);
+        return;
+      }
+
+      await copyText(textValue);
+      markShared();
+      Toastify("Trình duyệt chưa hỗ trợ chia sẻ, đã copy nội dung", 200);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
+      try {
+        await copyText(textValue);
+        markShared();
+        Toastify("Không thể mở chia sẻ, đã copy nội dung", 300);
+      } catch {
+        Toastify("Không thể chia sẻ ảnh đã chọn", 400);
+      }
+    }
+  };
+
   const handleDownloadSelectedAlbumImages = (): void => {
     if (!albumSource) {
       Toastify("Chưa có album để tải", 300);
@@ -4556,7 +4639,7 @@ export default function LocalProductsPage() {
                           type="button"
                           title="Chia sẻ sản phẩm"
                           aria-label="Chia sẻ sản phẩm"
-                          className="col-span-2 flex items-center justify-center gap-1 rounded-2xl border border-sky-300/50 bg-sky-300/10 p-1.5 text-[10px] font-black text-sky-100 transition hover:bg-sky-300/20 active:scale-[0.98]"
+                          className="flex items-center justify-center gap-1 rounded-2xl border border-sky-300/50 bg-sky-300/10 p-1.5 text-[10px] font-black text-sky-100 transition hover:bg-sky-300/20 active:scale-[0.98]"
                           onClick={(event) => {
                             event.stopPropagation();
                             void handleShareProduct(product);
@@ -4580,7 +4663,7 @@ export default function LocalProductsPage() {
                           type="button"
                           title="Copy ảnh đại diện"
                           aria-label="Copy ảnh đại diện"
-                          className="col-span-2 flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
+                          className="flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
                           onClick={(event) => {
                             event.stopPropagation();
                             void handleCopyProductRepresentativeImage(product);
@@ -6428,6 +6511,28 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
+                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-sky-300/50 bg-sky-300/10 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-sky-100 transition hover:bg-sky-300/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                          onClick={() => void handleShareSelectedAlbumImages()}
+                          title="Chia sẻ ảnh đã chọn"
+                          aria-label="Chia sẻ ảnh đã chọn"
+                          disabled={selectedAlbumImageIds.size === 0}
+                        >
+                          {copiedKey === "album-share-selected" ? (
+                            <FiCheck
+                              aria-hidden="true"
+                              className={iconClassName}
+                            />
+                          ) : (
+                            <FiShare2
+                              aria-hidden="true"
+                              className={iconClassName}
+                            />
+                          )}
+                          Chia sẻ {selectedAlbumImageIds.size}
+                        </button>
+
+                        <button
+                          type="button"
                           className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl bg-cyan-300 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
                           onClick={handleDownloadSelectedAlbumImages}
                           title="Tải ảnh đã chọn"
@@ -6475,17 +6580,22 @@ export default function LocalProductsPage() {
                       </div>
                     </div>
 
-                    <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
+                    <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-2xl border border-white/10 bg-slate-900 p-1">
                       {selectedAlbumImage ? (
-                        <Zoom>
-                          <img
-                            src={selectedAlbumImage.dataUrl}
-                            alt={selectedAlbumImage.name}
-                            width={1600}
-                            height={1600}
-                            className="h-full max-h-full w-full object-contain"
-                          />
-                        </Zoom>
+                        <div className="flex h-full min-h-0 w-full min-w-0 items-center justify-center">
+                          <Zoom>
+                            <img
+                              src={selectedAlbumImage.dataUrl}
+                              alt={selectedAlbumImage.name}
+                              width={1600}
+                              height={1600}
+                              className="block h-auto w-auto max-w-full object-contain"
+                              style={{
+                                maxHeight: "min(100%, calc(100dvh - 260px))",
+                              }}
+                            />
+                          </Zoom>
+                        </div>
                       ) : (
                         <FiImage
                           aria-hidden="true"
