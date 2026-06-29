@@ -4661,8 +4661,8 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          title="Copy ảnh đại diện"
-                          aria-label="Copy ảnh đại diện"
+                          title="Copy ảnh chính"
+                          aria-label="Copy ảnh chính"
                           className="flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
                           onClick={(event) => {
                             event.stopPropagation();
@@ -4670,7 +4670,7 @@ export default function LocalProductsPage() {
                           }}
                         >
                           {renderCopyIcon(`cover-${product.id}`)}
-                          Copy ảnh đại diện
+                          Ảnh Chính
                         </button>
 
                         <button
@@ -6580,19 +6580,16 @@ export default function LocalProductsPage() {
                       </div>
                     </div>
 
-                    <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-2xl border border-white/10 bg-slate-900 p-1">
+                    <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900 p-1">
                       {selectedAlbumImage ? (
-                        <div className="flex h-full min-h-0 w-full min-w-0 items-center justify-center">
+                        <div className="absolute inset-1 flex min-h-0 min-w-0 items-center justify-center overflow-hidden">
                           <Zoom>
                             <img
                               src={selectedAlbumImage.dataUrl}
                               alt={selectedAlbumImage.name}
                               width={1600}
                               height={1600}
-                              className="block h-auto w-auto max-w-full object-contain"
-                              style={{
-                                maxHeight: "min(100%, calc(100dvh - 260px))",
-                              }}
+                              className="block h-full w-full object-contain"
                             />
                           </Zoom>
                         </div>
