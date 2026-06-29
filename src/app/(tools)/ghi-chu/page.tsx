@@ -30,7 +30,6 @@ import {
   FiX,
 } from "react-icons/fi";
 import LoadingSpinner from "@/components/orther/loading/LoadingSpinner";
-import Zoom from "@/lib/Zoom";
 import { toast, ToastContainer, type ToastOptions } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -167,6 +166,7 @@ type ScheduleAssignmentMap = Record<string, string>;
 type AlbumSource = {
   title: string;
   description: string;
+  priceText: string;
   images: ProductImage[];
 };
 
@@ -1191,6 +1191,19 @@ const buildPostText = (
   ].filter(Boolean);
 
   return lines.join("\n");
+};
+
+const buildShareDescriptionText = (
+  description: string,
+  priceText: string,
+): string => {
+  const plusLines = description
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("+"));
+  const priceLine = priceText.trim() ? `Giá: ${priceText.trim()}` : "";
+
+  return [...plusLines, priceLine].filter(Boolean).join("\n");
 };
 
 const createImageFilenameSuffix = (imageId: string): string => {
@@ -3157,29 +3170,6 @@ export default function LocalProductsPage() {
     });
   };
 
-  const handleCopySelectedAlbumImage = async (): Promise<void> => {
-    if (!selectedAlbumImage) {
-      Toastify("Chưa chọn ảnh để copy", 300);
-      return;
-    }
-
-    try {
-      await copyImageToClipboard(selectedAlbumImage);
-      setCopiedKey(`album-image-${selectedAlbumImage.id}`);
-      Toastify("Đã copy ảnh vào clipboard", 200);
-
-      window.setTimeout(() => {
-        setCopiedKey((current) =>
-          current === `album-image-${selectedAlbumImage.id}` ? "" : current,
-        );
-      }, 1200);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Không thể copy ảnh";
-      Toastify(message, 400);
-    }
-  };
-
   const handleShareSelectedAlbumImages = async (): Promise<void> => {
     if (!albumSource) {
       Toastify("Chưa có album để chia sẻ", 300);
@@ -3197,7 +3187,9 @@ export default function LocalProductsPage() {
 
     const shareNavigator = getNativeShareNavigator();
     const shareKey = "album-share-selected";
-    const textValue = albumSource.description.trim() || albumSource.title.trim();
+    const textValue =
+      buildShareDescriptionText(albumSource.description, albumSource.priceText) ||
+      albumSource.title.trim();
 
     const markShared = (): void => {
       setCopiedKey(shareKey);
@@ -3232,13 +3224,7 @@ export default function LocalProductsPage() {
 
         await shareNavigator.share({
           title: albumSource.title,
-          text: [
-            albumSource.title,
-            textValue,
-            `Đã chọn ${selectedImages.length} ảnh.`,
-          ]
-            .filter(Boolean)
-            .join("\n"),
+          text: textValue,
         });
         markShared();
         Toastify("Thiết bị chưa hỗ trợ gửi nhiều ảnh, đã mở chia sẻ nội dung", 200);
@@ -4365,18 +4351,19 @@ export default function LocalProductsPage() {
                         openImageAlbum({
                           title: product.name,
                           description: descriptionPreview,
+                          priceText: product.priceText,
                           images: product.images,
                         });
                       }}
                     >
-                      {product.images[0] ? (                          <img
-                            src={product.images[0].dataUrl}
-                            alt={product.name}
-                            width={1200}
-                            height={1200}
-                            className={`h-full w-full object-cover transition duration-300 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
-                              }`}
-                          />
+                      {product.images[0] ? (<img
+                        src={product.images[0].dataUrl}
+                        alt={product.name}
+                        width={1200}
+                        height={1200}
+                        className={`h-full w-full object-cover transition duration-300 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
+                          }`}
+                      />
                       ) : (
                         <FiImage
                           aria-hidden="true"
@@ -5113,12 +5100,12 @@ export default function LocalProductsPage() {
                                       setDraggingDraftImageId("")
                                     }
                                   >                                      <img
-                                        src={image.dataUrl}
-                                        alt={image.name}
-                                        width={1200}
-                                        height={1200}
-                                        className="h-full w-full object-contain"
-                                      />
+                                      src={image.dataUrl}
+                                      alt={image.name}
+                                      width={1200}
+                                      height={1200}
+                                      className="h-full w-full object-contain"
+                                    />
 
                                     <div className="absolute left-1 top-1 rounded-lg bg-black/70 px-1.5 py-0.5 whitespace-nowrap text-[10px] font-black text-white">
                                       {index + 1}
@@ -5649,20 +5636,21 @@ export default function LocalProductsPage() {
                                               description:
                                                 assignedProduct.description.trim() ||
                                                 settings.commonDescription.trim(),
+                                              priceText: assignedProduct.priceText,
                                               images: assignedProduct.images,
                                             })
                                             : undefined
                                         }
                                       >
-                                        {assignedProduct?.images[0] ? (                                            <img
-                                              src={
-                                                assignedProduct.images[0].dataUrl
-                                              }
-                                              alt={assignedProduct.name}
-                                              width={1200}
-                                              height={1200}
-                                              className="h-full w-full object-contain"
-                                            />
+                                        {assignedProduct?.images[0] ? (<img
+                                          src={
+                                            assignedProduct.images[0].dataUrl
+                                          }
+                                          alt={assignedProduct.name}
+                                          width={1200}
+                                          height={1200}
+                                          className="h-full w-full object-contain"
+                                        />
                                         ) : (
                                           <FiImage
                                             aria-hidden="true"
@@ -5816,17 +5804,18 @@ export default function LocalProductsPage() {
                                       description:
                                         product.description.trim() ||
                                         settings.commonDescription.trim(),
+                                      priceText: product.priceText,
                                       images: product.images,
                                     });
                                   }}
                                 >
-                                  {product.images[0] ? (                                      <img
-                                        src={product.images[0].dataUrl}
-                                        alt={product.name}
-                                        width={1200}
-                                        height={1200}
-                                        className="h-full w-full object-contain"
-                                      />
+                                  {product.images[0] ? (<img
+                                    src={product.images[0].dataUrl}
+                                    alt={product.name}
+                                    width={1200}
+                                    height={1200}
+                                    className="h-full w-full object-contain"
+                                  />
                                   ) : (
                                     <FiImage
                                       aria-hidden="true"
@@ -6112,17 +6101,18 @@ export default function LocalProductsPage() {
                           openImageAlbum({
                             title: selectedAssignedSlot.product.name,
                             description: selectedAssignedSlot.description,
+                            priceText: selectedAssignedSlot.product.priceText,
                             images: selectedAssignedSlot.product.images,
                           })
                         }
                       >
-                        {selectedAssignedSlot.product.images[0] ? (                            <img
-                              src={selectedAssignedSlot.product.images[0].dataUrl}
-                              alt={selectedAssignedSlot.product.name}
-                              width={1200}
-                              height={1200}
-                              className="h-full w-full object-contain"
-                            />
+                        {selectedAssignedSlot.product.images[0] ? (<img
+                          src={selectedAssignedSlot.product.images[0].dataUrl}
+                          alt={selectedAssignedSlot.product.name}
+                          width={1200}
+                          height={1200}
+                          className="h-full w-full object-contain"
+                        />
                         ) : (
                           <FiImage
                             aria-hidden="true"
@@ -6145,16 +6135,17 @@ export default function LocalProductsPage() {
                                     title: selectedAssignedSlot.product.name,
                                     description:
                                       selectedAssignedSlot.description,
+                                    priceText: selectedAssignedSlot.product.priceText,
                                     images: selectedAssignedSlot.product.images,
                                   })
                                 }
                               >                                  <img
-                                    src={image.dataUrl}
-                                    alt={image.name}
-                                    width={1200}
-                                    height={1200}
-                                    className="h-full w-full object-contain"
-                                  />
+                                  src={image.dataUrl}
+                                  alt={image.name}
+                                  width={1200}
+                                  height={1200}
+                                  className="h-full w-full object-contain"
+                                />
                               </button>
                             ))}
                         </div>
@@ -6336,25 +6327,6 @@ export default function LocalProductsPage() {
                           Mô tả
                         </button>
 
-                        <button
-                          type="button"
-                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-cyan-300/50 bg-cyan-300/10 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
-                          onClick={() => void handleCopySelectedAlbumImage()}
-                          title="Copy ảnh đang xem vào clipboard"
-                          aria-label="Copy ảnh đang xem vào clipboard"
-                        >
-                          {selectedAlbumImage ? (
-                            renderCopyIcon(
-                              `album-image-${selectedAlbumImage.id}`,
-                            )
-                          ) : (
-                            <FiCopy
-                              aria-hidden="true"
-                              className={iconClassName}
-                            />
-                          )}
-                          Ảnh chính
-                        </button>
 
                         <button
                           type="button"
@@ -6389,7 +6361,7 @@ export default function LocalProductsPage() {
                             aria-hidden="true"
                             className={iconClassName}
                           />
-                          Tải đã chọn {selectedAlbumImageIds.size}
+                          Tải về {selectedAlbumImageIds.size} ảnh
                         </button>
 
                         <button
@@ -6430,16 +6402,14 @@ export default function LocalProductsPage() {
 
                     <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900 p-2">
                       {selectedAlbumImage ? (
-                        <div className="flex h-full w-full min-h-0 min-w-0 items-center justify-center overflow-hidden [&>*]:flex [&>*]:h-full [&>*]:w-full [&>*]:items-center [&>*]:justify-center [&_img]:!h-auto [&_img]:!max-h-full [&_img]:!max-w-full [&_img]:!object-contain [&_img]:!w-auto">
-                          <Zoom>
-                            <img
-                              src={selectedAlbumImage.dataUrl}
-                              alt={selectedAlbumImage.name}
-                              width={1600}
-                              height={1600}
-                              className="block h-auto max-h-full w-auto max-w-full object-contain"
-                            />
-                          </Zoom>
+                        <div className="flex h-full max-h-full min-h-0 w-full min-w-0 items-center justify-center overflow-hidden [&>*]:!flex [&>*]:!h-full [&>*]:!max-h-full [&>*]:!w-full [&>*]:!items-center [&>*]:!justify-center [&>*]:!overflow-hidden [&_img]:!h-full [&_img]:!max-h-full [&_img]:!w-full [&_img]:!max-w-full [&_img]:!object-contain">
+                          <img
+                            src={selectedAlbumImage.dataUrl}
+                            alt={selectedAlbumImage.name}
+                            width={1600}
+                            height={1600}
+                            className="h-full  w-full max-w-full object-contain"
+                          />
                         </div>
                       ) : (
                         <FiImage
@@ -6480,12 +6450,12 @@ export default function LocalProductsPage() {
                             onClick={() => toggleSelectedAlbumImage(image.id)}
                             title={`Ảnh ${index + 1}`}
                           >                              <img
-                                src={image.dataUrl}
-                                alt={image.name}
-                                width={1200}
-                                height={1200}
-                                className="h-full w-full object-cover"
-                              />
+                              src={image.dataUrl}
+                              alt={image.name}
+                              width={1200}
+                              height={1200}
+                              className="h-full w-full object-cover"
+                            />
                             <span
                               className={`absolute left-1 top-1 rounded-lg px-1.5 py-0.5 text-[10px] font-black ${active
                                 ? "bg-cyan-300 text-slate-950"
