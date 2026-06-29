@@ -29,6 +29,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import JSZip from "jszip";
+import LoadingSpinner from "@/components/orther/loading/LoadingSpinner";
 import { toast, ToastContainer, type ToastOptions } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -1838,6 +1839,7 @@ export default function LocalProductsPage() {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isProcessingImages, setIsProcessingImages] = useState<boolean>(false);
   const [isSettingsReady, setIsSettingsReady] = useState<boolean>(false);
+  const [pageLoadingText, setPageLoadingText] = useState<string>("");
   const [modalStack, setModalStack] = useState<ModalName[]>([]);
   const activeModal = modalStack[modalStack.length - 1] ?? "";
   const [selectedSlotId, setSelectedSlotId] = useState<string>("");
@@ -2384,6 +2386,18 @@ export default function LocalProductsPage() {
     });
   };
 
+  const closeAllModals = (): void => {
+    setModalStack([]);
+    setSelectedSlotId("");
+    setSelectedAlbumImageId("");
+    setSelectedAlbumImageIds(new Set<string>());
+    setAlbumSource(null);
+    setPendingConfirm(null);
+    setPendingBlobUpload(null);
+    setBlobUploadPassword("");
+    setPendingDownload(null);
+  };
+
   const closeAllProductModals = (): void => {
     setModalStack((current) =>
       current.filter((modalName) => modalName !== "product"),
@@ -2544,12 +2558,20 @@ export default function LocalProductsPage() {
       updatedAt: now,
     };
 
-    await saveProductToDb(product);
-    await loadProducts();
+    setPageLoadingText(editingId ? "Đang cập nhật sản phẩm..." : "Đang thêm sản phẩm...");
 
-    resetForm();
-    closeAllProductModals();
-    Toastify(editingId ? "Đã cập nhật sản phẩm" : "Đã thêm sản phẩm", 200);
+    try {
+      await saveProductToDb(product);
+      await loadProducts();
+
+      resetForm();
+      closeAllModals();
+      Toastify(editingId ? "Đã cập nhật sản phẩm" : "Đã thêm sản phẩm", 200);
+    } catch {
+      Toastify(editingId ? "Không thể cập nhật sản phẩm" : "Không thể thêm sản phẩm", 400);
+    } finally {
+      setPageLoadingText("");
+    }
   };
 
   const handleEdit = (product: LocalProduct): void => {
@@ -2844,16 +2866,23 @@ export default function LocalProductsPage() {
           event.target.value = "";
         },
         onConfirm: async () => {
-          await restorePayloadToLocal(payload, {
-            setSettings,
-            setScheduleConfig,
-            setScheduleAssignments,
-            setPostedRecords,
-            loadProducts,
-          });
+          setPageLoadingText("Đang import dữ liệu vào local...");
 
-          event.target.value = "";
-          Toastify("Đã import dữ liệu vào local", 200);
+          try {
+            await restorePayloadToLocal(payload, {
+              setSettings,
+              setScheduleConfig,
+              setScheduleAssignments,
+              setPostedRecords,
+              loadProducts,
+            });
+
+            event.target.value = "";
+            closeAllModals();
+            Toastify("Đã import dữ liệu vào local", 200);
+          } finally {
+            setPageLoadingText("");
+          }
         },
       });
     } catch {
@@ -2872,6 +2901,8 @@ export default function LocalProductsPage() {
       Toastify("Vui lòng nhập mật khẩu upload", 400);
       return;
     }
+
+    setPageLoadingText("Đang thay thế file backup trên Vercel Blob...");
 
     try {
       const payload = createExportPayload({
@@ -2934,6 +2965,8 @@ export default function LocalProductsPage() {
           : "Không thể upload JSON.GZ lên Blob";
 
       Toastify(message, 400);
+    } finally {
+      setPageLoadingText("");
     }
   };
 
@@ -2957,6 +2990,8 @@ export default function LocalProductsPage() {
       confirmLabel: "Tải về local",
       tone: "warning",
       onConfirm: async () => {
+        setPageLoadingText("Đang tải backup từ Vercel Blob về local...");
+
         try {
           const latestResponse = await fetch(
             `/api/blob/local-products-latest?t=${Date.now()}`,
@@ -2998,7 +3033,8 @@ export default function LocalProductsPage() {
             loadProducts,
           });
 
-          Toastify("Đã tải backup online về local", 200);
+          closeAllModals();
+          Toastify("Đã tải backup online và thay thế toàn bộ dữ liệu local", 200);
         } catch (error) {
           const message =
             error instanceof Error
@@ -3006,6 +3042,8 @@ export default function LocalProductsPage() {
               : "Không thể tải backup online";
 
           Toastify(message, 400);
+        } finally {
+          setPageLoadingText("");
         }
       },
     });
@@ -3897,8 +3935,7 @@ export default function LocalProductsPage() {
 
     const action = pendingBlobUpload.onConfirm;
 
-    setPendingBlobUpload(null);
-    setBlobUploadPassword("");
+    closeAllModals();
     await action(uploadKey);
   };
 
@@ -3956,6 +3993,24 @@ export default function LocalProductsPage() {
       );
     });
   };
+
+  if (pageLoadingText) {
+    return (
+      <main className="min-h-dvh w-full bg-slate-950 text-slate-100">
+        <ToastContainer />
+        <LoadingSpinner text={pageLoadingText} />
+      </main>
+    );
+  }
+
+  if (!isSettingsReady) {
+    return (
+      <main className="min-h-dvh w-full bg-slate-950 text-slate-100">
+        <ToastContainer />
+        <LoadingSpinner text="Đang tải dữ liệu local, vui lòng chờ..." />
+      </main>
+    );
+  }
 
   return (
     <main
