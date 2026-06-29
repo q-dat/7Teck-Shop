@@ -195,6 +195,11 @@ type DownloadRequest = {
   textToCopy?: string;
 };
 
+type SelectedDescriptionCopy = {
+  productId: string;
+  text: string;
+};
+
 type NativeShareData = {
   title?: string;
   text?: string;
@@ -1884,6 +1889,8 @@ export default function LocalProductsPage() {
   >(() => new Set<string>());
   const [albumSource, setAlbumSource] = useState<AlbumSource | null>(null);
   const [copiedKey, setCopiedKey] = useState<string>("");
+  const [selectedDescriptionCopy, setSelectedDescriptionCopy] =
+    useState<SelectedDescriptionCopy | null>(null);
   const [pendingDoneProductIds, setPendingDoneProductIds] = useState<
     Set<string>
   >(() => new Set<string>());
@@ -4042,6 +4049,82 @@ export default function LocalProductsPage() {
     await action(uploadKey);
   };
 
+  const getSelectedTextFromDescriptionContainer = (
+    container: HTMLElement,
+  ): string => {
+    if (typeof window === "undefined") return "";
+
+    const selection = window.getSelection();
+
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+      return "";
+    }
+
+    const selectedText = selection.toString().trim();
+
+    if (!selectedText) return "";
+
+    const anchorNode = selection.anchorNode;
+    const focusNode = selection.focusNode;
+
+    if (!anchorNode || !focusNode) return "";
+    if (!container.contains(anchorNode) || !container.contains(focusNode)) {
+      return "";
+    }
+
+    const range = selection.getRangeAt(0);
+    const lineElements = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-description-line='true']"),
+    );
+
+    const selectedLines = lineElements
+      .filter((element) => range.intersectsNode(element))
+      .map((element) => element.dataset.descriptionLineText ?? element.textContent ?? "")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if (selectedLines.length === 0) return selectedText;
+
+    return Array.from(new Set(selectedLines)).join("\n");
+  };
+
+  const updateSelectedDescriptionCopy = (
+    productId: string,
+    container: HTMLElement,
+  ): boolean => {
+    const selectedText = getSelectedTextFromDescriptionContainer(container);
+
+    if (!selectedText) {
+      setSelectedDescriptionCopy((current) =>
+        current?.productId === productId ? null : current,
+      );
+
+      return false;
+    }
+
+    setSelectedDescriptionCopy({
+      productId,
+      text: selectedText,
+    });
+
+    return true;
+  };
+
+  const handleCopySelectedDescription = async (
+    productId: string,
+  ): Promise<void> => {
+    if (!selectedDescriptionCopy || selectedDescriptionCopy.productId !== productId) {
+      Toastify("Chưa có nội dung mô tả được chọn", 300);
+      return;
+    }
+
+    const copyKey = `selected-description-${productId}`;
+
+    await handleCopyField(copyKey, "nội dung đã chọn", selectedDescriptionCopy.text);
+    window.getSelection()?.removeAllRanges();
+    setSelectedDescriptionCopy(null);
+  };
+
   const renderCopyIcon = (key: string) => {
     return copiedKey === key ? (
       <FiCheckCircle aria-hidden="true" className={iconClassName} />
@@ -4072,7 +4155,12 @@ export default function LocalProductsPage() {
 
       if (!isPlusLine) {
         return (
-          <span key={`${productId}-line-${index}`} className="block">
+          <span
+            key={`${productId}-line-${index}`}
+            className="block"
+            data-description-line="true"
+            data-description-line-text={line}
+          >
             {line}
           </span>
         );
@@ -4082,6 +4170,8 @@ export default function LocalProductsPage() {
         <button
           key={`${productId}-plus-${index}`}
           type="button"
+          data-description-line="true"
+          data-description-line-text={trimmedLine}
           className={`my-0.5 block w-full select-text rounded-lg px-1.5 py-1 text-left transition ${copiedKey === copyKey
             ? "bg-cyan-300 text-slate-950"
             : "bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
@@ -4384,8 +4474,29 @@ export default function LocalProductsPage() {
                           ? "cursor-pointer transition hover:border-cyan-300/30 hover:bg-white/[0.06]"
                           : ""
                           }`}
+                        onMouseUp={(event) => {
+                          event.stopPropagation();
+                          updateSelectedDescriptionCopy(
+                            product.id,
+                            event.currentTarget,
+                          );
+                        }}
+                        onTouchEnd={(event) => {
+                          event.stopPropagation();
+                          updateSelectedDescriptionCopy(
+                            product.id,
+                            event.currentTarget,
+                          );
+                        }}
                         onClick={(event) => {
                           event.stopPropagation();
+
+                          const hasSelectedText = updateSelectedDescriptionCopy(
+                            product.id,
+                            event.currentTarget,
+                          );
+
+                          if (hasSelectedText) return;
 
                           if (descriptionPreview.length > 90) {
                             toggleExpandedProduct(product.id);
@@ -4412,6 +4523,20 @@ export default function LocalProductsPage() {
                             expanded,
                           )}
                         </div>
+                        {selectedDescriptionCopy?.productId === product.id &&
+                          selectedDescriptionCopy.text ? (
+                          <button
+                            type="button"
+                            className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-cyan-300/40 bg-cyan-300/10 px-2 py-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleCopySelectedDescription(product.id);
+                            }}
+                          >
+                            {renderCopyIcon(`selected-description-${product.id}`)}
+                            Copy phần đã chọn
+                          </button>
+                        ) : null}
                         {descriptionPreview.length > 90 ? (
                           <button
                             type="button"
