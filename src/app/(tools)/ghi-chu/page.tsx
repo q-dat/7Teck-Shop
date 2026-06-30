@@ -1199,24 +1199,22 @@ const buildShareContentText = (
   priceText: string,
 ): string => {
   const cleanTitle = title.trim();
-
   const plusLines = description
     .split(/\r?\n/u)
     .map((line) => line.trim())
     .filter((line) => line.startsWith("+"));
-
   const cleanPrice = priceText
     .trim()
     .replace(/^📌?\s*giá\s*:\s*/iu, "")
     .trim();
 
-  const sections = [
+  return [
     cleanTitle,
     plusLines.length > 0 ? plusLines.join("\n") : "",
     cleanPrice ? `📌Giá: ${cleanPrice}` : "",
-  ].filter(Boolean);
-
-  return sections.join("\n\n");
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 };
 
 const createImageFilenameSuffix = (imageId: string): string => {
@@ -2995,11 +2993,10 @@ export default function LocalProductsPage() {
   const handleUploadJsonGzipToBlob = async (): Promise<void> => {
     setBlobUploadPassword("");
     setPendingBlobUpload({
-      title: "Xác thực upload Blob",
-      description:
-        "Nhập mật khẩu backup. File JSON.GZ mới sẽ thay thế hoàn toàn file backup hiện tại trên Vercel Blob.",
-      confirmLabel: "Xác thực và upload",
-      cancelLabel: "Hủy upload",
+      title: "Upload Blob",
+      description: "",
+      confirmLabel: "Upload",
+      cancelLabel: "Hủy",
       onConfirm: uploadJsonGzipToBlobWithPassword,
     });
   };
@@ -4259,7 +4256,7 @@ export default function LocalProductsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-1 sm:grid-cols-7">
+            <div className="grid grid-cols-4 gap-1 sm:grid-cols-8">
               <button
                 type="button"
                 title="Thêm sản phẩm"
@@ -4336,6 +4333,17 @@ export default function LocalProductsPage() {
               >
                 <FiDownload aria-hidden="true" className={iconClassName} />
                 Ảnh
+              </button>
+
+              <button
+                type="button"
+                title="Đồng bộ dữ liệu từ Vercel Blob về local"
+                aria-label="Đồng bộ dữ liệu từ Vercel Blob về local"
+                className="flex items-center justify-center gap-2 rounded-xl border border-violet-300/50 bg-violet-300/15 px-2 py-1 whitespace-nowrap text-[10px] font-black text-violet-100 transition hover:bg-violet-300/25 active:scale-[0.98]"
+                onClick={() => void handleRestoreLatestBackupFromBlob()}
+              >
+                <FiRefreshCcw aria-hidden="true" className={iconClassName} />
+                Đồng bộ
               </button>
             </div>
           </div>
@@ -4580,7 +4588,19 @@ export default function LocalProductsPage() {
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
-
+                        <button
+                          type="button"
+                          title="Copy ảnh chính"
+                          aria-label="Copy ảnh chính"
+                          className="flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleCopyProductRepresentativeImage(product);
+                          }}
+                        >
+                          {renderCopyIcon(`cover-${product.id}`)}
+                          Ảnh Chính
+                        </button>
 
                         <button
                           type="button"
@@ -4604,20 +4624,6 @@ export default function LocalProductsPage() {
                             />
                           )}
                           Chia sẻ
-                        </button>
-
-                        <button
-                          type="button"
-                          title="Copy ảnh chính"
-                          aria-label="Copy ảnh chính"
-                          className="flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void handleCopyProductRepresentativeImage(product);
-                          }}
-                        >
-                          {renderCopyIcon(`cover-${product.id}`)}
-                          Ảnh Chính
                         </button>
 
                         <button
@@ -4699,22 +4705,6 @@ export default function LocalProductsPage() {
                         </button>
                         <button
                           type="button"
-                          title="Xóa sản phẩm"
-                          aria-label="Xóa sản phẩm"
-                          className="flex items-center justify-center gap-1 rounded-2xl bg-red-700 p-1.5 whitespace-nowrap text-[10px] font-black text-white transition hover:bg-red-500 active:scale-[0.98]"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void handleDelete(product.id);
-                          }}
-                        >
-                          <FiTrash2
-                            aria-hidden="true"
-                            className={iconClassName}
-                          />
-                          Xóa vĩnh viễn
-                        </button>
-                        <button
-                          type="button"
                           title="Tải ảnh sản phẩm"
                           aria-label="Tải ảnh sản phẩm"
                           className="flex items-center justify-center gap-1 rounded-2xl bg-cyan-300 p-1.5 whitespace-nowrap text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
@@ -4730,6 +4720,23 @@ export default function LocalProductsPage() {
                           Tải ảnh
                         </button>
                       </div>
+
+                      <button
+                        type="button"
+                        title="Xóa sản phẩm"
+                        aria-label="Xóa sản phẩm"
+                        className="mt-2 flex w-full items-center justify-center gap-1 rounded-2xl border border-rose-400/30 bg-rose-400/10 p-1.5 text-[10px] font-black text-rose-100 transition hover:bg-rose-400/20 active:scale-[0.98]"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void handleDelete(product.id);
+                        }}
+                      >
+                        <FiTrash2
+                          aria-hidden="true"
+                          className={iconClassName}
+                        />
+                        Xóa vĩnh viễn
+                      </button>
                     </div>
                   </article>
                 );
@@ -5113,12 +5120,18 @@ export default function LocalProductsPage() {
                             </span>
                             <input
                               value={draft.category}
+                              list="local-product-category-options"
                               onChange={(event) =>
                                 updateDraftField("category", event.target.value)
                               }
                               className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
                               placeholder="Laptop Dell"
                             />
+                            <datalist id="local-product-category-options">
+                              {categories.map((category) => (
+                                <option key={category} value={category} />
+                              ))}
+                            </datalist>
                           </label>
                         </div>
 
@@ -6136,8 +6149,7 @@ export default function LocalProductsPage() {
                           Khôi phục dữ liệu
                         </h3>
                         <p className="mt-1 text-xs leading-5 text-amber-100/90">
-                          Chỉ chọn file backup tổng đã export từ công cụ này.
-                          Import sẽ thay thế dữ liệu hiện tại trong trình duyệt.
+                          Import file sẽ thay thế toàn bộ dữ liệu hiện tại trong trình duyệt.
                         </p>
                       </div>
                       <span className="rounded-xl bg-amber-300 px-2 py-1 text-[10px] font-black text-slate-950">
@@ -6166,46 +6178,6 @@ export default function LocalProductsPage() {
                         />
                         <span>Import file</span>
                       </button>
-
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/10 p-3 text-sm font-black text-white transition hover:bg-white/15"
-                        onClick={() => void handleRestoreLatestBackupFromBlob()}
-                        title="Tải backup online mới nhất về local"
-                      >
-                        <FiRefreshCcw
-                          aria-hidden="true"
-                          className={iconClassName}
-                        />
-                        <span>Tải từ Blob</span>
-                      </button>
-                    </div>
-                  </article>
-
-                  <article className="rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-2 xl:col-span-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <h3 className="text-sm font-black text-white">
-                          Upload backup online
-                        </h3>
-                        <p className="mt-1 text-xs leading-5 text-emerald-100/90">
-                          Tạo file JSON.GZ từ dữ liệu local hiện tại rồi upload
-                          lên Vercel Blob. Trước khi upload phải nhập mật khẩu
-                          khớp với BLOB_BACKUP_UPLOAD_KEY trên Vercel.
-                        </p>
-                      </div>
-                      <span className="rounded-xl bg-emerald-300 px-2 py-1 text-[10px] font-black text-slate-950">
-                        Mật khẩu
-                      </span>
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_220px]">
-                      <div className="rounded-2xl border border-emerald-300/20 bg-slate-950/40 p-3 text-xs leading-5 text-emerald-50/90">
-                        Dữ liệu upload là bản backup tổng gồm sản phẩm, ảnh, mô
-                        tả, ghi chú, lịch và trạng thái đã đăng. File cũ trên
-                        Blob không bị ghi đè vì mỗi lần upload sẽ tạo tên mới
-                        theo thời gian.
-                      </div>
 
                       <button
                         type="button"
@@ -6641,9 +6613,11 @@ export default function LocalProductsPage() {
                 <h3 className="text-sm font-black text-white">
                   {pendingBlobUpload.title}
                 </h3>
-                <p className="mt-2 text-xs leading-5 text-slate-400">
-                  {pendingBlobUpload.description}
-                </p>
+                {pendingBlobUpload.description ? (
+                  <p className="mt-2 text-xs leading-5 text-slate-400">
+                    {pendingBlobUpload.description}
+                  </p>
+                ) : null}
               </div>
               <button
                 type="button"
@@ -6658,7 +6632,7 @@ export default function LocalProductsPage() {
               htmlFor="blob-upload-password"
               className="mt-3 block text-xs font-black uppercase tracking-[0.2em] text-emerald-100/80"
             >
-              Mật khẩu upload Blob
+              Mật khẩu
             </label>
             <input
               id="blob-upload-password"
@@ -6667,13 +6641,8 @@ export default function LocalProductsPage() {
               onChange={(event) => setBlobUploadPassword(event.target.value)}
               autoFocus
               className="mt-2 w-full rounded-2xl border border-emerald-300/20 bg-slate-900/80 p-3 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-300/50"
-              placeholder="Nhập BLOB_BACKUP_UPLOAD_KEY"
+              placeholder="Nhập mật khẩu"
             />
-            <p className="mt-2 text-xs leading-5 text-slate-500">
-              Mật khẩu được gửi tới API upload để so khớp với biến server
-              BLOB_BACKUP_UPLOAD_KEY. Không cần dùng NEXT_PUBLIC key cho bước
-              upload này.
-            </p>
 
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
@@ -6818,7 +6787,7 @@ export default function LocalProductsPage() {
                     className="rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
                     onClick={() => void executeDownloadRequest()}
                   >
-                    Tải từng ảnh
+                    Tải
                   </button>
                 </div>
               </div>
