@@ -246,7 +246,7 @@ const defaultScheduleConfig: ScheduleConfig = {
 
 const BLOB_BACKUP_PATHNAME = "local-products/backups/local-products-current.json.gz";
 
-const iconClassName = "h-4 w-4 shrink-0";
+const iconClassName = "h-3.5 w-3.5 shrink-0";
 
 const isTypingTarget = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) return false;
@@ -1898,11 +1898,14 @@ export default function LocalProductsPage() {
   const filteredProducts = useMemo(() => {
     const keyword = normalizeTextKey(query);
     const activeCategoryKey = normalizeTextKey(activeCategoryTab);
+    const shouldSearchAllCategories = keyword.length > 0;
 
     const matchedProducts = products.filter((product) => {
       const productCategoryKey = normalizeTextKey(product.category);
       const matchesCategory =
-        activeCategoryTab === "all" || productCategoryKey === activeCategoryKey;
+        shouldSearchAllCategories ||
+        activeCategoryTab === "all" ||
+        productCategoryKey === activeCategoryKey;
       const content = normalizeTextKey(
         `${product.name} ${product.description} ${product.priceText} ${product.category}`,
       );
@@ -2011,10 +2014,14 @@ export default function LocalProductsPage() {
     );
   }, [albumSource, selectedAlbumImageId]);
 
-  const scheduleProducts = useMemo(() => {
-    const activeProducts = products.filter((product) => !product.isDone);
+  const activeScheduleProducts = useMemo(() => {
+    return products.filter((product) => !product.isDone);
+  }, [products]);
 
-    if (scheduleConfig.selectedCategories.length === 0) return activeProducts;
+  const scheduleProducts = useMemo(() => {
+    if (scheduleConfig.selectedCategories.length === 0) {
+      return activeScheduleProducts;
+    }
 
     const selectedCategoryKeys = new Set(
       scheduleConfig.selectedCategories.map((category) =>
@@ -2022,22 +2029,22 @@ export default function LocalProductsPage() {
       ),
     );
 
-    return activeProducts.filter((product) =>
+    return activeScheduleProducts.filter((product) =>
       selectedCategoryKeys.has(normalizeTextKey(product.category)),
     );
-  }, [products, scheduleConfig.selectedCategories]);
+  }, [activeScheduleProducts, scheduleConfig.selectedCategories]);
 
   const filteredScheduleProducts = useMemo(() => {
     const keyword = normalizeTextKey(scheduleQuery);
 
-    return scheduleProducts.filter((product) => {
+    return activeScheduleProducts.filter((product) => {
       const content = normalizeTextKey(
         `${product.name} ${product.description} ${product.priceText} ${product.category}`,
       );
 
       return !keyword || content.includes(keyword);
     });
-  }, [scheduleProducts, scheduleQuery]);
+  }, [activeScheduleProducts, scheduleQuery]);
 
   const todayPostedProductKeys = useMemo(() => {
     return new Set(
@@ -2316,7 +2323,7 @@ export default function LocalProductsPage() {
 
   useEffect(() => {
     const activeScheduleProductIds = new Set(
-      scheduleProducts.map((product) => product.id),
+      activeScheduleProducts.map((product) => product.id),
     );
     const removedAssignmentKeys: string[] = [];
     const nextAssignments: ScheduleAssignmentMap = {};
@@ -2346,7 +2353,7 @@ export default function LocalProductsPage() {
 
       return nextRecords;
     });
-  }, [scheduleAssignments, scheduleProducts]);
+  }, [activeScheduleProducts, scheduleAssignments]);
 
   const updateDraftField = <Key extends keyof ProductDraft>(
     key: Key,
@@ -4195,8 +4202,8 @@ export default function LocalProductsPage() {
           type="button"
           data-description-line="true"
           data-description-line-text={trimmedLine}
-          className={`my-0.5 block w-full select-text rounded-lg px-1.5 py-1 text-left transition ${copiedKey === copyKey
-            ? "bg-cyan-300 text-slate-950"
+          className={`my-0.5 block w-full select-text rounded-md px-0.5 py-1 text-left transition ${copiedKey === copyKey
+            ? "bg-amber-200 text-slate-950"
             : "bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
             }`}
           onClick={(event) => {
@@ -4212,7 +4219,7 @@ export default function LocalProductsPage() {
 
   if (pageLoadingText) {
     return (
-      <main className="min-h-dvh w-full bg-slate-950 text-slate-100">
+      <main className="min-h-dvh w-full bg-[#0b1220] text-slate-100">
         <ToastContainer />
         <LoadingSpinner text={pageLoadingText} />
       </main>
@@ -4221,7 +4228,7 @@ export default function LocalProductsPage() {
 
   if (!isSettingsReady) {
     return (
-      <main className="min-h-dvh w-full bg-slate-950 text-slate-100">
+      <main className="min-h-dvh w-full bg-[#0b1220] text-slate-100">
         <ToastContainer />
         <LoadingSpinner text="Đang tải dữ liệu local, vui lòng chờ..." />
       </main>
@@ -4230,38 +4237,50 @@ export default function LocalProductsPage() {
 
   return (
     <main
-      className="min-h-dvh w-full overflow-x-hidden bg-[radial-gradient(circle_at_top_left,#1e293b_0,#020617_34%,#020617_100%)] p-1 text-slate-100 xl:p-0"
+      className="min-h-dvh w-full overflow-x-hidden bg-[#0b1220] p-3 text-slate-100 xl:p-8"
       onPaste={(event) => {
         void handlePaste(event);
       }}
     >
       <ToastContainer />
 
-      <section className="mx-auto flex w-full flex-col gap-1 xl:min-h-dvh xl:p-1">
-        <header className="rounded-xl border border-cyan-400/20 bg-slate-950/80 p-1 shadow-xl shadow-cyan-950/20 backdrop-blur">
-          <div className="grid grid-cols-1 gap-1 xl:grid-cols-[1fr_auto] xl:items-center">
+      <style>{`
+ @keyframes productWaveIn {
+ 0% { opacity: 0; transform: translateY(18px) scale(0.985); }
+ 45% { opacity: 1; transform: translateY(-4px) scale(1); }
+ 100% { opacity: 1; transform: translateY(0) scale(1); }
+ }
+ .product-wave-card {
+ animation: productWaveIn 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+ will-change: transform, opacity;
+ }
+ `}</style>
+
+      <section className="flex w-full flex-col gap-4 xl:min-h-[calc(100dvh-4rem)]">
+        <header className="sticky top-3 z-30 rounded-md border border-slate-700/70 bg-slate-900/95 p-3 (0,0,0,0.28)] backdrop-blur xl:top-8">
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
             <div className="flex min-w-0 items-center gap-2">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-200">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-600 bg-slate-800 text-slate-100 ">
                 <FiDatabase aria-hidden="true" className={iconClassName} />
               </div>
 
               <div className="min-w-0">
-                <h1 className="truncate text-sm font-black tracking-tight text-white xl:text-base">
+                <h1 className="truncate text-sm font-black tracking-tight text-white xl:text-sm">
                   Local Product Manager
                 </h1>
-                <p className="truncate text-[10px] text-slate-400">
+                <p className="truncate text-[11px] font-semibold text-slate-400">
                   {products.length} sản phẩm · {totalImages} ảnh · hôm nay{" "}
                   {postedTodayCount}/{totalTodayTaskCount} bài đã đăng
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-1 sm:grid-cols-8">
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-8 xl:min-w-[780px]">
               <button
                 type="button"
                 title="Thêm sản phẩm"
                 aria-label="Thêm sản phẩm"
-                className="flex items-center justify-center gap-2 rounded-xl bg-cyan-300 px-2 py-1 whitespace-nowrap text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-300 bg-slate-100 px-2 py-1.5 text-[11px] font-black text-slate-950  transition hover:bg-white active:opacity-80"
                 onClick={openProductModalForCreate}
               >
                 <FiPlus aria-hidden="true" className={iconClassName} />
@@ -4272,7 +4291,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Import Export dữ liệu"
                 aria-label="Import Export dữ liệu"
-                className="flex items-center justify-center gap-2 rounded-xl border border-orange-300/70 bg-orange-300 px-2 py-1 whitespace-nowrap text-[10px] font-black text-slate-950 shadow-lg shadow-orange-950/30 transition hover:bg-orange-200 active:scale-[0.98]"
+                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-amber-300/80 bg-amber-200 px-2 py-1.5 text-[11px] font-black text-amber-950  transition hover:bg-amber-100 active:opacity-80"
                 onClick={() => openModal("importExport")}
               >
                 <FiArchive aria-hidden="true" className={iconClassName} />
@@ -4281,9 +4300,9 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
-                title="Danh sách dạng bảng"
-                aria-label="Danh sách dạng bảng"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                title="Bảng sản phẩm"
+                aria-label="Bảng sản phẩm"
+                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-[11px] font-black text-slate-100  transition hover:border-slate-400 hover:bg-slate-700 active:opacity-80"
                 onClick={() => openModal("productList")}
               >
                 <FiDatabase aria-hidden="true" className={iconClassName} />
@@ -4294,7 +4313,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Lịch đăng"
                 aria-label="Lịch đăng"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-[11px] font-black text-slate-100  transition hover:border-slate-400 hover:bg-slate-700 active:opacity-80"
                 onClick={() => openModal("schedule")}
               >
                 <FiCalendar aria-hidden="true" className={iconClassName} />
@@ -4305,7 +4324,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Ghi chú"
                 aria-label="Ghi chú"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-[11px] font-black text-slate-100  transition hover:border-slate-400 hover:bg-slate-700 active:opacity-80"
                 onClick={() => openModal("globalNote")}
               >
                 <FiClipboard aria-hidden="true" className={iconClassName} />
@@ -4316,7 +4335,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Mô tả chung"
                 aria-label="Mô tả chung"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-[11px] font-black text-slate-100  transition hover:border-slate-400 hover:bg-slate-700 active:opacity-80"
                 onClick={() => openModal("globalDescription")}
               >
                 <FiFileText aria-hidden="true" className={iconClassName} />
@@ -4328,7 +4347,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Tải toàn bộ ảnh"
                 aria-label="Tải toàn bộ ảnh"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-[11px] font-black text-slate-100  transition hover:border-slate-400 hover:bg-slate-700 active:opacity-80"
                 onClick={handleDownloadAllImages}
               >
                 <FiDownload aria-hidden="true" className={iconClassName} />
@@ -4339,7 +4358,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Đồng bộ dữ liệu từ Vercel Blob về local"
                 aria-label="Đồng bộ dữ liệu từ Vercel Blob về local"
-                className="flex items-center justify-center gap-2 rounded-xl border border-violet-300/50 bg-violet-300/15 px-2 py-1 whitespace-nowrap text-[10px] font-black text-violet-100 transition hover:bg-violet-300/25 active:scale-[0.98]"
+                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-emerald-300/80 bg-emerald-200 px-2 py-1.5 text-[11px] font-black text-emerald-950  transition hover:bg-emerald-100 active:opacity-80"
                 onClick={() => void handleRestoreLatestBackupFromBlob()}
               >
                 <FiRefreshCcw aria-hidden="true" className={iconClassName} />
@@ -4349,19 +4368,21 @@ export default function LocalProductsPage() {
           </div>
         </header>
 
-        <section className="rounded-xl border border-white/10 bg-slate-950/50 p-1 shadow-xl shadow-black/20 backdrop-blur">
-          <div className="mb-1 grid grid-cols-1 gap-1 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-center">
-            <div className="min-w-0">
-              <h2 className="text-xs font-black text-white">
-                Danh sách sản phẩm
-              </h2>
-              <p className="text-[10px] text-slate-400">
-                Bấm vùng ngoài ảnh và mô tả để mở sửa. Bấm ảnh để mở album. Mô
-                tả bấm vào khung để mở rộng hoặc thu gọn, không mở modal.
-              </p>
+        <section className="rounded-md border border-slate-700/70 bg-slate-900/70 mt-2 p-3 (0,0,0,0.22)]">
+          <div className="mb-3 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-center">
+            <div className="flex min-w-0 items-center gap-2 overflow-x-auto text-[11px] font-black text-slate-300">
+              <span className="shrink-0 rounded-md border border-emerald-300/40 bg-emerald-950/50 px-2 py-1 text-emerald-100 ">
+                {activeProductCount} đang bán
+              </span>
+              <span className="shrink-0 rounded-md border border-rose-300/40 bg-rose-950/45 px-2 py-1 text-rose-100 ">
+                {soldProductCount} đã bán
+              </span>
+              <span className="shrink-0 rounded-md border border-slate-600 bg-slate-800 px-2 py-1 text-slate-100 ">
+                {totalImages} ảnh
+              </span>
             </div>
 
-            <label className="flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1.5 text-slate-400">
+            <label className="flex items-center gap-2 rounded-md border border-slate-600 bg-slate-950/70 px-2 py-1.5 text-slate-400 transition focus-within:border-slate-300 focus-within:bg-slate-950">
               <FiSearch
                 aria-hidden="true"
                 className={`${iconClassName} shrink-0`}
@@ -4374,18 +4395,18 @@ export default function LocalProductsPage() {
                 onFocus={(event) => event.currentTarget.select()}
                 onChange={(event) => setQuery(event.target.value)}
                 onKeyDown={(event) => event.stopPropagation()}
-                className="w-full bg-transparent text-xs text-white outline-none placeholder:text-slate-600"
-                placeholder="Tìm sản phẩm, giá, danh mục"
+                className="w-full bg-transparent text-xs font-semibold text-white outline-none placeholder:text-slate-500"
+                placeholder="Tìm tất cả sản phẩm"
               />
             </label>
           </div>
 
-          <div className="mb-1 flex gap-1 overflow-x-auto pb-1">
+          <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
             <button
               type="button"
-              className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${activeCategoryTab === "all"
-                ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+              className={`shrink-0 rounded-md border px-4 py-2 text-xs font-black tracking-wide  transition ${activeCategoryTab === "all"
+                ? "border-slate-200 bg-slate-100 text-slate-950"
+                : "border-slate-600 bg-slate-900 text-slate-200 hover:border-slate-400 hover:bg-slate-800"
                 }`}
               onClick={() => setActiveCategoryTab("all")}
             >
@@ -4396,10 +4417,10 @@ export default function LocalProductsPage() {
               <button
                 key={category}
                 type="button"
-                className={`shrink-0 rounded-2xl border px-3 py-1.5 text-xs font-black transition ${normalizeTextKey(activeCategoryTab) ===
+                className={`shrink-0 rounded-md uppercase border px-4 py-2 text-xs font-black tracking-wide  transition ${normalizeTextKey(activeCategoryTab) ===
                   normalizeTextKey(category)
-                  ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                  ? "border-slate-200 bg-slate-100 text-slate-950"
+                  : "border-slate-600 bg-white/20 text-slate-200 hover:border-slate-400 hover:bg-slate-800"
                   }`}
                 onClick={() => setActiveCategoryTab(category)}
               >
@@ -4409,12 +4430,12 @@ export default function LocalProductsPage() {
           </div>
 
           {filteredProducts.length === 0 ? (
-            <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-6 text-center text-sm text-slate-400">
+            <div className="rounded-md border border-slate-700 bg-slate-900 p-3 text-center text-xs font-semibold text-slate-400 ">
               Chưa có sản phẩm phù hợp.
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-7">
-              {filteredProducts.map((product) => {
+            <div className="grid grid-cols-2 gap-2 xl:gap-4 2xl:[grid-template-columns:repeat(auto-fill,minmax(218px,1fr))]">
+              {filteredProducts.map((product, index) => {
                 const descriptionPreview =
                   product.description.trim() ||
                   settings.commonDescription.trim();
@@ -4424,11 +4445,12 @@ export default function LocalProductsPage() {
 
                 return (
                   <article
-                    key={product.id}
-                    className={`overflow-hidden rounded-xl border shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:border-cyan-300/40 hover:bg-slate-900 ${productDone ? "opacity-70" : ""
+                    key={`${activeCategoryTab}-${product.id}`}
+                    style={{ animationDelay: `${Math.min(index * 34, 340)}ms` }}
+                    className={`product-wave-card group overflow-hidden rounded-md border  transition duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-800 ${productDone ? "opacity-70" : ""
                       } ${active
-                        ? "border-cyan-300/70 bg-cyan-300/10 ring-1 ring-cyan-300/30"
-                        : "border-white/10 bg-slate-950/80"
+                        ? "border-slate-200 bg-slate-800  "
+                        : "border-slate-700 bg-slate-900"
                       }`}
                     onClick={() => {
                       setSelectedProductId(product.id);
@@ -4437,7 +4459,7 @@ export default function LocalProductsPage() {
                   >
                     <button
                       type="button"
-                      className={`relative flex aspect-square w-full items-center justify-center overflow-hidden bg-slate-900 ${productDone
+                      className={`relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-slate-900 ${productDone
                         ? "after:absolute after:inset-0 after:bg-slate-950/30"
                         : ""
                         }`}
@@ -4451,14 +4473,15 @@ export default function LocalProductsPage() {
                         });
                       }}
                     >
-                      {product.images[0] ? (<img
-                        src={product.images[0].dataUrl}
-                        alt={product.name}
-                        width={1200}
-                        height={1200}
-                        className={`h-full w-full object-cover transition duration-300 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
-                          }`}
-                      />
+                      {product.images[0] ? (
+                        <img
+                          src={product.images[0].dataUrl}
+                          alt={product.name}
+                          width={1200}
+                          height={1200}
+                          className={`h-full w-full object-cover transition duration-500 group-hover:scale-105 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
+                            }`}
+                        />
                       ) : (
                         <FiImage
                           aria-hidden="true"
@@ -4466,20 +4489,20 @@ export default function LocalProductsPage() {
                         />
                       )}
 
-                      <div className="absolute left-1 top-1 flex items-center gap-1 rounded-2xl bg-black/70 px-2 py-1 text-[10px] font-bold text-white">
+                      <div className="absolute left-2 top-2 flex items-center gap-1 rounded-md border border-white/10 bg-black/65 px-2 py-0.5 text-[10px] font-black text-white  ">
                         <FiImage aria-hidden="true" className={iconClassName} />
                         {product.images.length}
                       </div>
 
-                      <div className="absolute right-1 top-1 flex flex-col items-end gap-1">
+                      <div className="absolute right-2 top-2 flex flex-col items-end gap-1">
                         {productDone ? (
-                          <span className="rounded-2xl bg-emerald-300 px-2 py-1 text-[10px] font-black text-slate-950">
+                          <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-950">
                             DONE
                           </span>
                         ) : null}
 
                         {active ? (
-                          <span className="rounded-2xl bg-cyan-300 px-2 py-1 text-[10px] font-black text-slate-950">
+                          <span className="rounded-md bg-slate-200 px-2 py-1 text-[10px] font-black text-slate-950">
                             ACTIVE
                           </span>
                         ) : null}
@@ -4489,15 +4512,15 @@ export default function LocalProductsPage() {
                     <div className="flex flex-col gap-2 p-2">
                       <div className="min-w-0">
                         {product.category ? (
-                          <div className="truncate text-[10px] font-black uppercase tracking-wide text-cyan-200">
+                          <div className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">
                             {product.category}
                           </div>
                         ) : null}
 
-                        <h3 className="line-clamp-2 min-h-8 text-[11px] font-black leading-4 text-white">
+                        <h3 className="line-clamp-2 min-h-9 text-[12px] font-black leading-[18px] text-white">
                           {product.name}
                         </h3>
-                        <div className="mt-0.5 truncate text-xs font-black text-cyan-200">
+                        <div className="mt-1 truncate text-xs font-black text-amber-100">
                           {product.priceText || "Chưa có giá"}
                         </div>
                       </div>
@@ -4506,8 +4529,8 @@ export default function LocalProductsPage() {
                         role={descriptionPreview.length > 90 ? "button" : undefined}
                         tabIndex={descriptionPreview.length > 90 ? 0 : undefined}
                         aria-expanded={descriptionPreview.length > 90 ? expanded : undefined}
-                        className={`rounded-xl border border-white/10 bg-white/[0.03] p-4 ${descriptionPreview.length > 90
-                          ? "cursor-pointer transition hover:border-cyan-300/30 hover:bg-white/[0.06]"
+                        className={`rounded-md border bg-white/10 border-white/10  p-2 ${descriptionPreview.length > 90
+                          ? "cursor-pointer transition hover:border-slate-400/40 hover:bg-slate-800"
                           : ""
                           }`}
                         onMouseUp={(event) => {
@@ -4551,7 +4574,7 @@ export default function LocalProductsPage() {
                         }}
                       >
                         <div
-                          className={`${expanded ? "line-clamp-none" : "line-clamp-3"} whitespace-pre-line text-[10px] leading-4 text-slate-300`}
+                          className={`${expanded ? "line-clamp-none" : "line-clamp-2"}  whitespace-pre-line text-[11px] leading-[18px] text-slate-300`}
                         >
                           {renderDescriptionText(
                             product.id,
@@ -4563,7 +4586,7 @@ export default function LocalProductsPage() {
                           selectedDescriptionCopy.text ? (
                           <button
                             type="button"
-                            className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-cyan-300/40 bg-cyan-300/10 px-2 py-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
+                            className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-full border border-emerald-300/70 bg-emerald-300/10 px-0.5 py-1 text-[9px] font-black text-emerald-100 transition hover:bg-emerald-300/15 active:opacity-80"
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopySelectedDescription(product.id);
@@ -4576,7 +4599,7 @@ export default function LocalProductsPage() {
                         {descriptionPreview.length > 90 ? (
                           <button
                             type="button"
-                            className="mt-1 text-[11px] font-black text-cyan-200"
+                            className="mt-2 text-[11px] font-black text-slate-300"
                             onClick={(event) => {
                               event.stopPropagation();
                               toggleExpandedProduct(product.id);
@@ -4587,12 +4610,12 @@ export default function LocalProductsPage() {
                         ) : null}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 gap-1.5">
                         <button
                           type="button"
                           title="Copy ảnh chính"
                           aria-label="Copy ảnh chính"
-                          className="flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/50 bg-cyan-300/10 p-1.5 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:scale-[0.98]"
+                          className="flex items-center justify-center gap-1 rounded-full border border-cyan-400/70 bg-cyan-400/10 px-0.5 py-1 text-[9px] font-black text-cyan-100  transition hover:bg-cyan-400/15 active:opacity-80"
                           onClick={(event) => {
                             event.stopPropagation();
                             void handleCopyProductRepresentativeImage(product);
@@ -4606,7 +4629,7 @@ export default function LocalProductsPage() {
                           type="button"
                           title="Chia sẻ sản phẩm"
                           aria-label="Chia sẻ sản phẩm"
-                          className="flex items-center justify-center gap-1 rounded-2xl border border-sky-300/50 bg-sky-300/10 p-1.5 text-[10px] font-black text-sky-100 transition hover:bg-sky-300/20 active:scale-[0.98]"
+                          className="flex items-center justify-center gap-1 rounded-full border border-cyan-400/70 bg-cyan-400/10 px-0.5 py-1 text-[9px] font-black text-cyan-100  transition hover:bg-cyan-400/15 active:opacity-80"
                           onClick={(event) => {
                             event.stopPropagation();
                             void handleShareProduct(product);
@@ -4630,7 +4653,7 @@ export default function LocalProductsPage() {
                           type="button"
                           title="Copy nguyên bản mô tả"
                           aria-label="Copy nguyên bản mô tả"
-                          className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
+                          className="flex items-center justify-center gap-1 rounded-full border border-slate-500/90 bg-slate-400/10 px-0.5 py-1 text-[9px] font-black text-slate-100  transition hover:border-slate-300 hover:bg-slate-400/15 active:opacity-80"
                           onClick={(event) => {
                             event.stopPropagation();
                             void handleCopyField(
@@ -4648,7 +4671,7 @@ export default function LocalProductsPage() {
                           type="button"
                           title="Copy comment sản phẩm"
                           aria-label="Copy comment sản phẩm"
-                          className="flex items-center justify-center gap-1 rounded-2xl border border-amber-300/40 bg-amber-300/10 p-1.5 text-[10px] font-black text-amber-100 transition hover:bg-amber-300/20 active:scale-[0.98]"
+                          className="flex items-center justify-center gap-1 rounded-full border border-amber-300/70 bg-amber-300/10 px-0.5 py-1 text-[9px] font-black text-amber-100  transition hover:bg-amber-300/15 active:opacity-80"
                           onClick={(event) => {
                             event.stopPropagation();
                             void handleCopyField(
@@ -4670,7 +4693,7 @@ export default function LocalProductsPage() {
                           type="button"
                           title="Copy tên sản phẩm"
                           aria-label="Copy tên sản phẩm"
-                          className="flex items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 p-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10 active:scale-[0.98]"
+                          className="flex items-center justify-center gap-1 rounded-full border border-slate-500/90 bg-slate-400/10 px-0.5 py-1 text-[9px] font-black text-slate-100  transition hover:border-slate-300 hover:bg-slate-400/15 active:opacity-80"
                           onClick={(event) => {
                             event.stopPropagation();
                             void handleCopyField(
@@ -4688,9 +4711,9 @@ export default function LocalProductsPage() {
                           type="button"
                           title={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
                           aria-label={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
-                          className={`flex w-full items-center justify-center gap-1 rounded-2xl p-1.5 text-[10px] font-black transition active:scale-[0.98] ${productDone
-                            ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                            : "border border-emerald-400/30 bg-emerald-400/10 text-emerald-100 hover:bg-emerald-400/20"
+                          className={`flex w-full items-center justify-center gap-1 rounded-full px-0.5 py-1 text-[9px] font-black transition active:opacity-80 ${productDone
+                            ? "border border-slate-400/80 bg-slate-400/10 text-slate-100  hover:bg-slate-400/15"
+                            : "border border-emerald-300/70 bg-emerald-300/10 text-emerald-100  hover:bg-emerald-300/15"
                             }`}
                           onClick={(event) => {
                             event.stopPropagation();
@@ -4707,7 +4730,7 @@ export default function LocalProductsPage() {
                           type="button"
                           title="Tải ảnh sản phẩm"
                           aria-label="Tải ảnh sản phẩm"
-                          className="flex items-center justify-center gap-1 rounded-2xl bg-cyan-300 p-1.5 whitespace-nowrap text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                          className="flex items-center justify-center gap-1 rounded-full border border-sky-400/70 bg-sky-400/10 px-0.5 py-1 whitespace-nowrap text-[9px] font-black text-sky-100  transition hover:bg-sky-400/15 active:opacity-80"
                           onClick={(event) => {
                             event.stopPropagation();
                             handleDownloadProductImages(product);
@@ -4719,24 +4742,24 @@ export default function LocalProductsPage() {
                           />
                           Tải ảnh
                         </button>
-                      </div>
 
-                      <button
-                        type="button"
-                        title="Xóa sản phẩm"
-                        aria-label="Xóa sản phẩm"
-                        className="mt-2 flex w-full items-center justify-center gap-1 rounded-2xl border border-rose-400/30 bg-rose-400/10 p-1.5 text-[10px] font-black text-rose-100 transition hover:bg-rose-400/20 active:scale-[0.98]"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void handleDelete(product.id);
-                        }}
-                      >
-                        <FiTrash2
-                          aria-hidden="true"
-                          className={iconClassName}
-                        />
-                        Xóa vĩnh viễn
-                      </button>
+                        <button
+                          type="button"
+                          title="Xóa sản phẩm"
+                          aria-label="Xóa sản phẩm"
+                          className="flex items-center justify-center gap-1 rounded-full border border-rose-400/70 bg-rose-400/10 px-0.5 py-1 text-[9px] font-black text-rose-100  transition hover:bg-rose-400/15 active:opacity-80"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void handleDelete(product.id);
+                          }}
+                        >
+                          <FiTrash2
+                            aria-hidden="true"
+                            className={iconClassName}
+                          />
+                          Xóa
+                        </button>
+                      </div>
                     </div>
                   </article>
                 );
@@ -4747,11 +4770,11 @@ export default function LocalProductsPage() {
       </section>
 
       {activeModal ? (
-        <div className="fixed inset-0 z-[99999] flex h-dvh w-full items-center justify-center overflow-hidden bg-black/70 p-2 backdrop-blur">
-          <div className="h-[90dvh] w-full overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl">
-            <div className="flex items-center justify-between gap-2 border-b border-white/10 p-2">
+        <div className="fixed inset-0 z-[99999] flex h-dvh w-full items-center justify-center overflow-hidden bg-black/75 p-3 xl:p-8">
+          <div className="h-[calc(100dvh-1.5rem)] w-full overflow-hidden rounded-md border border-slate-700 bg-slate-950  xl:h-[calc(100dvh-4rem)]">
+            <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-slate-900 p-2">
               <div className="flex min-w-0 items-center gap-2">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-200">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-600 bg-slate-800 text-slate-100 ">
                   {activeModal === "product" ? (
                     <FiPlus aria-hidden="true" className={iconClassName} />
                   ) : null}
@@ -4786,7 +4809,7 @@ export default function LocalProductsPage() {
                         : "Thêm sản phẩm"
                       : null}
                     {activeModal === "productList"
-                      ? "Danh sách sản phẩm"
+                      ? "Bảng sản phẩm"
                       : null}
                     {activeModal === "schedule" ? "Cấu hình lịch đăng" : null}
                     {activeModal === "globalNote" ? "Ghi chú" : null}
@@ -4802,7 +4825,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-slate-200  transition hover:bg-slate-700 active:opacity-80"
                 onClick={closeModal}
               >
                 <FiX aria-hidden="true" className={iconClassName} />
@@ -4810,47 +4833,41 @@ export default function LocalProductsPage() {
             </div>
 
             <div
-              className={`h-[calc(90dvh-58px)] p-2 ${activeModal === "imageAlbum" || activeModal === "productList" ? "overflow-hidden" : "overflow-y-auto"}`}
+              className={`h-[calc(92dvh-66px)] p-2 ${activeModal === "imageAlbum" || activeModal === "productList" ? "overflow-hidden" : "overflow-y-auto"}`}
             >
               {activeModal === "productList" ? (
                 <section className="flex h-full flex-col gap-2">
                   <div className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-center">
                     <div className="min-w-0">
-                      <h3 className="text-sm font-black text-white">
-                        Danh sách sản phẩm
+                      <h3 className="text-xs font-black text-white">
+                        Bảng sản phẩm
                       </h3>
-
-                      <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                        Dạng danh sách tổng quan, nhóm theo danh mục, sắp xếp
-                        theo giá tăng dần. Bấm trực tiếp vào tên sản phẩm để
-                        sửa.
-                      </p>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2">
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
+                      <div className="rounded-md border border-white/10 bg-slate-800 p-2">
                         <p className="text-[9px] font-black uppercase tracking-wide text-slate-500">
                           Tổng
                         </p>
-                        <p className="mt-1 text-base font-black text-white">
+                        <p className="mt-1 text-sm font-black text-white">
                           {filteredProducts.length}
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-2">
-                        <p className="text-[9px] font-black uppercase tracking-wide text-emerald-200/80">
+                      <div className="rounded-md border border-emerald-400/20 bg-emerald-400/10 p-2">
+                        <p className="text-[9px] font-black uppercase tracking-wide text-slate-300/80">
                           Đã bán
                         </p>
-                        <p className="mt-1 text-base font-black text-emerald-100">
+                        <p className="mt-1 text-sm font-black text-emerald-100">
                           {soldProductCount}
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-2">
+                      <div className="rounded-md border border-cyan-400/20 bg-cyan-400/10 p-2">
                         <p className="text-[9px] font-black uppercase tracking-wide text-cyan-200/80">
                           Chưa bán
                         </p>
-                        <p className="mt-1 text-base font-black text-cyan-100">
+                        <p className="mt-1 text-sm font-black text-cyan-100">
                           {activeProductCount}
                         </p>
                       </div>
@@ -4858,7 +4875,7 @@ export default function LocalProductsPage() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_110px_110px_90px]">
-                    <label className="flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1.5 text-slate-400">
+                    <label className="flex items-center gap-2 rounded-md border border-slate-600 bg-slate-950/70 px-2 py-1.5 text-slate-400 transition focus-within:border-slate-300 focus-within:bg-slate-950">
                       <FiSearch
                         aria-hidden="true"
                         className={`${iconClassName} shrink-0`}
@@ -4869,14 +4886,14 @@ export default function LocalProductsPage() {
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         onKeyDown={(event) => event.stopPropagation()}
-                        className="w-full bg-transparent text-xs text-white outline-none placeholder:text-slate-600"
+                        className="w-full bg-transparent text-xs font-semibold text-white outline-none placeholder:text-slate-500"
                         placeholder="Tìm tên, giá hoặc danh mục"
                       />
                     </label>
 
                     <button
                       type="button"
-                      className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-2 whitespace-nowrap text-xs font-black text-white transition hover:bg-white/10 active:scale-[0.98]"
+                      className="flex items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 px-2 py-2 whitespace-nowrap text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80"
                       onClick={() => void handleCopyProductList()}
                     >
                       {copiedKey === "product-list-copy" ? (
@@ -4889,7 +4906,7 @@ export default function LocalProductsPage() {
 
                     <button
                       type="button"
-                      className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-2 whitespace-nowrap text-xs font-black text-white transition hover:bg-white/10 active:scale-[0.98]"
+                      className="flex items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 px-2 py-2 whitespace-nowrap text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80"
                       onClick={handleExportProductsCsv}
                     >
                       <FiFileText
@@ -4901,14 +4918,14 @@ export default function LocalProductsPage() {
 
                     <button
                       type="button"
-                      className="flex items-center justify-center gap-2 rounded-xl bg-cyan-300 px-2 py-2 whitespace-nowrap text-xs font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                      className="flex items-center justify-center gap-2 rounded-md bg-cyan-300 px-2 py-2 whitespace-nowrap text-xs font-black text-slate-950 transition hover:bg-cyan-200 active:opacity-80"
                       onClick={openProductModalForCreate}
                     >
                       <FiPlus aria-hidden="true" className={iconClassName} />
                     </button>
                   </div>
 
-                  <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-white/10 bg-slate-950">
+                  <div className="min-h-0 flex-1 overflow-auto rounded-md border border-white/10 bg-slate-950">
                     {groupedProductsByCategory.length > 0 ? (
                       <div className="min-w-[860px]">
                         <div className="sticky top-0 z-10 grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-white/10 bg-slate-900 text-[10px] font-black uppercase tracking-wide text-slate-400">
@@ -4972,7 +4989,7 @@ export default function LocalProductsPage() {
                                       ? "bg-cyan-300/10 text-white"
                                       : product.isDone
                                         ? "bg-emerald-400/[0.04] text-slate-300 hover:bg-emerald-400/10"
-                                        : "bg-slate-950 text-slate-300 hover:bg-white/5"
+                                        : "bg-slate-950 text-slate-300 hover:bg-slate-800"
                                       }`}
                                     onClick={() =>
                                       setSelectedProductId(product.id)
@@ -4984,7 +5001,7 @@ export default function LocalProductsPage() {
 
                                     <button
                                       type="button"
-                                      className="min-w-0 border-r border-white/10 px-2 py-2 text-left transition hover:bg-white/5"
+                                      className="min-w-0 border-r border-white/10 px-2 py-2 text-left transition hover:bg-slate-800"
                                       onClick={(event) => {
                                         event.stopPropagation();
                                         handleEdit(product);
@@ -4992,18 +5009,18 @@ export default function LocalProductsPage() {
                                     >
                                       <div className="flex min-w-0 items-center gap-2">
                                         {product.isDone ? (
-                                          <span className="shrink-0 rounded-lg bg-emerald-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950">
+                                          <span className="shrink-0 rounded-md bg-emerald-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950">
                                             Đã bán
                                           </span>
                                         ) : null}
 
-                                        <p className="line-clamp-1 text-sm font-black leading-5 text-white xl:text-base xl:leading-6">
+                                        <p className="line-clamp-1 text-xs font-black leading-5 text-white xl:text-sm xl:leading-6">
                                           {product.name}
                                         </p>
                                       </div>
 
                                       <div className="mt-1 flex flex-wrap items-center gap-2">
-                                        <span className="rounded-xl bg-cyan-300 px-2 py-1 text-xs font-black text-slate-950">
+                                        <span className="rounded-md bg-cyan-300 px-2 py-1 text-xs font-black text-slate-950">
                                           {product.priceText || "Chưa có giá"}
                                         </span>
 
@@ -5016,9 +5033,9 @@ export default function LocalProductsPage() {
                                     <div className="flex items-center border-r border-white/10 px-2 py-2">
                                       <button
                                         type="button"
-                                        className={`w-full rounded-xl px-2 py-1.5 text-[10px] font-black transition active:scale-[0.98] ${product.isDone
+                                        className={`w-full rounded-md px-2 py-1.5 text-[10px] font-black transition active:opacity-80 ${product.isDone
                                           ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                                          : "border border-slate-500/40 bg-white/5 text-slate-300 hover:bg-white/10"
+                                          : "border border-slate-500/40 bg-slate-800 text-slate-300 hover:bg-slate-700"
                                           }`}
                                         onClick={(event) => {
                                           event.stopPropagation();
@@ -5029,11 +5046,11 @@ export default function LocalProductsPage() {
                                       </button>
                                     </div>
 
-                                    <div className="flex items-center border-r border-white/10 px-2 py-2 text-sm font-black text-slate-300">
+                                    <div className="flex items-center border-r border-white/10 px-2 py-2 text-xs font-black text-slate-300">
                                       {product.images.length}
                                     </div>
 
-                                    <div className="flex flex-col justify-center px-2 py-2 text-[10px] text-slate-500">
+                                    <div className="flex flex-col justify-center px-2 py-1.5 text-[10px] text-slate-500">
                                       <span>
                                         {new Date(
                                           product.updatedAt,
@@ -5041,7 +5058,7 @@ export default function LocalProductsPage() {
                                       </span>
 
                                       {product.doneAt ? (
-                                        <span className="mt-0.5 text-emerald-200/80">
+                                        <span className="mt-0.5 text-slate-300/80">
                                           Bán:{" "}
                                           {new Date(
                                             product.doneAt,
@@ -5057,9 +5074,9 @@ export default function LocalProductsPage() {
                         })}
                       </div>
                     ) : (
-                      <div className="flex h-full min-h-[260px] items-center justify-center p-4 text-center">
+                      <div className="flex h-full min-h-[260px] items-center justify-center p-2 text-center">
                         <div>
-                          <p className="text-sm font-black text-white">
+                          <p className="text-xs font-black text-white">
                             Chưa có sản phẩm
                           </p>
 
@@ -5091,7 +5108,7 @@ export default function LocalProductsPage() {
                             onChange={(event) =>
                               updateDraftField("name", event.target.value)
                             }
-                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
+                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
                             placeholder="Dell Latitude 7440 i5 13th"
                           />
                         </label>
@@ -5109,7 +5126,7 @@ export default function LocalProductsPage() {
                                   event.target.value,
                                 )
                               }
-                              className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
+                              className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
                               placeholder="13tr8"
                             />
                           </label>
@@ -5124,7 +5141,7 @@ export default function LocalProductsPage() {
                               onChange={(event) =>
                                 updateDraftField("category", event.target.value)
                               }
-                              className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
+                              className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
                               placeholder="Laptop Dell"
                             />
                             <datalist id="local-product-category-options">
@@ -5148,7 +5165,7 @@ export default function LocalProductsPage() {
                               )
                             }
                             rows={8}
-                            className="min-h-[220px] w-full resize-y rounded-2xl border border-white/10 bg-slate-950/80 p-3 text-sm leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60 sm:min-h-[260px] xl:min-h-[calc(90dvh-260px)] xl:resize-none"
+                            className="min-h-[220px] w-full resize-y rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60 sm:min-h-[260px] xl:min-h-[calc(90dvh-260px)] xl:resize-none"
                             placeholder="Để trống nếu muốn dùng mô tả chung..."
                           />
                         </label>
@@ -5156,7 +5173,7 @@ export default function LocalProductsPage() {
 
                       <section className="order-1 flex min-h-0 flex-col gap-2 xl:order-2">
                         <label
-                          className={`cursor-pointer rounded-2xl border border-dashed p-2 text-center transition ${isDragging
+                          className={`cursor-pointer rounded-md border border-dashed p-2 text-center transition ${isDragging
                             ? "border-cyan-300/80 bg-cyan-300/10"
                             : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
                             }`}
@@ -5164,7 +5181,7 @@ export default function LocalProductsPage() {
                           onDragOver={handleDragOver}
                           onDragLeave={handleDragLeave}
                         >
-                          <div className="flex items-center justify-center gap-2 text-sm font-black text-white">
+                          <div className="flex items-center justify-center gap-2 text-xs font-black text-white">
                             <FiUploadCloud
                               aria-hidden="true"
                               className={iconClassName}
@@ -5185,7 +5202,7 @@ export default function LocalProductsPage() {
                         </label>
 
                         {draft.images.length > 0 ? (
-                          <div className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                          <div className="flex min-h-0 flex-col rounded-md border border-white/10 bg-slate-950/70 p-2">
                             <div className="mb-2 flex items-center justify-between gap-2">
                               <span className="flex items-center gap-2 text-xs font-black text-white">
                                 <FiImage
@@ -5197,7 +5214,7 @@ export default function LocalProductsPage() {
 
                               <button
                                 type="button"
-                                className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-bold text-slate-300 transition hover:bg-white/10"
+                                className="flex items-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-bold text-slate-300 transition hover:bg-slate-700"
                                 onClick={() => updateDraftField("images", [])}
                               >
                                 <FiTrash2
@@ -5216,9 +5233,9 @@ export default function LocalProductsPage() {
                                   <div
                                     key={image.id}
                                     draggable
-                                    className={`group relative h-[88px] cursor-grab overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:cursor-grabbing sm:h-[96px] xl:h-[108px] ${isDraggingImage
-                                      ? "scale-95 opacity-60 ring-cyan-300"
-                                      : "ring-white/10 hover:ring-cyan-300/70"
+                                    className={`group relative h-[88px] cursor-grab overflow-hidden rounded-md bg-slate-900  transition active:cursor-grabbing sm:h-[96px] xl:h-[108px] ${isDraggingImage
+                                      ? "scale-95 opacity-60 "
+                                      : " "
                                       }`}
                                     onDragStart={(event) => {
                                       event.dataTransfer.setData(
@@ -5246,7 +5263,7 @@ export default function LocalProductsPage() {
                                     onDragEnd={() =>
                                       setDraggingDraftImageId("")
                                     }
-                                  >                                      <img
+                                  > <img
                                       src={image.dataUrl}
                                       alt={image.name}
                                       width={1200}
@@ -5254,13 +5271,13 @@ export default function LocalProductsPage() {
                                       className="h-full w-full object-contain"
                                     />
 
-                                    <div className="absolute left-1 top-1 rounded-lg bg-black/70 px-1.5 py-0.5 whitespace-nowrap text-[10px] font-black text-white">
+                                    <div className="absolute left-1 top-1 rounded-md bg-black/70 px-1.5 py-0.5 whitespace-nowrap text-[10px] font-black text-white">
                                       {index + 1}
                                     </div>
 
                                     <button
                                       type="button"
-                                      className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-xs text-white opacity-100 transition hover:bg-rose-400 xl:opacity-0 xl:group-hover:opacity-100"
+                                      className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-md bg-rose-500 text-xs text-white opacity-100 transition hover:bg-rose-400 xl:opacity-0 xl:group-hover:opacity-100"
                                       onClick={() => removeDraftImage(image.id)}
                                     >
                                       <FiX
@@ -5281,7 +5298,7 @@ export default function LocalProductsPage() {
                   <div className="shrink-0 border-t border-white/10 bg-slate-950/95 p-2">
                     <button
                       type="submit"
-                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                      className="flex min-h-9 w-full items-center justify-center gap-2 rounded-md bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200 active:opacity-80"
                     >
                       {editingId ? (
                         <FiRefreshCcw
@@ -5300,7 +5317,7 @@ export default function LocalProductsPage() {
               {activeModal === "schedule" ? (
                 <section className="flex min-h-full flex-col gap-2">
                   <div className="grid grid-cols-2 gap-2 xl:grid-cols-8">
-                    <div className="rounded-xl border border-white/10 bg-white/[0.04] p-1">
+                    <div className="rounded-md border border-white/10 bg-slate-900 p-1">
                       <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
                         Khung giờ
                       </div>
@@ -5309,7 +5326,7 @@ export default function LocalProductsPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 p-1">
+                    <div className="rounded-md border border-cyan-400/20 bg-cyan-400/10 p-1">
                       <div className="text-[10px] font-bold uppercase tracking-wide text-cyan-200">
                         Tổng task
                       </div>
@@ -5318,8 +5335,8 @@ export default function LocalProductsPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-1">
-                      <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-200">
+                    <div className="rounded-md border border-emerald-400/20 bg-emerald-400/10 p-1">
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-300">
                         DONE
                       </div>
                       <div className="text-xs font-black text-white">
@@ -5327,7 +5344,7 @@ export default function LocalProductsPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-rose-400/20 bg-rose-400/10 p-1">
+                    <div className="rounded-md border border-rose-400/20 bg-rose-400/10 p-1">
                       <div className="text-[10px] font-bold uppercase tracking-wide text-rose-200">
                         Còn lại
                       </div>
@@ -5338,7 +5355,7 @@ export default function LocalProductsPage() {
 
                     <button
                       type="button"
-                      className="rounded-xl border border-white/10 bg-white/5 p-1 text-left transition hover:bg-white/10"
+                      className="rounded-md border border-white/10 bg-slate-800 p-1 text-left transition hover:bg-slate-700"
                       onClick={() =>
                         setCompactScheduleConfig((current) => !current)
                       }
@@ -5353,7 +5370,7 @@ export default function LocalProductsPage() {
 
                     <button
                       type="button"
-                      className="rounded-xl border border-violet-300/30 bg-violet-300/10 p-1 text-left transition hover:bg-violet-300/20"
+                      className="rounded-md border border-violet-300/30 bg-violet-300/10 p-1 text-left transition hover:bg-violet-300/20"
                       onClick={autoFillScheduleAssignments}
                     >
                       <div className="text-[10px] font-bold uppercase tracking-wide text-violet-200">
@@ -5366,7 +5383,7 @@ export default function LocalProductsPage() {
 
                     <button
                       type="button"
-                      className="rounded-xl border border-white/10 bg-white/5 p-1 text-left transition hover:bg-white/10"
+                      className="rounded-md border border-white/10 bg-slate-800 p-1 text-left transition hover:bg-slate-700"
                       onClick={resetActiveScheduleTaskAssignments}
                     >
                       <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
@@ -5379,7 +5396,7 @@ export default function LocalProductsPage() {
 
                     <button
                       type="button"
-                      className="rounded-xl border border-rose-400/30 bg-rose-400/10 p-1 text-left transition hover:bg-rose-400/20"
+                      className="rounded-md border border-rose-400/30 bg-rose-400/10 p-1 text-left transition hover:bg-rose-400/20"
                       onClick={resetAllScheduleAssignments}
                     >
                       <div className="text-[10px] font-bold uppercase tracking-wide text-rose-200">
@@ -5392,7 +5409,7 @@ export default function LocalProductsPage() {
                   </div>
 
                   {!compactScheduleConfig ? (
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                    <div className="rounded-md border border-white/10 bg-slate-950/70 p-2">
                       <div className="grid grid-cols-2 gap-2 xl:grid-cols-8">
                         <label className="flex flex-col gap-1">
                           <span className="text-[11px] font-bold text-slate-300">
@@ -5407,7 +5424,7 @@ export default function LocalProductsPage() {
                                 event.target.value,
                               )
                             }
-                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
                           />
                         </label>
 
@@ -5421,7 +5438,7 @@ export default function LocalProductsPage() {
                             onChange={(event) =>
                               updateScheduleField("dateTo", event.target.value)
                             }
-                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
                           />
                         </label>
 
@@ -5438,7 +5455,7 @@ export default function LocalProductsPage() {
                                 event.target.value,
                               )
                             }
-                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
                           />
                         </label>
 
@@ -5452,7 +5469,7 @@ export default function LocalProductsPage() {
                             onChange={(event) =>
                               updateScheduleField("endTime", event.target.value)
                             }
-                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
                           />
                         </label>
 
@@ -5468,7 +5485,7 @@ export default function LocalProductsPage() {
                                 Number(event.target.value),
                               )
                             }
-                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
                           >
                             {[1, 2, 3, 4, 5, 6].map((hour) => (
                               <option key={hour} value={hour}>
@@ -5497,7 +5514,7 @@ export default function LocalProductsPage() {
                                 ),
                               }));
                             }}
-                            className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
                           >
                             {[1, 2, 3, 4, 5, 6, 7, 8].map((count) => (
                               <option key={count} value={count}>
@@ -5511,7 +5528,7 @@ export default function LocalProductsPage() {
                       <div className="mt-2 flex flex-wrap gap-2 border-t border-white/10 pt-2">
                         <button
                           type="button"
-                          className="rounded-2xl border border-cyan-300/30 bg-cyan-300/10 px-3 py-1.5 text-[11px] font-black text-cyan-100 transition hover:bg-cyan-300/20"
+                          className="rounded-md border border-cyan-300/30 bg-cyan-300/10 px-2 py-1 text-[11px] font-black text-cyan-100 transition hover:bg-cyan-300/20"
                           onClick={addScheduleTask}
                         >
                           Thêm task
@@ -5519,7 +5536,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="rounded-2xl border border-violet-300/30 bg-violet-300/10 px-3 py-1.5 text-[11px] font-black text-violet-100 transition hover:bg-violet-300/20"
+                          className="rounded-md border border-violet-300/30 bg-violet-300/10 px-2 py-1 text-[11px] font-black text-violet-100 transition hover:bg-violet-300/20"
                           onClick={autoFillScheduleAssignments}
                         >
                           Tự rải đầy task
@@ -5527,14 +5544,14 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="rounded-2xl border border-emerald-300/30 bg-emerald-300/10 px-3 py-1.5 text-[11px] font-black text-emerald-100 transition hover:bg-emerald-300/20"
+                          className="rounded-md border border-emerald-300/30 bg-emerald-300/10 px-2 py-1 text-[11px] font-black text-slate-100 transition hover:bg-slate-700"
                           onClick={duplicateFirstScheduleTask}
                         >
                           Nhân bản task 1
                         </button>
                       </div>
 
-                      <div className="mt-2 rounded-2xl border border-white/10 bg-black/20 p-2">
+                      <div className="mt-2 rounded-md border border-white/10 bg-black/20 p-2">
                         <div className="mb-2 text-[11px] font-black uppercase tracking-wide text-slate-400">
                           Danh mục dùng để xếp lịch
                         </div>
@@ -5556,9 +5573,9 @@ export default function LocalProductsPage() {
                                 <button
                                   key={category}
                                   type="button"
-                                  className={`rounded-2xl border px-3 py-1.5 text-[11px] font-black transition ${active
-                                    ? "border-cyan-300/50 bg-cyan-300 text-slate-950"
-                                    : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                                  className={`rounded-md border px-2 py-1 text-[11px] font-black transition ${active
+                                    ? "border-slate-200 bg-slate-100 text-slate-950"
+                                    : "border-slate-600 bg-slate-900 text-slate-200 hover:border-slate-400 hover:bg-slate-800"
                                     }`}
                                   onClick={() =>
                                     toggleScheduleCategory(category)
@@ -5575,7 +5592,7 @@ export default function LocalProductsPage() {
                   ) : null}
 
                   {scheduleResult.warnings.length > 0 ? (
-                    <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-2 text-xs text-amber-100">
+                    <div className="rounded-md border border-amber-400/20 bg-amber-400/10 p-2 text-xs text-amber-100">
                       {scheduleResult.warnings.map((warning) => (
                         <p key={warning.message}>{warning.message}</p>
                       ))}
@@ -5583,22 +5600,22 @@ export default function LocalProductsPage() {
                   ) : null}
 
                   <div className="grid min-h-0 flex-1 grid-cols-1 gap-1 xl:grid-cols-[minmax(0,1fr)_320px]">
-                    <section className="min-w-0 rounded-xl border border-white/10 bg-slate-950/70 p-1">
-                      <div className="mb-1 flex gap-1 overflow-x-auto pb-1">
+                    <section className="min-w-0 rounded-md border border-white/10 bg-slate-950/70 p-1">
+                      <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
                         {scheduleTaskIndexes.map((taskIndex) => {
                           const active = activeScheduleTaskIndex === taskIndex;
 
                           return (
                             <div
                               key={taskIndex}
-                              className={`flex min-w-44 shrink-0 items-center gap-1 rounded-xl border p-1 ${active
+                              className={`flex min-w-44 shrink-0 items-center gap-1 rounded-md border p-1 ${active
                                 ? "border-cyan-300/60 bg-cyan-300/10"
                                 : "border-white/10 bg-white/[0.03]"
                                 }`}
                             >
                               <button
                                 type="button"
-                                className="shrink-0 rounded-xl bg-white/5 px-2 py-1 whitespace-nowrap text-[10px] font-black text-white"
+                                className="shrink-0 rounded-md bg-slate-800 px-2 py-1 whitespace-nowrap text-[10px] font-black text-white"
                                 onClick={() =>
                                   setActiveScheduleTaskIndex(taskIndex)
                                 }
@@ -5621,7 +5638,7 @@ export default function LocalProductsPage() {
                               />
                               <button
                                 type="button"
-                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-rose-400/30 bg-rose-400/10 text-rose-100 transition hover:bg-rose-400/20"
+                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-rose-400/30 bg-rose-400/10 text-rose-100 transition hover:bg-rose-400/20"
                                 onClick={() =>
                                   requestRemoveScheduleTask(taskIndex)
                                 }
@@ -5638,7 +5655,7 @@ export default function LocalProductsPage() {
                       </div>
 
                       {scheduleTimes.length === 0 ? (
-                        <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-4 text-center text-sm text-slate-400">
+                        <div className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-center text-xs text-slate-400">
                           Khung giờ chưa hợp lệ.
                         </div>
                       ) : (
@@ -5665,11 +5682,11 @@ export default function LocalProductsPage() {
                                 <article
                                   key={`${time}-${activeScheduleTaskIndex}`}
                                   draggable={Boolean(assignedProduct)}
-                                  className={`rounded-xl border p-1 transition ${assignedProduct ? "cursor-grab active:cursor-grabbing" : ""} ${done
+                                  className={`rounded-md border p-1 transition ${assignedProduct ? "cursor-grab active:cursor-grabbing" : ""} ${done
                                     ? "border-emerald-400/30 bg-emerald-400/10"
                                     : assignedProduct
                                       ? "border-cyan-300/30 bg-cyan-300/10"
-                                      : "border-white/10 bg-slate-950/80"
+                                      : "border-white/10 bg-slate-900"
                                     }`}
                                   onDragStart={(event) => {
                                     if (!assignedProduct) return;
@@ -5704,7 +5721,7 @@ export default function LocalProductsPage() {
                                   }
                                 >
                                   <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-1 xl:grid-cols-[58px_160px_minmax(0,1fr)_82px] xl:items-center">
-                                    <div className="rounded-xl border border-white/10 bg-black/30 p-1">
+                                    <div className="rounded-md border border-white/10 bg-slate-950 p-1">
                                       <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
                                         Bài {timeIndex + 1}
                                       </div>
@@ -5727,10 +5744,10 @@ export default function LocalProductsPage() {
                                           event.target.value,
                                         )
                                       }
-                                      className="col-span-1 rounded-xl border border-white/10 bg-slate-950 p-1.5 text-[11px] font-bold text-white outline-none focus:border-cyan-300/60 xl:col-span-1"
+                                      className="col-span-1 rounded-md border border-white/10 bg-slate-950 p-1.5 text-[11px] font-bold text-white outline-none focus:border-cyan-300/60 xl:col-span-1"
                                     >
                                       <option value="">Chọn sản phẩm</option>
-                                      {scheduleProducts.map((product) => {
+                                      {activeScheduleProducts.map((product) => {
                                         const currentAssignmentKey =
                                           createScheduleAssignmentKey(
                                             today,
@@ -5775,7 +5792,7 @@ export default function LocalProductsPage() {
                                     <div className="col-span-2 flex min-w-0 gap-1 xl:col-span-1">
                                       <button
                                         type="button"
-                                        className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-900"
+                                        className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-900"
                                         onClick={() =>
                                           assignedProduct
                                             ? openImageAlbum({
@@ -5828,10 +5845,10 @@ export default function LocalProductsPage() {
                                         title="Xem chi tiết lịch"
                                         aria-label="Xem chi tiết lịch"
                                         disabled={!assignedProduct}
-                                        className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${done
+                                        className={`flex items-center justify-center gap-2 rounded-md p-1.5 text-[10px] font-black transition ${done
                                           ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
                                           : assignedProduct
-                                            ? "border border-white/10 bg-white/5 text-white hover:bg-white/10"
+                                            ? "border border-white/10 bg-slate-800 text-white hover:bg-slate-700"
                                             : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
                                           }`}
                                         onClick={() =>
@@ -5851,7 +5868,7 @@ export default function LocalProductsPage() {
                                         title="Xem chi tiết lịch"
                                         aria-label="Xem chi tiết lịch"
                                         disabled={!assignedProduct}
-                                        className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${assignedProduct
+                                        className={`flex items-center justify-center gap-2 rounded-md p-1.5 text-[10px] font-black transition ${assignedProduct
                                           ? "border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
                                           : "cursor-not-allowed border border-white/10 bg-white/[0.03] text-slate-600"
                                           }`}
@@ -5879,7 +5896,7 @@ export default function LocalProductsPage() {
                       )}
                     </section>
 
-                    <aside className="min-w-0 rounded-xl border border-white/10 bg-slate-950/70 p-1">
+                    <aside className="min-w-0 rounded-md border border-white/10 bg-slate-950/70 p-1 ">
                       <div className="mb-1 flex items-center justify-between gap-1">
                         <div>
                           <h3 className="text-xs font-black text-white">
@@ -5889,12 +5906,12 @@ export default function LocalProductsPage() {
                             Kéo thả vào khung giờ hoặc click để active.
                           </p>
                         </div>
-                        <span className="rounded-2xl bg-white/5 px-2 py-1 text-[10px] font-black text-slate-300">
+                        <span className="rounded-md bg-slate-800 px-2 py-1 text-[10px] font-black text-slate-300">
                           {filteredScheduleProducts.length}
                         </span>
                       </div>
 
-                      <label className="mb-1 flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1.5 text-slate-400">
+                      <label className="mb-1 flex items-center gap-1 rounded-md border border-white/10 bg-slate-950/80 p-1.5 text-slate-400">
                         <FiSearch
                           aria-hidden="true"
                           className={`${iconClassName} shrink-0`}
@@ -5905,13 +5922,13 @@ export default function LocalProductsPage() {
                             setScheduleQuery(event.target.value)
                           }
                           onKeyDown={(event) => event.stopPropagation()}
-                          className="w-full bg-transparent text-xs text-white outline-none placeholder:text-slate-600"
-                          placeholder="Tìm trong lịch"
+                          className="w-full bg-transparent text-xs font-semibold text-white outline-none placeholder:text-slate-500"
+                          placeholder="Tìm tất cả sản phẩm"
                         />
                       </label>
 
                       <div className="grid max-h-[62dvh] grid-cols-1 gap-1 overflow-y-auto pr-1">
-                        {filteredScheduleProducts.map((product) => {
+                        {filteredScheduleProducts.map((product, index) => {
                           const scheduleLabels = getTodayProductScheduleLabels(
                             product.id,
                           );
@@ -5923,7 +5940,8 @@ export default function LocalProductsPage() {
 
                           return (
                             <article
-                              key={product.id}
+                              key={`${activeCategoryTab}-${product.id}`}
+                              style={{ animationDelay: `${Math.min(index * 34, 340)}ms` }}
                               draggable
                               onDragStart={(event) => {
                                 event.dataTransfer.setData(
@@ -5935,15 +5953,15 @@ export default function LocalProductsPage() {
                               }}
                               onDragEnd={() => setDraggingProductId("")}
                               onClick={() => setSelectedProductId(product.id)}
-                              className={`cursor-grab rounded-xl border p-1 transition active:cursor-grabbing ${active
-                                ? "border-cyan-300/60 bg-cyan-300/10 ring-1 ring-cyan-300/30"
+                              className={`cursor-grab rounded-md border p-1 transition active:cursor-grabbing ${active
+                                ? "border-cyan-300/60 bg-cyan-300/10  "
                                 : "border-white/10 bg-slate-950/80 hover:border-cyan-300/30"
                                 }`}
                             >
                               <div className="flex gap-2">
                                 <button
                                   type="button"
-                                  className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-900"
+                                  className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-900"
                                   onClick={(event) => {
                                     event.stopPropagation();
                                     openImageAlbum({
@@ -5985,20 +6003,20 @@ export default function LocalProductsPage() {
                               </div>
                               <div className="mt-1 flex flex-wrap gap-1">
                                 {active ? (
-                                  <span className="rounded-xl bg-cyan-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950">
+                                  <span className="rounded-md bg-cyan-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950">
                                     ACTIVE
                                   </span>
                                 ) : null}
                                 {scheduleLabels.map((label) => (
                                   <span
                                     key={label}
-                                    className="rounded-xl bg-cyan-300/10 px-1.5 py-0.5 text-[9px] font-black text-cyan-100"
+                                    className="rounded-md bg-cyan-300/10 px-1.5 py-0.5 text-[9px] font-black text-cyan-100"
                                   >
                                     {label}
                                   </span>
                                 ))}
                                 {doneToday ? (
-                                  <span className="rounded-xl bg-emerald-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950">
+                                  <span className="rounded-md bg-emerald-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950">
                                     DONE
                                   </span>
                                 ) : null}
@@ -6014,17 +6032,17 @@ export default function LocalProductsPage() {
 
               {activeModal === "globalNote" ? (
                 <section className="flex h-full min-h-0 flex-col overflow-hidden">
-                  <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 p-3">
+                  <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 p-2">
                     <label
                       htmlFor="global-note-input"
-                      className="text-sm font-black text-white"
+                      className="text-xs font-black text-white"
                     >
                       Ghi chú
                     </label>
 
                     <button
                       type="button"
-                      className="flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 whitespace-nowrap text-xs font-black text-white transition hover:bg-white/10 active:scale-[0.98]"
+                      className="flex shrink-0 items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 whitespace-nowrap text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80"
                       onClick={() =>
                         void handleCopyField(
                           "global-note",
@@ -6045,7 +6063,7 @@ export default function LocalProductsPage() {
                       onChange={(event) =>
                         updateSettingField("globalNote", event.target.value)
                       }
-                      className="h-full min-h-0 w-full resize-none rounded-3xl border border-white/10 bg-slate-900/70 p-4 text-base leading-7 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/40 focus:bg-slate-900 xl:text-sm xl:leading-6"
+                      className="h-full min-h-0 w-full resize-none rounded-md border border-white/10 bg-slate-900/70 p-2 text-sm leading-7 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/40 focus:bg-slate-900 xl:text-xs xl:leading-6"
                       placeholder="Nhập ghi chú..."
                     />
                   </div>
@@ -6054,17 +6072,17 @@ export default function LocalProductsPage() {
 
               {activeModal === "globalDescription" ? (
                 <section className="flex h-full min-h-0 flex-col overflow-hidden">
-                  <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 p-3">
+                  <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 p-2">
                     <label
                       htmlFor="global-description-input"
-                      className="text-sm font-black text-white"
+                      className="text-xs font-black text-white"
                     >
                       Mô tả chung
                     </label>
 
                     <button
                       type="button"
-                      className="flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 whitespace-nowrap text-xs font-black text-white transition hover:bg-white/10 active:scale-[0.98]"
+                      className="flex shrink-0 items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 whitespace-nowrap text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80"
                       onClick={() =>
                         void handleCopyField(
                           "global-description",
@@ -6088,7 +6106,7 @@ export default function LocalProductsPage() {
                           event.target.value,
                         )
                       }
-                      className="h-full min-h-0 w-full resize-none rounded-3xl border border-white/10 bg-slate-900/70 p-4 text-base leading-7 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/40 focus:bg-slate-900 xl:text-sm xl:leading-6"
+                      className="h-full min-h-0 w-full resize-none rounded-md border border-white/10 bg-slate-900/70 p-2 text-sm leading-7 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/40 focus:bg-slate-900 xl:text-xs xl:leading-6"
                       placeholder="Nhập mô tả chung..."
                     />
                   </div>
@@ -6097,10 +6115,10 @@ export default function LocalProductsPage() {
 
               {activeModal === "importExport" ? (
                 <section className="grid w-full grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                  <article className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-2">
+                  <article className="rounded-md border border-cyan-300/20 bg-cyan-300/10 p-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <h3 className="text-sm font-black text-white">
+                        <h3 className="text-xs font-black text-white">
                           Backup dữ liệu tổng
                         </h3>
                         <p className="mt-1 text-xs leading-5 text-cyan-100/90">
@@ -6108,15 +6126,15 @@ export default function LocalProductsPage() {
                           lịch, sản phẩm đã xếp trong lịch và trạng thái DONE.
                         </p>
                       </div>
-                      <span className="rounded-xl bg-cyan-300 px-2 py-1 text-[10px] font-black text-slate-950">
+                      <span className="rounded-md bg-slate-200 px-2 py-1 text-[10px] font-black text-slate-950">
                         An toàn
                       </span>
                     </div>
 
-                    <div className="mt-3 grid grid-cols-1 gap-2">
+                    <div className="mt-2 grid grid-cols-1 gap-2">
                       <button
                         type="button"
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-3 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
+                        className="flex w-full items-center justify-center gap-2 rounded-md bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
                         onClick={handleExportJson}
                         title="Export JSON"
                       >
@@ -6129,7 +6147,7 @@ export default function LocalProductsPage() {
 
                       <button
                         type="button"
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-cyan-300/30 bg-cyan-300/10 p-3 text-sm font-black text-cyan-100 transition hover:bg-cyan-300/20"
+                        className="flex w-full items-center justify-center gap-2 rounded-md border border-cyan-300/30 bg-cyan-300/10 p-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-300/20"
                         onClick={() => void handleExportJsonGzip()}
                         title="Export JSON.GZ"
                       >
@@ -6142,17 +6160,17 @@ export default function LocalProductsPage() {
                     </div>
                   </article>
 
-                  <article className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-2">
+                  <article className="rounded-md border border-amber-300/20 bg-amber-300/10 p-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <h3 className="text-sm font-black text-white">
+                        <h3 className="text-xs font-black text-white">
                           Khôi phục dữ liệu
                         </h3>
                         <p className="mt-1 text-xs leading-5 text-amber-100/90">
                           Import file sẽ thay thế toàn bộ dữ liệu hiện tại trong trình duyệt.
                         </p>
                       </div>
-                      <span className="rounded-xl bg-amber-300 px-2 py-1 text-[10px] font-black text-slate-950">
+                      <span className="rounded-md bg-amber-300 px-2 py-1 text-[10px] font-black text-slate-950">
                         Cẩn thận
                       </span>
                     </div>
@@ -6165,10 +6183,10 @@ export default function LocalProductsPage() {
                       onChange={(event) => void handleImportJson(event)}
                     />
 
-                    <div className="mt-3 grid grid-cols-1 gap-2">
+                    <div className="mt-2 grid grid-cols-1 gap-2">
                       <button
                         type="button"
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300/40 bg-amber-300/15 p-3 text-sm font-black text-amber-50 transition hover:bg-amber-300/25"
+                        className="flex w-full items-center justify-center gap-2 rounded-md border border-amber-300/40 bg-amber-300/15 p-2 text-xs font-black text-amber-50 transition hover:bg-amber-300/25"
                         onClick={() => fileImportRef.current?.click()}
                         title="Import JSON hoặc JSON.GZ"
                       >
@@ -6181,7 +6199,7 @@ export default function LocalProductsPage() {
 
                       <button
                         type="button"
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-300/30 bg-emerald-300/10 p-3 text-sm font-black text-emerald-100 transition hover:bg-emerald-300/20"
+                        className="flex w-full items-center justify-center gap-2 rounded-md border border-emerald-300/30 bg-emerald-300/10 p-2 text-xs font-black text-slate-100 transition hover:bg-slate-700"
                         onClick={() => void handleUploadJsonGzipToBlob()}
                         title="Upload JSON.GZ lên Blob"
                       >
@@ -6199,10 +6217,10 @@ export default function LocalProductsPage() {
               {activeModal === "slotDetail" ? (
                 selectedAssignedSlot ? (
                   <section className="grid grid-cols-1 gap-2 xl:grid-cols-[360px_1fr]">
-                    <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                    <article className="rounded-md border border-white/10 bg-slate-950/70 p-2">
                       <button
                         type="button"
-                        className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-900"
+                        className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-md bg-slate-900"
                         onClick={() =>
                           openImageAlbum({
                             title: selectedAssignedSlot.product.name,
@@ -6235,7 +6253,7 @@ export default function LocalProductsPage() {
                               <button
                                 key={image.id}
                                 type="button"
-                                className="aspect-square overflow-hidden rounded-xl bg-slate-900 ring-1 ring-white/10 transition hover:ring-cyan-300"
+                                className="aspect-square overflow-hidden rounded-md bg-slate-900   transition "
                                 onClick={() =>
                                   openImageAlbum({
                                     title: selectedAssignedSlot.product.name,
@@ -6245,7 +6263,7 @@ export default function LocalProductsPage() {
                                     images: selectedAssignedSlot.product.images,
                                   })
                                 }
-                              >                                  <img
+                              > <img
                                   src={image.dataUrl}
                                   alt={image.name}
                                   width={1200}
@@ -6260,9 +6278,9 @@ export default function LocalProductsPage() {
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         <button
                           type="button"
-                          className={`flex items-center justify-center gap-2 rounded-xl p-1.5 text-[10px] font-black transition ${selectedAssignedSlot.done
+                          className={`flex items-center justify-center gap-2 rounded-md p-1.5 text-[10px] font-black transition ${selectedAssignedSlot.done
                             ? "bg-emerald-300 text-slate-950 hover:bg-emerald-200"
-                            : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
+                            : "border border-white/10 bg-slate-800 text-white hover:bg-slate-700"
                             }`}
                           onClick={() =>
                             togglePostedSlot(
@@ -6280,7 +6298,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-white/10"
+                          className="flex items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-slate-700"
                           onClick={() =>
                             handleDownloadProductImages(
                               selectedAssignedSlot.product,
@@ -6295,23 +6313,23 @@ export default function LocalProductsPage() {
                       </div>
                     </article>
 
-                    <article className="rounded-2xl border border-white/10 bg-slate-950/70 p-2">
+                    <article className="rounded-md border border-white/10 bg-slate-950/70 p-2">
                       <div className="mb-1 flex items-center justify-between gap-1">
                         <div className="min-w-0">
-                          <div className="inline-flex rounded-2xl bg-cyan-300 px-3 py-1 text-xs font-black text-slate-950">
+                          <div className="inline-flex rounded-md bg-cyan-300 px-3 py-1 text-xs font-black text-slate-950">
                             {selectedAssignedSlot.date} ·{" "}
                             {selectedAssignedSlot.time} ·{" "}
                             {selectedAssignedSlot.taskName} · Bài{" "}
                             {selectedAssignedSlot.slotIndex + 1}
                           </div>
-                          <h3 className="mt-2 text-base font-black text-white">
+                          <h3 className="mt-2 text-sm font-black text-white">
                             {selectedAssignedSlot.product.name}
                           </h3>
                           <p className="mt-1 text-xs text-slate-400">
                             {selectedAssignedSlot.product.category ||
                               "Chưa có danh mục"}
                           </p>
-                          <p className="mt-1 text-sm font-black text-cyan-200">
+                          <p className="mt-1 text-xs font-black text-cyan-200">
                             {selectedAssignedSlot.product.priceText ||
                               "Chưa có giá"}
                           </p>
@@ -6321,7 +6339,7 @@ export default function LocalProductsPage() {
                       <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-white/10"
+                          className="flex items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-slate-700"
                           onClick={() =>
                             void handleCopyField(
                               `slot-name-${selectedAssignedSlot.key}`,
@@ -6338,7 +6356,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-white/10"
+                          className="flex items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-slate-700"
                           onClick={() =>
                             void handleCopyField(
                               `slot-post-${selectedAssignedSlot.key}`,
@@ -6355,7 +6373,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-300 p-2 whitespace-nowrap text-xs font-black text-slate-950 transition hover:bg-cyan-200"
+                          className="flex items-center justify-center gap-2 rounded-md bg-cyan-300 p-2 whitespace-nowrap text-xs font-black text-slate-950 transition hover:bg-cyan-200"
                           onClick={() =>
                             void handleCopyField(
                               `slot-desc-${selectedAssignedSlot.key}`,
@@ -6372,7 +6390,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-white/10"
+                          className="flex items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-slate-700"
                           onClick={() =>
                             handleEdit(selectedAssignedSlot.product)
                           }
@@ -6384,24 +6402,24 @@ export default function LocalProductsPage() {
                         </button>
                       </div>
 
-                      <pre className="mt-2 max-h-[50dvh] overflow-y-auto whitespace-pre-wrap rounded-2xl border border-white/10 bg-black/30 p-2 text-sm leading-6 text-slate-200">
+                      <pre className="mt-2 max-h-[50dvh] overflow-y-auto whitespace-pre-wrap rounded-md border border-white/10 bg-slate-950 p-2 text-xs leading-6 text-slate-200">
                         {selectedAssignedSlot.postText ||
                           "Chưa có nội dung bài viết"}
                       </pre>
                     </article>
                   </section>
                 ) : (
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-6 text-center text-sm text-slate-400">
+                  <div className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-center text-xs text-slate-400">
                     Chưa tìm thấy bài đã xếp trong lịch.
                   </div>
                 )
               ) : null}
 
               {activeModal === "imageAlbum" && albumSource ? (
-                <section className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_minmax(170px,34dvh)] gap-2 overflow-hidden md:grid-rows-[minmax(0,1fr)_minmax(190px,32dvh)] xl:grid-cols-[minmax(0,1fr)_280px] xl:grid-rows-1">
-                  <article className="flex min-h-0 min-w-0 flex-col rounded-xl border border-white/10 bg-slate-950/70 p-1">
-                    <div className="mb-1 grid min-w-0 grid-cols-1 gap-1 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-                      <div className="min-w-0 rounded-xl bg-black/20 px-2 py-1">
+                <section className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_minmax(170px,30dvh)] gap-2 overflow-hidden md:grid-rows-[minmax(0,1fr)_minmax(190px,28dvh)] xl:grid-cols-[minmax(0,1fr)_310px] xl:grid-rows-1">
+                  <article className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-white/10 bg-slate-900 p-2 ">
+                    <div className="mb-2 grid min-w-0 grid-cols-1 gap-2 rounded-md border border-white/10 bg-slate-900 p-2   xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+                      <div className="min-w-0 rounded-md bg-black/20 px-2 py-1">
                         <h3 className="truncate whitespace-nowrap text-xs font-black text-white">
                           {albumSource.title}
                         </h3>
@@ -6420,7 +6438,7 @@ export default function LocalProductsPage() {
                       <div className="flex shrink-0 gap-1 overflow-x-auto pb-1 xl:justify-end xl:overflow-visible xl:pb-0">
                         <button
                           type="button"
-                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                          className="flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-white  transition hover:bg-slate-700 active:opacity-80"
                           onClick={() =>
                             void handleCopyField(
                               `album-post-${albumSource.title}`,
@@ -6433,10 +6451,9 @@ export default function LocalProductsPage() {
                           Post
                         </button>
 
-
                         <button
                           type="button"
-                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-sky-300/50 bg-sky-300/10 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-sky-100 transition hover:bg-sky-300/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                          className="flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-sky-200/50 bg-sky-300/12 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-sky-100  transition hover:bg-sky-300/20 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
                           onClick={() => void handleShareSelectedAlbumImages()}
                           title="Chia sẻ ảnh đã chọn"
                           aria-label="Chia sẻ ảnh đã chọn"
@@ -6458,7 +6475,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl bg-cyan-300 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-slate-950 transition hover:bg-cyan-200 active:scale-[0.98]"
+                          className="flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-emerald-200/70 bg-emerald-500 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-slate-950  transition hover:bg-emerald-400 active:opacity-80"
                           onClick={handleDownloadSelectedAlbumImages}
                           title="Tải ảnh đã chọn"
                           aria-label="Tải ảnh đã chọn"
@@ -6472,7 +6489,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                          className="flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-white  transition hover:bg-slate-700 active:opacity-80"
                           onClick={handleSelectAllAlbumImages}
                           title="Chọn tất cả ảnh"
                           aria-label="Chọn tất cả ảnh"
@@ -6486,7 +6503,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                          className="flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-white  transition hover:bg-slate-700 active:opacity-80"
                           onClick={handleClearSelectedAlbumImages}
                           title="Bỏ chọn ảnh"
                           aria-label="Bỏ chọn ảnh"
@@ -6500,7 +6517,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 whitespace-nowrap text-[10px] font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+                          className="flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-white  transition hover:bg-slate-700 active:opacity-80"
                           onClick={handleDownloadAlbumImages}
                           title="Tải toàn bộ album"
                           aria-label="Tải toàn bộ album"
@@ -6514,7 +6531,7 @@ export default function LocalProductsPage() {
                       </div>
                     </div>
 
-                    <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-slate-900 p-2">
+                    <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-md border border-white/10 bg-black/35 p-2  ">
                       {selectedAlbumImage ? (
                         <div className="flex h-full min-h-0 w-full min-w-0 items-center justify-center overflow-hidden">
                           <img
@@ -6534,8 +6551,8 @@ export default function LocalProductsPage() {
                     </div>
                   </article>
 
-                  <aside className="flex min-h-0 min-w-0 flex-col rounded-xl border border-white/10 bg-slate-950/70 p-1">
-                    <div className="mb-1 flex items-center justify-between gap-1 rounded-xl bg-black/20 px-2 py-1">
+                  <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-white/10 bg-slate-900 p-2 ">
+                    <div className="mb-2 flex items-center justify-between gap-2 rounded-md border border-white/10 bg-black/25 px-2 py-1.5">
                       <h3 className="text-xs font-black text-white">
                         Tất cả ảnh
                       </h3>
@@ -6546,7 +6563,7 @@ export default function LocalProductsPage() {
                       </span>
                     </div>
 
-                    <div className="grid min-h-0 flex-1 auto-rows-[88px] grid-cols-3 content-start gap-1.5 overflow-y-auto overscroll-contain pr-1 sm:auto-rows-[96px] sm:grid-cols-4 md:auto-rows-[104px] md:grid-cols-5 xl:auto-rows-[118px] xl:grid-cols-2">
+                    <div className="grid min-h-0 flex-1 au grid-cols-3 content-start gap-2 overflow-y-auto overscroll-contain pr-1 sm:au sm:grid-cols-4 md:au md:grid-cols-5 xl:au xl:grid-cols-2">
                       {albumSource.images.map((image, index) => {
                         const active = image.id === selectedAlbumImage?.id;
                         const checked = selectedAlbumImageIds.has(image.id);
@@ -6555,24 +6572,25 @@ export default function LocalProductsPage() {
                           <button
                             key={image.id}
                             type="button"
-                            className={`group relative h-full min-h-0 w-full overflow-hidden rounded-xl bg-slate-900 ring-1 transition active:scale-[0.98] ${checked
-                              ? "ring-2 ring-cyan-300"
+                            className={`group relative h-full min-h-0 w-full overflow-hidden rounded-md bg-slate-900  transition active:opacity-80 ${checked
+                              ? " "
                               : active
-                                ? "ring-2 ring-white/60"
-                                : "ring-white/10 hover:ring-cyan-300/60"
+                                ? " "
+                                : " "
                               }`}
                             onClick={() => toggleSelectedAlbumImage(image.id)}
                             title={`Ảnh ${index + 1}`}
-                          >                              <img
+                          >
+                            <img
                               src={image.dataUrl}
                               alt={image.name}
                               width={1200}
                               height={1200}
-                              className="h-full w-full object-cover"
+                              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                             />
                             <span
-                              className={`absolute left-1 top-1 rounded-lg px-1.5 py-0.5 text-[10px] font-black ${active
-                                ? "bg-cyan-300 text-slate-950"
+                              className={`absolute left-1 top-1 rounded-md px-1.5 py-0.5 text-[10px] font-black ${active
+                                ? "bg-amber-200 text-slate-950"
                                 : "bg-black/70 text-white"
                                 }`}
                             >
@@ -6580,7 +6598,7 @@ export default function LocalProductsPage() {
                             </span>
 
                             {checked ? (
-                              <span className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-cyan-300 text-slate-950 shadow-lg shadow-black/30">
+                              <span className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-md bg-emerald-300 text-slate-950  ">
                                 <FiCheck
                                   aria-hidden="true"
                                   className="h-3.5 w-3.5"
@@ -6600,9 +6618,9 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingBlobUpload ? (
-        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/75 p-2 backdrop-blur">
+        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
           <form
-            className="w-full max-w-md rounded-3xl border border-emerald-300/20 bg-slate-950 p-3 shadow-2xl"
+            className="w-full max-w-md rounded-md border border-emerald-300/20 bg-slate-950 p-2 "
             onSubmit={(event) => {
               event.preventDefault();
               void executeBlobUploadConfirm();
@@ -6610,7 +6628,7 @@ export default function LocalProductsPage() {
           >
             <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2">
               <div className="min-w-0">
-                <h3 className="text-sm font-black text-white">
+                <h3 className="text-xs font-black text-white">
                   {pendingBlobUpload.title}
                 </h3>
                 {pendingBlobUpload.description ? (
@@ -6621,7 +6639,7 @@ export default function LocalProductsPage() {
               </div>
               <button
                 type="button"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-slate-200  transition hover:bg-slate-700 active:opacity-80"
                 onClick={closeBlobUploadConfirm}
               >
                 <FiX aria-hidden="true" className={iconClassName} />
@@ -6630,7 +6648,7 @@ export default function LocalProductsPage() {
 
             <label
               htmlFor="blob-upload-password"
-              className="mt-3 block text-xs font-black uppercase tracking-[0.2em] text-emerald-100/80"
+              className="mt-2 block text-xs font-black uppercase tracking-[0.2em] text-emerald-100/80"
             >
               Mật khẩu
             </label>
@@ -6640,14 +6658,14 @@ export default function LocalProductsPage() {
               value={blobUploadPassword}
               onChange={(event) => setBlobUploadPassword(event.target.value)}
               autoFocus
-              className="mt-2 w-full rounded-2xl border border-emerald-300/20 bg-slate-900/80 p-3 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-300/50"
+              className="mt-2 w-full rounded-md border border-emerald-300/20 bg-slate-900/80 p-2 text-xs font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-300/50"
               placeholder="Nhập mật khẩu"
             />
 
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-2 grid grid-cols-2 gap-2">
               <button
                 type="button"
-                className="rounded-2xl border border-white/10 bg-white/5 p-2 text-sm font-bold text-white transition hover:bg-white/10"
+                className="rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-bold text-white transition hover:bg-slate-700"
                 onClick={closeBlobUploadConfirm}
               >
                 {pendingBlobUpload.cancelLabel ?? "Hủy"}
@@ -6655,7 +6673,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="submit"
-                className="rounded-2xl bg-emerald-300 p-2 text-sm font-black text-slate-950 transition hover:bg-emerald-200"
+                className="rounded-md bg-emerald-300 p-2 text-xs font-black text-slate-950 transition hover:bg-emerald-200"
               >
                 {pendingBlobUpload.confirmLabel}
               </button>
@@ -6665,11 +6683,11 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingConfirm ? (
-        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/75 p-2 backdrop-blur">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-950 p-3 shadow-2xl">
+        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
+          <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-2 ">
             <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2">
               <div className="min-w-0">
-                <h3 className="text-sm font-black text-white">
+                <h3 className="text-xs font-black text-white">
                   {pendingConfirm.title}
                 </h3>
                 <p className="mt-2 text-xs leading-5 text-slate-400">
@@ -6678,17 +6696,17 @@ export default function LocalProductsPage() {
               </div>
               <button
                 type="button"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-slate-200  transition hover:bg-slate-700 active:opacity-80"
                 onClick={closeConfirm}
               >
                 <FiX aria-hidden="true" className={iconClassName} />
               </button>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-2 grid grid-cols-2 gap-2">
               <button
                 type="button"
-                className="rounded-2xl border border-white/10 bg-white/5 p-2 text-sm font-bold text-white transition hover:bg-white/10"
+                className="rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-bold text-white transition hover:bg-slate-700"
                 onClick={closeConfirm}
               >
                 {pendingConfirm.cancelLabel ?? "Hủy"}
@@ -6696,7 +6714,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
-                className={`rounded-2xl p-2 text-sm font-black transition ${pendingConfirm.tone === "danger"
+                className={`rounded-md p-2 text-xs font-black transition ${pendingConfirm.tone === "danger"
                   ? "bg-rose-500 text-white hover:bg-rose-400"
                   : pendingConfirm.tone === "warning"
                     ? "bg-amber-300 text-slate-950 hover:bg-amber-200"
@@ -6711,25 +6729,25 @@ export default function LocalProductsPage() {
         </div>
       ) : null}
       {pendingRemoveTaskIndex !== null ? (
-        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/70 p-2 backdrop-blur">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-950 p-3 shadow-2xl">
+        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/70 p-2 ">
+          <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-2 ">
             <h3 className="text-xs font-black text-white">Xoá task đã chọn?</h3>
             <p className="mt-2 text-xs leading-5 text-slate-400">
               Thao tác này chỉ xoá{" "}
               {getTaskName(scheduleConfig, pendingRemoveTaskIndex)} và dồn các
               task phía sau lên đúng thứ tự.
             </p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-2 grid grid-cols-2 gap-2">
               <button
                 type="button"
-                className="rounded-2xl border border-white/10 bg-white/5 p-2 text-xs font-black text-white transition hover:bg-white/10"
+                className="rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-black text-white transition hover:bg-slate-700"
                 onClick={() => setPendingRemoveTaskIndex(null)}
               >
                 Hủy
               </button>
               <button
                 type="button"
-                className="rounded-2xl bg-rose-500 p-2 text-xs font-black text-white transition hover:bg-rose-400"
+                className="rounded-md bg-rose-500 p-2 text-xs font-black text-white transition hover:bg-rose-400"
                 onClick={() => removeScheduleTask(pendingRemoveTaskIndex)}
               >
                 Xoá task
@@ -6740,9 +6758,9 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingDownload ? (
-        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/75 p-2 backdrop-blur">
-          <div className="flex h-[90dvh] w-full items-center justify-center rounded-3xl border border-white/10 bg-slate-950 p-2 shadow-2xl">
-            <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-2">
+        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
+          <div className="flex h-[90dvh] w-full items-center justify-center rounded-md border border-white/10 bg-slate-950 p-2 ">
+            <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-900 p-2">
               <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
                 <div className="min-w-0">
                   <h2 className="truncate text-xs font-black text-white">
@@ -6755,7 +6773,7 @@ export default function LocalProductsPage() {
 
                 <button
                   type="button"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-slate-200  transition hover:bg-slate-700 active:opacity-80"
                   onClick={() => setPendingDownload(null)}
                 >
                   <FiX aria-hidden="true" className={iconClassName} />
@@ -6766,17 +6784,17 @@ export default function LocalProductsPage() {
                 {canUseDirectoryPicker() ? (
                   <button
                     type="button"
-                    className="rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
+                    className="rounded-md bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
                     onClick={() => void executeDownloadToFolder()}
                   >
                     Chọn thư mục & lưu ảnh
                   </button>
                 ) : null}
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-1.5">
                   <button
                     type="button"
-                    className="rounded-2xl border border-white/10 bg-white/5 p-2 text-sm font-bold text-white transition hover:bg-white/10"
+                    className="rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-bold text-white transition hover:bg-slate-700"
                     onClick={() => setPendingDownload(null)}
                   >
                     Hủy
@@ -6784,7 +6802,7 @@ export default function LocalProductsPage() {
 
                   <button
                     type="button"
-                    className="rounded-2xl bg-cyan-300 p-2 text-sm font-black text-slate-950 transition hover:bg-cyan-200"
+                    className="rounded-md bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
                     onClick={() => void executeDownloadRequest()}
                   >
                     Tải
