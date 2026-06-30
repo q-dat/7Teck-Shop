@@ -16,6 +16,12 @@ body {
   margin: 0;
   box-sizing: border-box;
 }
+/* App Variables */
+.Toastify__toast-container {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+}
+/* Animation */
 @keyframes marquee {
   0% {
     transform: translateX(0);
