@@ -4479,7 +4479,7 @@ export default function LocalProductsPage() {
                           alt={product.name}
                           width={1200}
                           height={1200}
-                          className={`h-full w-full object-cover transition duration-500 group-hover:scale-105 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
+                          className={`h-full w-full object-contain transition glass duration-500 group-hover:scale-105 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
                             }`}
                         />
                       ) : (
