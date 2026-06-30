@@ -4257,7 +4257,7 @@ export default function LocalProductsPage() {
  `}</style>
 
       <section className="flex w-full flex-col gap-4 xl:min-h-[calc(100dvh-4rem)]">
-        <header className="sticky z-30 rounded-md border border-slate-700/70 bg-slate-900/95 p-3 (0,0,0,0.28)] backdrop-blur">
+        <header className="sticky z-30 rounded-md border border-slate-700/70 bg-slate-900/95 p-3 backdrop-blur">
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
             <div className="flex min-w-0 items-center gap-2">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-600 bg-slate-800 text-slate-100 ">
