@@ -4257,7 +4257,7 @@ export default function LocalProductsPage() {
  `}</style>
 
       <section className="flex w-full flex-col gap-4 xl:min-h-[calc(100dvh-4rem)]">
-        <header className="sticky  z-30 rounded-md border border-slate-700/70 bg-slate-900/95 p-3 (0,0,0,0.28)] backdrop-blur ">
+        <header className="sticky z-30 rounded-md border border-slate-700/70 bg-slate-900/95 p-3 (0,0,0,0.28)] backdrop-blur">
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
             <div className="flex min-w-0 items-center gap-2">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-600 bg-slate-800 text-slate-100 ">
@@ -6563,7 +6563,7 @@ export default function LocalProductsPage() {
                       </span>
                     </div>
 
-                    <div className="grid min-h-0 flex-1 au grid-cols-3 content-start gap-2 overflow-y-auto overscroll-contain pr-1 sm:au sm:grid-cols-4 md:au md:grid-cols-5 xl:au xl:grid-cols-2">
+                    <div className="grid min-h-0 flex-1 auto-rows-max grid-cols-3 content-start gap-2 overflow-y-auto overscroll-contain pr-1 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-2">
                       {albumSource.images.map((image, index) => {
                         const active = image.id === selectedAlbumImage?.id;
                         const checked = selectedAlbumImageIds.has(image.id);
@@ -6572,7 +6572,7 @@ export default function LocalProductsPage() {
                           <button
                             key={image.id}
                             type="button"
-                            className={`group relative h-full min-h-0 w-full overflow-hidden rounded-md bg-slate-900  transition active:opacity-80 ${checked
+                            className={`group relative aspect-square w-full shrink-0 overflow-hidden rounded-md bg-slate-900 transition active:opacity-80 ${checked
                               ? " "
                               : active
                                 ? " "
