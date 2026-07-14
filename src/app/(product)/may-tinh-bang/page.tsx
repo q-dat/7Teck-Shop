@@ -1,9 +1,9 @@
 import ClientTabletPage from './ClientTabletPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
-import { getNewGroupedTablets } from '@/services/products/tabletService';
+import { getGroupedTablets } from '@/services/products/tabletService';
 
 export default async function TabletPage() {
-  const groupedTablets = await getNewGroupedTablets();
+  const groupedTablets = await getGroupedTablets();
   if (!groupedTablets) {
     return <ErrorLoading />;
   }

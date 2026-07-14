@@ -1,6 +1,6 @@
 'use client';
 import ClientProductPage from '@/components/userPage/page/(san-pham)/ClientProductPage';
-import { getNewGroupedWindows } from '@/services/products/windowsService';
+import { getGroupedWindows } from '@/services/products/windowsService';
 import { GroupedWindows } from '@/types/type/products/windows/windows';
 import { useState } from 'react';
 
@@ -50,7 +50,7 @@ export default function ClientWindowsPage({ groupedWindows }: { groupedWindows: 
 
   // Handle khi chọn brand
   const handleBrandSelect = async (brand: string | null) => {
-    const data = await getNewGroupedWindows(brand ?? undefined);
+    const data = await getGroupedWindows(brand ?? undefined);
     setMappedWindows(mapGroupedWindows(data));
   };
 

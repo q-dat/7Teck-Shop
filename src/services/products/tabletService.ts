@@ -23,10 +23,10 @@ if (typeof setInterval !== 'undefined') {
   }, TABLET_CACHE_CLEANUP_INTERVAL);
 }
 
-export async function getNewGroupedTablets(name?: string): Promise<GroupedTablet[]> {
+export async function getGroupedTablets(name?: string): Promise<GroupedTablet[]> {
   try {
     const searchParams = new URLSearchParams();
-    searchParams.set('status', '0');
+    searchParams.set('status', '1');
     if (name) searchParams.set('name', name);
 
     const apiUrl = `${getServerApiUrl(`/api/grouped-tablets?${searchParams.toString()}`)}`;

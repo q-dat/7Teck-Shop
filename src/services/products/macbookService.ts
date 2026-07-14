@@ -24,10 +24,10 @@ if (typeof setInterval !== 'undefined') {
   }, MACBOOK_CACHE_CLEANUP_INTERVAL);
 }
 
-export async function getNewGroupedMacbook(name?: string): Promise<GroupedMacbook[]> {
+export async function getGroupedMacbook(name?: string): Promise<GroupedMacbook[]> {
   try {
     const searchParams = new URLSearchParams();
-    searchParams.set('status', '0');
+    searchParams.set('status', '1');
     if (name) searchParams.set('name', name);
 
     const apiUrl = `${getServerApiUrl(`/api/grouped-laptop-macbook?${searchParams.toString()}`)}`;

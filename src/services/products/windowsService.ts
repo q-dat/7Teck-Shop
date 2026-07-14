@@ -24,11 +24,11 @@ if (typeof setInterval !== 'undefined') {
   }, WINDOWS_CACHE_CLEANUP_INTERVAL);
 }
 
-export async function getNewGroupedWindows(name?: string): Promise<GroupedWindows[]> {
+export async function getGroupedWindows(name?: string): Promise<GroupedWindows[]> {
   try {
     const searchParams = new URLSearchParams();
 
-    searchParams.set('w_cat_status', '0');
+    searchParams.set('w_cat_status', '1');
 
     if (name) {
       searchParams.set('name', name);

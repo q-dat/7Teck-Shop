@@ -62,11 +62,11 @@ if (typeof setInterval !== 'undefined') {
  * Lấy danh sách grouped phones từ API với cache
  * @param name Tên filter (optional)
  */
-export async function getNewGroupedPhones(filters?: PhoneFilterParams): Promise<GroupedPhone[]> {
+export async function getGroupedPhones(filters?: PhoneFilterParams): Promise<GroupedPhone[]> {
   try {
     const searchParams = new URLSearchParams();
 
-    searchParams.set('status', '0');
+    searchParams.set('status', '1');
 
     if (filters?.name) searchParams.set('name', filters.name);
     if (filters?.minPrice) searchParams.set('minPrice', filters.minPrice);

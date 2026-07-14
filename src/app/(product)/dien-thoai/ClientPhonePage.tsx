@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import ClientProductPage from '@/components/userPage/page/(san-pham)/ClientProductPage';
 import { GroupedPhone, PhoneFilterParams } from '@/types/type/products/phone/phone';
-import { getNewGroupedPhones } from '@/services/products/phoneService';
+import { getGroupedPhones } from '@/services/products/phoneService';
 import { SiSamsung, SiApple, SiOppo, SiXiaomi, SiVivo } from 'react-icons/si';
 import PhoneFilterBar from '@/components/userPage/ui/sort/PhoneFilterBar';
 
@@ -57,7 +57,7 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
 
     setActiveFilters(mergedFilters);
 
-    const data = await getNewGroupedPhones(mergedFilters);
+    const data = await getGroupedPhones(mergedFilters);
     setMappedPhones(mapGroupedPhones(data));
   };
 
@@ -71,7 +71,7 @@ export default function ClientPhonePage({ groupedPhones }: { groupedPhones: Grou
 
     setActiveFilters(newFilters);
 
-    const data = await getNewGroupedPhones(newFilters);
+    const data = await getGroupedPhones(newFilters);
     setMappedPhones(mapGroupedPhones(data));
   };
 

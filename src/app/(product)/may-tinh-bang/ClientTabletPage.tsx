@@ -1,6 +1,6 @@
 'use client';
 import ClientProductPage from '@/components/userPage/page/(san-pham)/ClientProductPage';
-import { getNewGroupedTablets } from '@/services/products/tabletService';
+import { getGroupedTablets } from '@/services/products/tabletService';
 import { GroupedTablet } from '@/types/type/products/tablet/tablet';
 import { useState } from 'react';
 
@@ -46,7 +46,7 @@ export default function ClientTabletPage({ groupedTablets }: { groupedTablets: G
 
   // Handle khi chọn brand
   const handleBrandSelect = async (brand: string | null) => {
-    const data = await getNewGroupedTablets(brand ?? undefined);
+    const data = await getGroupedTablets(brand ?? undefined);
     setMappedTablets(mapGroupedTablets(data));
   };
 

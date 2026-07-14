@@ -1,6 +1,6 @@
 'use client';
 import ClientProductPage from '@/components/userPage/page/(san-pham)/ClientProductPage';
-import { getNewGroupedMacbook } from '@/services/products/macbookService';
+import { getGroupedMacbook } from '@/services/products/macbookService';
 import { GroupedMacbook } from '@/types/type/products/macbook/macbook';
 import { useState } from 'react';
 
@@ -52,7 +52,7 @@ export default function ClientMacbookPage({ groupedMacbook }: { groupedMacbook: 
 
   // Handle khi chọn brand
   const handleBrandSelect = async (brand: string | null) => {
-    const data = await getNewGroupedMacbook(brand ?? undefined);
+    const data = await getGroupedMacbook(brand ?? undefined);
     setMappedMacbook(mapGroupedMacbook(data));
   };
 

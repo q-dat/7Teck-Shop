@@ -1,9 +1,9 @@
 import ClientMacbookPage from './ClientMacbookPage';
-import { getNewGroupedMacbook } from '@/services/products/macbookService';
+import { getGroupedMacbook } from '@/services/products/macbookService';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 
 export default async function MacbookPage() {
-  const groupedMacbook = await getNewGroupedMacbook();
+  const groupedMacbook = await getGroupedMacbook();
   if (!groupedMacbook) {
     return <ErrorLoading />;
   }
