@@ -1,5 +1,6 @@
 "use client";
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -8,6 +9,7 @@ import {
   type ClipboardEvent,
   type DragEvent,
   type FormEvent,
+  type TouchEvent as ReactTouchEvent,
 } from "react";
 import {
   FiArchive,
@@ -1894,6 +1896,87 @@ export default function LocalProductsPage() {
 
     return Array.from(categoryMap.values());
   }, [products]);
+
+  // Danh sách tab theo thứ tự: "all" + các danh mục
+  const orderedCategoryTabs = useMemo<CategoryTab[]>(
+    () => ["all", ...categories],
+    [categories],
+  );
+
+  // Chuyển sang danh mục kế tiếp / trước đó (dùng cho vuốt ngang)
+  const goToAdjacentCategory = useCallback(
+    (direction: 1 | -1) => {
+      setActiveCategoryTab((current) => {
+        if (orderedCategoryTabs.length <= 1) return current;
+
+        const currentKey = normalizeTextKey(current);
+        const currentIndex = orderedCategoryTabs.findIndex(
+          (tab) => normalizeTextKey(tab) === currentKey,
+        );
+        const safeIndex = currentIndex < 0 ? 0 : currentIndex;
+        const nextIndex =
+          (safeIndex + direction + orderedCategoryTabs.length) %
+          orderedCategoryTabs.length;
+
+        return orderedCategoryTabs[nextIndex];
+      });
+    },
+    [orderedCategoryTabs],
+  );
+
+  // Lưu điểm chạm để phát hiện thao tác vuốt ngang
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Thanh tab danh mục — dùng để tự cuộn tab đang chọn về đầu
+  const categoryTabsRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const container = categoryTabsRef.current;
+    if (!container) return;
+
+    const activeButton = container.querySelector<HTMLElement>(
+      `[data-category-tab="${normalizeTextKey(activeCategoryTab)}"]`,
+    );
+    if (!activeButton) return;
+
+    // Cuộn sao cho tab đang chọn nằm ở đầu thanh danh mục
+    container.scrollTo({
+      left: activeButton.offsetLeft - container.offsetLeft,
+      behavior: "smooth",
+    });
+  }, [activeCategoryTab]);
+
+  const handleProductsTouchStart = useCallback(
+    (event: ReactTouchEvent<HTMLDivElement>) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
+    },
+    [],
+  );
+
+  const handleProductsTouchEnd = useCallback(
+    (event: ReactTouchEvent<HTMLDivElement>) => {
+      const start = swipeStartRef.current;
+      swipeStartRef.current = null;
+      if (!start) return;
+
+      const touch = event.changedTouches[0];
+      if (!touch) return;
+
+      const deltaX = touch.clientX - start.x;
+      const deltaY = touch.clientY - start.y;
+
+      // Chỉ tính là vuốt ngang khi đủ dài và không phải cuộn dọc
+      const MIN_SWIPE = 60;
+      if (Math.abs(deltaX) < MIN_SWIPE) return;
+      if (Math.abs(deltaX) < Math.abs(deltaY) * 1.5) return;
+
+      // Vuốt trái -> danh mục kế tiếp; vuốt phải -> danh mục trước đó
+      goToAdjacentCategory(deltaX < 0 ? 1 : -1);
+    },
+    [goToAdjacentCategory],
+  );
 
   const filteredProducts = useMemo(() => {
     const keyword = normalizeTextKey(query);
@@ -4401,9 +4484,13 @@ export default function LocalProductsPage() {
             </label>
           </div>
 
-          <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+          <div
+            ref={categoryTabsRef}
+            className="mb-3 flex gap-2 overflow-x-auto pb-1"
+          >
             <button
               type="button"
+              data-category-tab="all"
               className={`shrink-0 rounded-md border px-4 py-2 text-xs font-black tracking-wide  transition ${activeCategoryTab === "all"
                 ? "border-slate-200 bg-slate-100 text-slate-950"
                 : "border-slate-600 bg-slate-900 text-slate-200 hover:border-slate-400 hover:bg-slate-800"
@@ -4417,6 +4504,7 @@ export default function LocalProductsPage() {
               <button
                 key={category}
                 type="button"
+                data-category-tab={normalizeTextKey(category)}
                 className={`shrink-0 rounded-md uppercase border px-4 py-2 text-xs font-black tracking-wide  transition ${normalizeTextKey(activeCategoryTab) ===
                   normalizeTextKey(category)
                   ? "border-slate-200 bg-slate-100 text-slate-950"
@@ -4429,6 +4517,10 @@ export default function LocalProductsPage() {
             ))}
           </div>
 
+          <div
+            onTouchStart={handleProductsTouchStart}
+            onTouchEnd={handleProductsTouchEnd}
+          >
           {filteredProducts.length === 0 ? (
             <div className="rounded-md border border-slate-700 bg-slate-900 p-3 text-center text-xs font-semibold text-slate-400 ">
               Chưa có sản phẩm phù hợp.
@@ -4766,6 +4858,7 @@ export default function LocalProductsPage() {
               })}
             </div>
           )}
+          </div>
         </section>
       </section>
 
