@@ -1,18 +1,18 @@
-import { getServerApiUrl } from '../../hooks/useApiUrl';
 import { IGallery } from '@/types/type/gallery/gallery';
+import { fetchWithBackendFallback } from '@/lib/server/fetchWithBackendFallback';
+
+// Gọi trực tiếp API nguyên bản từ backend 7teck (NEXT_PUBLIC_API_BASE_URL),
+// bỏ hoàn toàn logic proxy localhost cũ. Dùng fetchWithBackendFallback để có
+// fallback an toàn khi BE không khả dụng (trả về mảng/rỗng thay vì throw).
+const GALLERIES_PATH = '/api/galleries';
+const GALLERY_PATH = '/api/gallery';
 
 export async function getAllGallerys(): Promise<IGallery[]> {
   try {
-    const apiUrl = `${getServerApiUrl('/api/galleries')}`;
-    const res = await fetch(apiUrl, {
-      cache: 'force-cache',
-      next: { revalidate: 60 },
+    const data = await fetchWithBackendFallback<{ galleries: IGallery[] }>({
+      backendPath: GALLERIES_PATH,
+      fallback: async () => ({ galleries: [] }),
     });
-
-    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
-
-    const data = await res.json();
-    // console.log('Gallery API response:', data); // Debug response
 
     if (!data || typeof data !== 'object' || !Array.isArray(data.galleries)) {
       console.warn('Dữ liệu API Gallery không hợp lệ:', data);
@@ -28,16 +28,10 @@ export async function getAllGallerys(): Promise<IGallery[]> {
 
 export async function getGalleryById(id: string): Promise<IGallery | null> {
   try {
-    const apiUrl = getServerApiUrl(`/api/gallery/${id}`);
-    const res = await fetch(apiUrl, {
-      cache: 'force-cache',
-      next: { revalidate: 60 },
+    const data = await fetchWithBackendFallback<{ gallery: IGallery }>({
+      backendPath: `${GALLERY_PATH}/${id}`,
+      fallback: async () => ({ gallery: null as unknown as IGallery }),
     });
-
-    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
-
-    const data = await res.json();
-    // console.log('Gallery by ID API response:', data); // Debug response
 
     if (!data || typeof data !== 'object' || !data.gallery) {
       console.warn('Dữ liệu API Gallery theo ID không hợp lệ:', data);
