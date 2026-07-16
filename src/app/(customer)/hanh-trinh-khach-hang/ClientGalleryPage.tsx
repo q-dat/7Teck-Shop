@@ -58,7 +58,9 @@ export default function ClientGalleryPage({ galleries }: { galleries: IGallery[]
             className="my-masonry-grid"
             columnClassName="my-masonry-grid_column"
           >
-            {galleries.map((gallery, index) => (
+            {galleries
+              .filter((g) => Array.isArray(g.gallery) && g.gallery.length > 0)
+              .map((gallery, index) => (
               <div key={index} className="pb-4">
                 <Zoom>
                   <div
@@ -68,7 +70,7 @@ export default function ClientGalleryPage({ galleries }: { galleries: IGallery[]
                     <Image
                       height={300}
                       width={300}
-                      src={`${gallery.gallery}`}
+                      src={gallery.gallery[0]}
                       alt="Hình ảnh khách hàng"
                       // Hiệu ứng zoom mượt, không quay (rotate) để giữ tính chuyên nghiệp
                       className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
