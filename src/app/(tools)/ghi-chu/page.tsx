@@ -4320,7 +4320,7 @@ export default function LocalProductsPage() {
 
   return (
     <main
-      className="min-h-dvh w-full overflow-x-hidden bg-[#0b1220] p-2 text-slate-100 "
+      className="min-h-dvh w-full overflow-x-hidden bg-[#0b1220] p-2 pb-[100px] text-slate-100 xl:pb-[50px] "
       onPaste={(event) => {
         void handlePaste(event);
       }}
@@ -4339,7 +4339,7 @@ export default function LocalProductsPage() {
  }
  `}</style>
 
-      <section className="flex w-full flex-col gap-4 xl:min-h-[calc(100dvh-4rem)]">
+      <section className="flex w-full flex-col xl:min-h-[calc(100dvh-4rem)]">
         <header className="sticky z-30 rounded-md border border-slate-700/70 bg-slate-900/95 p-3 backdrop-blur">
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
             <div className="flex min-w-0 items-center gap-2">
@@ -4351,10 +4351,12 @@ export default function LocalProductsPage() {
                 <h1 className="truncate text-sm font-black tracking-tight text-white xl:text-sm">
                   Local Product Manager
                 </h1>
-                <p className="truncate text-[11px] font-semibold text-slate-400">
-                  {products.length} sản phẩm · {totalImages} ảnh · hôm nay{" "}
-                  {postedTodayCount}/{totalTodayTaskCount} bài đã đăng
-                </p>
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] font-semibold text-slate-400">
+                  <span className="text-emerald-300">{activeProductCount} đang bán</span>
+                  <span className="text-rose-300">{soldProductCount} đã bán</span>
+                  <span className="text-slate-300">{totalImages} ảnh</span>
+                  <span className="text-sky-300">{postedTodayCount}/{totalTodayTaskCount} đã đăng</span>
+                </div>
               </div>
             </div>
 
@@ -4451,20 +4453,8 @@ export default function LocalProductsPage() {
           </div>
         </header>
 
-        <section className="rounded-md border border-slate-700/70 bg-slate-900/70 mt-2 p-3 (0,0,0,0.22)]">
-          <div className="mb-3 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-center">
-            <div className="flex min-w-0 items-center gap-2 overflow-x-auto text-[11px] font-black text-slate-300">
-              <span className="shrink-0 rounded-md border border-emerald-300/40 bg-emerald-950/50 px-2 py-1 text-emerald-100 ">
-                {activeProductCount} đang bán
-              </span>
-              <span className="shrink-0 rounded-md border border-rose-300/40 bg-rose-950/45 px-2 py-1 text-rose-100 ">
-                {soldProductCount} đã bán
-              </span>
-              <span className="shrink-0 rounded-md border border-slate-600 bg-slate-800 px-2 py-1 text-slate-100 ">
-                {totalImages} ảnh
-              </span>
-            </div>
-
+        <section className="rounded-md border border-slate-700/70 bg-slate-900/70 p-3 (0,0,0,0.22)]">
+          <div className="mb-3">
             <label className="flex items-center gap-2 rounded-md border border-slate-600 bg-slate-950/70 px-2 py-1.5 text-slate-400 transition focus-within:border-slate-300 focus-within:bg-slate-950">
               <FiSearch
                 aria-hidden="true"
@@ -4486,14 +4476,14 @@ export default function LocalProductsPage() {
 
           <div
             ref={categoryTabsRef}
-            className="mb-3 flex gap-2 overflow-x-auto pb-1"
+            className="fixed bottom-[50px] left-0 right-0 z-[9998] flex overflow-x-auto border-t border-black bg-black xl:bottom-0"
           >
             <button
               type="button"
               data-category-tab="all"
-              className={`shrink-0 rounded-md border px-4 py-2 text-xs font-black tracking-wide  transition ${activeCategoryTab === "all"
-                ? "border-slate-200 bg-slate-100 text-slate-950"
-                : "border-slate-600 bg-slate-900 text-slate-200 hover:border-slate-400 hover:bg-slate-800"
+              className={`flex h-[42px] shrink-0 items-center justify-center px-5 text-xs font-black uppercase tracking-wide transition ${activeCategoryTab === "all"
+                ? "bg-slate-100 text-slate-950"
+                : "bg-black text-slate-200 hover:bg-slate-800"
                 }`}
               onClick={() => setActiveCategoryTab("all")}
             >
@@ -4505,10 +4495,10 @@ export default function LocalProductsPage() {
                 key={category}
                 type="button"
                 data-category-tab={normalizeTextKey(category)}
-                className={`shrink-0 rounded-md uppercase border px-4 py-2 text-xs font-black tracking-wide  transition ${normalizeTextKey(activeCategoryTab) ===
+                className={`flex h-[42px] shrink-0 items-center justify-center px-5 text-xs font-black uppercase tracking-wide transition ${normalizeTextKey(activeCategoryTab) ===
                   normalizeTextKey(category)
-                  ? "border-slate-200 bg-slate-100 text-slate-950"
-                  : "border-slate-600 bg-white/20 text-slate-200 hover:border-slate-400 hover:bg-slate-800"
+                  ? "bg-slate-100 text-slate-950"
+                  : "bg-black text-white hover:bg-slate-800"
                   }`}
                 onClick={() => setActiveCategoryTab(category)}
               >
