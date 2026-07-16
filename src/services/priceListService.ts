@@ -1,20 +1,23 @@
-import { IPriceListApi, IProductVariant } from '@/types/type/price-list/price-list';
-import { fetchWithBackendFallback } from '@/lib/server/fetchWithBackendFallback';
+import { IPriceListApi } from '@/types/type/price-list/price-list';
+import { getServerApiUrl } from '../../hooks/useApiUrl';
 
-// Gọi trực tiếp API nguyên bản từ backend 7teck (NEXT_PUBLIC_API_BASE_URL),
-// bỏ hoàn toàn logic proxy localhost cũ. Dùng fetchWithBackendFallback để có
-// fallback an toàn khi BE không khả dụng (trả về mảng rỗng thay vì throw).
-const PRICE_LISTS_PATH = '/api/price-lists';
-const PRICE_LIST_PATH = '/api/price-list';
-
+// Gọi API riêng của 7Teck-Shop (src/app/api/price-lists), route này đọc từ
+// MongoDB cục bộ của shop (cùng cơ chế với phoneService). BE 7teck chỉ là nguồn seed.
 export async function getAllPriceLists(): Promise<{ priceLists: IPriceListApi[] }> {
   try {
-    const data = await fetchWithBackendFallback<{ priceLists: IPriceListApi[] }>({
-      backendPath: PRICE_LISTS_PATH,
-      fallback: async () => ({ priceLists: [] }),
+    const apiUrl = `${getServerApiUrl('/api/price-lists')}`;
+    const res = await fetch(apiUrl, {
+      cache: 'no-store',
     });
 
-    if (!data || !Array.isArray(data.priceLists)) return { priceLists: [] };
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+
+    if (!data || typeof data !== 'object' || !Array.isArray(data.priceLists)) {
+      console.warn('Dữ liệu API PriceList không hợp lệ:', data);
+      return { priceLists: [] };
+    }
 
     return data;
   } catch (error) {
@@ -23,12 +26,16 @@ export async function getAllPriceLists(): Promise<{ priceLists: IPriceListApi[] 
   }
 }
 
-export async function getPriceListById(id: string): Promise<IProductVariant | null> {
+export async function getPriceListById(id: string): Promise<IPriceListApi | null> {
   try {
-    const data = await fetchWithBackendFallback<{ priceList: IProductVariant }>({
-      backendPath: `${PRICE_LIST_PATH}/${id}`,
-      fallback: async () => ({ priceList: null as unknown as IProductVariant }),
+    const apiUrl = getServerApiUrl(`/api/price-list/${id}`);
+    const res = await fetch(apiUrl, {
+      cache: 'no-store',
     });
+
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
 
     if (!data || typeof data !== 'object' || !data.priceList) {
       console.warn('Dữ liệu API PriceList theo ID không hợp lệ:', data);

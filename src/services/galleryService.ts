@@ -1,18 +1,18 @@
 import { IGallery } from '@/types/type/gallery/gallery';
-import { fetchWithBackendFallback } from '@/lib/server/fetchWithBackendFallback';
+import { getServerApiUrl } from '../../hooks/useApiUrl';
 
-// Gọi trực tiếp API nguyên bản từ backend 7teck (NEXT_PUBLIC_API_BASE_URL),
-// bỏ hoàn toàn logic proxy localhost cũ. Dùng fetchWithBackendFallback để có
-// fallback an toàn khi BE không khả dụng (trả về mảng/rỗng thay vì throw).
-const GALLERIES_PATH = '/api/galleries';
-const GALLERY_PATH = '/api/gallery';
-
+// Gọi API riêng của 7Teck-Shop (src/app/api/galleries), route này forward dữ liệu
+// từ BE 7teck. BE giữ nguyên làm nguồn; shop có API trung gian riêng theo logic cũ.
 export async function getAllGallerys(): Promise<IGallery[]> {
   try {
-    const data = await fetchWithBackendFallback<{ galleries: IGallery[] }>({
-      backendPath: GALLERIES_PATH,
-      fallback: async () => ({ galleries: [] }),
+    const apiUrl = `${getServerApiUrl('/api/galleries')}`;
+    const res = await fetch(apiUrl, {
+      cache: 'no-store',
     });
+
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
 
     if (!data || typeof data !== 'object' || !Array.isArray(data.galleries)) {
       console.warn('Dữ liệu API Gallery không hợp lệ:', data);
@@ -28,10 +28,14 @@ export async function getAllGallerys(): Promise<IGallery[]> {
 
 export async function getGalleryById(id: string): Promise<IGallery | null> {
   try {
-    const data = await fetchWithBackendFallback<{ gallery: IGallery }>({
-      backendPath: `${GALLERY_PATH}/${id}`,
-      fallback: async () => ({ gallery: null as unknown as IGallery }),
+    const apiUrl = getServerApiUrl(`/api/gallery/${id}`);
+    const res = await fetch(apiUrl, {
+      cache: 'no-store',
     });
+
+    if (!res.ok) throw new Error(`Lỗi API: ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
 
     if (!data || typeof data !== 'object' || !data.gallery) {
       console.warn('Dữ liệu API Gallery theo ID không hợp lệ:', data);
