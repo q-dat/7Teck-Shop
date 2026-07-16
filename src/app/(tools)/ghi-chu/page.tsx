@@ -4476,6 +4476,10 @@ export default function LocalProductsPage() {
 
           <div
             ref={categoryTabsRef}
+            onWheel={(event) => {
+              if (event.deltaY === 0) return;
+              event.currentTarget.scrollLeft += event.deltaY;
+            }}
             className="fixed bottom-[50px] left-0 right-0 z-[9998] flex overflow-x-auto border-t border-black bg-black xl:bottom-0"
           >
             <button
