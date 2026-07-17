@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { slugify } from '@/utils/slugify';
 import { IPost } from '@/types/type/products/post/post';
 
@@ -40,4 +41,59 @@ export function toMetaDescription(raw: string | undefined, max = 160): string {
     .trim();
   if (clean.length <= max) return clean;
   return `${clean.slice(0, max - 1).trimEnd()}…`;
+}
+
+export type PageMetaConfig = {
+  path: string;
+  title: string;
+  description: string;
+  keywords?: string[];
+  image?: string;
+  /** 'index, follow' (mặc định) hoặc 'noindex, nofollow' cho trang nội bộ. */
+  robots?: string;
+  type?: 'website' | 'article';
+  publishedTime?: string;
+  modifiedTime?: string;
+  section?: string;
+};
+
+/**
+ * Metadata chuẩn cho MỌI trang (danh sách, chi tiết, tĩnh, bài viết).
+ * Sinh đồng bộ canonical + Open Graph + Twitter từ 1 config, đảm bảo
+ * Bot GG đọc đúng URL và nội dung. Tránh lệch canonical giữa trang/sitemap.
+ */
+export function buildPageMetadata(cfg: PageMetaConfig): Metadata {
+  const url = absoluteUrl(cfg.path);
+  const image = cfg.image || absoluteUrl('/logo.png');
+  const robots = cfg.robots ?? 'index, follow';
+
+  const og: Record<string, unknown> = {
+    title: cfg.title,
+    description: cfg.description,
+    url,
+    siteName: SITE_NAME,
+    images: [{ url: image, width: 1200, height: 630, alt: cfg.title }],
+    type: cfg.type ?? 'website',
+    locale: 'vi_VN',
+  };
+  if (cfg.type === 'article') {
+    if (cfg.publishedTime) og['publishedTime'] = cfg.publishedTime;
+    if (cfg.modifiedTime) og['modifiedTime'] = cfg.modifiedTime;
+    if (cfg.section) og['section'] = cfg.section;
+  }
+
+  return {
+    title: cfg.title,
+    description: cfg.description,
+    keywords: cfg.keywords,
+    robots,
+    alternates: { canonical: url },
+    openGraph: og as Metadata['openGraph'],
+    twitter: {
+      card: 'summary_large_image',
+      title: cfg.title,
+      description: cfg.description,
+      images: [image],
+    },
+  };
 }

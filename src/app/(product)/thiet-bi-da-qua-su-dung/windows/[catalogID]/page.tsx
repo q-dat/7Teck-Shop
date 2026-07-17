@@ -1,6 +1,15 @@
 import { ProductBase } from '@/components/userPage/page/(san-pham)/ClientProductPage';
 import ClientUsedProductByCatalogPage from '@/components/userPage/page/(thiet-bi-da-qua-su-dung)/ClientUsedProductByCatalogPage';
 import { getWindowsByCatalogId } from '@/services/products/windowsService';
+import { buildPageMetadata } from '@/app/(SEO)/lib/seo';
+
+export const metadata = buildPageMetadata({
+  path: '/thiet-bi-da-qua-su-dung/windows',
+  title: 'Laptop Windows đã qua sử dụng giá tốt | 7Teck.vn',
+  description:
+    'Danh sách laptop Windows đã qua sử dụng, chất lượng kiểm định, giá tốt tại 7Teck.vn. Bảo hành uy tín, giao hàng toàn quốc.',
+  keywords: ['laptop Windows cũ', 'laptop đã qua sử dụng', 'laptop giá rẻ', '7Teck.vn'],
+});
 
 type UsedWindowsCatalogPageProps = {
   params: Promise<{

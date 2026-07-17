@@ -42,21 +42,51 @@ function lastMod(item: AnyItem): Date {
   return Number.isNaN(d.getTime()) ? new Date() : d;
 }
 
-async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
-  const paths: MetadataRoute.Sitemap = [];
+async function fetchListAll(endpoint: string, dataField: string): Promise<AnyItem[]> {
+  // Hỗ trợ API có phân trang (vd /api/phones mặc định limit 20, max 100).
+  // Quét hết các page cho tới khi API hết dữ liệu (pagination.hasNextPage = false).
+  const out: AnyItem[] = [];
+  let page = 1;
+  const MAX_PAGES = 200; // tránh vòng lặp vô hạn nếu API lỗi
+  while (page <= MAX_PAGES) {
+    const qs = endpoint.includes('?') ? `&page=${page}&limit=100` : `?page=${page}&limit=100`;
+    let json: any = null;
+    try {
+      const res = await fetch(getServerApiUrl(`${endpoint}${qs}`), { next: { revalidate: 3600 } });
+      if (!res.ok) break;
+      json = await res.json();
+    } catch (err) {
+      console.error(`sitemap: lỗi lấy ${endpoint} (page ${page}):`, (err as Error).message);
+      break;
+    }
+    const items: AnyItem[] =
+      Array.isArray(json?.[dataField]) ? json[dataField]
+      : Array.isArray(json?.data) ? json.data
+      : Array.isArray(json) ? json
+      : [];
+    if (!items.length) break;
+    out.push(...items);
+    if (!json?.pagination?.hasNextPage) break;
+    page++;
+  }
+  return out;
+}
+
+async function getDynamicPaths(): Promise<MetadataRoute.Sitemap[number][]> {
+  const paths: MetadataRoute.Sitemap[number][] = [];
 
   const [phones, tablets, macbooks, windows, posts] = await Promise.all([
-    fetchList('/api/phones', 'phones'),
+    fetchListAll('/api/phones', 'phones'),
     fetchList('/api/tablets', 'tablets'),
     fetchList('/api/laptop-macbook', 'macbook'),
     fetchList('/api/laptop-windows', 'windows'),
     fetchList('/api/posts', 'posts'),
   ]);
 
-  // PHONE — canonical là route rút gọn `/${slug}` (xem (product-detail)/[slug]/page.tsx)
+  // PHONE — canonical là route `/dien-thoai/${slug}/${_id}` (KHỚP UI + JSON-LD thực tế)
   for (const p of phones) {
     const slug = p.slug as string | undefined;
-    if (slug) paths.push(buildEntry(`/${slug}`, lastMod(p), 0.8));
+    if (slug && p._id) paths.push(buildEntry(`/dien-thoai/${slug}/${p._id}`, lastMod(p), 0.8));
   }
 
   // TABLET — `/may-tinh-bang/${slug}/${id}`
@@ -113,5 +143,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const allPages = [...staticPages, ...dynamicPages].filter((p) => !p.url.includes('/cms/'));
 
-  return allPages.slice(0, 5000);
+  // Google chấp nhận sitemap tối đa 50.000 URL / 50MB. Nới an toàn,
+  // danh sách hiện tại (<2k) không bị cắt. Nếu vượt, nên tách sitemap index.
+  return allPages.slice(0, 50000);
 }

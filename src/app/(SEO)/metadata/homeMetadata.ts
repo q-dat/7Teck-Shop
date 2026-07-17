@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { SITE_NAME, SITE_URL, absoluteUrl } from '@/app/(SEO)/lib/seo';
 
 const tit = 'Điện thoại, smartphone chính hãng giá rẻ, trả góp 0% lãi suất - 12/2025';
 const des =
@@ -8,7 +9,11 @@ export const homeMetadata: Metadata = {
   icons: {
     icon: '/favicon.png',
   },
-  title: tit,
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: tit,
+    template: `%s | ${SITE_NAME}`,
+  },
   description: des,
   keywords: [
     'Đth',
@@ -60,5 +65,22 @@ export const homeMetadata: Metadata = {
     'điện thoại Android mới nhất',
   ],
   robots: 'index, follow',
-  metadataBase: new URL('https://www.7teck.vn'),
+  alternates: {
+    canonical: SITE_URL,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'vi_VN',
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: tit,
+    description: des,
+    images: [{ url: absoluteUrl('/logo.png'), width: 1200, height: 630, alt: SITE_NAME }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: tit,
+    description: des,
+    images: [absoluteUrl('/logo.png')],
+  },
 };
