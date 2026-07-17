@@ -37,7 +37,7 @@ export default async function MacbookDetailPage({ params }: { params: Promise<Ro
     return <div className="mt-10 text-center">Không có dữ liệu.</div>;
   }
 
-  const url = `${SITE_URL}/macbook/${mac.macbook_slug}/${mac._id}`;
+  const url = `${SITE_URL}/${mac.macbook_slug}`;
 
   const productJsonLd = {
     '@context': 'https://schema.org/',

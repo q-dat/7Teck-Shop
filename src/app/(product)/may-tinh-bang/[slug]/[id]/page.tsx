@@ -37,7 +37,7 @@ export default async function TabletDetailPage({ params }: { params: Promise<Rou
     return <div className="mt-10 text-center">Không có dữ liệu.</div>;
   }
 
-  const url = `${SITE_URL}/may-tinh-bang/${tablet.tablet_slug}/${tablet._id}`;
+  const url = `${SITE_URL}/${tablet.tablet_slug}`;
 
   const productJsonLd = {
     '@context': 'https://schema.org/',

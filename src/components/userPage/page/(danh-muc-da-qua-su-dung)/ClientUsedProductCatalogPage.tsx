@@ -2,6 +2,7 @@
 import Pagination from '@/components/userPage/Pagination';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { productHref as productHrefFn } from '@/utils/productLinks';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
 import { contact, hotlineUrl } from '@/utils/socialLinks';
 import Image from 'next/image';
@@ -76,7 +77,7 @@ export default function ClientUsedProductCatalogPage({ data, title }: ClientUsed
           <ProductPlaceholders count={12} />
         ) : (
           currentItems.map((product) => {
-            const productHref = `/${product.basePath}/${product.slug}/${product._id}`;
+            const productHref = productHrefFn(product.slug);
 
             return (
               <div

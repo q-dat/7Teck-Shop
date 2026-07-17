@@ -142,3 +142,21 @@ export async function getWindowsByIdData(id: string) {
     windows,
   };
 }
+
+export async function getWindowsBySlugData(slug: string) {
+  await connectDB();
+
+  const windows = await WindowsModel.findOne({ windows_slug: slug })
+    .populate({
+      path: 'windows_catalog_id',
+      select: '-createdAt -updatedAt -__v',
+    })
+    .lean();
+
+  if (!windows) return null;
+
+  return {
+    message: 'Lấy sản phẩm Windows theo slug thành công!',
+    windows,
+  };
+}

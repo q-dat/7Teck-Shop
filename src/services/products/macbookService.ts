@@ -142,3 +142,31 @@ export async function getMacbookById(id: string): Promise<IMacbook | null> {
 export async function getMacbookWithFallback(id: string): Promise<IMacbook | null> {
   return getWithFallback<IMacbook>(id, getAllMacbook, getMacbookById);
 }
+
+export async function getMacbookBySlug(slug: string): Promise<IMacbook | null> {
+  try {
+    if (!slug) return null;
+
+    const normalizedSlug = slug.trim().toLowerCase();
+
+    const apiUrl = getServerApiUrl(`/api/macbook/slug/${normalizedSlug}`);
+
+    const res = await fetch(apiUrl, {
+      // next: { revalidate: 300 },
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+
+    if (!data || typeof data !== 'object' || !data.macbook) {
+      console.warn('Dữ liệu API Macbook slug không hợp lệ:', data);
+      return null;
+    }
+
+    return data.macbook;
+  } catch (error) {
+    console.error('Lỗi khi lấy macbook theo slug:', error);
+    return null;
+  }
+}

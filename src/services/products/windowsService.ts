@@ -187,3 +187,31 @@ export async function getWindowsById(id: string): Promise<IWindows | null> {
 export async function getWindowsWithFallback(id: string): Promise<IWindows | null> {
   return getWithFallback<IWindows>(id, getAllWindows, getWindowsById);
 }
+
+export async function getWindowsBySlug(slug: string): Promise<IWindows | null> {
+  try {
+    if (!slug) return null;
+
+    const normalizedSlug = slug.trim().toLowerCase();
+
+    const apiUrl = getServerApiUrl(`/api/windows/slug/${normalizedSlug}`);
+
+    const res = await fetch(apiUrl, {
+      // next: { revalidate: 300 },
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+
+    if (!data || typeof data !== 'object' || !data.windows) {
+      console.warn('Dữ liệu API Windows slug không hợp lệ:', data);
+      return null;
+    }
+
+    return data.windows;
+  } catch (error) {
+    console.error('Lỗi khi lấy windows theo slug:', error);
+    return null;
+  }
+}

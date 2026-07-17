@@ -142,3 +142,31 @@ export async function getTabletById(id: string): Promise<ITablet | null> {
 export async function getTabletWithFallback(id: string): Promise<ITablet | null> {
   return getWithFallback<ITablet>(id, getAllTablets, getTabletById);
 }
+
+export async function getTabletBySlug(slug: string): Promise<ITablet | null> {
+  try {
+    if (!slug) return null;
+
+    const normalizedSlug = slug.trim().toLowerCase();
+
+    const apiUrl = getServerApiUrl(`/api/tablet/slug/${normalizedSlug}`);
+
+    const res = await fetch(apiUrl, {
+      // next: { revalidate: 300 },
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+
+    if (!data || typeof data !== 'object' || !data.tablet) {
+      console.warn('Dữ liệu API Tablet slug không hợp lệ:', data);
+      return null;
+    }
+
+    return data.tablet;
+  } catch (error) {
+    console.error('Lỗi khi lấy tablet theo slug:', error);
+    return null;
+  }
+}

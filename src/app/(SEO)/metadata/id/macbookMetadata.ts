@@ -3,7 +3,7 @@ import { IMacbook } from '@/types/type/products/macbook/macbook';
 
 export function generateMacbookMetadata(mac: IMacbook): Metadata {
   const slug = mac.macbook_slug;
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/macbook/${slug}/${mac._id}`;
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
   const title = `${mac.macbook_name} - Giá Tốt, Chính Hãng - Mua Ngay tại 7Teck.vn`;
   const description = mac.macbook_des || `Khám phá ${mac.macbook_name} chính hãng tại 7Teck.vn. Ưu đãi hấp dẫn, giao hàng toàn quốc.`;

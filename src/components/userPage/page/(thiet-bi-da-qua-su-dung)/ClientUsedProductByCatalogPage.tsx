@@ -8,6 +8,7 @@ import { Button } from 'react-daisyui';
 import imageRepresent from '../../../../../public/image-represent';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { productHref as productHrefFn } from '@/utils/productLinks';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { IconType } from 'react-icons';
 import { FaDesktop, FaFrown, FaMicrochip } from 'react-icons/fa';
@@ -71,7 +72,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                 <ProductPlaceholders count={12} />
               ) : products.length > 0 ? (
                 products.map((product) => {
-                  const productHref = `/${basePath}/${product.slug}/${product._id}`;
+                  const productHref = productHrefFn(product.slug);
                   const isErrored = isImageErrored(product._id);
                   const src = isErrored || !product.img ? fallbackSrc : product.img;
                   const isExcluded = product.status ? EXCLUDED_STATUSES.includes(product.status.toLowerCase()) : false;
@@ -173,7 +174,7 @@ export default function ClientUsedProductByCatalogPage({ products, title, basePa
                               price: product.price,
                               ram: product.ram,
                               color: product.color,
-                              link: `/${basePath}/${product.slug}/${product._id}`,
+                              link: productHrefFn(product.slug),
                             };
 
                             localStorage.setItem('selectedProduct', JSON.stringify(productToBuy));

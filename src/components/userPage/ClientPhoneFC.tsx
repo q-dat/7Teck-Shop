@@ -143,7 +143,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                     <div className="flex h-full w-full flex-col items-start justify-between p-1">
                       {/* Product Name and View Count */}
                       <div className="w-full">
-                        <Link aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm" className="w-full" href={`/${phoneUrl}/${phone?._id}`}>
+                        <Link aria-label="Xem chi tiết sản phẩm khi nhấn vào tên sản phẩm" className="w-full" href={`/${phoneUrl}`}>
                           <div className="flex w-full flex-wrap items-center gap-1 font-light text-gray-300">
                             {/* Product Specifications */}
                             <>

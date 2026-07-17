@@ -143,3 +143,21 @@ export async function getTabletByIdData(id: string) {
     tablet,
   };
 }
+
+export async function getTabletBySlugData(slug: string) {
+  await connectDB();
+
+  const tablet = await TabletModel.findOne({ tablet_slug: slug })
+    .populate({
+      path: 'tablet_catalog_id',
+      select: '-createdAt -updatedAt -__v',
+    })
+    .lean();
+
+  if (!tablet) return null;
+
+  return {
+    message: 'Lấy máy tính bảng theo slug thành công!',
+    tablet,
+  };
+}

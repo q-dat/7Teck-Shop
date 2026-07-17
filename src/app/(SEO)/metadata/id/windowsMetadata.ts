@@ -3,7 +3,7 @@ import { IWindows } from '@/types/type/products/windows/windows';
 
 export function generateWindowsMetadata(win: IWindows): Metadata {
   const slug = win.windows_slug;
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/windows/${slug}/${win._id}`;
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
   const title = `${win.windows_name} - Laptop Windows Chính Hãng, Giá Tốt tại 7Teck.vn`;
   const description = `Mua ${win.windows_name} chính hãng, giá ưu đãi tại 7Teck.vn. Bảo hành uy tín, giao hàng nhanh toàn quốc.`;

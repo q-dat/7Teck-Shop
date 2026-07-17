@@ -3,7 +3,7 @@ import { ITablet } from '@/types/type/products/tablet/tablet';
 
 export function generateTabletMetadata(tablet: ITablet): Metadata {
   const slug = tablet.tablet_slug;
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/may-tinh-bang/${slug}/${tablet._id}`;
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
   const title = `${tablet.tablet_name} - Máy Tính Bảng Chính Hãng, Giá Tốt tại 7Teck.vn`;
   const description = `Khám phá máy tính bảng ${tablet.tablet_name} chính hãng, giá tốt tại 7Teck.vn. Ưu đãi hấp dẫn, bảo hành uy tín, giao hàng nhanh.`;

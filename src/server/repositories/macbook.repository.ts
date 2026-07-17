@@ -142,3 +142,21 @@ export async function getMacbookByIdData(id: string) {
     macbook,
   };
 }
+
+export async function getMacbookBySlugData(slug: string) {
+  await connectDB();
+
+  const macbook = await MacbookModel.findOne({ macbook_slug: slug })
+    .populate({
+      path: 'macbook_catalog_id',
+      select: '-createdAt -updatedAt -__v',
+    })
+    .lean();
+
+  if (!macbook) return null;
+
+  return {
+    message: 'Lấy sản phẩm Macbook theo slug thành công!',
+    macbook,
+  };
+}

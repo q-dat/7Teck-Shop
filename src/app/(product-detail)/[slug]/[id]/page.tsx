@@ -20,7 +20,7 @@ const getCachedPhone = cache(async (id: string): Promise<IPhone | null> => {
 // JSON-LD
 function buildJsonLd(phone: IPhone): JsonLdProduct {
   const domain = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '');
-  const url = `${domain}/dien-thoai/${phone.slug}/${phone._id}`;
+  const url = `${domain}/${phone.slug}`;
 
   return {
     '@context': 'https://schema.org/',
@@ -55,7 +55,6 @@ export default async function ProductDetailUnified({ params }: { params: Promise
 
   // validate slug
   if (phone.slug !== slug) {
-    // redirect(`/dien-thoai/${phone.slug}/${phone._id}`);
     redirect(`/${phone.slug}`);
   }
 

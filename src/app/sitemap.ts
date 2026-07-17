@@ -83,28 +83,28 @@ async function getDynamicPaths(): Promise<MetadataRoute.Sitemap[number][]> {
     fetchList('/api/posts', 'posts'),
   ]);
 
-  // PHONE — canonical là route `/dien-thoai/${slug}/${_id}` (KHỚP UI + JSON-LD thực tế)
+  // PHONE — canonical là route `/${slug}` (unified, KHỚP UI + JSON-LD thực tế)
   for (const p of phones) {
     const slug = p.slug as string | undefined;
-    if (slug && p._id) paths.push(buildEntry(`/dien-thoai/${slug}/${p._id}`, lastMod(p), 0.8));
+    if (slug) paths.push(buildEntry(`/${slug}`, lastMod(p), 0.8));
   }
 
-  // TABLET — `/may-tinh-bang/${slug}/${id}`
+  // TABLET — `/${slug}`
   for (const t of tablets) {
     const slug = t.tablet_slug as string | undefined;
-    if (slug && t._id) paths.push(buildEntry(`/may-tinh-bang/${slug}/${t._id}`, lastMod(t), 0.8));
+    if (slug) paths.push(buildEntry(`/${slug}`, lastMod(t), 0.8));
   }
 
-  // MACBOOK — `/macbook/${slug}/${id}`
+  // MACBOOK — `/${slug}`
   for (const m of macbooks) {
     const slug = m.macbook_slug as string | undefined;
-    if (slug && m._id) paths.push(buildEntry(`/macbook/${slug}/${m._id}`, lastMod(m), 0.8));
+    if (slug) paths.push(buildEntry(`/${slug}`, lastMod(m), 0.8));
   }
 
-  // WINDOWS — `/windows/${slug}/${id}`
+  // WINDOWS — `/${slug}`
   for (const w of windows) {
     const slug = w.windows_slug as string | undefined;
-    if (slug && w._id) paths.push(buildEntry(`/windows/${slug}/${w._id}`, lastMod(w), 0.8));
+    if (slug) paths.push(buildEntry(`/${slug}`, lastMod(w), 0.8));
   }
 
   // POST — `/tin-tuc/${slugify(title)}/${id}` (KHỚP link UI thực tế qua postPath)

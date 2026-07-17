@@ -37,7 +37,7 @@ export default async function WindowsDetailPage({ params }: { params: Promise<Ro
     return <div className="mt-10 text-center">Không có dữ liệu.</div>;
   }
 
-  const url = `${SITE_URL}/windows/${win.windows_slug}/${win._id}`;
+  const url = `${SITE_URL}/${win.windows_slug}`;
 
   const productJsonLd = {
     '@context': 'https://schema.org/',

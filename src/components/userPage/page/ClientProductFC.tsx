@@ -9,6 +9,7 @@ import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
 import { FaArrowRight } from 'react-icons/fa';
 import { useScroll } from '@/hooks/useScroll';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { productHref } from '@/utils/productLinks';
 import ProductPlaceholders from '@/components/userPage/ProductPlaceholders';
 
 export interface Product {
@@ -35,8 +36,8 @@ interface ClientProductFCProps {
   loading?: boolean;
 }
 
-const ProductItem = ({ product, baseUrl, onQuickBuy }: { product: Product; baseUrl: string; onQuickBuy: (p: Product, url: string) => void }) => {
-  const productUrl = `/${baseUrl}/${product.slug}/${product._id}`;
+const ProductItem = ({ product, onQuickBuy }: { product: Product; onQuickBuy: (p: Product, url: string) => void }) => {
+  const productUrl = productHref(product.slug);
 
   return (
     <motion.div
@@ -197,7 +198,7 @@ export default function ClientProductFC({ products, category, loading: externalL
         )}
         <div ref={scrollRef} className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-10 pt-2 scrollbar-hide">
           {products.map((product) => (
-            <ProductItem key={product._id} product={product} baseUrl={category.baseUrl} onQuickBuy={handleQuickBuy} />
+            <ProductItem key={product._id} product={product} onQuickBuy={handleQuickBuy} />
           ))}
 
           {/* View All */}
