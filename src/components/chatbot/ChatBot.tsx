@@ -66,7 +66,7 @@ export default function ChatBot() {
 
   return (
     <div className="w-full pl-2 xl:px-0">
-      <div className="z-[88888] w-full overflow-hidden rounded-lg border border-primary bg-[#fafafa] xl:w-[400px]">
+      <div className="z-chatbot w-full overflow-hidden rounded-lg border border-primary bg-[#fafafa] xl:w-[400px]">
         <div className="bg-primary-white">
           {/* Header */}
           <div className="flex items-center gap-1 bg-primary p-3">

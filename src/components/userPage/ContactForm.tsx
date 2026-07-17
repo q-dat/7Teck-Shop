@@ -12,7 +12,7 @@ const ContactForm: React.FC = () => {
   const [collapsed, setCollapsed] = useState(true);
 
   return (
-    <div className="z-[9999999] w-full">
+    <div className="z-header-mobile w-full">
       {/* Overlay */}
       {!collapsed && <div className="fixed inset-0 bg-[#000000]/60" onClick={() => setCollapsed(true)} />}
 
@@ -92,7 +92,7 @@ const ContactForm: React.FC = () => {
             </Link>
 
             {/* Nút thu gọn */}
-            <div className="fixed bottom-24 left-1/2 z-[99999] -translate-x-1/2">
+            <div className="fixed bottom-24 left-1/2 z-modal -translate-x-1/2">
               <button className="rounded-full border border-white bg-black/60 p-1 shadow-xl" onClick={() => setCollapsed(true)}>
                 <IoCloseSharp className="text-4xl text-white" />
               </button>

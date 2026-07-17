@@ -115,7 +115,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
   };
 
   return (
-    <div className="fixed z-[9999999] block w-full bg-gradient-to-b from-white to-primary xl:hidden">
+    <div className="fixed z-header-mobile block w-full bg-gradient-to-b from-white to-primary xl:hidden">
       <header
         className={`fixed h-[60px] w-full bg-gradient-to-r from-primary via-primary to-primary px-2 transition-all delay-200 duration-300 ease-in-out ${
           showMenu ? 'top-0' : 'top-0'
@@ -165,7 +165,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
 
                   {/* Suggestion keywords */}
                   {isInputFocused && !query && (
-                    <div className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-none bg-white p-2 shadow-md">
+                    <div className="fixed left-[50%] top-[100px] z-header w-full max-w-[600px] -translate-x-1/2 rounded-none bg-white p-2 shadow-md">
                       <p className="mb-2 text-sm font-semibold text-primary">Từ khóa phổ biến</p>
                       <div className="flex flex-wrap gap-2">
                         {suggestions.map((text, index) => (
@@ -189,7 +189,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
 
             {/* Result */}
             {openSearch && query && results.length > 0 && (
-              <ul className="fixed left-[50%] top-[100px] z-[99999] max-h-[500px] w-full max-w-[600px] -translate-x-1/2 overflow-auto rounded-none border bg-white p-2 text-primary shadow-md">
+              <ul className="fixed left-[50%] top-[100px] z-header max-h-[500px] w-full max-w-[600px] -translate-x-1/2 overflow-auto rounded-none border bg-white p-2 text-primary shadow-md">
                 <span className="text-xs font-medium">Sản phẩm gợi ý</span>
                 {results.map((item, index) => (
                   <li
@@ -240,13 +240,13 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
             )}
             {/* 404 */}
             {query && !isLoading && results.length === 0 && (
-              <p className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-none bg-white p-2 text-sm text-gray-500 shadow-md">
+              <p className="fixed left-[50%] top-[100px] z-header w-full max-w-[600px] -translate-x-1/2 rounded-none bg-white p-2 text-sm text-gray-500 shadow-md">
                 Không tìm thấy kết quả
               </p>
             )}
             {/* Close Search */}
             {openSearch && (
-              <div className="fixed bottom-[60px] left-1/2 z-[99999] -translate-x-1/2">
+              <div className="fixed bottom-[60px] left-1/2 z-header -translate-x-1/2">
                 <button className="rounded-full border border-white bg-black/60 shadow-xl" onClick={handleSearchToggle}>
                   <IoCloseSharp className="text-4xl text-white" />
                 </button>

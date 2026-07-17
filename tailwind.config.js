@@ -79,6 +79,21 @@ export default {
         exfadeIn: 'exfadeIn 0.3s ease-in-out forwards',
         zoomBorderBtn: 'zoomBorderBtn 2s infinite ease-in-out',
       },
+      // ── Named z-index layers (replaces magic numbers across the project) ──
+      // Usage: z-gallery, z-header, z-header-mobile, z-modal, z-modal-top, z-overlay, z-bar, z-chatbot, z-float, z-control
+      // (z-header and z-modal share 99999 = the shared "top tier" used by both the desktop header and popups)
+      zIndex: {
+        gallery: '99999999',        // fullscreen image gallery (top-most layer)
+        'header-mobile': '9999999', // mobile header, bottom nav, contact form, scroll-to-top
+        header: '99999',            // desktop header bar + search/cart dropdowns (shared top tier)
+        modal: '99999',             // popup modals, notification popup, cart popup, fullscreen mobile panels
+        'modal-top': '100000',      // highest-priority modals (e.g. ghi-chu fullscreen modals)
+        overlay: '99998',           // dimmed modal backdrop (sits just below its modal content)
+        bar: '9998',                // fixed bottom bar (ghi-chu tool page)
+        chatbot: '88888',           // floating chatbot widget
+        float: '999',               // minor above-content floating element (used-product side tab)
+        control: '100',             // in-page slider arrows / controls
+      },
     },
   },
   corePlugins: {

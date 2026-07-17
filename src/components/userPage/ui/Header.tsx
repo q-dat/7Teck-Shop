@@ -171,7 +171,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <div className="fixed left-0 top-0 z-[99999] hidden w-full flex-col xl:block">
+    <div className="fixed left-0 top-0 z-header hidden w-full flex-col xl:block">
       {/* Benefits */}
       <div className="h-[30px] overflow-hidden bg-[#FFC107] text-black xl:px-desktop-padding">
         <div className="animate-marquee flex h-full w-full flex-row items-center justify-around gap-20 whitespace-nowrap">
@@ -237,7 +237,7 @@ const Header: React.FC = () => {
 
           {/* Suggestion keywords */}
           {isInputFocused && !query && (
-            <div className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-none bg-white p-2 shadow-md">
+            <div className="fixed left-[50%] top-[100px] z-header w-full max-w-[600px] -translate-x-1/2 rounded-none bg-white p-2 shadow-md">
               <p className="mb-2 text-sm font-semibold text-primary">Từ khóa phổ biến</p>
               <div className="flex flex-wrap gap-2">
                 {suggestions.map((text, index) => (
@@ -258,7 +258,7 @@ const Header: React.FC = () => {
 
           {/* Result */}
           {query && results.length > 0 && (
-            <ul className="fixed left-[50%] top-[100px] z-[99999] max-h-[500px] w-full max-w-[600px] -translate-x-1/2 overflow-auto rounded-none border bg-white p-2 text-primary shadow-md">
+            <ul className="fixed left-[50%] top-[100px] z-header max-h-[500px] w-full max-w-[600px] -translate-x-1/2 overflow-auto rounded-none border bg-white p-2 text-primary shadow-md">
               <span className="text-sm font-medium">Sản phẩm gợi ý</span>
               {results.map((item, index) => (
                 <li
@@ -308,7 +308,7 @@ const Header: React.FC = () => {
 
           {/* 404 */}
           {query && !isLoading && results.length === 0 && (
-            <p className="fixed left-[50%] top-[100px] z-[99999] w-full max-w-[600px] -translate-x-1/2 rounded-none bg-white p-2 text-sm text-gray-500 shadow-md">
+            <p className="fixed left-[50%] top-[100px] z-header w-full max-w-[600px] -translate-x-1/2 rounded-none bg-white p-2 text-sm text-gray-500 shadow-md">
               Không tìm thấy kết quả
             </p>
           )}
@@ -317,14 +317,14 @@ const Header: React.FC = () => {
             createPortal(
               <>
                 <div
-                  className="fixed inset-0 z-[99998] cursor-pointer bg-[#000000]/60"
+                  className="fixed inset-0 z-overlay cursor-pointer bg-[#000000]/60"
                   onClick={() => {
                     setIsInputFocused(false);
                     setQuery('');
                     setResults([]);
                   }}
                 />
-                <div className="fixed bottom-24 left-1/2 z-[99999] -translate-x-1/2">
+                <div className="fixed bottom-24 left-1/2 z-header -translate-x-1/2">
                   <button className="rounded-full border border-white bg-black/60 p-1 shadow-xl" onClick={handleSearchClose}>
                     <IoCloseSharp className="text-4xl text-white" />
                   </button>

@@ -647,7 +647,7 @@ function ProductAlbumModal({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[99999] bg-[#000000]/95 text-white"
+          className="fixed inset-0 z-modal bg-[#000000]/95 text-white"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

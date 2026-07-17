@@ -4476,7 +4476,7 @@ export default function LocalProductsPage() {
 
           <div
             ref={categoryTabsRef}
-            className="fixed bottom-[50px] left-0 right-0 z-[9998] flex overflow-x-auto border-t border-black bg-black xl:bottom-0"
+            className="fixed bottom-[50px] left-0 right-0 z-bar flex overflow-x-auto border-t border-black bg-black xl:bottom-0"
           >
             <button
               type="button"
@@ -4853,7 +4853,7 @@ export default function LocalProductsPage() {
       </section>
 
       {activeModal ? (
-        <div className="fixed inset-0 z-[99999] flex h-dvh w-full items-center justify-center overflow-hidden bg-black/75 p-3 xl:p-8">
+        <div className="fixed inset-0 z-modal flex h-dvh w-full items-center justify-center overflow-hidden bg-black/75 p-3 xl:p-8">
           <div className="h-[calc(100dvh-1.5rem)] w-full overflow-hidden rounded-md border border-slate-700 bg-slate-950  xl:h-[calc(100dvh-4rem)]">
             <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-slate-900 p-2">
               <div className="flex min-w-0 items-center gap-2">
@@ -6701,7 +6701,7 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingBlobUpload ? (
-        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
+        <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
           <form
             className="w-full max-w-md rounded-md border border-emerald-300/20 bg-slate-950 p-2 "
             onSubmit={(event) => {
@@ -6766,7 +6766,7 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingConfirm ? (
-        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
+        <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
           <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-2 ">
             <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2">
               <div className="min-w-0">
@@ -6812,7 +6812,7 @@ export default function LocalProductsPage() {
         </div>
       ) : null}
       {pendingRemoveTaskIndex !== null ? (
-        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/70 p-2 ">
+        <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/70 p-2 ">
           <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-2 ">
             <h3 className="text-xs font-black text-white">Xoá task đã chọn?</h3>
             <p className="mt-2 text-xs leading-5 text-slate-400">
@@ -6841,7 +6841,7 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingDownload ? (
-        <div className="fixed inset-0 z-[100000] flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
+        <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
           <div className="flex h-[90dvh] w-full items-center justify-center rounded-md border border-white/10 bg-slate-950 p-2 ">
             <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-900 p-2">
               <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">

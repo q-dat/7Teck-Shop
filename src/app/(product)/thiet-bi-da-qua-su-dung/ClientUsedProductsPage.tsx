@@ -32,7 +32,7 @@ const CategoryMenuComponent = ({ categories, isOpen, toggleMenu, selectedCategor
   return (
     <div
       onClick={toggleMenu}
-      className={`fixed left-0 top-1/3 z-[999] mx-1 w-auto overflow-hidden rounded-r-[50%] border-2 border-b-0 border-l-0 border-t-0 border-primary bg-gradient-to-r from-transparent to-white py-[25px] text-primary transition-transform duration-300 ${
+      className={`fixed left-0 top-1/3 z-float mx-1 w-auto overflow-hidden rounded-r-[50%] border-2 border-b-0 border-l-0 border-t-0 border-primary bg-gradient-to-r from-transparent to-white py-[25px] text-primary transition-transform duration-300 ${
         isOpen ? 'translate-x-0' : 'ml-4 -translate-x-full'
       }`}
     >

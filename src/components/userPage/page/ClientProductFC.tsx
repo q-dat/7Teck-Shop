@@ -178,7 +178,7 @@ export default function ClientProductFC({ products, category, loading: externalL
             <button
               aria-label="Cuộn sang trái"
               onClick={() => scrollBy(-390)}
-              className={`absolute -left-2 top-1/2 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
+              className={`absolute -left-2 top-1/2 z-control -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
                 isLeftVisible ? '' : 'hidden'
               }`}
             >
@@ -187,7 +187,7 @@ export default function ClientProductFC({ products, category, loading: externalL
             <button
               aria-label="Cuộn sang phải"
               onClick={() => scrollBy(390)}
-              className={`absolute -right-2 top-1/2 z-[100] -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
+              className={`absolute -right-2 top-1/2 z-control -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
                 isRightVisible ? '' : 'hidden'
               }`}
             >
