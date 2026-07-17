@@ -17,6 +17,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: 'https://www.7teck.vn/sitemap.xml',
+    sitemap: ['https://www.7teck.vn/sitemap.xml', 'https://www.7teck.vn/news-sitemap.xml'],
   };
 }

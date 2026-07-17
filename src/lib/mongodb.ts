@@ -28,7 +28,6 @@ export async function connectDB(): Promise<Connection> {
     console.log('Đang kết nối đến MongoDB...');
     cached.promise = mongoose
       .connect(MONGO_URI, {
-        dbName: '',
         bufferCommands: false,
       })
       .then((mongooseInstance) => {

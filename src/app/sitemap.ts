@@ -1,74 +1,88 @@
 import { MetadataRoute } from 'next';
-import axios, { AxiosResponse } from 'axios';
+import { getServerApiUrl } from '../../hooks/useApiUrl';
+import { SITE_URL, postPath } from '@/app/(SEO)/lib/seo';
 
-interface Item {
-  _id: string;
-  slug?: string;
-  tablet_slug?: string;
-  macbook_slug?: string;
-  windows_slug?: string;
-  updatedAt?: string;
-  [key: string]: string | undefined;
-}
+// Sitemap chính: LẤY DỮ LIỆU QUA API NỘI BỘ (getServerApiUrl) — cùng cơ chế với
+// services của shop, KHÔNG gọi thẳng external BE. URL trong sitemap PHẢI khớp
+// chính xác canonical thực tế của từng loại trang (nếu lệch, Google index sai).
+export const revalidate = 3600;
 
-interface ApiResponse {
-  data?: Item[];
-  phones?: Item[];
-  tablets?: Item[];
-  macbook?: Item[];
-  windows?: Item[];
-  [key: string]: any;
-}
+type AnyItem = Record<string, unknown> & { _id?: string; updatedAt?: string };
 
-const domain = 'https://www.7teck.vn';
-
-const buildEntry = (url: string, lastModified: Date): MetadataRoute.Sitemap[number] => ({
-  url,
+const buildEntry = (
+  path: string,
+  lastModified: Date,
+  priority = 0.7,
+  changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] = 'daily'
+): MetadataRoute.Sitemap[number] => ({
+  url: `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`,
   lastModified,
-  changeFrequency: 'daily',
-  priority: 0.7,
+  changeFrequency,
+  priority,
 });
 
+async function fetchList(endpoint: string, dataField: string): Promise<AnyItem[]> {
+  try {
+    const res = await fetch(getServerApiUrl(endpoint), { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (Array.isArray(json)) return json as AnyItem[];
+    if (Array.isArray(json?.[dataField])) return json[dataField] as AnyItem[];
+    if (Array.isArray(json?.data)) return json.data as AnyItem[];
+    return [];
+  } catch (err) {
+    console.error(`sitemap: lỗi lấy ${endpoint}:`, (err as Error).message);
+    return [];
+  }
+}
+
+function lastMod(item: AnyItem): Date {
+  const raw = typeof item.updatedAt === 'string' ? item.updatedAt : undefined;
+  const d = raw ? new Date(raw) : new Date();
+  return Number.isNaN(d.getTime()) ? new Date() : d;
+}
+
 async function getDynamicPaths(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL as string;
   const paths: MetadataRoute.Sitemap = [];
 
-  const endpoints = [
-    { url: '/api/phones', slugField: 'slug', dataField: 'phones' },
-    { url: '/api/tablets', slugField: 'tablet_slug', dataField: 'tablets' },
-    { url: '/api/laptop-macbook', slugField: 'macbook_slug', dataField: 'macbook' },
-    { url: '/api/laptop-windows', slugField: 'windows_slug', dataField: 'windows' },
-    { url: '/api/posts', slugField: 'title', dataField: 'posts', prefix: 'tin-tuc' },
-  ];
+  const [phones, tablets, macbooks, windows, posts] = await Promise.all([
+    fetchList('/api/phones', 'phones'),
+    fetchList('/api/tablets', 'tablets'),
+    fetchList('/api/laptop-macbook', 'macbook'),
+    fetchList('/api/laptop-windows', 'windows'),
+    fetchList('/api/posts', 'posts'),
+  ]);
 
-  for (const ep of endpoints) {
-    try {
-      const res: AxiosResponse<ApiResponse> = await axios.get(`${baseUrl}${ep.url}`);
+  // PHONE — canonical là route rút gọn `/${slug}` (xem (product-detail)/[slug]/page.tsx)
+  for (const p of phones) {
+    const slug = p.slug as string | undefined;
+    if (slug) paths.push(buildEntry(`/${slug}`, lastMod(p), 0.8));
+  }
 
-      const data: Item[] = Array.isArray(res.data.data)
-        ? res.data.data
-        : Array.isArray(res.data[ep.dataField])
-          ? (res.data[ep.dataField] as Item[])
-          : [];
+  // TABLET — `/may-tinh-bang/${slug}/${id}`
+  for (const t of tablets) {
+    const slug = t.tablet_slug as string | undefined;
+    if (slug && t._id) paths.push(buildEntry(`/may-tinh-bang/${slug}/${t._id}`, lastMod(t), 0.8));
+  }
 
-      if (!data.length) continue;
+  // MACBOOK — `/macbook/${slug}/${id}`
+  for (const m of macbooks) {
+    const slug = m.macbook_slug as string | undefined;
+    if (slug && m._id) paths.push(buildEntry(`/macbook/${slug}/${m._id}`, lastMod(m), 0.8));
+  }
 
-      const segmentPaths = data
-        .map((item) => {
-          const slug = item[ep.slugField];
-          if (!slug) return null;
+  // WINDOWS — `/windows/${slug}/${id}`
+  for (const w of windows) {
+    const slug = w.windows_slug as string | undefined;
+    if (slug && w._id) paths.push(buildEntry(`/windows/${slug}/${w._id}`, lastMod(w), 0.8));
+  }
 
-          const lastModified = item.updatedAt ? new Date(item.updatedAt) : new Date();
-
-          const url = ep.prefix ? `${domain}/${ep.prefix}/${slug}` : `${domain}/${slug}`;
-
-          return buildEntry(url, lastModified);
-        })
-        .filter(Boolean) as MetadataRoute.Sitemap;
-
-      paths.push(...segmentPaths);
-    } catch (err) {
-      console.error(`Error fetching ${ep.url}:`, (err as Error).message);
+  // POST — `/tin-tuc/${slugify(title)}/${id}` (KHỚP link UI thực tế qua postPath)
+  for (const post of posts) {
+    const title = post.title as string | undefined;
+    if (title && post._id) {
+      // slugify được bọc trong postPath; đảm bảo có title + _id
+      paths.push(buildEntry(postPath({ _id: post._id as string, title }), lastMod(post), 0.6, 'daily'));
     }
   }
 
@@ -79,21 +93,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
-    '',
-    '/dien-thoai',
-    '/may-tinh-bang',
-    '/macbook',
-    '/windows',
-    '/bang-gia-thu-mua',
-    '/thanh-toan',
-    '/thu-thuat-va-meo-hay',
-    '/tin-tuc-moi-nhat',
-    '/thiet-bi-da-qua-su-dung',
-    '/chinh-sach-quyen-rieng-tu',
-    '/dieu-khoan-dich-vu',
-    '/chinh-sach-bao-hanh',
-    '/hanh-trinh-khach-hang',
-  ].map((path) => buildEntry(`${domain}${path}`, now));
+    { path: '', priority: 1.0 },
+    { path: '/dien-thoai', priority: 0.9 },
+    { path: '/may-tinh-bang', priority: 0.9 },
+    { path: '/macbook', priority: 0.9 },
+    { path: '/windows', priority: 0.9 },
+    { path: '/thiet-bi-da-qua-su-dung', priority: 0.7 },
+    { path: '/bang-gia-thu-mua', priority: 0.7 },
+    { path: '/tin-tuc-moi-nhat', priority: 0.8 },
+    { path: '/thu-thuat-va-meo-hay', priority: 0.7 },
+    { path: '/hanh-trinh-khach-hang', priority: 0.6 },
+    { path: '/thanh-toan', priority: 0.5 },
+    { path: '/chinh-sach-quyen-rieng-tu', priority: 0.3 },
+    { path: '/dieu-khoan-dich-vu', priority: 0.3 },
+    { path: '/chinh-sach-bao-hanh', priority: 0.3 },
+  ].map(({ path, priority }) => buildEntry(path, now, priority, 'weekly'));
 
   const dynamicPages = await getDynamicPaths();
 

@@ -1,15 +1,20 @@
 import { Metadata } from 'next';
 import { IPost } from '@/types/type/products/post/post';
+import { SITE_NAME, postUrl, toMetaDescription } from '@/app/(SEO)/lib/seo';
 
 export function buildPostDetailMetadata(post: IPost): Metadata {
+  const url = postUrl(post);
+  const description = toMetaDescription(post.content);
+  const title = `${post.title} | ${SITE_NAME}`;
+
   return {
-    title: post.title,
-    description: post.content.slice(0, 160),
+    title,
+    description,
     openGraph: {
       title: post.title,
-      description: post.content.slice(0, 160),
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/tin-tuc/${encodeURIComponent(post.title)}/${post._id}`,
-      siteName: '7teck.vn',
+      description,
+      url,
+      siteName: SITE_NAME,
       images: [
         {
           url: post.imageUrl,
@@ -25,12 +30,12 @@ export function buildPostDetailMetadata(post: IPost): Metadata {
     twitter: {
       card: 'summary_large_image',
       title: post.title,
-      description: post.content.slice(0, 160),
+      description,
       images: [post.imageUrl],
     },
     robots: 'index, follow',
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/tin-tuc/${encodeURIComponent(post.title)}/${post._id}`,
+      canonical: url,
     },
   };
 }

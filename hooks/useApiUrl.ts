@@ -3,7 +3,7 @@ export function getServerApiUrl(endpoint: string): string {
 
   if (typeof window !== 'undefined') {
     return normalizedEndpoint;
-  }
+  }   
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 

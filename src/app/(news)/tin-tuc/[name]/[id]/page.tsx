@@ -5,6 +5,7 @@ import ClientPostDetailPage from './ClientPostDetailPage';
 import ErrorLoading from '@/components/orther/error/ErrorLoading';
 import { IPost } from '@/types/type/products/post/post';
 import { buildPostDetailMetadata } from '@/app/(SEO)/metadata/id/postDetailMetadata';
+import { SITE_NAME, SITE_URL, postUrl, absoluteUrl, toMetaDescription } from '@/app/(SEO)/lib/seo';
 import { Metadata } from 'next';
 
 type RouteParams = {
@@ -63,36 +64,53 @@ export default async function PostDetail({ params }: { params: Promise<RoutePara
     return <ErrorLoading />;
   }
 
-  const jsonLd = {
+  const canonicalUrl = postUrl(post);
+
+  // NewsArticle: định dạng Google ưu tiên cho Tin tức (Google News / Top Stories).
+  const newsArticleJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: post.title,
+    '@type': 'NewsArticle',
+    headline: post.title.slice(0, 110), // Google giới hạn headline ~110 ký tự
     image: [post.imageUrl],
     datePublished: post.createdAt,
-    dateModified: post.updatedAt,
+    dateModified: post.updatedAt || post.createdAt,
     author: {
       '@type': 'Organization',
-      name: '7Teck',
+      name: SITE_NAME,
+      url: SITE_URL,
     },
     publisher: {
       '@type': 'Organization',
-      name: '7Teck',
+      name: SITE_NAME,
       logo: {
         '@type': 'ImageObject',
-        url: `${process.env.NEXT_PUBLIC_SITE_URL}/logo.png`,
+        url: absoluteUrl('/logo.png'),
       },
     },
-    description: post.content.slice(0, 160),
+    description: toMetaDescription(post.content),
+    articleSection: post.catalog,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `${process.env.NEXT_PUBLIC_SITE_URL}/tin-tuc/${encodeURIComponent(post.title)}/${post._id}`,
+      '@id': canonicalUrl,
     },
+  };
+
+  // BreadcrumbList: giúp Google hiển thị đường dẫn phân cấp trong kết quả tìm kiếm.
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Trang chủ', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Tin tức', item: absoluteUrl('/tin-tuc-moi-nhat') },
+      { '@type': 'ListItem', position: 3, name: post.title, item: canonicalUrl },
+    ],
   };
 
   return (
     <>
       {/* JSON-LD Structured Data */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(newsArticleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <ClientPostDetailPage relatedPosts={filteredRelated} post={post} catalogWithPosts={catalogWithPosts} />
     </>
   );
