@@ -1,7 +1,8 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import HeaderResponsive from '../../components/userPage/ui/HeaderResponsive';
-import { Textarea, Button } from 'react-daisyui';
+import Button from '@/components/ui/Button';
+import { Textarea } from '@/components/ui/Form';
 import { scrollToTopInstantly } from '../../utils/scrollToTop';
 import { Toastify } from '@/helper/Toastify';
 import Link from 'next/link';
@@ -162,7 +163,7 @@ export default function PurchasePage() {
             <section className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
               {/* TAB CHUYỂN ĐỔI LUỒNG NGHIỆP VỤ */}
               <div className="mb-6 flex gap-2 rounded-lg bg-neutral-100 p-1">
-                <button
+                <Button
                   type="button"
                   onClick={() => setTransactionMode('order')}
                   className={`flex-1 rounded-md py-2.5 text-sm font-bold uppercase tracking-wider transition-all ${
@@ -170,8 +171,8 @@ export default function PurchasePage() {
                   }`}
                 >
                   Giao hàng tận nơi
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setTransactionMode('schedule')}
                   className={`flex-1 rounded-md py-2.5 text-sm font-bold uppercase tracking-wider transition-all ${
@@ -179,7 +180,7 @@ export default function PurchasePage() {
                   }`}
                 >
                   Đặt lịch xem máy
-                </button>
+                </Button>
               </div>
 
               <div className="mb-4">
@@ -358,7 +359,7 @@ export default function PurchasePage() {
 
               <div className="mb-2 flex gap-2 rounded-lg bg-neutral-100 p-1">
                 {(['zalo', 'messenger'] as const).map((tab) => (
-                  <button
+                  <Button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`flex-1 rounded-md py-2 text-xs font-bold uppercase tracking-wider transition-all ${
@@ -366,7 +367,7 @@ export default function PurchasePage() {
                     }`}
                   >
                     {tab}
-                  </button>
+                  </Button>
                 ))}
               </div>
 

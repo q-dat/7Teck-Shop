@@ -7,7 +7,7 @@ import Pagination from '@/components/userPage/Pagination';
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Button } from 'react-daisyui';
+import Button from '@/components/ui/Button';
 import imageRepresent from '../../../../../public/image-represent';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
 import { IconType } from 'react-icons';
@@ -187,7 +187,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
             <div className="hidden h-5 w-[1px] bg-black/10 md:block"></div>
 
             {/* Nút Tất cả */}
-            <button
+            <Button variant="unstyled"
               className={`flex h-8 items-center gap-1.5 rounded-[4px] border px-3 text-[11px] font-semibold uppercase tracking-wide shadow-sm transition-all ${
                 selectedBrand === null
                   ? 'border-primary bg-primary text-white'
@@ -197,11 +197,11 @@ export default function ClientProductPage({ products, title, basePath, brands = 
             >
               <FaThLarge size={12} />
               Tất cả
-            </button>
+            </Button>
 
             {/* Danh sách Brands */}
             {brands.map((brand) => (
-              <button
+              <Button
                 key={brand.name}
                 className={`flex h-8 items-center gap-1.5 rounded-[4px] border px-3 text-[11px] font-semibold uppercase tracking-wide shadow-sm transition-all ${
                   selectedBrand === brand.name
@@ -212,7 +212,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
               >
                 {brand.icon && <span className="text-[12px]">{brand.icon}</span>}
                 {brand.name}
-              </button>
+              </Button>
             ))}
 
             {/* Title & Slogan (Đẩy sát về lề phải trên Desktop) */}
@@ -360,7 +360,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                         <div className="mt-2 flex min-h-[20px] flex-wrap gap-1">
                           {Array.isArray(product.variants) &&
                             product.variants.map((v) => (
-                              <button
+                              <Button
                                 key={v._id}
                                 onClick={() => handleVariantClick(product._id, v)}
                                 className={`h-5 min-w-[24px] rounded-[2px] border px-1 text-[9px] font-medium transition-all ${
@@ -370,7 +370,7 @@ export default function ClientProductPage({ products, title, basePath, brands = 
                                 }`}
                               >
                                 {v.color}
-                              </button>
+                              </Button>
                             ))}
                         </div>
 

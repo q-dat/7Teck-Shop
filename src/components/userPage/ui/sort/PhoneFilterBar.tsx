@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type React from "react";
+import Button from '@/components/ui/Button';
 import { FaSortAmountDown, FaMemory, FaHdd, FaPalette, FaFilter, FaUndo, FaMoneyBill } from 'react-icons/fa';
 import { PhoneFilterParams } from '@/types/type/products/phone/phone';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -58,16 +60,16 @@ export default function PhoneFilterBar({
 
   return (
     <div className="relative flex items-center gap-2 text-black">
-      <button
+      <Button variant="unstyled"
         onClick={handleSortToggle}
         className="flex h-8 items-center gap-1.5 rounded-[4px] border border-black/10 bg-white px-3 text-[11px] font-semibold tracking-wide text-black/70 shadow-sm transition-all hover:border-primary/40 hover:text-primary"
       >
         <FaSortAmountDown size={12} />
         {activeFilters.sort === 'price_asc' ? 'GIÁ TĂNG DẦN' : activeFilters.sort === 'price_desc' ? 'GIÁ GIẢM DẦN' : 'MỚI NHẤT'}
-      </button>
+      </Button>
 
       <div className="relative">
-        <button
+        <Button variant="unstyled"
           onClick={() => setOpen((prev) => !prev)}
           className={`flex h-8 items-center gap-1.5 rounded-[4px] border px-3 text-[11px] font-semibold tracking-wide shadow-sm transition-all ${
             open ? 'border-primary bg-primary/5 text-primary' : 'border-black/10 bg-white text-black/70 hover:border-primary/40 hover:text-primary'
@@ -75,7 +77,7 @@ export default function PhoneFilterBar({
         >
           <FaFilter size={12} />
           BỘ LỌC
-        </button>
+        </Button>
 
         <AnimatePresence>
           {open && (
@@ -96,7 +98,7 @@ export default function PhoneFilterBar({
                   placeholder="Nhập màu cần tìm..."
                   list="color-options"
                   value={filters.color}
-                  onChange={(e) => setFilters((p) => ({ ...p, color: e.target.value }))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters((p) => ({ ...p, color: e.target.value }))}
                   className="w-full rounded-[4px] border border-black/10 bg-black/5 px-3 py-1.5 text-xs font-medium text-black/90 outline-none transition-all focus:border-primary/50 focus:bg-white focus:ring-2 focus:ring-primary/10"
                 />
                 <datalist id="color-options">
@@ -113,7 +115,7 @@ export default function PhoneFilterBar({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {RAM_OPTIONS.map((ram) => (
-                    <button
+                    <Button
                       key={ram}
                       onClick={() => setFilters((p) => ({ ...p, ram: p.ram === ram ? '' : ram }))}
                       className={`min-w-[40px] rounded-[3px] border px-2 py-1 text-[11px] font-medium transition-all ${
@@ -123,7 +125,7 @@ export default function PhoneFilterBar({
                       }`}
                     >
                       {ram}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -135,7 +137,7 @@ export default function PhoneFilterBar({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {STORAGE_OPTIONS.map((s) => (
-                    <button
+                    <Button
                       key={s}
                       onClick={() => setFilters((p) => ({ ...p, storage: p.storage === s ? '' : s }))}
                       className={`min-w-[48px] rounded-[3px] border px-2 py-1 text-[11px] font-medium transition-all ${
@@ -145,7 +147,7 @@ export default function PhoneFilterBar({
                       }`}
                     >
                       {s}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -167,7 +169,7 @@ export default function PhoneFilterBar({
                     max={PRICE_MAX_QUERY}
                     step={500}
                     value={min}
-                    onChange={(e) => setFilters((p) => ({ ...p, minPrice: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters((p) => ({ ...p, minPrice: e.target.value }))}
                     className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-black/10 accent-primary outline-none"
                   />
                   <input
@@ -176,26 +178,26 @@ export default function PhoneFilterBar({
                     max={PRICE_MAX_QUERY}
                     step={500}
                     value={max}
-                    onChange={(e) => setFilters((p) => ({ ...p, maxPrice: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters((p) => ({ ...p, maxPrice: e.target.value }))}
                     className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-black/10 accent-primary outline-none"
                   />
                 </div>
               </div>
 
               <div className="flex items-center gap-2 border-t border-black/5 pt-2">
-                <button
+                <Button variant="unstyled"
                   onClick={handleReset}
                   title="Đặt lại"
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] bg-black/5 text-black/50 transition-colors hover:bg-primary/10 hover:text-primary"
                 >
                   <FaUndo size={12} />
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={handleApply}
                   className="h-8 w-full rounded-[4px] bg-primary text-[11px] font-bold uppercase tracking-wide text-white shadow-sm transition-all hover:bg-primary/90 hover:shadow-md"
                 >
                   Áp dụng bộ lọc
-                </button>
+                </Button>
               </div>
             </motion.div>
           )}

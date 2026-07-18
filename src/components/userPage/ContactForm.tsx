@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import Button from '@/components/ui/Button';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaFacebookMessenger, FaCommentDots } from 'react-icons/fa';
@@ -28,13 +29,13 @@ const ContactForm: React.FC = () => {
               ))}
             </span>
             {/* Nút mở liên hệ nhanh */}
-            <button
+            <Button variant="unstyled"
               onClick={() => setCollapsed(false)}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg"
               aria-label="Mở liên hệ nhanh"
             >
               <FaCommentDots className="h-6 w-6" />
-            </button>
+            </Button>
             {/* WaveText */}
             <style jsx>{`
               @keyframes wave {
@@ -63,7 +64,7 @@ const ContactForm: React.FC = () => {
         ) : (
           <div className="flex flex-col items-end gap-2" onClick={() => setCollapsed(true)}>
             {/* ChatBot: không đóng khi click */}
-            <div onClick={(e) => e.stopPropagation()}>
+            <div onClick={(e: React.MouseEvent<HTMLElement>) => e.stopPropagation()}>
               <ChatBot />
             </div>
 
@@ -73,7 +74,7 @@ const ContactForm: React.FC = () => {
               target="_blank"
               href={messengerUrl}
               aria-label="Liên hệ qua Messenger"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e: React.MouseEvent<HTMLElement>) => e.stopPropagation()}
             >
               <div className="flex h-[45px] w-[45px] items-center justify-center rounded-full bg-gradient-to-tl from-[#1f6bf6] via-white to-transparent shadow-md xl:h-[50px] xl:w-[50px]">
                 <FaFacebookMessenger className="text-[35px] text-[#1f6bf6] xl:text-[40px]" />
@@ -81,7 +82,7 @@ const ContactForm: React.FC = () => {
             </Link>
 
             {/* Zalo: đóng khi click */}
-            <Link title="Liên hệ qua Zalo" target="_blank" href={zaloUrl} aria-label="Liên hệ qua Zalo" onClick={(e) => e.stopPropagation()}>
+            <Link title="Liên hệ qua Zalo" target="_blank" href={zaloUrl} aria-label="Liên hệ qua Zalo" onClick={(e: React.MouseEvent<HTMLElement>) => e.stopPropagation()}>
               <Image
                 width={45}
                 height={45}
@@ -93,9 +94,9 @@ const ContactForm: React.FC = () => {
 
             {/* Nút thu gọn */}
             <div className="fixed bottom-24 left-1/2 z-modal -translate-x-1/2">
-              <button className="rounded-full border border-white bg-black/60 p-1 shadow-xl" onClick={() => setCollapsed(true)}>
+              <Button variant="unstyled" className="rounded-full border border-white bg-black/60 p-1 shadow-xl" onClick={() => setCollapsed(true)}>
                 <IoCloseSharp className="text-4xl text-white" />
-              </button>
+              </Button>
             </div>
           </div>
         )}

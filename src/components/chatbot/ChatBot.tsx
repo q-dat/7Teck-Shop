@@ -1,5 +1,7 @@
 'use client';
 import { useState } from 'react';
+import type React from "react";
+import Button from '@/components/ui/Button';
 import { images } from '../../../public/images';
 import Image from 'next/image';
 
@@ -108,16 +110,16 @@ export default function ChatBot() {
             <input
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
               readOnly
               // placeholder="Nhập tin nhắn..."
               placeholder="Tính năng đang được phát triển."
               className="flex-1 p-2 text-sm outline-none"
             />
-            <button onClick={sendMessage} className="bg-primary px-3 text-sm text-white" disabled={loading}>
+            <Button onClick={sendMessage} className="bg-primary px-3 text-sm text-white" disabled={loading}>
               Gửi
-            </button>
+            </Button>
           </div>
           <div className="w-full text-center">
             <span className="px-4 text-[10px] text-gray-700">Thông tin chỉ mang tính tham khảo, được tư vấn bởi Trí Tuệ Nhân Tạo</span>

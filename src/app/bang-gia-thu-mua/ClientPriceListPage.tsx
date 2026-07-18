@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Button from '@/components/ui/Button';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiPhoneCall, FiZap, FiShield, FiArrowRight, FiCheckCircle, FiTrendingUp, FiRepeat, FiMonitor, FiSmartphone, FiTablet } from 'react-icons/fi';
@@ -147,7 +148,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                     {/* TABS - Custom Pill Design */}
                     <div className="flex flex-wrap gap-2">
                       {tabs.map((catalog) => (
-                        <button
+                        <Button
                           key={catalog}
                           onClick={() => setActiveTabs({ ...activeTabs, [categoryType]: catalog })}
                           className={`rounded-full px-6 py-2 text-[11px] font-bold uppercase tracking-widest transition-all ${
@@ -157,7 +158,7 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
                           }`}
                         >
                           {catalog}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
@@ -267,9 +268,9 @@ export default function ClientPriceListPage({ priceLists }: { priceLists: IPrice
 
       {/* 3. STICKY MOBILE CTA */}
       <div className="fixed bottom-4 left-4 right-4 z-50 sm:hidden">
-        <button className="flex w-full items-center justify-center gap-3 rounded-2xl bg-neutral-900 py-4 text-sm font-black uppercase tracking-[0.2em] text-white shadow-2xl">
+        <Button variant="unstyled" className="flex w-full items-center justify-center gap-3 rounded-2xl bg-neutral-900 py-4 text-sm font-black uppercase tracking-[0.2em] text-white shadow-2xl">
           <FiPhoneCall /> ĐẶT LỊCH THU MUA NGAY
-        </button>
+        </Button>
       </div>
     </div>
   );

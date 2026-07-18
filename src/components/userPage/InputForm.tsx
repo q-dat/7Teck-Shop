@@ -1,6 +1,6 @@
 'use client';
 import React, { ReactNode } from 'react';
-import { Input } from 'react-daisyui';
+import { Input } from '@/components/ui/Form';
 
 interface InputFormProps {
   id?: string | number;

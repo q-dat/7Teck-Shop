@@ -1,5 +1,7 @@
 'use client';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import type React from "react";
+import Button from '@/components/ui/Button';
 import Link from 'next/link';
 import { MdOutlineDoubleArrow } from 'react-icons/md';
 
@@ -39,19 +41,19 @@ const CategoryMenuComponent = ({ categories, isOpen, toggleMenu, selectedCategor
       <div className="flex h-full cursor-pointer flex-row items-center justify-center gap-1">
         <nav className="flex w-full flex-col items-start justify-center gap-2">
           {categories.map(({ id, label }) => (
-            <button
+            <Button
               key={id}
               type="button"
               className={`w-full rounded-sm border border-primary bg-primary px-1 py-2 text-start text-sm hover:scale-105 hover:outline hover:outline-offset-1 hover:outline-primary ${
                 selectedCategory === id ? 'bg-white text-primary' : 'text-white'
               }`}
-              onClick={(event) => {
+              onClick={(event: React.MouseEvent<HTMLElement>) => {
                 event.stopPropagation();
                 scrollToSection(id);
               }}
             >
               {label}
-            </button>
+            </Button>
           ))}
         </nav>
 

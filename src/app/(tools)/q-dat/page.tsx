@@ -9,7 +9,10 @@ import {
     type DragEvent,
     type ClipboardEvent,
 } from "react";
-import { Button, Input, Progress } from "react-daisyui";
+import type React from "react";
+import Button from '@/components/ui/Button';
+import { Input } from '@/components/ui/Form';
+import { Progress } from 'react-daisyui';
 import { toast, ToastContainer, type ToastOptions } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -1116,7 +1119,7 @@ export default function MediaBackupPage() {
                                     <Input
                                         autoFocus
                                         value={password}
-                                        onChange={(event) => setPassword(event.target.value)}
+                                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
                                         type="password"
                                         inputMode="numeric"
                                         pattern="[0-9]*"
@@ -1128,7 +1131,7 @@ export default function MediaBackupPage() {
                                     <span className="text-xs font-medium text-slate-300">Nhập lại mật khẩu</span>
                                     <Input
                                         value={confirmPassword}
-                                        onChange={(event) => setConfirmPassword(event.target.value)}
+                                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(event.target.value)}
                                         type="password"
                                         inputMode="numeric"
                                         pattern="[0-9]*"
@@ -1157,13 +1160,13 @@ export default function MediaBackupPage() {
                                 className="hidden"
                                 type="file"
                                 accept=".7tbk,application/octet-stream"
-                                onChange={(event) => void handleBackupInput(event)}
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => void handleBackupInput(event)}
                             />
                             <label className="mt-3 block">
                                 <span className="text-xs font-medium text-slate-300">Mật khẩu giải mã</span>
                                 <Input
                                     value={restorePassword}
-                                    onChange={(event) => setRestorePassword(event.target.value)}
+                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setRestorePassword(event.target.value)}
                                     type="password"
                                     inputMode="numeric"
                                     pattern="[0-9]*"
@@ -1175,7 +1178,7 @@ export default function MediaBackupPage() {
                                 <span className="text-xs font-medium text-slate-300">Tên thư mục khôi phục sẽ tạo</span>
                                 <Input
                                     value={restoreFolderName}
-                                    onChange={(event) => setRestoreFolderName(event.target.value)}
+                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setRestoreFolderName(event.target.value)}
                                     type="text"
                                     className="mt-1 w-full bg-slate-900 text-white"
                                     placeholder="7teck-restore"

@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import Button from '@/components/ui/Button';
 import { IoArrowUpCircleSharp } from 'react-icons/io5';
 
 const ScrollToTopButton = () => {
@@ -23,7 +24,7 @@ const ScrollToTopButton = () => {
   };
 
   return (
-    <button
+    <Button variant="unstyled"
       aria-label="Cuộn lên trên cùng"
       onClick={scrollToTop}
       className={`rounded-xs fixed bottom-[58px] left-1 z-header-mobile transform rounded-md border border-white bg-primary p-2 shadow-md transition-transform xl:bottom-5 xl:left-2 xl:hover:bg-primary xl:hover:bg-opacity-50 ${
@@ -31,7 +32,7 @@ const ScrollToTopButton = () => {
       }`}
     >
       <IoArrowUpCircleSharp className="text-2xl text-white" />
-    </button>
+    </Button>
   );
 };
 

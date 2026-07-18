@@ -1,6 +1,7 @@
 'use client';
 
 import { LoadingLocal } from '@/components/orther/loading';
+import Button from '@/components/ui/Button';
 import HeaderResponsive from '@/components/userPage/ui/HeaderResponsive';
 import { handleProductShare } from '@/helper/handleShare';
 import { useImageErrorHandler } from '@/hooks/useImageErrorHandler';
@@ -423,7 +424,7 @@ function ProductGallery({
                   const isActive = selectedImageIndex === index;
 
                   return (
-                    <button
+                    <Button variant="unstyled"
                       type="button"
                       key={`${image}-${index}`}
                       onClick={() => setSelectedImageIndex(index)}
@@ -441,7 +442,7 @@ function ProductGallery({
                       />
 
                       {isActive && <span className="absolute inset-x-2 bottom-1 h-[2px] rounded-full bg-secondary" />}
-                    </button>
+                    </Button>
                   );
                 })
               ) : (
@@ -453,21 +454,21 @@ function ProductGallery({
 
             {hasMultipleImages && (
               <div className="mt-2 hidden grid-cols-2 gap-1 xl:grid">
-                <button
+                <Button variant="unstyled"
                   type="button"
                   onClick={() => scrollThumbnails('left')}
                   className="flex h-8 items-center justify-center rounded-md border border-slate-200 bg-[#f5f5f7] text-slate-700 transition-colors hover:border-secondary/50 hover:text-secondary"
                 >
                   <MdKeyboardArrowLeft size={20} />
-                </button>
+                </Button>
 
-                <button
+                <Button variant="unstyled"
                   type="button"
                   onClick={() => scrollThumbnails('right')}
                   className="flex h-8 items-center justify-center rounded-md border border-slate-200 bg-[#f5f5f7] text-slate-700 transition-colors hover:border-secondary/50 hover:text-secondary"
                 >
                   <MdKeyboardArrowRight size={20} />
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -511,27 +512,27 @@ function ProductGallery({
 
             {hasMultipleImages && (
               <>
-                <button
+                <Button variant="unstyled"
                   type="button"
-                  onClick={(event) => {
+                  onClick={(event: React.MouseEvent<HTMLElement>) => {
                     event.stopPropagation();
                     goPrev();
                   }}
                   className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-white/95 text-slate-800 shadow-sm backdrop-blur transition-colors hover:border-secondary/50 hover:text-secondary"
                 >
                   <MdKeyboardArrowLeft size={24} />
-                </button>
+                </Button>
 
-                <button
+                <Button variant="unstyled"
                   type="button"
-                  onClick={(event) => {
+                  onClick={(event: React.MouseEvent<HTMLElement>) => {
                     event.stopPropagation();
                     goNext();
                   }}
                   className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md border border-slate-200 bg-white/95 text-slate-800 shadow-sm backdrop-blur transition-colors hover:border-secondary/50 hover:text-secondary"
                 >
                   <MdKeyboardArrowRight size={24} />
-                </button>
+                </Button>
               </>
             )}
 
@@ -665,39 +666,39 @@ function ProductAlbumModal({
                     {imageCount > 0 ? selectedImageIndex + 1 : 0}/{imageCount}
                   </span>
 
-                  <button
+                  <Button
                     type="button"
                     onClick={rotateLeft}
                     className="flex h-9 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 px-3 text-xs font-bold text-white transition-colors hover:bg-white/10"
                   >
                     Xoay trái
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     type="button"
                     onClick={rotateRight}
                     className="flex h-9 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 px-3 text-xs font-bold text-white transition-colors hover:bg-white/10"
                   >
                     Xoay phải
-                  </button>
+                  </Button>
 
                   {rotateDeg !== 0 && (
-                    <button
+                    <Button
                       type="button"
                       onClick={resetRotate}
                       className="flex h-9 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 px-3 text-xs font-bold text-white/80 transition-colors hover:bg-white/10"
                     >
                       Reset
-                    </button>
+                    </Button>
                   )}
 
-                  <button
+                  <Button variant="unstyled"
                     type="button"
                     onClick={closeAlbum}
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 text-white transition-colors hover:bg-white/10"
                   >
                     <MdClose size={22} />
-                  </button>
+                  </Button>
                 </div>
               </div>
             </header>
@@ -717,21 +718,21 @@ function ProductAlbumModal({
 
               {hasMultipleImages && (
                 <>
-                  <button
+                  <Button variant="unstyled"
                     type="button"
                     onClick={goPrev}
                     className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-md border border-white/10 bg-white text-primary backdrop-blur transition-colors hover:bg-primary hover:text-white xl:left-4"
                   >
                     <MdKeyboardArrowLeft size={30} />
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button variant="unstyled"
                     type="button"
                     onClick={goNext}
                     className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-md border border-white/10 bg-white text-primary backdrop-blur transition-colors hover:bg-primary hover:text-white xl:right-4"
                   >
                     <MdKeyboardArrowRight size={30} />
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
@@ -743,7 +744,7 @@ function ProductAlbumModal({
                     const isActive = selectedImageIndex === index;
 
                     return (
-                      <button
+                      <Button variant="unstyled"
                         type="button"
                         key={`${image}-${index}`}
                         onClick={() => setSelectedImageIndex(index)}
@@ -758,7 +759,7 @@ function ProductAlbumModal({
                           height={96}
                           className="max-h-full max-w-full rounded-md object-cover p-1"
                         />
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -849,7 +850,7 @@ function ProductBuyBox({
           </div>
 
           <div className="grid grid-cols-1 gap-2">
-            <button
+            <Button
               type="button"
               disabled={isExcluded}
               onClick={handleBuyNow}
@@ -858,7 +859,7 @@ function ProductBuyBox({
               }`}
             >
               {isExcluded ? 'Tạm hết hàng' : 'Mua ngay'}
-            </button>
+            </Button>
 
             <Link
               href={hotlineUrl}
@@ -876,14 +877,14 @@ function ProductBuyBox({
             ))}
           </div>
 
-          <button
+          <Button variant="unstyled"
             type="button"
             onClick={() => handleProductShare(product.slug)}
             className="flex items-center gap-1.5 text-xs font-bold text-secondary transition-opacity hover:opacity-80"
           >
             <FaFacebookSquare size={15} />
             Chia sẻ sản phẩm
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -1079,7 +1080,7 @@ function MobileBottomCTA({ isExcluded, handleBuyNow }: { isExcluded: boolean; ha
           Gọi/Zalo
         </Link>
 
-        <button
+        <Button
           type="button"
           disabled={isExcluded}
           onClick={handleBuyNow}
@@ -1088,7 +1089,7 @@ function MobileBottomCTA({ isExcluded, handleBuyNow }: { isExcluded: boolean; ha
           }`}
         >
           {isExcluded ? 'Tạm hết hàng' : 'Mua ngay'}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 'use client';
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input, Kbd, Menu } from 'react-daisyui';
+import Button from '@/components/ui/Button';
+import { Input } from '@/components/ui/Form';
+import { Kbd, Menu } from 'react-daisyui';
 import { FaChevronDown } from 'react-icons/fa';
 import { RiArrowLeftRightFill } from 'react-icons/ri';
 import { IoCloseSharp, IoLogoFacebook, IoSearch } from 'react-icons/io5';
@@ -241,7 +243,7 @@ const Header: React.FC = () => {
               <p className="mb-2 text-sm font-semibold text-primary">Từ khóa phổ biến</p>
               <div className="flex flex-wrap gap-2">
                 {suggestions.map((text, index) => (
-                  <button
+                  <Button
                     key={index}
                     onClick={() => {
                       setQuery(text);
@@ -250,7 +252,7 @@ const Header: React.FC = () => {
                     className="rounded-full border border-gray-200 bg-[#f3f3f3] px-3 py-1 text-xs text-gray-600 hover:border-primary hover:bg-primary hover:text-white"
                   >
                     {text}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -325,9 +327,9 @@ const Header: React.FC = () => {
                   }}
                 />
                 <div className="fixed bottom-24 left-1/2 z-header -translate-x-1/2">
-                  <button className="rounded-full border border-white bg-black/60 p-1 shadow-xl" onClick={handleSearchClose}>
+                  <Button variant="unstyled" className="rounded-full border border-white bg-black/60 p-1 shadow-xl" onClick={handleSearchClose}>
                     <IoCloseSharp className="text-4xl text-white" />
-                  </button>
+                  </Button>
                 </div>
               </>,
               document.body

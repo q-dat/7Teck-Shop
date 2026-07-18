@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Button from '@/components/ui/Button';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RiScrollToBottomLine } from 'react-icons/ri';
@@ -216,13 +217,13 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                             <span className="text-[17px] font-extrabold text-yellow-400 drop-shadow-sm">{formatCurrency(phone?.price)}</span>
                           </div>
 
-                          <button
+                          <Button variant="unstyled"
                             onClick={() => handleAddToCart(phone)}
                             className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary text-white shadow-md transition-all duration-300 hover:scale-110 hover:bg-primary-lighter hover:text-primary hover:shadow-[0_0_10px_rgba(0,180,216,0.6)]"
                             aria-label="Thêm vào giỏ hàng"
                           >
                             <FaCartPlus className="text-sm" />
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -234,7 +235,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
             {/* Navigation Button */}
             {!loading && mostViewedPhones.length > 0 && (hasOverflow || mostViewedPhones.length > 12) && (
               <div className="pointer-events-none absolute inset-y-0 -left-3 -right-3 flex items-center justify-between">
-                <button
+                <Button variant="unstyled"
                   aria-label="Cuộn sang trái"
                   onClick={() => scrollBy(-450)}
                   className={`pointer-events-auto z-10 flex h-8 w-8 items-center justify-center rounded-sm border border-white/20 bg-slate-900/80 text-white shadow-lg backdrop-blur-md transition-all duration-200 hover:scale-110 hover:border-cyan-400 hover:bg-slate-800 ${
@@ -242,8 +243,8 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                   }`}
                 >
                   <MdArrowBackIosNew className="text-sm" />
-                </button>
-                <button
+                </Button>
+                <Button variant="unstyled"
                   aria-label="Cuộn sang phải"
                   onClick={() => scrollBy(450)}
                   className={`pointer-events-auto z-10 flex h-8 w-8 items-center justify-center rounded-sm border border-white/20 bg-slate-900/80 text-white shadow-lg backdrop-blur-md transition-all duration-200 hover:scale-110 hover:border-cyan-400 hover:bg-slate-800 ${
@@ -251,7 +252,7 @@ export default function BannerDesktop({ mostViewedPhones, loading }: Props) {
                   }`}
                 >
                   <MdArrowForwardIos className="text-sm" />
-                </button>
+                </Button>
               </div>
             )}
           </div>

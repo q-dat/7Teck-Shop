@@ -1,5 +1,6 @@
 'use client';
 import { IPostCatalog } from '@/types/type/catalogs/post-catalog/post-catalog';
+import Button from '@/components/ui/Button';
 import { IPost } from '@/types/type/products/post/post';
 import Image from 'next/image';
 
@@ -26,7 +27,7 @@ export default function CatalogSidebar({ catalogWithPosts = [], onSelectPost }: 
             ) : (
               <div className="flex flex-col gap-3">
                 {item.posts.map((p) => (
-                  <button
+                  <Button variant="unstyled"
                     key={p._id}
                     onClick={() => onSelectPost(p)}
                     className="group flex w-full gap-3 text-left transition-colors hover:text-primary"
@@ -49,7 +50,7 @@ export default function CatalogSidebar({ catalogWithPosts = [], onSelectPost }: 
                         {p.title}
                       </p>
                     </div>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}

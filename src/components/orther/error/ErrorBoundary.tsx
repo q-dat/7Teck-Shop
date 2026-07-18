@@ -1,5 +1,6 @@
 'use client';
 import React, { Component } from 'react';
+import Button from '@/components/ui/Button';
 import { ErrorBoundaryProps, ErrorBoundaryState } from '../../../types/type/error/error';
 
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -26,12 +27,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
               <p className="break-words font-mono text-red-500">{this.state.error?.toString()}</p>
               <pre className="mt-4 whitespace-pre-wrap">{this.state.errorInfo?.componentStack}</pre>
             </div>
-            <button
+            <Button
               className="rounded-md bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700"
               onClick={() => window.location.reload()}
             >
               Thua luôn, hết cứu!!!
-            </button>
+            </Button>
           </div>
         </div>
       );

@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Button } from 'react-daisyui';
+import Button from '@/components/ui/Button';
 import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
 import { scrollToTopInstantly } from '@/utils/scrollToTop';
 
@@ -23,7 +23,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
     <div className="sticky bottom-[50px] z-50 w-full rounded-md border-t border-black/10 pb-2 pt-1 backdrop-blur-sm xl:bottom-0">
       <div className="flex flex-row items-center justify-center gap-x-6 px-2 text-black xl:gap-x-12">
         {/* --- Nút Trang Trước (Prev Page) --- */}
-        <Button
+        <Button variant="unstyled"
           className={`${buttonClass} ${currentPage === 1 ? disabledClass : ''}`}
           size="xs"
           disabled={currentPage === 1}
@@ -46,7 +46,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onNext
         </div>
 
         {/* --- Nút Trang Tiếp (Next Page) --- */}
-        <Button
+        <Button variant="unstyled"
           className={`${buttonClass} ${currentPage === totalPages ? disabledClass : ''}`}
           size="xs"
           disabled={currentPage === totalPages}

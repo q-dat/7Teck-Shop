@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Button } from 'react-daisyui';
+import Button from '@/components/ui/Button';
 import { IoIosArrowForward } from 'react-icons/io';
 import { FaRegNewspaper } from 'react-icons/fa';
 import { slugify } from '@/utils/slugify';
@@ -102,7 +102,7 @@ export default function ClientPostSection({ news, tricks }: ClientPostSectionPro
                   <p className="text-2xl font-light text-white">Bản tin công nghệ mới</p>
                 </div>
                 <Link href={urlNews}>
-                  <Button
+                  <Button variant="unstyled"
                     size="sm"
                     className="group rounded-none border-white/30 bg-transparent text-xs font-bold uppercase tracking-widest text-white hover:bg-white hover:text-neutral-900"
                   >
@@ -128,7 +128,7 @@ export default function ClientPostSection({ news, tricks }: ClientPostSectionPro
                   <p className="text-2xl font-light text-white">Thủ thuật & Mẹo hay</p>
                 </div>
                 <Link href={urlTipsAndTricksPage}>
-                  <Button
+                  <Button variant="unstyled"
                     size="sm"
                     className="group rounded-none border-white/30 bg-transparent text-xs font-bold uppercase tracking-widest text-white hover:bg-white hover:text-neutral-900"
                   >

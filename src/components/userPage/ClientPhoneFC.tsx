@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Button } from 'react-daisyui';
+import Button from '@/components/ui/Button';
 import { FaMicrochip, FaRegEye } from 'react-icons/fa';
 import { IoIosArrowForward } from 'react-icons/io';
 import { MdArrowBackIosNew, MdArrowForwardIos, MdMemory, MdMonitor, MdSdStorage } from 'react-icons/md';
@@ -218,7 +218,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
           {!loading && mostViewedPhones.length > 0 && (hasOverflow || mostViewedPhones.length > 12) && (
             <div className="absolute top-1/2 flex w-full items-center justify-between">
               <div className="relative w-full">
-                <button
+                <Button variant="unstyled"
                   aria-label="Cuộn sang trái"
                   onClick={() => scrollBy(-390)}
                   className={`absolute left-0 z-control -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
@@ -226,8 +226,8 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                   }`}
                 >
                   <MdArrowBackIosNew className="text-2xl" />
-                </button>
-                <button
+                </Button>
+                <Button variant="unstyled"
                   aria-label="Cuộn sang phải"
                   onClick={() => scrollBy(390)}
                   className={`absolute right-0 z-control -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
@@ -235,7 +235,7 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
                   }`}
                 >
                   <MdArrowForwardIos className="text-2xl" />
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -245,10 +245,10 @@ export default function ClientPhoneFC({ mostViewedPhones, loading }: ClientPhone
       {/* See more */}
       {!loading && mostViewedPhones.length > 0 && (
         <Link href="/dien-thoai" aria-label="Xem thêm sản phẩm điện thoại">
-          <button className="flex w-full cursor-pointer items-center justify-center bg-gradient-to-r from-white via-secondary to-white py-1 text-sm text-white xl:rounded-b-lg">
+          <Button variant="unstyled" className="flex w-full cursor-pointer items-center justify-center bg-gradient-to-r from-white via-secondary to-white py-1 text-sm text-white xl:rounded-b-lg">
             Xem Thêm
             <IoIosArrowForward className="text-xl" />
-          </button>
+          </Button>
         </Link>
       )}
     </div>

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Button } from 'react-daisyui';
+import Button from '@/components/ui/Button';
 import { MdArrowBackIosNew, MdArrowForwardIos } from 'react-icons/md';
 import { FaArrowRight } from 'react-icons/fa';
 import { useScroll } from '@/hooks/useScroll';
@@ -176,7 +176,7 @@ export default function ClientProductFC({ products, category, loading: externalL
       <div className="relative w-full">
         {hasOverflow && (
           <div className="">
-            <button
+            <Button variant="unstyled"
               aria-label="Cuộn sang trái"
               onClick={() => scrollBy(-390)}
               className={`absolute -left-2 top-1/2 z-control -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
@@ -184,8 +184,8 @@ export default function ClientProductFC({ products, category, loading: externalL
               }`}
             >
               <MdArrowBackIosNew className="text-2xl" />
-            </button>
-            <button
+            </Button>
+            <Button variant="unstyled"
               aria-label="Cuộn sang phải"
               onClick={() => scrollBy(390)}
               className={`absolute -right-2 top-1/2 z-control -translate-y-1/2 rounded-full border border-gray-400 bg-white p-2 text-black shadow transition-transform duration-200 hover:scale-110 ${
@@ -193,7 +193,7 @@ export default function ClientProductFC({ products, category, loading: externalL
               }`}
             >
               <MdArrowForwardIos className="text-2xl" />
-            </button>
+            </Button>
           </div>
         )}
         <div ref={scrollRef} className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-10 pt-2 scrollbar-hide">

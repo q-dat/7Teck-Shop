@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import Button from '@/components/ui/Button';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -392,9 +393,9 @@ export default function TongHopGiaMacbookPage() {
         </section>
 
         <section className="mb-4 flex flex-wrap gap-2">
-          <button onClick={reseed} className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white hover:bg-sky-500">Làm mới dữ liệu</button>
-          <button onClick={exportJSON} className="rounded-lg border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800">Xuất JSON</button>
-          <button onClick={clearAll} className="rounded-lg border border-rose-700 px-3 py-2 text-sm font-medium text-rose-300 hover:bg-rose-950">Xoá tất cả</button>
+          <Button onClick={reseed} className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white hover:bg-sky-500">Làm mới dữ liệu</Button>
+          <Button onClick={exportJSON} className="rounded-lg border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800">Xuất JSON</Button>
+          <Button onClick={clearAll} className="rounded-lg border border-rose-700 px-3 py-2 text-sm font-medium text-rose-300 hover:bg-rose-950">Xoá tất cả</Button>
         </section>
 
         <section className="mb-4 flex flex-wrap gap-1">
@@ -425,7 +426,7 @@ export default function TongHopGiaMacbookPage() {
                       <p className="font-medium text-white">{m.name}</p>
                       {m.note ? <p className="text-xs text-slate-500">{m.note}</p> : null}
                     </div>
-                    <button onClick={() => removeModel(m.id)} className="text-xs text-rose-400 hover:text-rose-300">Xoá</button>
+                    <Button onClick={() => removeModel(m.id)} className="text-xs text-rose-400 hover:text-rose-300">Xoá</Button>
                   </div>
 
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center">
@@ -437,9 +438,9 @@ export default function TongHopGiaMacbookPage() {
                     TB giá/model = trung bình của {st.n} nguồn báo giá · {allSources.length} nguồn có link chi tiết
                   </p>
 
-                  <button onClick={() => toggle(m.id)} className="mt-2 text-xs font-medium text-sky-400 hover:text-sky-300">
+                  <Button onClick={() => toggle(m.id)} className="mt-2 text-xs font-medium text-sky-400 hover:text-sky-300">
                     {isOpen ? "Ẩn nguồn ▲" : `Xem ${allSources.length} link chi tiết ▼`}
-                  </button>
+                  </Button>
 
                   {isOpen ? (
                     <div className="mt-3 space-y-1">
@@ -465,7 +466,7 @@ export default function TongHopGiaMacbookPage() {
                         <input name="src" placeholder="Tên nguồn" className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-white outline-none focus:border-sky-500" />
                         <input name="url" placeholder="Link chi tiết (PDP)" className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-white outline-none focus:border-sky-500" />
                         <input name="prc" placeholder="Giá" inputMode="numeric" className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-white outline-none focus:border-sky-500" />
-                        <button className="rounded-md bg-emerald-600 px-2 text-xs font-semibold text-white">+ link</button>
+                        <Button className="rounded-md bg-emerald-600 px-2 text-xs font-semibold text-white">+ link</Button>
                       </form>
                     </div>
                   ) : null}
@@ -505,8 +506,8 @@ function Mini({ label, value }: { label: string; value: string }) {
 
 function TabButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
-    <button onClick={onClick} className={"rounded-md px-2 py-1 text-xs font-medium " + (active ? "bg-sky-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700")}>
+    <Button onClick={onClick} className={"rounded-md px-2 py-1 text-xs font-medium " + (active ? "bg-sky-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700")}>
       {label}
-    </button>
+    </Button>
   );
 }
