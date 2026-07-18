@@ -1,6 +1,5 @@
 'use client';
 import Link from 'next/link';
-import Button from '@/components/ui/Button';
 import React from 'react';
 import { FaMobileAlt, FaTabletAlt, FaWindows } from 'react-icons/fa';
 import { MdListAlt } from 'react-icons/md';
@@ -40,10 +39,10 @@ const NavBottom: React.FC = () => {
           const Icon = item.icon;
           return (
             <Link key={index} href={item.link} className="flex-grow">
-              <Button className="flex h-full w-full flex-col items-center justify-center gap-[2px] bg-default text-white">
+              <button className="flex h-full w-full flex-col items-center justify-center gap-[2px] bg-default text-white">
                 {Icon && <Icon className="text-lg text-white" />}
                 <span className="text-[10px]"> {item.name}</span>
-              </Button>
+              </button>
             </Link>
           );
         })}

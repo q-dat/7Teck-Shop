@@ -1,8 +1,6 @@
 'use client';
 import React, { ReactNode, useEffect, useState, useMemo } from 'react';
-import Button from '@/components/ui/Button';
-import { Input } from '@/components/ui/Form';
-import { Drawer, Menu } from 'react-daisyui';
+import { Button, Drawer, Input, Menu } from 'react-daisyui';
 import { RxHamburgerMenu } from 'react-icons/rx';
 import { FaChevronDown } from 'react-icons/fa';
 import { SlClose } from 'react-icons/sl';
@@ -171,7 +169,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                       <p className="mb-2 text-sm font-semibold text-primary">Từ khóa phổ biến</p>
                       <div className="flex flex-wrap gap-2">
                         {suggestions.map((text, index) => (
-                          <Button
+                          <button
                             key={index}
                             onMouseDown={() => {
                               setQuery(text);
@@ -180,7 +178,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                             className="rounded-full border border-gray-200 bg-[#f3f3f3] px-3 py-1 text-xs text-gray-600 hover:border-primary hover:bg-primary hover:text-white"
                           >
                             {text}
-                          </Button>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -249,9 +247,9 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
             {/* Close Search */}
             {openSearch && (
               <div className="fixed bottom-[60px] left-1/2 z-header -translate-x-1/2">
-                <Button variant="unstyled" className="rounded-full border border-white bg-black/60 shadow-xl" onClick={handleSearchToggle}>
+                <button className="rounded-full border border-white bg-black/60 shadow-xl" onClick={handleSearchToggle}>
                   <IoCloseSharp className="text-4xl text-white" />
-                </Button>
+                </button>
               </div>
             )}
           </div>
@@ -324,7 +322,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
               }
             >
               {/*  */}
-              <Button
+              <button
                 aria-expanded={rightVisible}
                 aria-controls="drawer-menu"
                 onClick={toggleRightVisible}
@@ -337,7 +335,7 @@ export default function HeaderResponsive({ Title_NavbarMobile }: HeaderResponsiv
                 >
                   <p>{rightVisible ? <SlClose /> : <RxHamburgerMenu />}</p>
                 </div>
-              </Button>
+              </button>
             </Drawer>
           </div>
         </div>
