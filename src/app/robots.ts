@@ -14,6 +14,8 @@ export default function robots(): MetadataRoute.Robots {
           '/*.map$', // chặn source map (nếu public)
           '/_next/static/', // chặn static assets nội bộ của Next (không ảnh hưởng SEO)
           '/*?_rsc=', // ❗ chặn mọi URL chứa query `_rsc=...`
+          '/ghi-chu', // chặn trang ghi-chú nội bộ
+          '/sub-note', // chặn trang sub-note nội bộ
         ],
       },
     ],
