@@ -4241,7 +4241,7 @@ export default function LocalProductsPage() {
                             />
                             <input
                                 ref={searchInputRef}
-                                autoFocus
+                                // autoFocus
                                 type="text"
                                 value={query}
                                 onFocus={(event) => event.currentTarget.select()}
@@ -4744,7 +4744,7 @@ export default function LocalProductsPage() {
                                             />
 
                                             <input
-                                                autoFocus
+                                                // autoFocus
                                                 value={query}
                                                 onChange={(event) => setQuery(event.target.value)}
                                                 onKeyDown={(event) => event.stopPropagation()}

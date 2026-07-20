@@ -4462,7 +4462,7 @@ export default function LocalProductsPage() {
               />
               <input
                 ref={searchInputRef}
-                autoFocus
+                // autoFocus
                 type="text"
                 value={query}
                 onFocus={(event) => event.currentTarget.select()}
@@ -4511,343 +4511,343 @@ export default function LocalProductsPage() {
             onTouchStart={handleProductsTouchStart}
             onTouchEnd={handleProductsTouchEnd}
           >
-          {filteredProducts.length === 0 ? (
-            <div className="rounded-md border border-slate-700 bg-slate-900 p-3 text-center text-xs font-semibold text-slate-400 ">
-              Chưa có sản phẩm phù hợp.
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2 xl:gap-4 2xl:[grid-template-columns:repeat(auto-fill,minmax(218px,1fr))]">
-              {filteredProducts.map((product, index) => {
-                const descriptionPreview =
-                  product.description.trim() ||
-                  settings.commonDescription.trim();
-                const active = selectedProductId === product.id;
-                const expanded = expandedProductIds.has(product.id);
-                const productDone = product.isDone;
+            {filteredProducts.length === 0 ? (
+              <div className="rounded-md border border-slate-700 bg-slate-900 p-3 text-center text-xs font-semibold text-slate-400 ">
+                Chưa có sản phẩm phù hợp.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 xl:gap-4 2xl:[grid-template-columns:repeat(auto-fill,minmax(218px,1fr))]">
+                {filteredProducts.map((product, index) => {
+                  const descriptionPreview =
+                    product.description.trim() ||
+                    settings.commonDescription.trim();
+                  const active = selectedProductId === product.id;
+                  const expanded = expandedProductIds.has(product.id);
+                  const productDone = product.isDone;
 
-                return (
-                  <article
-                    key={`${activeCategoryTab}-${product.id}`}
-                    style={{ animationDelay: `${Math.min(index * 34, 340)}ms` }}
-                    className={`product-wave-card group overflow-hidden rounded-md border  transition duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-800 ${productDone ? "opacity-70" : ""
-                      } ${active
-                        ? "border-slate-200 bg-slate-800  "
-                        : "border-slate-700 bg-slate-900"
-                      }`}
-                    onClick={() => {
-                      setSelectedProductId(product.id);
-                      handleEdit(product);
-                    }}
-                  >
-                    <button
-                      type="button"
-                      className={`relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-slate-900 ${productDone
-                        ? "after:absolute after:inset-0 after:bg-slate-950/30"
-                        : ""
+                  return (
+                    <article
+                      key={`${activeCategoryTab}-${product.id}`}
+                      style={{ animationDelay: `${Math.min(index * 34, 340)}ms` }}
+                      className={`product-wave-card group overflow-hidden rounded-md border  transition duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-800 ${productDone ? "opacity-70" : ""
+                        } ${active
+                          ? "border-slate-200 bg-slate-800  "
+                          : "border-slate-700 bg-slate-900"
                         }`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        openImageAlbum({
-                          title: product.name,
-                          description: descriptionPreview,
-                          priceText: product.priceText,
-                          images: product.images,
-                        });
+                      onClick={() => {
+                        setSelectedProductId(product.id);
+                        handleEdit(product);
                       }}
                     >
-                      {product.images[0] ? (
-                        <img
-                          src={product.images[0].dataUrl}
-                          alt={product.name}
-                          width={1200}
-                          height={1200}
-                          className={`h-full w-full object-contain transition glass duration-500 group-hover:scale-105 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
-                            }`}
-                        />
-                      ) : (
-                        <FiImage
-                          aria-hidden="true"
-                          className={`${iconClassName} text-slate-600`}
-                        />
-                      )}
-
-                      <div className="absolute left-2 top-2 flex items-center gap-1 rounded-md border border-white/10 bg-black/65 px-2 py-0.5 text-[10px] font-black text-white  ">
-                        <FiImage aria-hidden="true" className={iconClassName} />
-                        {product.images.length}
-                      </div>
-
-                      <div className="absolute right-2 top-2 flex flex-col items-end gap-1">
-                        {productDone ? (
-                          <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-950">
-                            DONE
-                          </span>
-                        ) : null}
-
-                        {active ? (
-                          <span className="rounded-md bg-slate-200 px-2 py-1 text-[10px] font-black text-slate-950">
-                            ACTIVE
-                          </span>
-                        ) : null}
-                      </div>
-                    </button>
-
-                    <div className="flex flex-col gap-2 p-2">
-                      <div className="min-w-0">
-                        {product.category ? (
-                          <div className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">
-                            {product.category}
-                          </div>
-                        ) : null}
-
-                        <h3 className="line-clamp-2 min-h-9 text-[12px] font-black leading-[18px] text-white">
-                          {product.name}
-                        </h3>
-                        <div className="mt-1 truncate text-xs font-black text-amber-100">
-                          {product.priceText || "Chưa có giá"}
-                        </div>
-                      </div>
-
-                      <div
-                        role={descriptionPreview.length > 90 ? "button" : undefined}
-                        tabIndex={descriptionPreview.length > 90 ? 0 : undefined}
-                        aria-expanded={descriptionPreview.length > 90 ? expanded : undefined}
-                        className={`rounded-md border bg-white/10 border-white/10  p-2 ${descriptionPreview.length > 90
-                          ? "cursor-pointer transition hover:border-slate-400/40 hover:bg-slate-800"
+                      <button
+                        type="button"
+                        className={`relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-slate-900 ${productDone
+                          ? "after:absolute after:inset-0 after:bg-slate-950/30"
                           : ""
                           }`}
-                        onMouseUp={(event) => {
-                          event.stopPropagation();
-                          updateSelectedDescriptionCopy(
-                            product.id,
-                            event.currentTarget,
-                          );
-                        }}
-                        onTouchEnd={(event) => {
-                          event.stopPropagation();
-                          updateSelectedDescriptionCopy(
-                            product.id,
-                            event.currentTarget,
-                          );
-                        }}
                         onClick={(event) => {
                           event.stopPropagation();
-
-                          const hasSelectedText = updateSelectedDescriptionCopy(
-                            product.id,
-                            event.currentTarget,
-                          );
-
-                          if (hasSelectedText) return;
-
-                          if (descriptionPreview.length > 90) {
-                            toggleExpandedProduct(product.id);
-                          }
-                        }}
-                        onKeyDown={(event) => {
-                          event.stopPropagation();
-
-                          if (
-                            descriptionPreview.length > 90 &&
-                            (event.key === "Enter" || event.key === " ")
-                          ) {
-                            event.preventDefault();
-                            toggleExpandedProduct(product.id);
-                          }
+                          openImageAlbum({
+                            title: product.name,
+                            description: descriptionPreview,
+                            priceText: product.priceText,
+                            images: product.images,
+                          });
                         }}
                       >
-                        <div
-                          className={`${expanded ? "line-clamp-none" : "line-clamp-2"}  whitespace-pre-line text-[11px] leading-[18px] text-slate-300`}
-                        >
-                          {renderDescriptionText(
-                            product.id,
-                            descriptionPreview,
-                            expanded,
-                          )}
+                        {product.images[0] ? (
+                          <img
+                            src={product.images[0].dataUrl}
+                            alt={product.name}
+                            width={1200}
+                            height={1200}
+                            className={`h-full w-full object-contain transition glass duration-500 group-hover:scale-105 ${productDone ? "blur-[2px] grayscale opacity-40" : ""
+                              }`}
+                          />
+                        ) : (
+                          <FiImage
+                            aria-hidden="true"
+                            className={`${iconClassName} text-slate-600`}
+                          />
+                        )}
+
+                        <div className="absolute left-2 top-2 flex items-center gap-1 rounded-md border border-white/10 bg-black/65 px-2 py-0.5 text-[10px] font-black text-white  ">
+                          <FiImage aria-hidden="true" className={iconClassName} />
+                          {product.images.length}
                         </div>
-                        {selectedDescriptionCopy?.productId === product.id &&
-                          selectedDescriptionCopy.text ? (
-                          <button
-                            type="button"
-                            className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-full border border-emerald-300/70 bg-emerald-300/10 px-0.5 py-1 text-[9px] font-black text-emerald-100 transition hover:bg-emerald-300/15 active:opacity-80"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void handleCopySelectedDescription(product.id);
-                            }}
-                          >
-                            {renderCopyIcon(`selected-description-${product.id}`)}
-                            Copy phần đã chọn
-                          </button>
-                        ) : null}
-                        {descriptionPreview.length > 90 ? (
-                          <button
-                            type="button"
-                            className="mt-2 text-[11px] font-black text-slate-300"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              toggleExpandedProduct(product.id);
-                            }}
-                          >
-                            {expanded ? "Thu gọn" : "Xem thêm"}
-                          </button>
-                        ) : null}
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <button
-                          type="button"
-                          title="Copy ảnh chính"
-                          aria-label="Copy ảnh chính"
-                          className="flex items-center justify-center gap-1 rounded-full border border-cyan-400/70 bg-cyan-400/10 px-0.5 py-1 text-[9px] font-black text-cyan-100  transition hover:bg-cyan-400/15 active:opacity-80"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void handleCopyProductRepresentativeImage(product);
-                          }}
-                        >
-                          {renderCopyIcon(`cover-${product.id}`)}
-                          Ảnh Chính
-                        </button>
+                        <div className="absolute right-2 top-2 flex flex-col items-end gap-1">
+                          {productDone ? (
+                            <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-950">
+                              DONE
+                            </span>
+                          ) : null}
 
-                        <button
-                          type="button"
-                          title="Chia sẻ sản phẩm"
-                          aria-label="Chia sẻ sản phẩm"
-                          className="flex items-center justify-center gap-1 rounded-full border border-cyan-400/70 bg-cyan-400/10 px-0.5 py-1 text-[9px] font-black text-cyan-100  transition hover:bg-cyan-400/15 active:opacity-80"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void handleShareProduct(product);
-                          }}
-                        >
-                          {copiedKey === `share-product-${product.id}` ? (
-                            <FiCheck
-                              aria-hidden="true"
-                              className={iconClassName}
-                            />
-                          ) : (
-                            <FiShare2
-                              aria-hidden="true"
-                              className={iconClassName}
-                            />
-                          )}
-                          Chia sẻ
-                        </button>
+                          {active ? (
+                            <span className="rounded-md bg-slate-200 px-2 py-1 text-[10px] font-black text-slate-950">
+                              ACTIVE
+                            </span>
+                          ) : null}
+                        </div>
+                      </button>
 
-                        <button
-                          type="button"
-                          title="Copy nguyên bản mô tả"
-                          aria-label="Copy nguyên bản mô tả"
-                          className="flex items-center justify-center gap-1 rounded-full border border-slate-500/90 bg-slate-400/10 px-0.5 py-1 text-[9px] font-black text-slate-100  transition hover:border-slate-300 hover:bg-slate-400/15 active:opacity-80"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void handleCopyField(
-                              `post-${product.id}`,
-                              "post",
-                              descriptionPreview,
-                            );
-                          }}
-                        >
-                          {renderCopyIcon(`post-${product.id}`)}
-                          Post
-                        </button>
+                      <div className="flex flex-col gap-2 p-2">
+                        <div className="min-w-0">
+                          {product.category ? (
+                            <div className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">
+                              {product.category}
+                            </div>
+                          ) : null}
 
-                        <button
-                          type="button"
-                          title="Copy comment sản phẩm"
-                          aria-label="Copy comment sản phẩm"
-                          className="flex items-center justify-center gap-1 rounded-full border border-amber-300/70 bg-amber-300/10 px-0.5 py-1 text-[9px] font-black text-amber-100  transition hover:bg-amber-300/15 active:opacity-80"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void handleCopyField(
-                              `cmt-${product.id}`,
-                              "cmt",
-                              buildShareContentText(
-                                product.name,
-                                descriptionPreview,
-                                product.priceText,
-                              ),
-                            );
-                          }}
-                        >
-                          {renderCopyIcon(`cmt-${product.id}`)}
-                          Cmt
-                        </button>
+                          <h3 className="line-clamp-2 min-h-9 text-[12px] font-black leading-[18px] text-white">
+                            {product.name}
+                          </h3>
+                          <div className="mt-1 truncate text-xs font-black text-amber-100">
+                            {product.priceText || "Chưa có giá"}
+                          </div>
+                        </div>
 
-                        <button
-                          type="button"
-                          title="Copy tên sản phẩm"
-                          aria-label="Copy tên sản phẩm"
-                          className="flex items-center justify-center gap-1 rounded-full border border-slate-500/90 bg-slate-400/10 px-0.5 py-1 text-[9px] font-black text-slate-100  transition hover:border-slate-300 hover:bg-slate-400/15 active:opacity-80"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void handleCopyField(
-                              `name-${product.id}`,
-                              "tên",
-                              product.name,
-                            );
-                          }}
-                        >
-                          {renderCopyIcon(`name-${product.id}`)}
-                          Tên
-                        </button>
-
-                        <button
-                          type="button"
-                          title={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
-                          aria-label={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
-                          className={`flex w-full items-center justify-center gap-1 rounded-full px-0.5 py-1 text-[9px] font-black transition active:opacity-80 ${productDone
-                            ? "border border-slate-400/80 bg-slate-400/10 text-slate-100  hover:bg-slate-400/15"
-                            : "border border-emerald-300/70 bg-emerald-300/10 text-emerald-100  hover:bg-emerald-300/15"
+                        <div
+                          role={descriptionPreview.length > 90 ? "button" : undefined}
+                          tabIndex={descriptionPreview.length > 90 ? 0 : undefined}
+                          aria-expanded={descriptionPreview.length > 90 ? expanded : undefined}
+                          className={`rounded-md border bg-white/10 border-white/10  p-2 ${descriptionPreview.length > 90
+                            ? "cursor-pointer transition hover:border-slate-400/40 hover:bg-slate-800"
+                            : ""
                             }`}
+                          onMouseUp={(event) => {
+                            event.stopPropagation();
+                            updateSelectedDescriptionCopy(
+                              product.id,
+                              event.currentTarget,
+                            );
+                          }}
+                          onTouchEnd={(event) => {
+                            event.stopPropagation();
+                            updateSelectedDescriptionCopy(
+                              product.id,
+                              event.currentTarget,
+                            );
+                          }}
                           onClick={(event) => {
                             event.stopPropagation();
-                            void toggleProductDone(product.id);
-                          }}
-                        >
-                          <FiCheckCircle
-                            aria-hidden="true"
-                            className={iconClassName}
-                          />
-                          {productDone ? "DONE" : "Chưa bán"}
-                        </button>
-                        <button
-                          type="button"
-                          title="Tải ảnh sản phẩm"
-                          aria-label="Tải ảnh sản phẩm"
-                          className="flex items-center justify-center gap-1 rounded-full border border-sky-400/70 bg-sky-400/10 px-0.5 py-1 whitespace-nowrap text-[9px] font-black text-sky-100  transition hover:bg-sky-400/15 active:opacity-80"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleDownloadProductImages(product);
-                          }}
-                        >
-                          <FiDownload
-                            aria-hidden="true"
-                            className={iconClassName}
-                          />
-                          Tải ảnh
-                        </button>
 
-                        <button
-                          type="button"
-                          title="Xóa sản phẩm"
-                          aria-label="Xóa sản phẩm"
-                          className="flex items-center justify-center gap-1 rounded-full border border-rose-400/70 bg-rose-400/10 px-0.5 py-1 text-[9px] font-black text-rose-100  transition hover:bg-rose-400/15 active:opacity-80"
-                          onClick={(event) => {
+                            const hasSelectedText = updateSelectedDescriptionCopy(
+                              product.id,
+                              event.currentTarget,
+                            );
+
+                            if (hasSelectedText) return;
+
+                            if (descriptionPreview.length > 90) {
+                              toggleExpandedProduct(product.id);
+                            }
+                          }}
+                          onKeyDown={(event) => {
                             event.stopPropagation();
-                            void handleDelete(product.id);
+
+                            if (
+                              descriptionPreview.length > 90 &&
+                              (event.key === "Enter" || event.key === " ")
+                            ) {
+                              event.preventDefault();
+                              toggleExpandedProduct(product.id);
+                            }
                           }}
                         >
-                          <FiTrash2
-                            aria-hidden="true"
-                            className={iconClassName}
-                          />
-                          Xóa
-                        </button>
+                          <div
+                            className={`${expanded ? "line-clamp-none" : "line-clamp-2"}  whitespace-pre-line text-[11px] leading-[18px] text-slate-300`}
+                          >
+                            {renderDescriptionText(
+                              product.id,
+                              descriptionPreview,
+                              expanded,
+                            )}
+                          </div>
+                          {selectedDescriptionCopy?.productId === product.id &&
+                            selectedDescriptionCopy.text ? (
+                            <button
+                              type="button"
+                              className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-full border border-emerald-300/70 bg-emerald-300/10 px-0.5 py-1 text-[9px] font-black text-emerald-100 transition hover:bg-emerald-300/15 active:opacity-80"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void handleCopySelectedDescription(product.id);
+                              }}
+                            >
+                              {renderCopyIcon(`selected-description-${product.id}`)}
+                              Copy phần đã chọn
+                            </button>
+                          ) : null}
+                          {descriptionPreview.length > 90 ? (
+                            <button
+                              type="button"
+                              className="mt-2 text-[11px] font-black text-slate-300"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleExpandedProduct(product.id);
+                              }}
+                            >
+                              {expanded ? "Thu gọn" : "Xem thêm"}
+                            </button>
+                          ) : null}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <button
+                            type="button"
+                            title="Copy ảnh chính"
+                            aria-label="Copy ảnh chính"
+                            className="flex items-center justify-center gap-1 rounded-full border border-cyan-400/70 bg-cyan-400/10 px-0.5 py-1 text-[9px] font-black text-cyan-100  transition hover:bg-cyan-400/15 active:opacity-80"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleCopyProductRepresentativeImage(product);
+                            }}
+                          >
+                            {renderCopyIcon(`cover-${product.id}`)}
+                            Ảnh Chính
+                          </button>
+
+                          <button
+                            type="button"
+                            title="Chia sẻ sản phẩm"
+                            aria-label="Chia sẻ sản phẩm"
+                            className="flex items-center justify-center gap-1 rounded-full border border-cyan-400/70 bg-cyan-400/10 px-0.5 py-1 text-[9px] font-black text-cyan-100  transition hover:bg-cyan-400/15 active:opacity-80"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleShareProduct(product);
+                            }}
+                          >
+                            {copiedKey === `share-product-${product.id}` ? (
+                              <FiCheck
+                                aria-hidden="true"
+                                className={iconClassName}
+                              />
+                            ) : (
+                              <FiShare2
+                                aria-hidden="true"
+                                className={iconClassName}
+                              />
+                            )}
+                            Chia sẻ
+                          </button>
+
+                          <button
+                            type="button"
+                            title="Copy nguyên bản mô tả"
+                            aria-label="Copy nguyên bản mô tả"
+                            className="flex items-center justify-center gap-1 rounded-full border border-slate-500/90 bg-slate-400/10 px-0.5 py-1 text-[9px] font-black text-slate-100  transition hover:border-slate-300 hover:bg-slate-400/15 active:opacity-80"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleCopyField(
+                                `post-${product.id}`,
+                                "post",
+                                descriptionPreview,
+                              );
+                            }}
+                          >
+                            {renderCopyIcon(`post-${product.id}`)}
+                            Post
+                          </button>
+
+                          <button
+                            type="button"
+                            title="Copy comment sản phẩm"
+                            aria-label="Copy comment sản phẩm"
+                            className="flex items-center justify-center gap-1 rounded-full border border-amber-300/70 bg-amber-300/10 px-0.5 py-1 text-[9px] font-black text-amber-100  transition hover:bg-amber-300/15 active:opacity-80"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleCopyField(
+                                `cmt-${product.id}`,
+                                "cmt",
+                                buildShareContentText(
+                                  product.name,
+                                  descriptionPreview,
+                                  product.priceText,
+                                ),
+                              );
+                            }}
+                          >
+                            {renderCopyIcon(`cmt-${product.id}`)}
+                            Cmt
+                          </button>
+
+                          <button
+                            type="button"
+                            title="Copy tên sản phẩm"
+                            aria-label="Copy tên sản phẩm"
+                            className="flex items-center justify-center gap-1 rounded-full border border-slate-500/90 bg-slate-400/10 px-0.5 py-1 text-[9px] font-black text-slate-100  transition hover:border-slate-300 hover:bg-slate-400/15 active:opacity-80"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleCopyField(
+                                `name-${product.id}`,
+                                "tên",
+                                product.name,
+                              );
+                            }}
+                          >
+                            {renderCopyIcon(`name-${product.id}`)}
+                            Tên
+                          </button>
+
+                          <button
+                            type="button"
+                            title={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
+                            aria-label={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
+                            className={`flex w-full items-center justify-center gap-1 rounded-full px-0.5 py-1 text-[9px] font-black transition active:opacity-80 ${productDone
+                              ? "border border-slate-400/80 bg-slate-400/10 text-slate-100  hover:bg-slate-400/15"
+                              : "border border-emerald-300/70 bg-emerald-300/10 text-emerald-100  hover:bg-emerald-300/15"
+                              }`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void toggleProductDone(product.id);
+                            }}
+                          >
+                            <FiCheckCircle
+                              aria-hidden="true"
+                              className={iconClassName}
+                            />
+                            {productDone ? "DONE" : "Chưa bán"}
+                          </button>
+                          <button
+                            type="button"
+                            title="Tải ảnh sản phẩm"
+                            aria-label="Tải ảnh sản phẩm"
+                            className="flex items-center justify-center gap-1 rounded-full border border-sky-400/70 bg-sky-400/10 px-0.5 py-1 whitespace-nowrap text-[9px] font-black text-sky-100  transition hover:bg-sky-400/15 active:opacity-80"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDownloadProductImages(product);
+                            }}
+                          >
+                            <FiDownload
+                              aria-hidden="true"
+                              className={iconClassName}
+                            />
+                            Tải ảnh
+                          </button>
+
+                          <button
+                            type="button"
+                            title="Xóa sản phẩm"
+                            aria-label="Xóa sản phẩm"
+                            className="flex items-center justify-center gap-1 rounded-full border border-rose-400/70 bg-rose-400/10 px-0.5 py-1 text-[9px] font-black text-rose-100  transition hover:bg-rose-400/15 active:opacity-80"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleDelete(product.id);
+                            }}
+                          >
+                            <FiTrash2
+                              aria-hidden="true"
+                              className={iconClassName}
+                            />
+                            Xóa
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
       </section>
@@ -4965,7 +4965,7 @@ export default function LocalProductsPage() {
                       />
 
                       <input
-                        autoFocus
+                        // autoFocus
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         onKeyDown={(event) => event.stopPropagation()}
@@ -6740,7 +6740,7 @@ export default function LocalProductsPage() {
               type="password"
               value={blobUploadPassword}
               onChange={(event) => setBlobUploadPassword(event.target.value)}
-              autoFocus
+              // autoFocus
               className="mt-2 w-full rounded-md border border-emerald-300/20 bg-slate-900/80 p-2 text-xs font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-300/50"
               placeholder="Nhập mật khẩu"
             />
