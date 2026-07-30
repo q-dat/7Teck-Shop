@@ -181,6 +181,7 @@ type ModalName =
   | "importExport"
   | "slotDetail"
   | "imageAlbum"
+  | "imageDownload"
   | "";
 
 type CategoryTab = "all" | string;
@@ -1832,6 +1833,8 @@ export default function LocalProductsPage() {
   const [query, setQuery] = useState<string>("");
   const [activeCategoryTab, setActiveCategoryTab] =
     useState<CategoryTab>("all");
+  const [imageDownloadCategory, setImageDownloadCategory] =
+    useState<CategoryTab>("all");
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [scheduleQuery, setScheduleQuery] = useState<string>("");
   const [expandedProductIds, setExpandedProductIds] = useState<Set<string>>(
@@ -2029,12 +2032,76 @@ export default function LocalProductsPage() {
     return filteredProducts.filter((product) => !product.isDone).length;
   }, [filteredProducts]);
 
+  const downloadableProducts = useMemo(() => {
+    return products.filter((product) => !product.isDone);
+  }, [products]);
+
   const totalImages = useMemo(() => {
-    return products.reduce(
+    return downloadableProducts.reduce(
       (total, product) => total + product.images.length,
       0,
     );
-  }, [products]);
+  }, [downloadableProducts]);
+
+  const representativeImageCategoryOptions = useMemo(() => {
+    const categoryMap = new Map<string, { name: string; count: number }>();
+
+    downloadableProducts.forEach((product) => {
+      if (!product.images[0]) return;
+
+      const categoryName =
+        normalizeCategoryName(product.category) || "Chưa phân loại";
+      const categoryKey = normalizeTextKey(categoryName);
+      const currentCategory = categoryMap.get(categoryKey);
+
+      categoryMap.set(categoryKey, {
+        name: currentCategory?.name ?? categoryName,
+        count: (currentCategory?.count ?? 0) + 1,
+      });
+    });
+
+    return Array.from(categoryMap.values()).sort((first, second) =>
+      normalizeTextKey(first.name).localeCompare(
+        normalizeTextKey(second.name),
+        "vi",
+      ),
+    );
+  }, [downloadableProducts]);
+
+  const totalRepresentativeImages = useMemo(() => {
+    return representativeImageCategoryOptions.reduce(
+      (total, category) => total + category.count,
+      0,
+    );
+  }, [representativeImageCategoryOptions]);
+
+  const representativeImageProducts = useMemo(() => {
+    const selectedCategoryKey = normalizeTextKey(imageDownloadCategory);
+
+    return downloadableProducts.filter((product) => {
+      if (!product.images[0]) return false;
+      if (imageDownloadCategory === "all") return true;
+
+      const productCategory =
+        normalizeCategoryName(product.category) || "Chưa phân loại";
+
+      return normalizeTextKey(productCategory) === selectedCategoryKey;
+    });
+  }, [downloadableProducts, imageDownloadCategory]);
+
+  useEffect(() => {
+    if (imageDownloadCategory === "all") return;
+
+    const selectedCategoryExists = representativeImageCategoryOptions.some(
+      (category) =>
+        normalizeTextKey(category.name) ===
+        normalizeTextKey(imageDownloadCategory),
+    );
+
+    if (!selectedCategoryExists) {
+      setImageDownloadCategory("all");
+    }
+  }, [imageDownloadCategory, representativeImageCategoryOptions]);
 
   const scheduleResult = useMemo(() => {
     return buildRandomSchedule(
@@ -2492,6 +2559,10 @@ export default function LocalProductsPage() {
         setAlbumSource(null);
       }
 
+      if (closingModal === "imageDownload") {
+        setImageDownloadCategory("all");
+      }
+
       return current.slice(0, -1);
     });
   };
@@ -2502,6 +2573,7 @@ export default function LocalProductsPage() {
     setSelectedAlbumImageId("");
     setSelectedAlbumImageIds(new Set<string>());
     setAlbumSource(null);
+    setImageDownloadCategory("all");
     setPendingConfirm(null);
     setPendingBlobUpload(null);
     setBlobUploadPassword("");
@@ -3475,16 +3547,41 @@ export default function LocalProductsPage() {
     });
   };
 
-  const handleDownloadAllImages = (): void => {
-    const allImages = products.flatMap((product) => product.images);
+  const handleDownloadRepresentativeImages = (): void => {
+    const representativeImages = representativeImageProducts
+      .map((product) => product.images[0])
+      .filter((image): image is ProductImage => Boolean(image));
 
-    if (allImages.length === 0) {
-      Toastify("Chưa có ảnh để tải", 300);
+    if (representativeImages.length === 0) {
+      Toastify("Danh mục đã chọn chưa có ảnh đại diện để tải", 300);
       return;
     }
 
-    const activeDescriptions = products
-      .filter((product) => !product.isDone)
+    const categoryLabel =
+      imageDownloadCategory === "all"
+        ? "tất cả danh mục"
+        : `danh mục ${imageDownloadCategory}`;
+
+    requestDownload({
+      title: "Tải ảnh đại diện",
+      description: `Bạn có muốn tải ${representativeImages.length} ảnh đại diện, là ảnh đầu tiên có index 0 của mỗi sản phẩm thuộc ${categoryLabel}, về máy không?`,
+      mode: representativeImages.length === 1 ? "single" : "multiple",
+      images: representativeImages,
+      startIndex: 0,
+    });
+  };
+
+  const handleDownloadAllImages = (): void => {
+    const allImages = downloadableProducts.flatMap(
+      (product) => product.images,
+    );
+
+    if (allImages.length === 0) {
+      Toastify("Chưa có ảnh của sản phẩm chưa DONE để tải", 300);
+      return;
+    }
+
+    const activeDescriptions = downloadableProducts
       .map((product) => {
         const description =
           product.description.trim() || settings.commonDescription.trim();
@@ -3496,7 +3593,7 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải toàn bộ ảnh",
-      description: `Bạn có muốn tải ${allImages.length} ảnh của tất cả sản phẩm về máy không? Mô tả của các sản phẩm đang hoạt động sẽ được tự động copy trước khi tải.`,
+      description: `Bạn có muốn tải ${allImages.length} ảnh của tất cả sản phẩm chưa DONE về máy không? Mô tả của các sản phẩm này sẽ được tự động copy trước khi tải.`,
       mode: "multiple",
       images: allImages,
       startIndex: 0,
@@ -4430,10 +4527,10 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
-                title="Tải toàn bộ ảnh"
-                aria-label="Tải toàn bộ ảnh"
+                title="Tải ảnh"
+                aria-label="Tải ảnh"
                 className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-[11px] font-black text-slate-100  transition hover:border-slate-400 hover:bg-slate-700 active:opacity-80"
-                onClick={handleDownloadAllImages}
+                onClick={() => openModal("imageDownload")}
               >
                 <FiDownload aria-hidden="true" className={iconClassName} />
                 Ảnh
@@ -4882,6 +4979,9 @@ export default function LocalProductsPage() {
                   {activeModal === "imageAlbum" ? (
                     <FiImage aria-hidden="true" className={iconClassName} />
                   ) : null}
+                  {activeModal === "imageDownload" ? (
+                    <FiDownload aria-hidden="true" className={iconClassName} />
+                  ) : null}
                 </div>
 
                 <div className="min-w-0">
@@ -4902,6 +5002,7 @@ export default function LocalProductsPage() {
                       : null}
                     {activeModal === "slotDetail" ? "Chi tiết bài đăng" : null}
                     {activeModal === "imageAlbum" ? "Album ảnh" : null}
+                    {activeModal === "imageDownload" ? "Tải ảnh" : null}
                   </h2>
                 </div>
               </div>
@@ -4918,6 +5019,115 @@ export default function LocalProductsPage() {
             <div
               className={`h-[calc(92dvh-66px)] p-2 ${activeModal === "imageAlbum" || activeModal === "productList" ? "overflow-hidden" : "overflow-y-auto"}`}
             >
+              {activeModal === "imageDownload" ? (
+                <section className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-3 xl:grid-cols-2">
+                  <article className="flex flex-col rounded-md border border-white/10 bg-slate-900 p-3">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-sky-300/20 bg-sky-300/10 text-sky-100">
+                        <FiArchive
+                          aria-hidden="true"
+                          className="h-4 w-4"
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-black text-white">
+                          Tải tất cả ảnh
+                        </h3>
+                        <p className="mt-1 text-xs leading-5 text-slate-400">
+                          Tải toàn bộ ảnh của các sản phẩm chưa DONE. Sản phẩm
+                          đã DONE sẽ luôn được loại khỏi danh sách tải.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 rounded-md border border-white/10 bg-slate-950 p-3">
+                      <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+                        Tổng ảnh chưa DONE
+                      </p>
+                      <p className="mt-1 text-xl font-black text-white">
+                        {totalImages}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="mt-3 flex items-center justify-center gap-2 rounded-md bg-sky-300 px-3 py-2 text-xs font-black text-slate-950 transition hover:bg-sky-200 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={totalImages === 0}
+                      onClick={handleDownloadAllImages}
+                    >
+                      <FiDownload
+                        aria-hidden="true"
+                        className={iconClassName}
+                      />
+                      Tải tất cả ảnh
+                    </button>
+                  </article>
+
+                  <article className="flex flex-col rounded-md border border-white/10 bg-slate-900 p-3">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-cyan-300/20 bg-cyan-300/10 text-cyan-100">
+                        <FiImage aria-hidden="true" className="h-4 w-4" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-black text-white">
+                          Tải ảnh đại diện
+                        </h3>
+                        <p className="mt-1 text-xs leading-5 text-slate-400">
+                          Chỉ tải ảnh index 0 của mỗi sản phẩm chưa DONE. Có
+                          thể chọn một danh mục hoặc tải tất cả danh mục.
+                        </p>
+                      </div>
+                    </div>
+
+                    <label className="mt-3 block">
+                      <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wide text-slate-400">
+                        Danh mục cần tải
+                      </span>
+                      <select
+                        value={imageDownloadCategory}
+                        className="min-h-10 w-full rounded-md border border-slate-600 bg-slate-950 px-2 text-xs font-bold text-white transition focus:border-cyan-300"
+                        onChange={(event) =>
+                          setImageDownloadCategory(event.target.value)
+                        }
+                      >
+                        <option value="all">
+                          Tất cả danh mục ({totalRepresentativeImages})
+                        </option>
+                        {representativeImageCategoryOptions.map((category) => (
+                          <option key={category.name} value={category.name}>
+                            {category.name} ({category.count})
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <div className="mt-3 rounded-md border border-white/10 bg-slate-950 p-3">
+                      <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+                        Ảnh đại diện chưa DONE sẽ tải
+                      </p>
+                      <p className="mt-1 text-xl font-black text-white">
+                        {representativeImageProducts.length}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="mt-3 flex items-center justify-center gap-2 rounded-md bg-cyan-300 px-3 py-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={representativeImageProducts.length === 0}
+                      onClick={handleDownloadRepresentativeImages}
+                    >
+                      <FiDownload
+                        aria-hidden="true"
+                        className={iconClassName}
+                      />
+                      Tải ảnh đại diện
+                    </button>
+                  </article>
+                </section>
+              ) : null}
+
               {activeModal === "productList" ? (
                 <section className="flex h-full flex-col gap-2">
                   <div className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-center">
