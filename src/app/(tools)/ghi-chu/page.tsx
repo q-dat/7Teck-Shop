@@ -232,6 +232,14 @@ type WindowWithDocumentPictureInPicture = Window & {
   documentPictureInPicture?: DocumentPictureInPictureApi;
 };
 
+type ClipboardItemConstructor = new (
+  items: Record<string, Blob | PromiseLike<Blob>>,
+) => ClipboardItem;
+
+type ClipboardCapableWindow = Window & {
+  ClipboardItem?: ClipboardItemConstructor;
+};
+
 const DB_NAME = "local_product_store";
 const DB_VERSION = 1;
 const STORE_NAME = "products";
@@ -1237,8 +1245,48 @@ const parseImportPayload = (value: unknown): ParsedImportPayload | null => {
   };
 };
 
+const copyTextWithExecCommand = (
+  interactionWindow: Window,
+  value: string,
+): boolean => {
+  const targetDocument = interactionWindow.document;
+  const textarea = targetDocument.createElement("textarea");
+
+  textarea.value = value;
+  textarea.setAttribute("readonly", "true");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  textarea.style.opacity = "0";
+
+  targetDocument.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+
+  const copied = targetDocument.execCommand("copy");
+
+  textarea.remove();
+  return copied;
+};
+
 const copyText = async (value: string): Promise<void> => {
-  await navigator.clipboard.writeText(value);
+  const interactionWindow = getActiveInteractionWindow();
+  const clipboard = interactionWindow.navigator.clipboard;
+
+  if (clipboard) {
+    try {
+      await clipboard.writeText(value);
+      return;
+    } catch {
+      // Dùng fallback trong chính cửa sổ đang nhận thao tác.
+    }
+  }
+
+  if (copyTextWithExecCommand(interactionWindow, value)) {
+    return;
+  }
+
+  throw new Error("Không thể copy. Hãy kiểm tra quyền clipboard của trình duyệt.");
 };
 
 const buildPostText = (
@@ -1405,15 +1453,24 @@ const copyImageToClipboard = async (image: ProductImage): Promise<void> => {
     throw new Error("Clipboard chỉ hoạt động trên trình duyệt");
   }
 
-  if (!navigator.clipboard || typeof ClipboardItem === "undefined") {
+  const interactionWindow =
+    getActiveInteractionWindow() as ClipboardCapableWindow;
+  const clipboard = interactionWindow.navigator.clipboard;
+  const ClipboardItemClass =
+    interactionWindow.ClipboardItem ??
+    (typeof ClipboardItem !== "undefined"
+      ? (ClipboardItem as ClipboardItemConstructor)
+      : undefined);
+
+  if (!clipboard || !ClipboardItemClass) {
     throw new Error("Trình duyệt chưa hỗ trợ copy ảnh vào clipboard");
   }
 
-  const pngBlob = await dataUrlToPngBlob(image.dataUrl);
+  const pngBlobPromise = dataUrlToPngBlob(image.dataUrl);
 
-  await navigator.clipboard.write([
-    new ClipboardItem({
-      "image/png": pngBlob,
+  await clipboard.write([
+    new ClipboardItemClass({
+      "image/png": pngBlobPromise,
     }),
   ]);
 };
@@ -3060,13 +3117,20 @@ export default function LocalProductsPage() {
       return;
     }
 
-    await copyText(value);
-    setCopiedKey(key);
-    Toastify(`Đã copy ${label}`, 200);
+    try {
+      await copyText(value);
+      setCopiedKey(key);
+      Toastify(`Đã copy ${label}`, 200);
 
-    window.setTimeout(() => {
-      setCopiedKey((current) => (current === key ? "" : current));
-    }, 1200);
+      getActiveInteractionWindow().setTimeout(() => {
+        setCopiedKey((current) => (current === key ? "" : current));
+      }, 1200);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : `Không thể copy ${label}`;
+
+      Toastify(message, 400);
+    }
   };
 
   const handleCopyProductRepresentativeImage = async (
@@ -3086,7 +3150,7 @@ export default function LocalProductsPage() {
       setCopiedKey(copyKey);
       Toastify("Đã copy ảnh đại diện", 200);
 
-      window.setTimeout(() => {
+      getActiveInteractionWindow().setTimeout(() => {
         setCopiedKey((current) => (current === copyKey ? "" : current));
       }, 1200);
     } catch (error) {
@@ -3104,15 +3168,24 @@ export default function LocalProductsPage() {
 
     const textValue = buildCopyableProductListText(copyableProductGroups);
 
-    await copyText(textValue);
-    setCopiedKey("product-list-copy");
-    Toastify(`Đã copy ${copyableProductCount} sản phẩm đang hoạt động`, 200);
+    try {
+      await copyText(textValue);
+      setCopiedKey("product-list-copy");
+      Toastify(`Đã copy ${copyableProductCount} sản phẩm đang hoạt động`, 200);
 
-    window.setTimeout(() => {
-      setCopiedKey((current) =>
-        current === "product-list-copy" ? "" : current,
-      );
-    }, 1200);
+      getActiveInteractionWindow().setTimeout(() => {
+        setCopiedKey((current) =>
+          current === "product-list-copy" ? "" : current,
+        );
+      }, 1200);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Không thể copy danh sách sản phẩm";
+
+      Toastify(message, 400);
+    }
   };
 
   const handleExportProductsCsv = (): void => {
@@ -4588,8 +4661,8 @@ export default function LocalProductsPage() {
   const localProductsWorkspace = (
     <main
       className={`min-h-dvh w-full overflow-x-hidden bg-[#0b1220] p-2 text-slate-100 ${pictureInPictureWindow
-          ? "pb-[50px]"
-          : "pb-[100px] xl:pb-[50px]"
+        ? "pb-[50px]"
+        : "pb-[100px] xl:pb-[50px]"
         }`}
       onPaste={(event) => {
         void handlePaste(event);
@@ -4721,7 +4794,7 @@ export default function LocalProductsPage() {
                     ? "Đóng cửa sổ nổi và trở lại tab"
                     : "Mở Local Product Manager dạng cửa sổ nổi"
                 }
-                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-violet-300/80 bg-violet-200 px-2 py-1.5 text-[11px] font-black text-violet-950 transition hover:bg-violet-100 active:opacity-80"
+                className="group xl:flex hidden  items-center justify-center gap-2 whitespace-nowrap rounded-md border border-violet-300/80 bg-violet-200 px-2 py-1.5 text-[11px] font-black text-violet-950 transition hover:bg-violet-100 active:opacity-80"
                 onClick={() => {
                   if (pictureInPictureWindow) {
                     handleClosePictureInPicture();
@@ -4773,8 +4846,8 @@ export default function LocalProductsPage() {
           <div
             ref={categoryTabsRef}
             className={`fixed left-0 right-0 z-bar flex overflow-x-auto border-t border-black bg-black ${pictureInPictureWindow
-                ? "bottom-0"
-                : "bottom-[50px] xl:bottom-0"
+              ? "bottom-0"
+              : "bottom-[50px] xl:bottom-0"
               }`}
           >
             <button
