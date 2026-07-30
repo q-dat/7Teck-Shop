@@ -11,6 +11,7 @@ import {
   type FormEvent,
   type TouchEvent as ReactTouchEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   FiArchive,
   FiCalendar,
@@ -23,6 +24,7 @@ import {
   FiEdit3,
   FiFileText,
   FiImage,
+  FiMonitor,
   FiPlus,
   FiRefreshCcw,
   FiSearch,
@@ -214,6 +216,22 @@ type NativeShareNavigator = Navigator & {
   canShare?: (data: NativeShareData) => boolean;
 };
 
+type DocumentPictureInPictureOptions = {
+  width?: number;
+  height?: number;
+};
+
+type DocumentPictureInPictureApi = {
+  window: Window | null;
+  requestWindow: (
+    options?: DocumentPictureInPictureOptions,
+  ) => Promise<Window>;
+};
+
+type WindowWithDocumentPictureInPicture = Window & {
+  documentPictureInPicture?: DocumentPictureInPictureApi;
+};
+
 const DB_NAME = "local_product_store";
 const DB_VERSION = 1;
 const STORE_NAME = "products";
@@ -250,6 +268,49 @@ const defaultScheduleConfig: ScheduleConfig = {
 const BLOB_BACKUP_PATHNAME = "local-products/backups/local-products-current.json.gz";
 
 const iconClassName = "h-3.5 w-3.5 shrink-0";
+
+const getActiveInteractionWindow = (): Window => {
+  if (typeof window === "undefined") {
+    throw new Error("Cửa sổ trình duyệt chưa sẵn sàng");
+  }
+
+  const browserWindow = window as WindowWithDocumentPictureInPicture;
+  const pictureInPictureWindow = browserWindow.documentPictureInPicture?.window;
+
+  if (pictureInPictureWindow && !pictureInPictureWindow.closed) {
+    return pictureInPictureWindow;
+  }
+
+  return window;
+};
+
+const copyStylesToDocument = (
+  sourceDocument: Document,
+  targetDocument: Document,
+): void => {
+  const styleNodes = sourceDocument.querySelectorAll(
+    'link[rel="stylesheet"], style',
+  );
+
+  styleNodes.forEach((node) => {
+    targetDocument.head.appendChild(node.cloneNode(true));
+  });
+
+  Array.from(sourceDocument.documentElement.attributes).forEach((attribute) => {
+    targetDocument.documentElement.setAttribute(attribute.name, attribute.value);
+  });
+
+  const viewport = targetDocument.createElement("meta");
+
+  viewport.name = "viewport";
+  viewport.content = "width=device-width, initial-scale=1";
+  targetDocument.head.appendChild(viewport);
+
+  targetDocument.documentElement.style.backgroundColor = "#0b1220";
+  targetDocument.body.style.margin = "0";
+  targetDocument.body.style.minWidth = "320px";
+  targetDocument.body.style.backgroundColor = "#0b1220";
+};
 
 const isTypingTarget = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) return false;
@@ -1358,12 +1419,13 @@ const copyImageToClipboard = async (image: ProductImage): Promise<void> => {
 };
 
 const downloadDataUrl = (dataUrl: string, filename: string): void => {
-  const link = document.createElement("a");
+  const targetDocument = getActiveInteractionWindow().document;
+  const link = targetDocument.createElement("a");
 
   link.href = dataUrl;
   link.download = filename;
 
-  document.body.appendChild(link);
+  targetDocument.body.appendChild(link);
   link.click();
   link.remove();
 };
@@ -1379,12 +1441,13 @@ const downloadImageAsJpg = async (
 
 const downloadBlob = (blob: Blob, filename: string): void => {
   const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  const targetDocument = getActiveInteractionWindow().document;
+  const link = targetDocument.createElement("a");
 
   link.href = url;
   link.download = filename;
 
-  document.body.appendChild(link);
+  targetDocument.body.appendChild(link);
   link.click();
   link.remove();
 
@@ -1519,15 +1582,20 @@ type DirectoryPickerWindow = Window & {
 const canUseDirectoryPicker = (): boolean => {
   if (typeof window === "undefined") return false;
 
+  const interactionWindow = getActiveInteractionWindow();
+
   return (
-    typeof (window as DirectoryPickerWindow).showDirectoryPicker === "function"
+    typeof (interactionWindow as DirectoryPickerWindow).showDirectoryPicker ===
+    "function"
   );
 };
 
 const saveImagesToChosenFolder = async (
   request: DownloadRequest,
 ): Promise<void> => {
-  const directoryPicker = (window as DirectoryPickerWindow).showDirectoryPicker;
+  const interactionWindow = getActiveInteractionWindow();
+  const directoryPicker = (interactionWindow as DirectoryPickerWindow)
+    .showDirectoryPicker;
 
   if (!directoryPicker) {
     throw new Error("Trình duyệt chưa hỗ trợ chọn thư mục lưu.");
@@ -1882,9 +1950,96 @@ export default function LocalProductsPage() {
   const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>(() =>
     loadScheduleConfig(),
   );
+  const [pictureInPictureWindow, setPictureInPictureWindow] =
+    useState<Window | null>(null);
 
   const today = useMemo(() => nowTick.toISOString().slice(0, 10), [nowTick]);
   const currentTime = useMemo(() => getCurrentTimeString(), [nowTick]);
+
+  const handleOpenPictureInPicture = useCallback(async (): Promise<void> => {
+    const browserWindow = window as WindowWithDocumentPictureInPicture;
+    const pictureInPictureApi = browserWindow.documentPictureInPicture;
+
+    if (!pictureInPictureApi) {
+      Toastify(
+        "Trình duyệt chưa hỗ trợ cửa sổ nổi. Vui lòng dùng Chrome hoặc Edge phiên bản mới.",
+        400,
+      );
+      return;
+    }
+
+    const existingWindow =
+      pictureInPictureWindow ?? pictureInPictureApi.window;
+
+    if (existingWindow && !existingWindow.closed) {
+      existingWindow.focus();
+      setPictureInPictureWindow(existingWindow);
+      return;
+    }
+
+    try {
+      const nextWindow = await pictureInPictureApi.requestWindow({
+        width: 520,
+        height: 760,
+      });
+
+      nextWindow.document.title = "Local Product Manager";
+      nextWindow.document.body.replaceChildren();
+      copyStylesToDocument(document, nextWindow.document);
+
+      nextWindow.addEventListener(
+        "pagehide",
+        () => {
+          setPictureInPictureWindow((currentWindow) =>
+            currentWindow === nextWindow ? null : currentWindow,
+          );
+        },
+        { once: true },
+      );
+
+      setPictureInPictureWindow(nextWindow);
+      nextWindow.focus();
+    } catch (error: unknown) {
+      if (error instanceof DOMException && error.name === "NotAllowedError") {
+        Toastify("Hãy nhấn trực tiếp nút Cửa sổ nổi để mở", 400);
+        return;
+      }
+
+      Toastify("Không thể mở cửa sổ nổi", 400);
+    }
+  }, [pictureInPictureWindow]);
+
+  const handleClosePictureInPicture = useCallback((): void => {
+    const browserWindow = window as WindowWithDocumentPictureInPicture;
+    const activeWindow =
+      pictureInPictureWindow ?? browserWindow.documentPictureInPicture?.window;
+
+    if (activeWindow && !activeWindow.closed) {
+      activeWindow.close();
+    }
+
+    setPictureInPictureWindow(null);
+  }, [pictureInPictureWindow]);
+
+  const handleFocusPictureInPicture = useCallback((): void => {
+    if (!pictureInPictureWindow || pictureInPictureWindow.closed) {
+      setPictureInPictureWindow(null);
+      return;
+    }
+
+    pictureInPictureWindow.focus();
+  }, [pictureInPictureWindow]);
+
+  useEffect(() => {
+    return () => {
+      const browserWindow = window as WindowWithDocumentPictureInPicture;
+      const activeWindow = browserWindow.documentPictureInPicture?.window;
+
+      if (activeWindow && !activeWindow.closed) {
+        activeWindow.close();
+      }
+    };
+  }, []);
 
   const categories = useMemo(() => {
     const categoryMap = new Map<string, string>();
@@ -2411,12 +2566,27 @@ export default function LocalProductsPage() {
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    const eventWindows = [window, pictureInPictureWindow].filter(
+      (targetWindow, index, windowList): targetWindow is Window =>
+        targetWindow !== null && windowList.indexOf(targetWindow) === index,
+    );
+
+    eventWindows.forEach((targetWindow) => {
+      targetWindow.addEventListener("keydown", handleKeyDown);
+    });
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      eventWindows.forEach((targetWindow) => {
+        targetWindow.removeEventListener("keydown", handleKeyDown);
+      });
     };
-  }, [activeModal, pendingDownload, pendingConfirm, pendingBlobUpload]);
+  }, [
+    activeModal,
+    pendingDownload,
+    pendingConfirm,
+    pendingBlobUpload,
+    pictureInPictureWindow,
+  ]);
 
   useEffect(() => {
     if (!isSettingsReady) return;
@@ -4264,7 +4434,7 @@ export default function LocalProductsPage() {
   ): string => {
     if (typeof window === "undefined") return "";
 
-    const selection = window.getSelection();
+    const selection = getActiveInteractionWindow().getSelection();
 
     if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
       return "";
@@ -4331,7 +4501,7 @@ export default function LocalProductsPage() {
     const copyKey = `selected-description-${productId}`;
 
     await handleCopyField(copyKey, "nội dung đã chọn", selectedDescriptionCopy.text);
-    window.getSelection()?.removeAllRanges();
+    getActiveInteractionWindow().getSelection()?.removeAllRanges();
     setSelectedDescriptionCopy(null);
   };
 
@@ -4415,9 +4585,12 @@ export default function LocalProductsPage() {
     );
   }
 
-  return (
+  const localProductsWorkspace = (
     <main
-      className="min-h-dvh w-full overflow-x-hidden bg-[#0b1220] p-2 pb-[100px] text-slate-100 xl:pb-[50px] "
+      className={`min-h-dvh w-full overflow-x-hidden bg-[#0b1220] p-2 text-slate-100 ${pictureInPictureWindow
+          ? "pb-[50px]"
+          : "pb-[100px] xl:pb-[50px]"
+        }`}
       onPaste={(event) => {
         void handlePaste(event);
       }}
@@ -4457,7 +4630,7 @@ export default function LocalProductsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-8 xl:min-w-[780px]">
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-9 xl:min-w-[880px]">
               <button
                 type="button"
                 title="Thêm sản phẩm"
@@ -4538,6 +4711,32 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
+                title={
+                  pictureInPictureWindow
+                    ? "Đóng cửa sổ nổi và trở lại tab"
+                    : "Mở Local Product Manager dạng cửa sổ nổi"
+                }
+                aria-label={
+                  pictureInPictureWindow
+                    ? "Đóng cửa sổ nổi và trở lại tab"
+                    : "Mở Local Product Manager dạng cửa sổ nổi"
+                }
+                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-violet-300/80 bg-violet-200 px-2 py-1.5 text-[11px] font-black text-violet-950 transition hover:bg-violet-100 active:opacity-80"
+                onClick={() => {
+                  if (pictureInPictureWindow) {
+                    handleClosePictureInPicture();
+                    return;
+                  }
+
+                  void handleOpenPictureInPicture();
+                }}
+              >
+                <FiMonitor aria-hidden="true" className={iconClassName} />
+                {pictureInPictureWindow ? "Về tab" : "Nổi"}
+              </button>
+
+              <button
+                type="button"
                 title="Đồng bộ dữ liệu từ Vercel Blob về local"
                 aria-label="Đồng bộ dữ liệu từ Vercel Blob về local"
                 className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-emerald-300/80 bg-emerald-200 px-2 py-1.5 text-[11px] font-black text-emerald-950  transition hover:bg-emerald-100 active:opacity-80"
@@ -4573,7 +4772,10 @@ export default function LocalProductsPage() {
 
           <div
             ref={categoryTabsRef}
-            className="fixed bottom-[50px] left-0 right-0 z-bar flex overflow-x-auto border-t border-black bg-black xl:bottom-0"
+            className={`fixed left-0 right-0 z-bar flex overflow-x-auto border-t border-black bg-black ${pictureInPictureWindow
+                ? "bottom-0"
+                : "bottom-[50px] xl:bottom-0"
+              }`}
           >
             <button
               type="button"
@@ -7107,5 +7309,48 @@ export default function LocalProductsPage() {
         </div>
       ) : null}
     </main>
+  );
+
+  if (!pictureInPictureWindow || pictureInPictureWindow.closed) {
+    return localProductsWorkspace;
+  }
+
+  return (
+    <>
+      <main className="flex min-h-dvh w-full items-center justify-center bg-[#0b1220] p-4 text-slate-100">
+        <section className="w-full max-w-md rounded-md border border-slate-700 bg-slate-900 p-4 text-center shadow-2xl">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-md border border-violet-300/50 bg-violet-200 text-violet-950">
+            <FiMonitor aria-hidden="true" className="h-5 w-5" />
+          </div>
+          <h1 className="mt-3 text-sm font-black text-white">
+            Local Product Manager đang mở dạng cửa sổ nổi
+          </h1>
+          <p className="mt-2 text-xs leading-5 text-slate-400">
+            Ngài có thể chuyển sang Facebook và tiếp tục thao tác trong cửa sổ nhỏ nằm phía trên.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              className="rounded-md bg-violet-200 px-3 py-2 text-xs font-black text-violet-950 transition hover:bg-violet-100 active:opacity-80"
+              onClick={handleFocusPictureInPicture}
+            >
+              Hiện cửa sổ nổi
+            </button>
+            <button
+              type="button"
+              className="rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80"
+              onClick={handleClosePictureInPicture}
+            >
+              Đóng và trở lại tab
+            </button>
+          </div>
+        </section>
+      </main>
+
+      {createPortal(
+        localProductsWorkspace,
+        pictureInPictureWindow.document.body,
+      )}
+    </>
   );
 }
