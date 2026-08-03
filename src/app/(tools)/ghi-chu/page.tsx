@@ -216,6 +216,12 @@ type NativeShareNavigator = Navigator & {
   canShare?: (data: NativeShareData) => boolean;
 };
 
+type PreparedBackup = {
+  blob: Blob;
+  filename: string;
+  label: string;
+};
+
 type DocumentPictureInPictureOptions = {
   width?: number;
   height?: number;
@@ -290,6 +296,37 @@ const getActiveInteractionWindow = (): Window => {
   }
 
   return window;
+};
+
+const IMPORT_BACKUP_INPUT_ID = "local-products-backup-input";
+
+const waitForUiPaint = (): Promise<void> => {
+  if (typeof window === "undefined") return Promise.resolve();
+
+  const interactionWindow = getActiveInteractionWindow();
+
+  return new Promise((resolve) => {
+    interactionWindow.requestAnimationFrame(() => {
+      interactionWindow.setTimeout(resolve, 0);
+    });
+  });
+};
+
+const isAbortError = (error: unknown): boolean => {
+  return error instanceof DOMException && error.name === "AbortError";
+};
+
+const formatFileSize = (bytes: number): string => {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+
+  const units = ["B", "KB", "MB", "GB"] as const;
+  const unitIndex = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1,
+  );
+  const value = bytes / 1024 ** unitIndex;
+
+  return `${value >= 10 || unitIndex === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[unitIndex]}`;
 };
 
 const copyStylesToDocument = (
@@ -470,11 +507,25 @@ const openDatabase = (): Promise<IDBDatabase> => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => {
-      reject(new Error("Không thể mở IndexedDB"));
+      reject(request.error ?? new Error("Không thể mở IndexedDB"));
+    };
+
+    request.onblocked = () => {
+      reject(
+        new Error(
+          "IndexedDB đang bị khóa bởi một tab khác. Hãy đóng các tab đang mở ứng dụng rồi thử lại.",
+        ),
+      );
     };
 
     request.onsuccess = () => {
-      resolve(request.result);
+      const database = request.result;
+
+      database.onversionchange = () => {
+        database.close();
+      };
+
+      resolve(database);
     };
 
     request.onupgradeneeded = () => {
@@ -489,6 +540,13 @@ const openDatabase = (): Promise<IDBDatabase> => {
   });
 };
 
+const getTransactionError = (
+  transaction: IDBTransaction,
+  fallbackMessage: string,
+): Error => {
+  return transaction.error ?? new Error(fallbackMessage);
+};
+
 const getAllProductsFromDb = async (): Promise<LocalProduct[]> => {
   const database = await openDatabase();
 
@@ -496,20 +554,37 @@ const getAllProductsFromDb = async (): Promise<LocalProduct[]> => {
     const transaction = database.transaction(STORE_NAME, "readonly");
     const store = transaction.objectStore(STORE_NAME);
     const request = store.getAll();
-
-    request.onerror = () => {
-      reject(new Error("Không thể đọc danh sách sản phẩm"));
-    };
+    let rawProducts: unknown[] = [];
 
     request.onsuccess = () => {
-      const rawProducts = request.result as unknown[];
-      const products = normalizeProductsArray(rawProducts);
+      rawProducts = request.result as unknown[];
+    };
 
-      resolve(products);
+    request.onerror = () => {
+      transaction.abort();
     };
 
     transaction.oncomplete = () => {
       database.close();
+      resolve(normalizeProductsArray(rawProducts));
+    };
+
+    transaction.onerror = () => {
+      const error = getTransactionError(
+        transaction,
+        "Không thể đọc danh sách sản phẩm",
+      );
+      database.close();
+      reject(error);
+    };
+
+    transaction.onabort = () => {
+      const error = getTransactionError(
+        transaction,
+        "Quá trình đọc IndexedDB đã bị hủy",
+      );
+      database.close();
+      reject(error);
     };
   });
 };
@@ -520,18 +595,27 @@ const saveProductToDb = async (product: LocalProduct): Promise<void> => {
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.put(product);
 
-    request.onerror = () => {
-      reject(new Error("Không thể lưu sản phẩm"));
-    };
-
-    request.onsuccess = () => {
-      resolve();
-    };
+    store.put(product);
 
     transaction.oncomplete = () => {
       database.close();
+      resolve();
+    };
+
+    transaction.onerror = () => {
+      const error = getTransactionError(transaction, "Không thể lưu sản phẩm");
+      database.close();
+      reject(error);
+    };
+
+    transaction.onabort = () => {
+      const error = getTransactionError(
+        transaction,
+        "Quá trình lưu sản phẩm đã bị hủy",
+      );
+      database.close();
+      reject(error);
     };
   });
 };
@@ -542,40 +626,67 @@ const deleteProductFromDb = async (id: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(id);
 
-    request.onerror = () => {
-      reject(new Error("Không thể xóa sản phẩm"));
-    };
-
-    request.onsuccess = () => {
-      resolve();
-    };
+    store.delete(id);
 
     transaction.oncomplete = () => {
       database.close();
+      resolve();
+    };
+
+    transaction.onerror = () => {
+      const error = getTransactionError(transaction, "Không thể xóa sản phẩm");
+      database.close();
+      reject(error);
+    };
+
+    transaction.onabort = () => {
+      const error = getTransactionError(
+        transaction,
+        "Quá trình xóa sản phẩm đã bị hủy",
+      );
+      database.close();
+      reject(error);
     };
   });
 };
 
-const clearProductsDb = async (): Promise<void> => {
+const replaceAllProductsInDb = async (
+  products: LocalProduct[],
+): Promise<void> => {
   const database = await openDatabase();
 
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.clear();
 
-    request.onerror = () => {
-      reject(new Error("Không thể xóa dữ liệu cũ"));
-    };
+    store.clear();
 
-    request.onsuccess = () => {
-      resolve();
-    };
+    products.forEach((product) => {
+      store.put(product);
+    });
 
     transaction.oncomplete = () => {
       database.close();
+      resolve();
+    };
+
+    transaction.onerror = () => {
+      const error = getTransactionError(
+        transaction,
+        "Không thể thay thế dữ liệu trong IndexedDB",
+      );
+      database.close();
+      reject(error);
+    };
+
+    transaction.onabort = () => {
+      const error = getTransactionError(
+        transaction,
+        "Import IndexedDB đã bị hủy. Dữ liệu cũ được giữ nguyên.",
+      );
+      database.close();
+      reject(error);
     };
   });
 };
@@ -1498,17 +1609,53 @@ const downloadImageAsJpg = async (
 
 const downloadBlob = (blob: Blob, filename: string): void => {
   const url = URL.createObjectURL(blob);
-  const targetDocument = getActiveInteractionWindow().document;
+  const interactionWindow = getActiveInteractionWindow();
+  const targetDocument = interactionWindow.document;
   const link = targetDocument.createElement("a");
 
   link.href = url;
   link.download = filename;
+  link.rel = "noopener";
 
   targetDocument.body.appendChild(link);
   link.click();
   link.remove();
 
-  URL.revokeObjectURL(url);
+  // Safari iPhone có thể chưa tiếp nhận xong Blob nếu URL bị thu hồi ngay.
+  interactionWindow.setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 60_000);
+};
+
+const saveBackupBlob = async (
+  blob: Blob,
+  filename: string,
+): Promise<"shared" | "downloaded"> => {
+  const shareNavigator = getNativeShareNavigator();
+
+  if (shareNavigator?.share && shareNavigator.canShare) {
+    const file = new File([blob], filename, {
+      type: blob.type || "application/octet-stream",
+      lastModified: Date.now(),
+    });
+    const shareData: NativeShareData = {
+      title: filename,
+      files: [file],
+    };
+
+    try {
+      if (shareNavigator.canShare(shareData)) {
+        await shareNavigator.share(shareData);
+        return "shared";
+      }
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+      // Nếu Share Sheet không mở được, chuyển sang tải Blob thông thường.
+    }
+  }
+
+  downloadBlob(blob, filename);
+  return "downloaded";
 };
 
 const createExportPayload = (params: {
@@ -1593,11 +1740,8 @@ const restorePayloadToLocal = async (
     loadProducts: () => Promise<void>;
   },
 ): Promise<void> => {
-  await clearProductsDb();
-
-  for (const product of payload.products) {
-    await saveProductToDb(product);
-  }
+  // Clear và ghi mới trong cùng một transaction để IndexedDB tự rollback khi lỗi.
+  await replaceAllProductsInDb(payload.products);
 
   if (payload.settings) {
     params.setSettings(payload.settings);
@@ -1949,7 +2093,6 @@ const buildRandomSchedule = (
 };
 
 export default function LocalProductsPage() {
-  const fileImportRef = useRef<HTMLInputElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [products, setProducts] = useState<LocalProduct[]>([]);
   const [draft, setDraft] = useState<ProductDraft>(emptyDraft);
@@ -1979,6 +2122,10 @@ export default function LocalProductsPage() {
   const [pendingConfirm, setPendingConfirm] = useState<ConfirmRequest | null>(
     null,
   );
+  const [pendingBackup, setPendingBackup] =
+    useState<PreparedBackup | null>(null);
+  const [isConfirmExecuting, setIsConfirmExecuting] = useState<boolean>(false);
+  const [isBackupSaving, setIsBackupSaving] = useState<boolean>(false);
   const [pendingBlobUpload, setPendingBlobUpload] =
     useState<BlobUploadRequest | null>(null);
   const [blobUploadPassword, setBlobUploadPassword] = useState<string>("");
@@ -2588,6 +2735,7 @@ export default function LocalProductsPage() {
         event.code === "Space" &&
         !activeModal &&
         !pendingDownload &&
+        !pendingBackup &&
         !pendingConfirm &&
         !pendingBlobUpload &&
         !isTypingTarget(event.target)
@@ -2605,9 +2753,16 @@ export default function LocalProductsPage() {
         return;
       }
 
+      if (pendingBackup) {
+        if (!isBackupSaving) setPendingBackup(null);
+        return;
+      }
+
       if (pendingConfirm) {
-        pendingConfirm.onCancel?.();
-        setPendingConfirm(null);
+        if (!isConfirmExecuting) {
+          pendingConfirm.onCancel?.();
+          setPendingConfirm(null);
+        }
         return;
       }
 
@@ -2640,7 +2795,10 @@ export default function LocalProductsPage() {
   }, [
     activeModal,
     pendingDownload,
+    pendingBackup,
+    isBackupSaving,
     pendingConfirm,
+    isConfirmExecuting,
     pendingBlobUpload,
     pictureInPictureWindow,
   ]);
@@ -2802,6 +2960,7 @@ export default function LocalProductsPage() {
     setAlbumSource(null);
     setImageDownloadCategory("all");
     setPendingConfirm(null);
+    setPendingBackup(null);
     setPendingBlobUpload(null);
     setBlobUploadPassword("");
     setPendingDownload(null);
@@ -3203,95 +3362,136 @@ export default function LocalProductsPage() {
     Toastify(`Đã xuất ${copyableProductCount} sản phẩm sang Excel`, 200);
   };
 
-  const handleExportJson = (): void => {
-    requestConfirm({
-      title: "Export JSON?",
-      description:
-        "File JSON sẽ được tải về máy hiện tại. Dữ liệu local không bị thay đổi.",
-      confirmLabel: "Export JSON",
-      tone: "default",
-      onConfirm: () => {
-        const payload = createExportPayload({
-          settings,
-          products,
-          scheduleConfig,
-          scheduleAssignments,
-          postedRecords,
-        });
+  const prepareBackupFile = async (
+    extension: "json" | "json.gz",
+  ): Promise<void> => {
+    const isCompressed = extension === "json.gz";
 
-        const content = JSON.stringify(payload, null, 2);
-        const blob = new Blob([content], {
+    setPageLoadingText(
+      isCompressed
+        ? "Đang tạo và nén file backup..."
+        : "Đang tạo file backup JSON...",
+    );
+    await waitForUiPaint();
+
+    try {
+      const payload = createExportPayload({
+        settings,
+        products,
+        scheduleConfig,
+        scheduleAssignments,
+        postedRecords,
+      });
+
+      // Dùng JSON compact để giảm bộ nhớ, thời gian và dung lượng trên iPhone.
+      const content = JSON.stringify(payload);
+      const blob = isCompressed
+        ? await textToGzipBlob(content)
+        : new Blob([content], {
           type: "application/json;charset=utf-8",
         });
 
-        downloadBlob(blob, createBackupFileName("json"));
-        Toastify("Đã export JSON", 200);
+      setPendingBackup({
+        blob,
+        filename: createBackupFileName(extension),
+        label: isCompressed ? "JSON.GZ" : "JSON",
+      });
+    } finally {
+      setPageLoadingText("");
+    }
+  };
+
+  const handleExportJson = (): void => {
+    requestConfirm({
+      title: "Tạo file backup JSON?",
+      description:
+        "Hệ thống sẽ chuẩn bị file trước. Trên iPhone, nhấn Lưu file rồi chọn Lưu vào Tệp trong bảng chia sẻ.",
+      confirmLabel: "Tạo file JSON",
+      tone: "default",
+      onConfirm: async () => {
+        await prepareBackupFile("json");
       },
     });
   };
 
-  const handleExportJsonGzip = async (): Promise<void> => {
+  const handleExportJsonGzip = (): void => {
     requestConfirm({
-      title: "Export JSON.GZ?",
+      title: "Tạo file backup JSON.GZ?",
       description:
-        "File JSON sẽ được nén gzip rồi tải về máy hiện tại. Dữ liệu sau khi giải nén vẫn giữ nguyên.",
-      confirmLabel: "Export JSON.GZ",
+        "Định dạng nén phù hợp hơn khi dữ liệu và ảnh lớn. Sau khi chuẩn bị xong, nhấn Lưu file để mở bảng chia sẻ trên iPhone.",
+      confirmLabel: "Tạo file JSON.GZ",
       tone: "default",
       onConfirm: async () => {
-        try {
-          const payload = createExportPayload({
-            settings,
-            products,
-            scheduleConfig,
-            scheduleAssignments,
-            postedRecords,
-          });
-
-          const content = JSON.stringify(payload);
-          const blob = await textToGzipBlob(content);
-
-          downloadBlob(blob, createBackupFileName("json.gz"));
-          Toastify("Đã export JSON.GZ", 200);
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : "Không thể export JSON.GZ";
-
-          Toastify(message, 400);
-        }
+        await prepareBackupFile("json.gz");
       },
     });
+  };
+
+  const handleSavePreparedBackup = async (): Promise<void> => {
+    if (!pendingBackup || isBackupSaving) return;
+
+    setIsBackupSaving(true);
+
+    try {
+      const result = await saveBackupBlob(
+        pendingBackup.blob,
+        pendingBackup.filename,
+      );
+
+      setPendingBackup(null);
+      Toastify(
+        result === "shared"
+          ? "Đã mở bảng chia sẻ. Hãy chọn Lưu vào Tệp."
+          : "Đã gửi file đến trình quản lý tải xuống.",
+        200,
+      );
+    } catch (error) {
+      if (isAbortError(error)) return;
+
+      const message =
+        error instanceof Error ? error.message : "Không thể lưu file backup";
+      Toastify(message, 400);
+    } finally {
+      setIsBackupSaving(false);
+    }
   };
 
   const handleImportJson = async (
     event: ChangeEvent<HTMLInputElement>,
   ): Promise<void> => {
-    const file = event.target.files?.[0];
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+
+    // Reset ngay để có thể chọn lại cùng một file, kể cả khi modal đổi trạng thái.
+    input.value = "";
 
     if (!file) return;
+
+    setPageLoadingText("Đang đọc và kiểm tra file backup...");
+    await waitForUiPaint();
 
     try {
       const text = await readJsonOrGzipFileText(file);
       const payload = parseJsonTextToPayload(text);
 
       if (!payload || payload.products.length === 0) {
-        Toastify("File backup không đúng cấu trúc", 400);
-        event.target.value = "";
-        return;
+        throw new Error("File backup không đúng cấu trúc hoặc không có sản phẩm");
       }
+
+      setPageLoadingText("");
 
       requestConfirm({
         title: isGzipFile(file)
           ? "Import dữ liệu JSON.GZ?"
           : "Import dữ liệu JSON?",
-        description:
-          "Import sẽ thay thế toàn bộ dữ liệu sản phẩm hiện tại trong IndexedDB. File .json.gz sẽ được tự giải nén và đọc như JSON thường.",
+        description: `File có ${payload.products.length} sản phẩm (${formatFileSize(file.size)}). Import sẽ thay thế toàn bộ dữ liệu hiện tại trong IndexedDB.`,
         confirmLabel: "Import dữ liệu",
         tone: "warning",
-        onCancel: () => {
-          event.target.value = "";
-        },
         onConfirm: async () => {
-          setPageLoadingText("Đang import dữ liệu vào local...");
+          setPageLoadingText(
+            `Đang import ${payload.products.length} sản phẩm vào local...`,
+          );
+          await waitForUiPaint();
 
           try {
             await restorePayloadToLocal(payload, {
@@ -3302,18 +3502,26 @@ export default function LocalProductsPage() {
               loadProducts,
             });
 
-            event.target.value = "";
             closeAllModals();
-            Toastify("Đã import dữ liệu vào local", 200);
+            Toastify(
+              `Đã import ${payload.products.length} sản phẩm vào local`,
+              200,
+            );
           } finally {
             setPageLoadingText("");
           }
         },
       });
-    } catch {
-      Toastify("Không thể import file backup", 400);
-    } finally {
-      event.target.value = "";
+    } catch (error) {
+      const message =
+        error instanceof SyntaxError
+          ? "File JSON không hợp lệ hoặc đã bị hỏng"
+          : error instanceof Error
+            ? error.message
+            : "Không thể import file backup";
+
+      Toastify(message, 400);
+      setPageLoadingText("");
     }
   };
 
@@ -4467,17 +4675,29 @@ export default function LocalProductsPage() {
   };
 
   const closeConfirm = (): void => {
+    if (isConfirmExecuting) return;
+
     pendingConfirm?.onCancel?.();
     setPendingConfirm(null);
   };
 
   const executeConfirm = async (): Promise<void> => {
-    if (!pendingConfirm) return;
+    if (!pendingConfirm || isConfirmExecuting) return;
 
-    const action = pendingConfirm.onConfirm;
+    const request = pendingConfirm;
 
-    setPendingConfirm(null);
-    await action();
+    setIsConfirmExecuting(true);
+
+    try {
+      await request.onConfirm();
+      setPendingConfirm(null);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Không thể thực hiện thao tác";
+      Toastify(message, 400);
+    } finally {
+      setIsConfirmExecuting(false);
+    }
   };
 
   const closeBlobUploadConfirm = (): void => {
@@ -4640,15 +4860,6 @@ export default function LocalProductsPage() {
     });
   };
 
-  if (pageLoadingText) {
-    return (
-      <main className="min-h-dvh w-full bg-[#0b1220] text-slate-100">
-        <ToastContainer />
-        <LoadingSpinner text={pageLoadingText} />
-      </main>
-    );
-  }
-
   if (!isSettingsReady) {
     return (
       <main className="min-h-dvh w-full bg-[#0b1220] text-slate-100">
@@ -4669,6 +4880,29 @@ export default function LocalProductsPage() {
       }}
     >
       <ToastContainer />
+
+      <input
+        id={IMPORT_BACKUP_INPUT_ID}
+        type="file"
+        accept=".json,.json.gz,.gz,application/json,application/gzip,application/x-gzip"
+        className="sr-only"
+        onChange={(event) => {
+          void handleImportJson(event);
+        }}
+      />
+
+      {pageLoadingText ? (
+        <div
+          className="fixed inset-0 z-[999998] flex h-dvh w-full items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div className="w-full max-w-sm rounded-xl border border-white/10 bg-slate-950 p-4 shadow-2xl">
+            <LoadingSpinner text={pageLoadingText} />
+          </div>
+        </div>
+      ) : null}
 
       <style>{`
  @keyframes productWaveIn {
@@ -6743,27 +6977,18 @@ export default function LocalProductsPage() {
                       </span>
                     </div>
 
-                    <input
-                      ref={fileImportRef}
-                      type="file"
-                      accept="application/json,.json,.json.gz,.gz,application/gzip,application/x-gzip"
-                      className="hidden"
-                      onChange={(event) => void handleImportJson(event)}
-                    />
-
                     <div className="mt-2 grid grid-cols-1 gap-2">
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-center gap-2 rounded-md border border-amber-300/40 bg-amber-300/15 p-2 text-xs font-black text-amber-50 transition hover:bg-amber-300/25"
-                        onClick={() => fileImportRef.current?.click()}
+                      <label
+                        htmlFor={IMPORT_BACKUP_INPUT_ID}
+                        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-amber-300/40 bg-amber-300/15 p-2 text-xs font-black text-amber-50 transition hover:bg-amber-300/25 active:opacity-80"
                         title="Import JSON hoặc JSON.GZ"
                       >
                         <FiUploadCloud
                           aria-hidden="true"
                           className={iconClassName}
                         />
-                        <span>Import file</span>
-                      </button>
+                        <span>Chọn file backup</span>
+                      </label>
 
                       <button
                         type="button"
@@ -7264,7 +7489,8 @@ export default function LocalProductsPage() {
               </div>
               <button
                 type="button"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-slate-200  transition hover:bg-slate-700 active:opacity-80"
+                disabled={isConfirmExecuting}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-slate-200 transition hover:bg-slate-700 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
                 onClick={closeConfirm}
               >
                 <FiX aria-hidden="true" className={iconClassName} />
@@ -7274,7 +7500,8 @@ export default function LocalProductsPage() {
             <div className="mt-2 grid grid-cols-2 gap-2">
               <button
                 type="button"
-                className="rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-bold text-white transition hover:bg-slate-700"
+                disabled={isConfirmExecuting}
+                className="rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-bold text-white transition hover:bg-slate-700 disabled:cursor-wait disabled:opacity-50"
                 onClick={closeConfirm}
               >
                 {pendingConfirm.cancelLabel ?? "Hủy"}
@@ -7282,7 +7509,8 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
-                className={`rounded-md p-2 text-xs font-black transition ${pendingConfirm.tone === "danger"
+                disabled={isConfirmExecuting}
+                className={`rounded-md p-2 text-xs font-black transition disabled:cursor-wait disabled:opacity-60 ${pendingConfirm.tone === "danger"
                   ? "bg-rose-500 text-white hover:bg-rose-400"
                   : pendingConfirm.tone === "warning"
                     ? "bg-amber-300 text-slate-950 hover:bg-amber-200"
@@ -7290,12 +7518,67 @@ export default function LocalProductsPage() {
                   }`}
                 onClick={() => void executeConfirm()}
               >
-                {pendingConfirm.confirmLabel}
+                {isConfirmExecuting
+                  ? "Đang xử lý..."
+                  : pendingConfirm.confirmLabel}
               </button>
             </div>
           </div>
         </div>
       ) : null}
+      {pendingBackup ? (
+        <div className="fixed inset-0 z-[999999] flex h-dvh w-full items-center justify-center bg-black/80 p-2 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-cyan-300/20 bg-slate-950 p-3 shadow-2xl">
+            <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+              <div className="min-w-0">
+                <h3 className="text-sm font-black text-white">
+                  File {pendingBackup.label} đã sẵn sàng
+                </h3>
+                <p className="mt-2 break-all text-xs leading-5 text-slate-400">
+                  {pendingBackup.filename}
+                </p>
+                <p className="mt-1 text-xs font-bold text-cyan-100">
+                  Dung lượng: {formatFileSize(pendingBackup.blob.size)}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-400">
+                  Trên iPhone, nhấn Lưu file rồi chọn Lưu vào Tệp trong bảng chia sẻ.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                disabled={isBackupSaving}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-slate-200 transition hover:bg-slate-700 disabled:cursor-wait disabled:opacity-50"
+                onClick={() => setPendingBackup(null)}
+                aria-label="Đóng file backup"
+              >
+                <FiX aria-hidden="true" className={iconClassName} />
+              </button>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                disabled={isBackupSaving}
+                className="rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-bold text-white transition hover:bg-slate-700 disabled:cursor-wait disabled:opacity-50"
+                onClick={() => setPendingBackup(null)}
+              >
+                Hủy
+              </button>
+
+              <button
+                type="button"
+                disabled={isBackupSaving}
+                className="rounded-md bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200 disabled:cursor-wait disabled:opacity-60"
+                onClick={() => void handleSavePreparedBackup()}
+              >
+                {isBackupSaving ? "Đang mở..." : "Lưu file"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {pendingRemoveTaskIndex !== null ? (
         <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/70 p-2 ">
           <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-2 ">
