@@ -4045,7 +4045,7 @@ export default function LocalProductsPage() {
             return description || "Chưa có mô tả";
         }
 
-        const lines = description.split("\n");
+        const lines = description.split(/\r?\n/u);
 
         return lines.map((line, index) => {
             const trimmedLine = line.trim();
@@ -4060,7 +4060,7 @@ export default function LocalProductsPage() {
                 return (
                     <span
                         key={`${productId}-line-${index}`}
-                        className="block"
+                        className="block min-w-0 max-w-full whitespace-pre-wrap [overflow-wrap:anywhere]"
                         data-description-line="true"
                         data-description-line-text={line}
                     >
@@ -4075,7 +4075,7 @@ export default function LocalProductsPage() {
                     type="button"
                     data-description-line="true"
                     data-description-line-text={trimmedLine}
-                    className={`my-0.5 block w-full select-text rounded-md px-0.5 py-1 text-left transition ${copiedKey === copyKey
+                    className={`my-0.5 block w-full min-w-0 max-w-full select-text whitespace-pre-wrap rounded-md px-0.5 py-1 text-left [overflow-wrap:anywhere] transition ${copiedKey === copyKey
                         ? "bg-amber-200 text-slate-950"
                         : "bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20"
                         }`}
@@ -4110,7 +4110,7 @@ export default function LocalProductsPage() {
 
     return (
         <main
-            className="min-h-dvh w-full overflow-x-hidden bg-[#0b1220] p-2 pb-[100px] text-slate-100 xl:pb-[50px] "
+            className="local-products-workspace min-h-dvh w-full overflow-x-hidden bg-[#0b1220] p-2 pb-[100px] text-slate-100 xl:pb-[50px]"
             onPaste={(event) => {
                 void handlePaste(event);
             }}
@@ -4118,6 +4118,22 @@ export default function LocalProductsPage() {
             <ToastContainer />
 
             <style>{`
+ .local-products-workspace button[data-description-line="true"] {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  flex-wrap: wrap;
+ }
+ .local-products-workspace button[data-description-line="true"] > span {
+  min-width: 0;
+  max-width: 100%;
+  white-space: inherit;
+  overflow-wrap: inherit;
+  word-break: inherit;
+ }
  @keyframes productWaveIn {
  0% { opacity: 0; transform: translateY(18px) scale(0.985); }
  45% { opacity: 1; transform: translateY(-4px) scale(1); }
@@ -4308,7 +4324,7 @@ export default function LocalProductsPage() {
                                         <article
                                             key={`${activeCategoryTab}-${product.id}`}
                                             style={{ animationDelay: `${Math.min(index * 34, 340)}ms` }}
-                                            className={`product-wave-card group overflow-hidden rounded-md border  transition duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-800 ${productDone ? "opacity-70" : ""
+                                            className={`product-wave-card group min-w-0 overflow-hidden rounded-md border transition duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-800 ${productDone ? "opacity-70" : ""
                                                 } ${active
                                                     ? "border-slate-200 bg-slate-800  "
                                                     : "border-slate-700 bg-slate-900"
@@ -4370,7 +4386,7 @@ export default function LocalProductsPage() {
                                                 </div>
                                             </button>
 
-                                            <div className="flex flex-col gap-2 p-2">
+                                            <div className="flex w-full min-w-0 flex-col gap-2 p-2">
                                                 <div className="min-w-0">
                                                     {product.category ? (
                                                         <div className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">
@@ -4390,7 +4406,7 @@ export default function LocalProductsPage() {
                                                     role={descriptionPreview.length > 90 ? "button" : undefined}
                                                     tabIndex={descriptionPreview.length > 90 ? 0 : undefined}
                                                     aria-expanded={descriptionPreview.length > 90 ? expanded : undefined}
-                                                    className={`rounded-md border bg-white/10 border-white/10  p-2 ${descriptionPreview.length > 90
+                                                    className={`w-full min-w-0 rounded-md border border-white/10 bg-white/10 p-2 ${descriptionPreview.length > 90
                                                         ? "cursor-pointer transition hover:border-slate-400/40 hover:bg-slate-800"
                                                         : ""
                                                         }`}
@@ -4435,7 +4451,7 @@ export default function LocalProductsPage() {
                                                     }}
                                                 >
                                                     <div
-                                                        className={`${expanded ? "line-clamp-none" : "line-clamp-2"}  whitespace-pre-line text-[11px] leading-[18px] text-slate-300`}
+                                                        className={`${expanded ? "line-clamp-none" : "line-clamp-2"} w-full min-w-0 whitespace-pre-wrap p-1 text-[11px] leading-[18px] text-slate-300 [overflow-wrap:anywhere]`}
                                                     >
                                                         {renderDescriptionText(
                                                             product.id,
@@ -6598,5 +6614,5 @@ export default function LocalProductsPage() {
                 </div>
             ) : null}
         </main>
-        );
+    );
 }
