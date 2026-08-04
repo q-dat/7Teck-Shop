@@ -283,6 +283,9 @@ const BLOB_BACKUP_PATHNAME = "local-products/backups/local-products-current.json
 
 const iconClassName = "h-3.5 w-3.5 shrink-0";
 
+const productActionButtonBaseClassName =
+  "flex h-7 w-full min-w-0 flex-nowrap items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full px-1.5 text-[9px] font-black leading-none transition active:opacity-80";
+
 const getActiveInteractionWindow = (): Window => {
   if (typeof window === "undefined") {
     throw new Error("Cửa sổ trình duyệt chưa sẵn sàng");
@@ -4921,7 +4924,7 @@ export default function LocalProductsPage() {
 
   const localProductsWorkspace = (
     <main
-      className={`min-h-dvh w-full overflow-x-hidden bg-[#0b1220] p-2 text-slate-100 ${pictureInPictureWindow
+      className={`local-products-workspace min-h-dvh w-full overflow-x-hidden bg-[#0b1220] p-2 text-slate-100 ${pictureInPictureWindow
         ? "pb-[50px]"
         : "pb-[100px] xl:pb-[50px]"
         }`}
@@ -4955,6 +4958,15 @@ export default function LocalProductsPage() {
       ) : null}
 
       <style>{`
+ .local-products-workspace button {
+  min-width: 0;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+ }
+ .local-products-workspace button > span {
+  min-width: 0;
+  white-space: nowrap;
+ }
  @keyframes productWaveIn {
  0% { opacity: 0; transform: translateY(18px) scale(0.985); }
  45% { opacity: 1; transform: translateY(-4px) scale(1); }
@@ -5348,26 +5360,26 @@ export default function LocalProductsPage() {
                           ) : null}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-1.5">
+                        <div className="grid min-w-0 grid-cols-2 gap-1.5">
                           <button
                             type="button"
                             title="Copy ảnh chính"
                             aria-label="Copy ảnh chính"
-                            className="flex items-center justify-center gap-1 rounded-full border border-cyan-400/70 bg-cyan-400/10 px-0.5 py-1 text-[9px] font-black text-cyan-100  transition hover:bg-cyan-400/15 active:opacity-80"
+                            className={`${productActionButtonBaseClassName} border border-cyan-400/70 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/15`}
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopyProductRepresentativeImage(product);
                             }}
                           >
                             {renderCopyIcon(`cover-${product.id}`)}
-                            Ảnh Chính
+                            <span className="min-w-0 truncate whitespace-nowrap">Ảnh Chính</span>
                           </button>
 
                           <button
                             type="button"
                             title="Chia sẻ sản phẩm"
                             aria-label="Chia sẻ sản phẩm"
-                            className="flex items-center justify-center gap-1 rounded-full border border-cyan-400/70 bg-cyan-400/10 px-0.5 py-1 text-[9px] font-black text-cyan-100  transition hover:bg-cyan-400/15 active:opacity-80"
+                            className={`${productActionButtonBaseClassName} border border-cyan-400/70 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/15`}
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleShareProduct(product);
@@ -5384,14 +5396,14 @@ export default function LocalProductsPage() {
                                 className={iconClassName}
                               />
                             )}
-                            Chia sẻ
+                            <span className="min-w-0 truncate whitespace-nowrap">Chia sẻ</span>
                           </button>
 
                           <button
                             type="button"
                             title="Copy nguyên bản mô tả"
                             aria-label="Copy nguyên bản mô tả"
-                            className="flex items-center justify-center gap-1 rounded-full border border-slate-500/90 bg-slate-400/10 px-0.5 py-1 text-[9px] font-black text-slate-100  transition hover:border-slate-300 hover:bg-slate-400/15 active:opacity-80"
+                            className={`${productActionButtonBaseClassName} border border-slate-500/90 bg-slate-400/10 text-slate-100 hover:border-slate-300 hover:bg-slate-400/15`}
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopyField(
@@ -5402,14 +5414,14 @@ export default function LocalProductsPage() {
                             }}
                           >
                             {renderCopyIcon(`post-${product.id}`)}
-                            Post
+                            <span className="min-w-0 truncate whitespace-nowrap">Post</span>
                           </button>
 
                           <button
                             type="button"
                             title="Copy comment sản phẩm"
                             aria-label="Copy comment sản phẩm"
-                            className="flex items-center justify-center gap-1 rounded-full border border-amber-300/70 bg-amber-300/10 px-0.5 py-1 text-[9px] font-black text-amber-100  transition hover:bg-amber-300/15 active:opacity-80"
+                            className={`${productActionButtonBaseClassName} border border-amber-300/70 bg-amber-300/10 text-amber-100 hover:bg-amber-300/15`}
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopyField(
@@ -5424,14 +5436,14 @@ export default function LocalProductsPage() {
                             }}
                           >
                             {renderCopyIcon(`cmt-${product.id}`)}
-                            Cmt
+                            <span className="min-w-0 truncate whitespace-nowrap">Cmt</span>
                           </button>
 
                           <button
                             type="button"
                             title="Copy tên sản phẩm"
                             aria-label="Copy tên sản phẩm"
-                            className="flex items-center justify-center gap-1 rounded-full border border-slate-500/90 bg-slate-400/10 px-0.5 py-1 text-[9px] font-black text-slate-100  transition hover:border-slate-300 hover:bg-slate-400/15 active:opacity-80"
+                            className={`${productActionButtonBaseClassName} border border-slate-500/90 bg-slate-400/10 text-slate-100 hover:border-slate-300 hover:bg-slate-400/15`}
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopyField(
@@ -5442,16 +5454,16 @@ export default function LocalProductsPage() {
                             }}
                           >
                             {renderCopyIcon(`name-${product.id}`)}
-                            Tên
+                            <span className="min-w-0 truncate whitespace-nowrap">Tên</span>
                           </button>
 
                           <button
                             type="button"
                             title={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
                             aria-label={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
-                            className={`flex w-full items-center justify-center gap-1 rounded-full px-0.5 py-1 text-[9px] font-black transition active:opacity-80 ${productDone
-                              ? "border border-slate-400/80 bg-slate-400/10 text-slate-100  hover:bg-slate-400/15"
-                              : "border border-emerald-300/70 bg-emerald-300/10 text-emerald-100  hover:bg-emerald-300/15"
+                            className={`${productActionButtonBaseClassName} ${productDone
+                              ? "border border-slate-400/80 bg-slate-400/10 text-slate-100 hover:bg-slate-400/15"
+                              : "border border-emerald-300/70 bg-emerald-300/10 text-emerald-100 hover:bg-emerald-300/15"
                               }`}
                             onClick={(event) => {
                               event.stopPropagation();
@@ -5462,13 +5474,15 @@ export default function LocalProductsPage() {
                               aria-hidden="true"
                               className={iconClassName}
                             />
-                            {productDone ? "DONE" : "Chưa bán"}
+                            <span className="min-w-0 truncate whitespace-nowrap">
+                              {productDone ? "DONE" : "Chưa bán"}
+                            </span>
                           </button>
                           <button
                             type="button"
                             title="Tải ảnh sản phẩm"
                             aria-label="Tải ảnh sản phẩm"
-                            className="flex items-center justify-center gap-1 rounded-full border border-sky-400/70 bg-sky-400/10 px-0.5 py-1 whitespace-nowrap text-[9px] font-black text-sky-100  transition hover:bg-sky-400/15 active:opacity-80"
+                            className={`${productActionButtonBaseClassName} border border-sky-400/70 bg-sky-400/10 text-sky-100 hover:bg-sky-400/15`}
                             onClick={(event) => {
                               event.stopPropagation();
                               handleDownloadProductImages(product);
@@ -5478,14 +5492,14 @@ export default function LocalProductsPage() {
                               aria-hidden="true"
                               className={iconClassName}
                             />
-                            Tải ảnh
+                            <span className="min-w-0 truncate whitespace-nowrap">Tải ảnh</span>
                           </button>
 
                           <button
                             type="button"
                             title="Xóa sản phẩm"
                             aria-label="Xóa sản phẩm"
-                            className="flex items-center justify-center gap-1 rounded-full border border-rose-400/70 bg-rose-400/10 px-0.5 py-1 text-[9px] font-black text-rose-100  transition hover:bg-rose-400/15 active:opacity-80"
+                            className={`${productActionButtonBaseClassName} border border-rose-400/70 bg-rose-400/10 text-rose-100 hover:bg-rose-400/15`}
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleDelete(product.id);
@@ -5495,7 +5509,7 @@ export default function LocalProductsPage() {
                               aria-hidden="true"
                               className={iconClassName}
                             />
-                            Xóa
+                            <span className="min-w-0 truncate whitespace-nowrap">Xóa</span>
                           </button>
                         </div>
                       </div>
