@@ -279,12 +279,11 @@ const defaultScheduleConfig: ScheduleConfig = {
   selectedCategories: [],
 };
 
-const BLOB_BACKUP_PATHNAME = "local-products/backups/local-products-current.json.gz";
 
 const iconClassName = "h-3.5 w-3.5 shrink-0";
 
 const productActionButtonBaseClassName =
-  "flex h-7 w-full min-w-0 flex-nowrap items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full px-1.5 text-[9px] font-black leading-none transition active:opacity-80";
+  "flex items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full px-0.5 py-1 text-[9px] font-black  transition active:opacity-80";
 
 const getActiveInteractionWindow = (): Window => {
   if (typeof window === "undefined") {
@@ -4981,12 +4980,12 @@ export default function LocalProductsPage() {
       <section className="flex w-full flex-col xl:min-h-[calc(100dvh-4rem)]">
         <header className="sticky z-30 rounded-md border border-slate-700/70 bg-slate-900/95 p-3 backdrop-blur">
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex  items-center gap-2">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-600 bg-slate-800 text-slate-100 ">
                 <FiDatabase aria-hidden="true" className={iconClassName} />
               </div>
 
-              <div className="min-w-0">
+              <div className="">
                 <h1 className="truncate text-sm font-black tracking-tight text-white xl:text-sm">
                   Local Product Manager
                 </h1>
@@ -5260,7 +5259,7 @@ export default function LocalProductsPage() {
                       </button>
 
                       <div className="flex flex-col gap-2 p-2">
-                        <div className="min-w-0">
+                        <div className="">
                           {product.category ? (
                             <div className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">
                               {product.category}
@@ -5360,7 +5359,7 @@ export default function LocalProductsPage() {
                           ) : null}
                         </div>
 
-                        <div className="grid min-w-0 grid-cols-2 gap-1.5">
+                        <div className="grid  grid-cols-2 gap-1.5">
                           <button
                             type="button"
                             title="Copy ảnh chính"
@@ -5372,7 +5371,7 @@ export default function LocalProductsPage() {
                             }}
                           >
                             {renderCopyIcon(`cover-${product.id}`)}
-                            <span className="min-w-0 truncate whitespace-nowrap">Ảnh Chính</span>
+                            <span className=" truncate whitespace-nowrap">Ảnh Chính</span>
                           </button>
 
                           <button
@@ -5396,7 +5395,7 @@ export default function LocalProductsPage() {
                                 className={iconClassName}
                               />
                             )}
-                            <span className="min-w-0 truncate whitespace-nowrap">Chia sẻ</span>
+                            <span className=" truncate whitespace-nowrap">Chia sẻ</span>
                           </button>
 
                           <button
@@ -5414,7 +5413,7 @@ export default function LocalProductsPage() {
                             }}
                           >
                             {renderCopyIcon(`post-${product.id}`)}
-                            <span className="min-w-0 truncate whitespace-nowrap">Post</span>
+                            <span className=" truncate whitespace-nowrap">Post</span>
                           </button>
 
                           <button
@@ -5436,7 +5435,7 @@ export default function LocalProductsPage() {
                             }}
                           >
                             {renderCopyIcon(`cmt-${product.id}`)}
-                            <span className="min-w-0 truncate whitespace-nowrap">Cmt</span>
+                            <span className=" truncate whitespace-nowrap">Cmt</span>
                           </button>
 
                           <button
@@ -5454,7 +5453,7 @@ export default function LocalProductsPage() {
                             }}
                           >
                             {renderCopyIcon(`name-${product.id}`)}
-                            <span className="min-w-0 truncate whitespace-nowrap">Tên</span>
+                            <span className=" truncate whitespace-nowrap">Tên</span>
                           </button>
 
                           <button
@@ -5474,7 +5473,7 @@ export default function LocalProductsPage() {
                               aria-hidden="true"
                               className={iconClassName}
                             />
-                            <span className="min-w-0 truncate whitespace-nowrap">
+                            <span className=" truncate whitespace-nowrap">
                               {productDone ? "DONE" : "Chưa bán"}
                             </span>
                           </button>
@@ -5492,7 +5491,7 @@ export default function LocalProductsPage() {
                               aria-hidden="true"
                               className={iconClassName}
                             />
-                            <span className="min-w-0 truncate whitespace-nowrap">Tải ảnh</span>
+                            <span className=" truncate whitespace-nowrap">Tải ảnh</span>
                           </button>
 
                           <button
@@ -5509,7 +5508,7 @@ export default function LocalProductsPage() {
                               aria-hidden="true"
                               className={iconClassName}
                             />
-                            <span className="min-w-0 truncate whitespace-nowrap">Xóa</span>
+                            <span className=" truncate whitespace-nowrap">Xóa</span>
                           </button>
                         </div>
                       </div>
@@ -5526,7 +5525,7 @@ export default function LocalProductsPage() {
         <div className="fixed inset-0 z-modal flex h-dvh w-full items-center justify-center overflow-hidden bg-black/75 p-3 xl:p-8">
           <div className="h-[calc(100dvh-1.5rem)] w-full overflow-hidden rounded-md border border-slate-700 bg-slate-950  xl:h-[calc(100dvh-4rem)]">
             <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-slate-900 p-2">
-              <div className="flex min-w-0 items-center gap-2">
+              <div className="flex  items-center gap-2">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-600 bg-slate-800 text-slate-100 ">
                   {activeModal === "product" ? (
                     <FiPlus aria-hidden="true" className={iconClassName} />
@@ -5557,7 +5556,7 @@ export default function LocalProductsPage() {
                   ) : null}
                 </div>
 
-                <div className="min-w-0">
+                <div className="">
                   <h2 className="truncate text-xs font-black text-white">
                     {activeModal === "product"
                       ? editingId
@@ -5603,7 +5602,7 @@ export default function LocalProductsPage() {
                         />
                       </div>
 
-                      <div className="min-w-0">
+                      <div className="">
                         <h3 className="text-sm font-black text-white">
                           Tải tất cả ảnh
                         </h3>
@@ -5643,7 +5642,7 @@ export default function LocalProductsPage() {
                         <FiImage aria-hidden="true" className="h-4 w-4" />
                       </div>
 
-                      <div className="min-w-0">
+                      <div className="">
                         <h3 className="text-sm font-black text-white">
                           Tải ảnh đại diện
                         </h3>
@@ -5704,7 +5703,7 @@ export default function LocalProductsPage() {
               {activeModal === "productList" ? (
                 <section className="flex h-full flex-col gap-2">
                   <div className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-center">
-                    <div className="min-w-0">
+                    <div className="">
                       <h3 className="text-xs font-black text-white">
                         Bảng sản phẩm
                       </h3>
@@ -5867,13 +5866,13 @@ export default function LocalProductsPage() {
 
                                     <button
                                       type="button"
-                                      className="min-w-0 border-r border-white/10 px-2 py-2 text-left transition hover:bg-slate-800"
+                                      className=" border-r border-white/10 px-2 py-2 text-left transition hover:bg-slate-800"
                                       onClick={(event) => {
                                         event.stopPropagation();
                                         handleEdit(product);
                                       }}
                                     >
-                                      <div className="flex min-w-0 items-center gap-2">
+                                      <div className="flex  items-center gap-2">
                                         {product.isDone ? (
                                           <span className="shrink-0 rounded-md bg-emerald-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950">
                                             Đã bán
@@ -6466,7 +6465,7 @@ export default function LocalProductsPage() {
                   ) : null}
 
                   <div className="grid min-h-0 flex-1 grid-cols-1 gap-1 xl:grid-cols-[minmax(0,1fr)_320px]">
-                    <section className="min-w-0 rounded-md border border-white/10 bg-slate-950/70 p-1">
+                    <section className=" rounded-md border border-white/10 bg-slate-950/70 p-1">
                       <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
                         {scheduleTaskIndexes.map((taskIndex) => {
                           const active = activeScheduleTaskIndex === taskIndex;
@@ -6500,7 +6499,7 @@ export default function LocalProductsPage() {
                                   setActiveScheduleTaskIndex(taskIndex)
                                 }
                                 onKeyDown={(event) => event.stopPropagation()}
-                                className="min-w-0 flex-1 bg-transparent text-xs font-black text-white outline-none placeholder:text-slate-600"
+                                className=" flex-1 bg-transparent text-xs font-black text-white outline-none placeholder:text-slate-600"
                               />
                               <button
                                 type="button"
@@ -6655,7 +6654,7 @@ export default function LocalProductsPage() {
                                       })}
                                     </select>
 
-                                    <div className="col-span-2 flex min-w-0 gap-1 xl:col-span-1">
+                                    <div className="col-span-2 flex  gap-1 xl:col-span-1">
                                       <button
                                         type="button"
                                         className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-900"
@@ -6689,7 +6688,7 @@ export default function LocalProductsPage() {
                                         )}
                                       </button>
 
-                                      <div className="min-w-0 flex-1">
+                                      <div className=" flex-1">
                                         <h4 className="line-clamp-2 text-[11px] font-black leading-4 text-white">
                                           {assignedProduct?.name ??
                                             "Kéo sản phẩm vào đây hoặc chọn từ danh sách"}
@@ -6762,7 +6761,7 @@ export default function LocalProductsPage() {
                       )}
                     </section>
 
-                    <aside className="min-w-0 rounded-md border border-white/10 bg-slate-950/70 p-1 ">
+                    <aside className=" rounded-md border border-white/10 bg-slate-950/70 p-1 ">
                       <div className="mb-1 flex items-center justify-between gap-1">
                         <div>
                           <h3 className="text-xs font-black text-white">
@@ -6855,7 +6854,7 @@ export default function LocalProductsPage() {
                                   )}
                                 </button>
 
-                                <div className="min-w-0 flex-1">
+                                <div className=" flex-1">
                                   <h4 className="line-clamp-2 text-[11px] font-black leading-4 text-white">
                                     {product.name}
                                   </h4>
@@ -6983,7 +6982,7 @@ export default function LocalProductsPage() {
                 <section className="grid w-full grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                   <article className="rounded-md border border-cyan-300/20 bg-cyan-300/10 p-2">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
+                      <div className="">
                         <h3 className="text-xs font-black text-white">
                           Backup dữ liệu tổng
                         </h3>
@@ -7028,7 +7027,7 @@ export default function LocalProductsPage() {
 
                   <article className="rounded-md border border-amber-300/20 bg-amber-300/10 p-2">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
+                      <div className="">
                         <h3 className="text-xs font-black text-white">
                           Khôi phục dữ liệu
                         </h3>
@@ -7172,7 +7171,7 @@ export default function LocalProductsPage() {
 
                     <article className="rounded-md border border-white/10 bg-slate-950/70 p-2">
                       <div className="mb-1 flex items-center justify-between gap-1">
-                        <div className="min-w-0">
+                        <div className="">
                           <div className="inline-flex rounded-md bg-cyan-300 px-3 py-1 text-xs font-black text-slate-950">
                             {selectedAssignedSlot.date} ·{" "}
                             {selectedAssignedSlot.time} ·{" "}
@@ -7273,10 +7272,10 @@ export default function LocalProductsPage() {
               ) : null}
 
               {activeModal === "imageAlbum" && albumSource ? (
-                <section className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_minmax(170px,30dvh)] gap-2 overflow-hidden md:grid-rows-[minmax(0,1fr)_minmax(190px,28dvh)] xl:grid-cols-[minmax(0,1fr)_310px] xl:grid-rows-1">
-                  <article className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-white/10 bg-slate-900 p-2 ">
-                    <div className="mb-2 grid min-w-0 grid-cols-1 gap-2 rounded-md border border-white/10 bg-slate-900 p-2   xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-                      <div className="min-w-0 rounded-md bg-black/20 px-2 py-1">
+                <section className="grid h-full min-h-0  grid-rows-[minmax(0,1fr)_minmax(170px,30dvh)] gap-2 overflow-hidden md:grid-rows-[minmax(0,1fr)_minmax(190px,28dvh)] xl:grid-cols-[minmax(0,1fr)_310px] xl:grid-rows-1">
+                  <article className="flex min-h-0  flex-col overflow-hidden rounded-md border border-white/10 bg-slate-900 p-2 ">
+                    <div className="mb-2 grid  grid-cols-1 gap-2 rounded-md border border-white/10 bg-slate-900 p-2   xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+                      <div className=" rounded-md bg-black/20 px-2 py-1">
                         <h3 className="truncate whitespace-nowrap text-xs font-black text-white">
                           {albumSource.title}
                         </h3>
@@ -7390,7 +7389,7 @@ export default function LocalProductsPage() {
 
                     <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-md border border-white/10 bg-black/35 p-2  ">
                       {selectedAlbumImage ? (
-                        <div className="flex h-full min-h-0 w-full min-w-0 items-center justify-center overflow-hidden">
+                        <div className="flex h-full min-h-0 w-full  items-center justify-center overflow-hidden">
                           <img
                             src={selectedAlbumImage.dataUrl}
                             alt={selectedAlbumImage.name}
@@ -7408,7 +7407,7 @@ export default function LocalProductsPage() {
                     </div>
                   </article>
 
-                  <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-white/10 bg-slate-900 p-2 ">
+                  <aside className="flex min-h-0  flex-col overflow-hidden rounded-md border border-white/10 bg-slate-900 p-2 ">
                     <div className="mb-2 flex items-center justify-between gap-2 rounded-md border border-white/10 bg-black/25 px-2 py-1.5">
                       <h3 className="text-xs font-black text-white">
                         Tất cả ảnh
@@ -7484,7 +7483,7 @@ export default function LocalProductsPage() {
             }}
           >
             <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2">
-              <div className="min-w-0">
+              <div className="">
                 <h3 className="text-xs font-black text-white">
                   {pendingBlobUpload.title}
                 </h3>
@@ -7543,7 +7542,7 @@ export default function LocalProductsPage() {
         <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
           <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-2 ">
             <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2">
-              <div className="min-w-0">
+              <div className="">
                 <h3 className="text-xs font-black text-white">
                   {pendingConfirm.title}
                 </h3>
@@ -7594,7 +7593,7 @@ export default function LocalProductsPage() {
         <div className="fixed inset-0 z-[999999] flex h-dvh w-full items-center justify-center bg-black/80 p-2 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-xl border border-cyan-300/20 bg-slate-950 p-3 shadow-2xl">
             <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
-              <div className="min-w-0">
+              <div className="">
                 <h3 className="text-sm font-black text-white">
                   File {pendingBackup.label} đã sẵn sàng
                 </h3>
@@ -7677,7 +7676,7 @@ export default function LocalProductsPage() {
           <div className="flex h-[90dvh] w-full items-center justify-center rounded-md border border-white/10 bg-slate-950 p-2 ">
             <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-900 p-2">
               <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
-                <div className="min-w-0">
+                <div className="">
                   <h2 className="truncate text-xs font-black text-white">
                     {pendingDownload.title}
                   </h2>
