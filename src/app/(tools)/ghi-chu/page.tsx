@@ -1440,6 +1440,56 @@ const buildShareContentText = (
     .join("\n\n");
 };
 
+const normalizeCommentPrice = (priceText: string): string => {
+  const cleanPrice = priceText
+    .trim()
+    .replace(/^📌?\s*giá\s*:\s*/iu, "")
+    .trim();
+
+  if (!cleanPrice) return "";
+
+  if (/liên\s*hệ/iu.test(cleanPrice)) {
+    return cleanPrice;
+  }
+
+  const normalizedPrice = cleanPrice
+    .replace(/\s*(triệu|trieu)\s*$/iu, "tr")
+    .replace(/\s*tr\s*$/iu, "tr")
+    .replace(/,/g, ".")
+    .replace(/\s+/g, "");
+
+  return /tr$/iu.test(normalizedPrice)
+    ? normalizedPrice
+    : `${normalizedPrice}tr`;
+};
+
+const buildCommentContentText = (
+  title: string,
+  description: string,
+  priceText: string,
+): string => {
+  const cleanTitle = title.trim();
+  const commentPrice = normalizeCommentPrice(priceText);
+  const plusLines = description
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("+"));
+
+  const headingLines = [
+    cleanTitle,
+    commentPrice ? `📌Giá: ${commentPrice}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return [
+    headingLines,
+    plusLines.length > 0 ? plusLines.join("\n") : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+};
+
 const createImageFilenameSuffix = (imageId: string): string => {
   const normalizedId = imageId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8);
 
@@ -5087,7 +5137,7 @@ export default function LocalProductsPage() {
             <button
               type="button"
               data-category-tab="all"
-              className={`flex h-9 shrink-0 items-center justify-center whitespace-nowrap px-3 text-[11px] font-black uppercase leading-none tracking-wide transition xl:h-[42px] xl:px-5 xl:text-xs ${activeCategoryTab === "all"
+              className={`flex h-[42px] shrink-0 items-center justify-center px-5 text-xs font-black uppercase tracking-wide transition ${activeCategoryTab === "all"
                 ? "bg-slate-100 text-slate-950"
                 : "bg-black text-slate-200 hover:bg-slate-800"
                 }`}
@@ -5101,7 +5151,7 @@ export default function LocalProductsPage() {
                 key={category}
                 type="button"
                 data-category-tab={normalizeTextKey(category)}
-                className={`flex h-9 shrink-0 items-center justify-center whitespace-nowrap px-3 text-[11px] font-black uppercase leading-none tracking-wide transition xl:h-[42px] xl:px-5 xl:text-xs ${normalizeTextKey(activeCategoryTab) ===
+                className={`flex h-[42px] shrink-0 items-center justify-center px-5 text-xs font-black uppercase tracking-wide transition ${normalizeTextKey(activeCategoryTab) ===
                   normalizeTextKey(category)
                   ? "bg-slate-100 text-slate-950"
                   : "bg-black text-white hover:bg-slate-800"
@@ -5303,23 +5353,21 @@ export default function LocalProductsPage() {
                             type="button"
                             title="Copy ảnh chính"
                             aria-label="Copy ảnh chính"
-                            className="flex h-7 w-full min-w-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full border border-cyan-400/70 bg-cyan-400/10 px-1 text-[9px] font-black leading-none text-cyan-100 transition hover:bg-cyan-400/15 active:opacity-80"
+                            className="flex items-center justify-center gap-1 rounded-full border border-cyan-400/70 bg-cyan-400/10 px-0.5 py-1 text-[9px] font-black text-cyan-100  transition hover:bg-cyan-400/15 active:opacity-80"
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopyProductRepresentativeImage(product);
                             }}
                           >
                             {renderCopyIcon(`cover-${product.id}`)}
-                            <span className="min-w-0 truncate whitespace-nowrap">
-                              Ảnh Chính
-                            </span>
+                            Ảnh Chính
                           </button>
 
                           <button
                             type="button"
                             title="Chia sẻ sản phẩm"
                             aria-label="Chia sẻ sản phẩm"
-                            className="flex h-7 w-full min-w-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full border border-cyan-400/70 bg-cyan-400/10 px-1 text-[9px] font-black leading-none text-cyan-100 transition hover:bg-cyan-400/15 active:opacity-80"
+                            className="flex items-center justify-center gap-1 rounded-full border border-cyan-400/70 bg-cyan-400/10 px-0.5 py-1 text-[9px] font-black text-cyan-100  transition hover:bg-cyan-400/15 active:opacity-80"
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleShareProduct(product);
@@ -5328,24 +5376,22 @@ export default function LocalProductsPage() {
                             {copiedKey === `share-product-${product.id}` ? (
                               <FiCheck
                                 aria-hidden="true"
-                                className="h-3 w-3 shrink-0"
+                                className={iconClassName}
                               />
                             ) : (
                               <FiShare2
                                 aria-hidden="true"
-                                className="h-3 w-3 shrink-0"
+                                className={iconClassName}
                               />
                             )}
-                            <span className="min-w-0 truncate whitespace-nowrap">
-                              Chia sẻ
-                            </span>
+                            Chia sẻ
                           </button>
 
                           <button
                             type="button"
                             title="Copy nguyên bản mô tả"
                             aria-label="Copy nguyên bản mô tả"
-                            className="flex h-7 w-full min-w-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full border border-slate-500/90 bg-slate-400/10 px-1 text-[9px] font-black leading-none text-slate-100 transition hover:border-slate-300 hover:bg-slate-400/15 active:opacity-80"
+                            className="flex items-center justify-center gap-1 rounded-full border border-slate-500/90 bg-slate-400/10 px-0.5 py-1 text-[9px] font-black text-slate-100  transition hover:border-slate-300 hover:bg-slate-400/15 active:opacity-80"
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopyField(
@@ -5363,13 +5409,13 @@ export default function LocalProductsPage() {
                             type="button"
                             title="Copy comment sản phẩm"
                             aria-label="Copy comment sản phẩm"
-                            className="flex h-7 w-full min-w-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full border border-amber-300/70 bg-amber-300/10 px-1 text-[9px] font-black leading-none text-amber-100 transition hover:bg-amber-300/15 active:opacity-80"
+                            className="flex items-center justify-center gap-1 rounded-full border border-amber-300/70 bg-amber-300/10 px-0.5 py-1 text-[9px] font-black text-amber-100  transition hover:bg-amber-300/15 active:opacity-80"
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopyField(
                                 `cmt-${product.id}`,
                                 "cmt",
-                                buildShareContentText(
+                                buildCommentContentText(
                                   product.name,
                                   descriptionPreview,
                                   product.priceText,
@@ -5385,7 +5431,7 @@ export default function LocalProductsPage() {
                             type="button"
                             title="Copy tên sản phẩm"
                             aria-label="Copy tên sản phẩm"
-                            className="flex h-7 w-full min-w-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full border border-slate-500/90 bg-slate-400/10 px-1 text-[9px] font-black leading-none text-slate-100 transition hover:border-slate-300 hover:bg-slate-400/15 active:opacity-80"
+                            className="flex items-center justify-center gap-1 rounded-full border border-slate-500/90 bg-slate-400/10 px-0.5 py-1 text-[9px] font-black text-slate-100  transition hover:border-slate-300 hover:bg-slate-400/15 active:opacity-80"
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopyField(
@@ -5403,7 +5449,7 @@ export default function LocalProductsPage() {
                             type="button"
                             title={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
                             aria-label={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
-                            className={`flex h-7 w-full min-w-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full px-1 text-[9px] font-black leading-none transition active:opacity-80 ${productDone
+                            className={`flex w-full items-center justify-center gap-1 rounded-full px-0.5 py-1 text-[9px] font-black transition active:opacity-80 ${productDone
                               ? "border border-slate-400/80 bg-slate-400/10 text-slate-100  hover:bg-slate-400/15"
                               : "border border-emerald-300/70 bg-emerald-300/10 text-emerald-100  hover:bg-emerald-300/15"
                               }`}
@@ -5414,7 +5460,7 @@ export default function LocalProductsPage() {
                           >
                             <FiCheckCircle
                               aria-hidden="true"
-                              className="h-3 w-3 shrink-0"
+                              className={iconClassName}
                             />
                             {productDone ? "DONE" : "Chưa bán"}
                           </button>
@@ -5422,7 +5468,7 @@ export default function LocalProductsPage() {
                             type="button"
                             title="Tải ảnh sản phẩm"
                             aria-label="Tải ảnh sản phẩm"
-                            className="flex h-7 w-full min-w-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full border border-sky-400/70 bg-sky-400/10 px-1 text-[9px] font-black leading-none text-sky-100 transition hover:bg-sky-400/15 active:opacity-80"
+                            className="flex items-center justify-center gap-1 rounded-full border border-sky-400/70 bg-sky-400/10 px-0.5 py-1 whitespace-nowrap text-[9px] font-black text-sky-100  transition hover:bg-sky-400/15 active:opacity-80"
                             onClick={(event) => {
                               event.stopPropagation();
                               handleDownloadProductImages(product);
@@ -5430,7 +5476,7 @@ export default function LocalProductsPage() {
                           >
                             <FiDownload
                               aria-hidden="true"
-                              className="h-3 w-3 shrink-0"
+                              className={iconClassName}
                             />
                             Tải ảnh
                           </button>
@@ -5439,7 +5485,7 @@ export default function LocalProductsPage() {
                             type="button"
                             title="Xóa sản phẩm"
                             aria-label="Xóa sản phẩm"
-                            className="flex h-7 w-full min-w-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full border border-rose-400/70 bg-rose-400/10 px-1 text-[9px] font-black leading-none text-rose-100 transition hover:bg-rose-400/15 active:opacity-80"
+                            className="flex items-center justify-center gap-1 rounded-full border border-rose-400/70 bg-rose-400/10 px-0.5 py-1 text-[9px] font-black text-rose-100  transition hover:bg-rose-400/15 active:opacity-80"
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleDelete(product.id);
@@ -5447,7 +5493,7 @@ export default function LocalProductsPage() {
                           >
                             <FiTrash2
                               aria-hidden="true"
-                              className="h-3 w-3 shrink-0"
+                              className={iconClassName}
                             />
                             Xóa
                           </button>
