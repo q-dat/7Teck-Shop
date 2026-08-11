@@ -1,12 +1,25 @@
-import { buildPageMetadata } from '@/app/(SEO)/lib/seo';
+import type { Metadata } from 'next';
 
-export const metadata = buildPageMetadata({
-  path: '/sub-note',
-  title: 'Sub Note nội bộ',
-  description: 'Công cụ quản lý sản phẩm phụ nội bộ.',
-  robots: 'noindex, follow',
-});
+export const metadata = {
+  title: {
+    absolute: '7Teck.vn',
+  },
+  robots: {
+    index: false,
+    follow: true,
+    googleBot: {
+      index: false,
+      follow: true,
+    },
+  },
+} satisfies Metadata;
 
-export default function SubNoteLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+interface LocalProductsPageLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function LocalProductsPageLayout({
+  children,
+}: LocalProductsPageLayoutProps) {
+  return children;
 }

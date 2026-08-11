@@ -1,12 +1,25 @@
-import { buildPageMetadata } from '@/app/(SEO)/lib/seo';
+import type { Metadata } from 'next';
 
-export const metadata = buildPageMetadata({
-  path: '/ghi-chu',
-  title: 'Ghi chú nội bộ',
-  description: 'Công cụ ghi chú nội bộ quản lý sản phẩm.',
-  robots: 'noindex, follow',
-});
+export const metadata = {
+  title: {
+    absolute: '7Teck.vn',
+  },
+  robots: {
+    index: false,
+    follow: true,
+    googleBot: {
+      index: false,
+      follow: true,
+    },
+  },
+} satisfies Metadata;
 
-export default function GhiChuLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+interface LocalProductsPageLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function LocalProductsPageLayout({
+  children,
+}: LocalProductsPageLayoutProps) {
+  return children;
 }

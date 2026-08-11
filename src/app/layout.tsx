@@ -11,6 +11,7 @@ import { homeMetadata } from '@/app/(SEO)/metadata/homeMetadata';
 import { Inter, Roboto_Mono } from 'next/font/google';
 import { PreloadSearch } from '@/components/userPage/PreloadSearch';
 import CustomCursor from '@/components/userPage/CustomCursor';
+import { Metadata } from 'next';
 
 const geistSans = Inter({
   variable: '--font-geist-sans',
@@ -24,7 +25,17 @@ const geistMono = Roboto_Mono({
   display: 'swap', // Giảm CLS
 });
 
-export const metadata = homeMetadata;
+export const metadata = {
+  ...homeMetadata,
+  icons: {
+    icon: {
+      url: '/favicon.png',
+      type: 'image/png',
+    },
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
+} satisfies Metadata;
 
 export default function RootLayout({
   children,
