@@ -12,6 +12,7 @@ import {
   type TouchEvent as ReactTouchEvent,
 } from "react";
 import { createPortal } from "react-dom";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   FiArchive,
   FiCalendar,
@@ -2319,6 +2320,9 @@ export default function LocalProductsPage() {
   const [query, setQuery] = useState<string>("");
   const [activeCategoryTab, setActiveCategoryTab] =
     useState<CategoryTab>("all");
+  const [isMobileCategoryMenuOpen, setIsMobileCategoryMenuOpen] =
+    useState<boolean>(false);
+  const prefersReducedMotion = useReducedMotion();
   const [imageDownloadCategory, setImageDownloadCategory] =
     useState<CategoryTab>("all");
   const [selectedProductId, setSelectedProductId] = useState<string>("");
@@ -5389,7 +5393,7 @@ export default function LocalProductsPage() {
                 }
               >
                 <FiHash aria-hidden="true" className={iconClassName} />
-                {settings.includeSocialTags ? "Bật Tag" : "Tắt Tag"}
+                {settings.includeSocialTags ? "Tag Bật" : "Tag Tắt"}
               </button>
 
               <button
@@ -5519,11 +5523,114 @@ export default function LocalProductsPage() {
             </label>
           </div>
 
+          <div className="fixed bottom-3 right-2 z-bar md:hidden">
+            <AnimatePresence initial={false}>
+              {isMobileCategoryMenuOpen ? (
+                <motion.div
+                  id="mobile-category-menu"
+                  initial={
+                    prefersReducedMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, x: 24, scale: 0.98 }
+                  }
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={
+                    prefersReducedMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, x: 20, scale: 0.98 }
+                  }
+                  transition={{
+                    duration: prefersReducedMotion ? 0.12 : 0.3,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className="absolute bottom-[calc(100%+0.65rem)] right-0 flex max-h-[68dvh] w-[min(84vw,320px)] touch-pan-y flex-col items-end gap-2 overflow-x-hidden overflow-y-auto overscroll-x-none overscroll-y-contain py-2 pl-8 pr-1"
+                >
+                  {orderedCategoryTabs.map((category, index) => {
+                    const isActive =
+                      normalizeTextKey(activeCategoryTab) ===
+                      normalizeTextKey(category);
+
+                    return (
+                      <motion.button
+                        key={category}
+                        type="button"
+                        initial={
+                          prefersReducedMotion
+                            ? { opacity: 0 }
+                            : {
+                              opacity: 0,
+                              x: 48,
+                              y: index % 2 === 0 ? 11 : -5,
+                              scale: 0.92,
+                            }
+                        }
+                        animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+                        exit={
+                          prefersReducedMotion
+                            ? { opacity: 0 }
+                            : { opacity: 0, x: 28, scale: 0.94 }
+                        }
+                        transition={
+                          prefersReducedMotion
+                            ? { duration: 0.1 }
+                            : {
+                              delay: index * 0.045,
+                              type: "spring",
+                              stiffness: 270,
+                              damping: 24,
+                              mass: 0.78,
+                            }
+                        }
+                        whileTap={
+                          prefersReducedMotion ? undefined : { scale: 0.96, x: -3 }
+                        }
+                        className={`relative flex w-fit max-w-[calc(50vw-8px)] items-center justify-end rounded-[20px] border px-4 py-2.5 text-right text-xs font-black uppercase tracking-[0.04em] backdrop-blur-xl ${isActive
+                          ? "border-amber-200/70 bg-gradient-to-br from-amber-50 via-white to-amber-100 text-slate-950 shadow-[0_14px_38px_rgba(251,191,36,0.24)]"
+                          : "border-white/10 bg-slate-950/90 text-slate-100 shadow-[0_14px_36px_rgba(0,0,0,0.45)]"
+                          }`}
+                        onClick={() => {
+                          setActiveCategoryTab(category);
+                          setIsMobileCategoryMenuOpen(false);
+                        }}
+                      >
+                        <span className="block max-w-[calc(50vw-40px)] overflow-hidden text-ellipsis whitespace-nowrap">
+                          {category === "all" ? "Tất cả" : category}
+                        </span>
+                        <span
+                          aria-hidden="true"
+                          className={`absolute -bottom-1 right-4 h-2.5 w-2.5 rotate-45 border-b border-r ${isActive
+                            ? "border-amber-200/70 bg-amber-100"
+                            : "border-white/10 bg-slate-950"
+                            }`}
+                        />
+                      </motion.button>
+                    );
+                  })}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <motion.button
+              type="button"
+              aria-controls="mobile-category-menu"
+              aria-expanded={isMobileCategoryMenuOpen}
+              whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
+              className={`flex min-h-11 min-w-24 items-center justify-center rounded-full border px-4 text-xs font-black tracking-wide backdrop-blur-xl transition ${isMobileCategoryMenuOpen
+                ? "border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-amber-100 text-slate-950 shadow-[0_12px_34px_rgba(251,191,36,0.28)]"
+                : "border-white/15 bg-slate-950/90 text-white shadow-[0_12px_34px_rgba(0,0,0,0.5)]"
+                }`}
+              onClick={() =>
+                setIsMobileCategoryMenuOpen((current) => !current)
+              }
+            >
+              {isMobileCategoryMenuOpen ? "Đóng" : "Danh mục"}
+            </motion.button>
+          </div>
+
           <div
             ref={categoryTabsRef}
-            // ${pictureInPictureWindow ? "bottom-0" : "bottom-[50px] xl:bottom-0" }  
-            className={`fixed left-0 right-0 bottom-0 z-bar flex overflow-x-auto border-t border-black bg-black 
-          `}>
+            className="fixed bottom-0 left-0 right-0 z-bar hidden overflow-x-auto border-t border-black bg-black md:flex"
+          >
             <button
               type="button"
               data-category-tab="all"
