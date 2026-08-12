@@ -5521,11 +5521,9 @@ export default function LocalProductsPage() {
 
           <div
             ref={categoryTabsRef}
-            className={`fixed left-0 right-0 z-bar flex overflow-x-auto border-t border-black bg-black ${pictureInPictureWindow
-              ? "bottom-0"
-              : "bottom-[50px] xl:bottom-0"
-              }`}
-          >
+            // ${pictureInPictureWindow ? "bottom-0" : "bottom-[50px] xl:bottom-0" }  
+            className={`fixed left-0 right-0 bottom-0 z-bar flex overflow-x-auto border-t border-black bg-black 
+          `}>
             <button
               type="button"
               data-category-tab="all"

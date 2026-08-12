@@ -4271,7 +4271,7 @@ export default function LocalProductsPage() {
 
                     <div
                         ref={categoryTabsRef}
-                        className="fixed bottom-[50px] left-0 right-0 z-bar flex overflow-x-auto border-t border-black bg-black xl:bottom-0"
+                        className="fixed left-0 right-0 z-bar flex overflow-x-auto border-t border-black bg-black bottom-0"
                     >
                         <button
                             type="button"
