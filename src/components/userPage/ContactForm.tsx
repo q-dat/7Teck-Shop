@@ -8,9 +8,18 @@ import { images } from '../../../public/images';
 import { messengerUrl, zaloUrl } from '@/utils/socialLinks';
 import ChatBot from '../chatbot/ChatBot';
 import { IoCloseSharp } from 'react-icons/io5';
+import { usePathname } from 'next/navigation';
 
+const HIDDEN_CONTACT_ROUTES = ['/ghi-chu', '/sub-note'] as const;
 const ContactForm: React.FC = () => {
   const [collapsed, setCollapsed] = useState(true);
+  
+  const pathname = usePathname();
+  const shouldHideContactForm = HIDDEN_CONTACT_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+
+  if (shouldHideContactForm) return null;
 
   return (
     <div className="z-header-mobile w-full">
