@@ -25,6 +25,7 @@ import {
   FiFileText,
   FiImage,
   FiMonitor,
+  FiPhone,
   FiPlus,
   FiRefreshCcw,
   FiSearch,
@@ -33,7 +34,6 @@ import {
   FiUploadCloud,
   FiX,
 } from "react-icons/fi";
-import LoadingSpinner from "@/components/orther/loading/LoadingSpinner";
 import { toast, ToastContainer, type ToastOptions } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -68,14 +68,21 @@ type ProductDraft = {
   images: ProductImage[];
 };
 
+type ContactOption = {
+  id: string;
+  text: string;
+};
+
 type GlobalSettings = {
   commonDescription: string;
   globalNote: string;
+  contactOptions: ContactOption[];
+  selectedContactId: string;
   updatedAt: string;
 };
 
 type ExportPayload = {
-  version: 4;
+  version: 5;
   settings: GlobalSettings;
   products: LocalProduct[];
   scheduleConfig: ScheduleConfig;
@@ -180,6 +187,7 @@ type ModalName =
   | "schedule"
   | "globalNote"
   | "globalDescription"
+  | "contact"
   | "importExport"
   | "slotDetail"
   | "imageAlbum"
@@ -265,6 +273,8 @@ const emptyDraft: ProductDraft = {
 const defaultSettings: GlobalSettings = {
   commonDescription: "",
   globalNote: "",
+  contactOptions: [],
+  selectedContactId: "",
   updatedAt: "",
 };
 
@@ -301,6 +311,23 @@ const getActiveInteractionWindow = (): Window => {
 };
 
 const IMPORT_BACKUP_INPUT_ID = "local-products-backup-input";
+
+const LoadingOverlay = ({ text }: { text: string }) => {
+  return (
+    <div
+      className="fixed inset-0 z-[999998] flex h-dvh w-full items-center justify-center bg-slate-950/85 backdrop-blur-sm"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div
+        aria-hidden="true"
+        className="h-10 w-10 animate-spin rounded-full border-4 border-white/20 border-t-cyan-300"
+      />
+      <span className="sr-only">{text}</span>
+    </div>
+  );
+};
 
 const waitForUiPaint = (): Promise<void> => {
   if (typeof window === "undefined") return Promise.resolve();
@@ -693,6 +720,48 @@ const replaceAllProductsInDb = async (
   });
 };
 
+const LOCAL_PRODUCT_STORAGE_KEYS = [
+  SETTINGS_KEY,
+  POSTED_KEY,
+  SCHEDULE_CONFIG_KEY,
+  SCHEDULE_ASSIGNMENTS_KEY,
+] as const;
+
+const clearLocalProductStorage = (): void => {
+  if (typeof window === "undefined") return;
+
+  LOCAL_PRODUCT_STORAGE_KEYS.forEach((key) => {
+    localStorage.removeItem(key);
+  });
+};
+
+const clearAllLocalProductData = async (): Promise<void> => {
+  await replaceAllProductsInDb([]);
+  clearLocalProductStorage();
+};
+
+const normalizeContactOptions = (value: unknown): ContactOption[] => {
+  if (!Array.isArray(value)) return [];
+
+  const usedIds = new Set<string>();
+
+  return value.reduce<ContactOption[]>((options, item, index) => {
+    if (typeof item !== "object" || item === null) return options;
+
+    const record = item as Record<string, unknown>;
+    const text = typeof record.text === "string" ? record.text.trim() : "";
+    const rawId = typeof record.id === "string" ? record.id.trim() : "";
+    const id = rawId || `contact-${index + 1}`;
+
+    if (!text || usedIds.has(id)) return options;
+
+    usedIds.add(id);
+    options.push({ id, text });
+
+    return options;
+  }, []);
+};
+
 const loadGlobalSettings = (): GlobalSettings => {
   if (typeof window === "undefined") return defaultSettings;
 
@@ -707,6 +776,15 @@ const loadGlobalSettings = (): GlobalSettings => {
 
     const record = parsed as Record<string, unknown>;
 
+    const contactOptions = normalizeContactOptions(record.contactOptions);
+    const selectedContactId =
+      typeof record.selectedContactId === "string" &&
+        contactOptions.some(
+          (option) => option.id === record.selectedContactId,
+        )
+        ? record.selectedContactId
+        : "";
+
     return {
       commonDescription:
         typeof record.commonDescription === "string"
@@ -714,6 +792,8 @@ const loadGlobalSettings = (): GlobalSettings => {
           : "",
       globalNote:
         typeof record.globalNote === "string" ? record.globalNote : "",
+      contactOptions,
+      selectedContactId,
       updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : "",
     };
   } catch {
@@ -1231,6 +1311,12 @@ const normalizeGlobalSettings = (
   if (typeof value !== "object" || value === null) return undefined;
 
   const record = value as Record<string, unknown>;
+  const contactOptions = normalizeContactOptions(record.contactOptions);
+  const selectedContactId =
+    typeof record.selectedContactId === "string" &&
+      contactOptions.some((option) => option.id === record.selectedContactId)
+      ? record.selectedContactId
+      : "";
 
   return {
     commonDescription:
@@ -1238,6 +1324,8 @@ const normalizeGlobalSettings = (
         ? record.commonDescription
         : "",
     globalNote: typeof record.globalNote === "string" ? record.globalNote : "",
+    contactOptions,
+    selectedContactId,
     updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : "",
   };
 };
@@ -1402,9 +1490,29 @@ const copyText = async (value: string): Promise<void> => {
   throw new Error("Không thể copy. Hãy kiểm tra quyền clipboard của trình duyệt.");
 };
 
+const getSelectedContactText = (settings: GlobalSettings): string => {
+  return (
+    settings.contactOptions.find(
+      (option) => option.id === settings.selectedContactId,
+    )?.text.trim() ?? ""
+  );
+};
+
+const appendContactText = (value: string, contactText: string): string => {
+  const cleanValue = value.trim();
+  const cleanContactText = contactText.trim();
+
+  if (!cleanContactText) return cleanValue;
+  if (!cleanValue) return cleanContactText;
+  if (cleanValue.endsWith(cleanContactText)) return cleanValue;
+
+  return `${cleanValue}\n\n${cleanContactText}`;
+};
+
 const buildPostText = (
   product: LocalProduct,
   commonDescription: string,
+  contactText: string,
 ): string => {
   const description = product.description.trim() || commonDescription.trim();
 
@@ -1415,7 +1523,7 @@ const buildPostText = (
     description,
   ].filter(Boolean);
 
-  return lines.join("\n");
+  return appendContactText(lines.join("\n"), contactText);
 };
 
 const buildShareContentText = (
@@ -1469,6 +1577,7 @@ const buildCommentContentText = (
   title: string,
   description: string,
   priceText: string,
+  contactText: string,
 ): string => {
   const cleanTitle = title.trim();
   const commentPrice = normalizeCommentPrice(priceText);
@@ -1484,12 +1593,14 @@ const buildCommentContentText = (
     .filter(Boolean)
     .join("\n");
 
-  return [
+  const content = [
     headingLines,
     plusLines.length > 0 ? plusLines.join("\n") : "",
   ]
     .filter(Boolean)
     .join("\n\n");
+
+  return appendContactText(content, contactText);
 };
 
 const createImageFilenameSuffix = (imageId: string): string => {
@@ -1718,7 +1829,7 @@ const createExportPayload = (params: {
   postedRecords: PostedRecord[];
 }): ExportPayload => {
   return {
-    version: 4,
+    version: 5,
     settings: params.settings,
     products: params.products,
     scheduleConfig: params.scheduleConfig,
@@ -1792,28 +1903,36 @@ const restorePayloadToLocal = async (
     loadProducts: () => Promise<void>;
   },
 ): Promise<void> => {
+  const today = getTodayString();
+  const nextSettings = payload.settings ?? {
+    ...defaultSettings,
+    contactOptions: [],
+  };
+  const nextScheduleConfig = payload.scheduleConfig ?? {
+    ...defaultScheduleConfig,
+    dateFrom: today,
+    dateTo: today,
+    taskNames: [...defaultScheduleConfig.taskNames],
+    selectedCategories: [],
+  };
+  const nextScheduleAssignments = payload.scheduleAssignments ?? {};
+  const nextPostedRecords = payload.postedRecords ?? [];
+
   // Clear và ghi mới trong cùng một transaction để IndexedDB tự rollback khi lỗi.
   await replaceAllProductsInDb(payload.products);
+  clearLocalProductStorage();
 
-  if (payload.settings) {
-    params.setSettings(payload.settings);
-    saveGlobalSettings(payload.settings);
-  }
+  params.setSettings(nextSettings);
+  saveGlobalSettings(nextSettings);
 
-  if (payload.scheduleConfig) {
-    params.setScheduleConfig(payload.scheduleConfig);
-    saveScheduleConfig(payload.scheduleConfig);
-  }
+  params.setScheduleConfig(nextScheduleConfig);
+  saveScheduleConfig(nextScheduleConfig);
 
-  if (payload.scheduleAssignments) {
-    params.setScheduleAssignments(payload.scheduleAssignments);
-    saveScheduleAssignments(payload.scheduleAssignments);
-  }
+  params.setScheduleAssignments(nextScheduleAssignments);
+  saveScheduleAssignments(nextScheduleAssignments);
 
-  if (payload.postedRecords) {
-    params.setPostedRecords(payload.postedRecords);
-    savePostedRecords(payload.postedRecords);
-  }
+  params.setPostedRecords(nextPostedRecords);
+  savePostedRecords(nextPostedRecords);
 
   await params.loadProducts();
 };
@@ -2009,6 +2128,7 @@ const buildRandomSchedule = (
   products: LocalProduct[],
   config: ScheduleConfig,
   commonDescription: string,
+  contactText: string,
 ): BuildScheduleResult => {
   const activeProducts = products.filter((product) => !product.isDone);
 
@@ -2110,7 +2230,11 @@ const buildRandomSchedule = (
 
       const description =
         candidate.description.trim() || commonDescription.trim();
-      const postText = buildPostText(candidate, commonDescription);
+      const postText = buildPostText(
+        candidate,
+        commonDescription,
+        contactText,
+      );
 
       dailyUsedProductIds.add(candidate.id);
 
@@ -2149,6 +2273,7 @@ export default function LocalProductsPage() {
   const [products, setProducts] = useState<LocalProduct[]>([]);
   const [draft, setDraft] = useState<ProductDraft>(emptyDraft);
   const [settings, setSettings] = useState<GlobalSettings>(defaultSettings);
+  const [contactDraft, setContactDraft] = useState<string>("");
   const [editingId, setEditingId] = useState<string>("");
   const [query, setQuery] = useState<string>("");
   const [activeCategoryTab, setActiveCategoryTab] =
@@ -2208,6 +2333,11 @@ export default function LocalProductsPage() {
   );
   const [pictureInPictureWindow, setPictureInPictureWindow] =
     useState<Window | null>(null);
+
+  const activeContactText = useMemo(
+    () => getSelectedContactText(settings),
+    [settings],
+  );
 
   const today = useMemo(() => nowTick.toISOString().slice(0, 10), [nowTick]);
   const currentTime = useMemo(() => getCurrentTimeString(), [nowTick]);
@@ -2519,8 +2649,9 @@ export default function LocalProductsPage() {
       products,
       scheduleConfig,
       settings.commonDescription,
+      activeContactText,
     );
-  }, [products, scheduleConfig, settings.commonDescription]);
+  }, [activeContactText, products, scheduleConfig, settings.commonDescription]);
 
   const scheduleTaskIndexes = useMemo(() => {
     return Array.from(
@@ -2862,7 +2993,13 @@ export default function LocalProductsPage() {
       ...settings,
       updatedAt: new Date().toISOString(),
     });
-  }, [settings.commonDescription, settings.globalNote, isSettingsReady]);
+  }, [
+    settings.commonDescription,
+    settings.globalNote,
+    settings.contactOptions,
+    settings.selectedContactId,
+    isSettingsReady,
+  ]);
 
   useEffect(() => {
     if (activeCategoryTab === "all") return;
@@ -2960,6 +3097,75 @@ export default function LocalProductsPage() {
       ...current,
       [key]: value,
     }));
+  };
+
+  const addContactOption = (): void => {
+    const text = contactDraft.trim();
+
+    if (!text) {
+      Toastify("Vui lòng nhập nội dung liên hệ", 400);
+      return;
+    }
+
+    setSettings((current) => {
+      const existingOption = current.contactOptions.find(
+        (option) => option.text.trim() === text,
+      );
+
+      if (existingOption) {
+        return {
+          ...current,
+          selectedContactId: existingOption.id,
+        };
+      }
+
+      const option: ContactOption = {
+        id: crypto.randomUUID(),
+        text,
+      };
+
+      return {
+        ...current,
+        contactOptions: [...current.contactOptions, option],
+        selectedContactId: option.id,
+      };
+    });
+
+    setContactDraft("");
+  };
+
+  const updateContactOptionText = (id: string, text: string): void => {
+    setSettings((current) => ({
+      ...current,
+      contactOptions: current.contactOptions.map((option) =>
+        option.id === id ? { ...option, text } : option,
+      ),
+    }));
+  };
+
+  const selectContactOption = (id: string): void => {
+    setSettings((current) => ({
+      ...current,
+      selectedContactId: id,
+    }));
+  };
+
+  const removeContactOption = (id: string): void => {
+    setSettings((current) => {
+      const contactOptions = current.contactOptions.filter(
+        (option) => option.id !== id,
+      );
+      const selectedContactId =
+        current.selectedContactId === id
+          ? (contactOptions[0]?.id ?? "")
+          : current.selectedContactId;
+
+      return {
+        ...current,
+        contactOptions,
+        selectedContactId,
+      };
+    });
   };
 
   const updateScheduleField = <Key extends keyof ScheduleConfig>(
@@ -3508,6 +3714,52 @@ export default function LocalProductsPage() {
     }
   };
 
+  const handleClearAllLocalData = (): void => {
+    requestConfirm({
+      title: "Xóa toàn bộ dữ liệu local?",
+      description:
+        "Toàn bộ sản phẩm và ảnh trong IndexedDB cùng dữ liệu ứng dụng trong localStorage sẽ bị xóa.",
+      confirmLabel: "Xóa toàn bộ dữ liệu",
+      tone: "danger",
+      onConfirm: async () => {
+        setPageLoadingText("Đang xóa toàn bộ dữ liệu local...");
+        await waitForUiPaint();
+
+        try {
+          const today = getTodayString();
+          const nextSettings: GlobalSettings = {
+            ...defaultSettings,
+            contactOptions: [],
+          };
+          const nextScheduleConfig: ScheduleConfig = {
+            ...defaultScheduleConfig,
+            dateFrom: today,
+            dateTo: today,
+            taskNames: [...defaultScheduleConfig.taskNames],
+            selectedCategories: [],
+          };
+
+          await clearAllLocalProductData();
+
+          setProducts([]);
+          setSettings(nextSettings);
+          setContactDraft("");
+          setPostedRecords([]);
+          setScheduleConfig(nextScheduleConfig);
+          setScheduleAssignments({});
+          setDraft(emptyDraft);
+          setEditingId("");
+          setQuery("");
+          setActiveCategoryTab("all");
+          closeAllModals();
+          Toastify("Đã xóa toàn bộ dữ liệu local", 200);
+        } finally {
+          setPageLoadingText("");
+        }
+      },
+    });
+  };
+
   const handleImportJson = async (
     event: ChangeEvent<HTMLInputElement>,
   ): Promise<void> => {
@@ -3533,10 +3785,8 @@ export default function LocalProductsPage() {
       setPageLoadingText("");
 
       requestConfirm({
-        title: isGzipFile(file)
-          ? "Import dữ liệu JSON.GZ?"
-          : "Import dữ liệu JSON?",
-        description: `File có ${payload.products.length} sản phẩm (${formatFileSize(file.size)}). Import sẽ thay thế toàn bộ dữ liệu hiện tại trong IndexedDB.`,
+        title: "Bạn có muốn thay thế bằng dữ liệu mới?",
+        description: `File ${isGzipFile(file) ? "JSON.GZ" : "JSON"} có ${payload.products.length} sản phẩm (${formatFileSize(file.size)}). Dữ liệu hiện tại trong IndexedDB và localStorage sẽ được xóa sạch trước khi thay thế.`,
         confirmLabel: "Import dữ liệu",
         tone: "warning",
         onConfirm: async () => {
@@ -3554,6 +3804,7 @@ export default function LocalProductsPage() {
               loadProducts,
             });
 
+            setContactDraft("");
             closeAllModals();
             Toastify(
               `Đã import ${payload.products.length} sản phẩm vào local`,
@@ -3668,9 +3919,9 @@ export default function LocalProductsPage() {
 
   const handleRestoreLatestBackupFromBlob = async (): Promise<void> => {
     requestConfirm({
-      title: "Tải backup online về local?",
+      title: "Bạn có muốn thay thế bằng dữ liệu mới?",
       description:
-        "Hệ thống sẽ tải bản JSON.GZ mới nhất từ Vercel Blob, giải nén và thay thế toàn bộ dữ liệu hiện tại trong IndexedDB.",
+        "Hệ thống sẽ tải bản JSON.GZ mới nhất từ Vercel Blob. Dữ liệu hiện tại trong IndexedDB và localStorage sẽ được xóa sạch trước khi thay thế.",
       confirmLabel: "Tải về local",
       tone: "warning",
       onConfirm: async () => {
@@ -3717,6 +3968,7 @@ export default function LocalProductsPage() {
             loadProducts,
           });
 
+          setContactDraft("");
           closeAllModals();
           Toastify("Đã tải backup online và thay thế toàn bộ dữ liệu local", 200);
         } catch (error) {
@@ -4709,7 +4961,11 @@ export default function LocalProductsPage() {
       taskName: getTaskName(scheduleConfig, taskIndex),
       product,
       description,
-      postText: buildPostText(product, settings.commonDescription),
+      postText: buildPostText(
+        product,
+        settings.commonDescription,
+        activeContactText,
+      ),
       done: postedIds.has(createPostedKey(date, slotIndex, taskIndex)),
     };
   }, [
@@ -4717,6 +4973,7 @@ export default function LocalProductsPage() {
     scheduleTimes,
     scheduleAssignments,
     products,
+    activeContactText,
     settings.commonDescription,
     scheduleConfig,
     postedIds,
@@ -4916,7 +5173,7 @@ export default function LocalProductsPage() {
     return (
       <main className="min-h-dvh w-full bg-[#0b1220] text-slate-100">
         <ToastContainer />
-        <LoadingSpinner text="Đang tải dữ liệu local, vui lòng chờ..." />
+        <LoadingOverlay text="Đang tải dữ liệu local, vui lòng chờ..." />
       </main>
     );
   }
@@ -4943,24 +5200,22 @@ export default function LocalProductsPage() {
         }}
       />
 
-      {pageLoadingText ? (
-        <div
-          className="fixed inset-0 z-[999998] flex h-dvh w-full items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm"
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <div className="w-full max-w-sm rounded-xl border border-white/10 bg-slate-950 p-4 shadow-2xl">
-            <LoadingSpinner text={pageLoadingText} />
-          </div>
-        </div>
-      ) : null}
+      {pageLoadingText ? <LoadingOverlay text={pageLoadingText} /> : null}
 
       <style>{`
  .local-products-workspace button {
   min-width: 0;
   white-space: nowrap;
   flex-wrap: nowrap;
+ }
+ .local-products-workspace button:not(:disabled),
+ .local-products-workspace label[for],
+ .local-products-workspace input[type="radio"],
+ .local-products-workspace [role="button"] {
+  cursor: pointer;
+ }
+ .local-products-workspace button:disabled {
+  cursor: not-allowed;
  }
  .local-products-workspace button > span {
   min-width: 0;
@@ -5014,7 +5269,7 @@ export default function LocalProductsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-9 xl:min-w-[880px]">
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-9 xl:min-w-[960px] xl:grid-cols-10">
               <button
                 type="button"
                 title="Thêm sản phẩm"
@@ -5081,7 +5336,6 @@ export default function LocalProductsPage() {
                 Mô tả
               </button>
 
-
               <button
                 type="button"
                 title="Tải ảnh"
@@ -5117,6 +5371,17 @@ export default function LocalProductsPage() {
               >
                 <FiMonitor aria-hidden="true" className={iconClassName} />
                 {pictureInPictureWindow ? "Về tab" : "Nổi"}
+              </button>
+
+              <button
+                type="button"
+                title="Liên hệ khi copy Post hoặc Cmt"
+                aria-label="Liên hệ khi copy Post hoặc Cmt"
+                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-emerald-300/40 bg-emerald-300/10 px-2 py-1.5 text-[11px] font-black text-emerald-100 transition hover:bg-emerald-300/20 active:opacity-80"
+                onClick={() => openModal("contact")}
+              >
+                <FiPhone aria-hidden="true" className={iconClassName} />
+                Liên hệ
               </button>
 
               <button
@@ -5425,7 +5690,10 @@ export default function LocalProductsPage() {
                               void handleCopyField(
                                 `post-${product.id}`,
                                 "post",
-                                descriptionPreview,
+                                appendContactText(
+                                  descriptionPreview,
+                                  activeContactText,
+                                ),
                               );
                             }}
                           >
@@ -5447,6 +5715,7 @@ export default function LocalProductsPage() {
                                   product.name,
                                   descriptionPreview,
                                   product.priceText,
+                                  activeContactText,
                                 ),
                               );
                             }}
@@ -5559,6 +5828,9 @@ export default function LocalProductsPage() {
                   {activeModal === "globalDescription" ? (
                     <FiFileText aria-hidden="true" className={iconClassName} />
                   ) : null}
+                  {activeModal === "contact" ? (
+                    <FiPhone aria-hidden="true" className={iconClassName} />
+                  ) : null}
                   {activeModal === "importExport" ? (
                     <FiArchive aria-hidden="true" className={iconClassName} />
                   ) : null}
@@ -5586,6 +5858,7 @@ export default function LocalProductsPage() {
                     {activeModal === "schedule" ? "Cấu hình lịch đăng" : null}
                     {activeModal === "globalNote" ? "Ghi chú" : null}
                     {activeModal === "globalDescription" ? "Mô tả chung" : null}
+                    {activeModal === "contact" ? "Liên hệ khi copy" : null}
                     {activeModal === "importExport"
                       ? "Import / Export Data"
                       : null}
@@ -5609,7 +5882,7 @@ export default function LocalProductsPage() {
               className={`h-[calc(92dvh-66px)] p-2 ${activeModal === "imageAlbum" || activeModal === "productList" ? "overflow-hidden" : "overflow-y-auto"}`}
             >
               {activeModal === "imageDownload" ? (
-                <section className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-3 xl:grid-cols-2">
+                <section className="grid w-full grid-cols-1 gap-3 xl:grid-cols-2">
                   <article className="flex flex-col rounded-md border border-white/10 bg-slate-900 p-3">
                     <div className="flex items-start gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-sky-300/20 bg-sky-300/10 text-sky-100">
@@ -6995,6 +7268,93 @@ export default function LocalProductsPage() {
                 </section>
               ) : null}
 
+              {activeModal === "contact" ? (
+                <section className="grid w-full grid-cols-1 gap-2">
+                  <article className="rounded-md border border-emerald-300/20 bg-emerald-300/10 p-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="text-xs font-black text-white">
+                          Thêm nội dung liên hệ
+                        </h3>
+                        <p className="mt-1 text-[10px] leading-4 text-emerald-100/80">
+                          Liên hệ được chọn sẽ cách nội dung Post hoặc Cmt một dòng trống và được lưu trong file backup JSON.
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-md bg-emerald-300 px-2 py-1 text-[9px] font-black text-slate-950">
+                        Chọn 1
+                      </span>
+                    </div>
+
+                    <div className="mt-2 grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_auto]">
+                      <textarea
+                        value={contactDraft}
+                        onChange={(event) => setContactDraft(event.target.value)}
+                        className="min-h-24 w-full resize-y rounded-md border border-emerald-300/20 bg-slate-950/70 p-2 text-xs leading-5 text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-300/50"
+                        placeholder="Nhập nội dung liên hệ..."
+                      />
+                      <button
+                        type="button"
+                        className="flex items-center justify-center gap-2 rounded-md bg-emerald-300 px-3 py-2 text-xs font-black text-slate-950 transition hover:bg-emerald-200 active:opacity-80 xl:self-stretch"
+                        onClick={addContactOption}
+                      >
+                        <FiPlus aria-hidden="true" className={iconClassName} />
+                        Thêm liên hệ
+                      </button>
+                    </div>
+                  </article>
+
+                  <article className="grid grid-cols-1 gap-2 rounded-md border border-white/10 bg-slate-950/60 p-2">
+                    {settings.contactOptions.length > 0 ? (
+                      settings.contactOptions.map((option, index) => (
+                        <div
+                          key={option.id}
+                          className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2 rounded-md border p-2 ${settings.selectedContactId === option.id
+                            ? "border-emerald-300/60 bg-emerald-300/15"
+                            : "border-white/10 bg-slate-900/70"
+                            }`}
+                        >
+                          <input
+                            type="radio"
+                            name="selected-contact-option"
+                            checked={settings.selectedContactId === option.id}
+                            onChange={() => selectContactOption(option.id)}
+                            className="mt-2 h-4 w-4 accent-emerald-300"
+                            aria-label={`Chọn liên hệ ${index + 1}`}
+                          />
+                          <textarea
+                            value={option.text}
+                            onChange={(event) =>
+                              updateContactOptionText(
+                                option.id,
+                                event.target.value,
+                              )
+                            }
+                            className="min-h-20 w-full resize-y rounded-md border border-white/10 bg-slate-900/80 p-2 text-xs leading-5 text-white outline-none transition focus:border-emerald-300/40"
+                            aria-label={`Nội dung liên hệ ${index + 1}`}
+                          />
+                          <button
+                            type="button"
+                            className="flex h-8 w-8 items-center justify-center rounded-md border border-rose-300/30 bg-rose-300/10 text-rose-100 transition hover:bg-rose-300/20 active:opacity-80"
+                            onClick={() => removeContactOption(option.id)}
+                            title="Xóa liên hệ"
+                            aria-label={`Xóa liên hệ ${index + 1}`}
+                          >
+                            <FiTrash2
+                              aria-hidden="true"
+                              className={iconClassName}
+                            />
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="rounded-md border border-dashed border-white/10 bg-slate-950/40 p-3 text-center text-[10px] text-slate-400">
+                        Chưa có nội dung liên hệ.
+                      </p>
+                    )}
+                  </article>
+                </section>
+              ) : null}
+
               {activeModal === "importExport" ? (
                 <section className="grid w-full grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                   <article className="rounded-md border border-cyan-300/20 bg-cyan-300/10 p-2">
@@ -7081,6 +7441,19 @@ export default function LocalProductsPage() {
                           className={iconClassName}
                         />
                         <span>Upload Blob</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-center gap-2 rounded-md border border-rose-300/40 bg-rose-300/10 p-2 text-xs font-black text-rose-100 transition hover:bg-rose-300/20 active:opacity-80"
+                        onClick={handleClearAllLocalData}
+                        title="Xóa toàn bộ dữ liệu local"
+                      >
+                        <FiTrash2
+                          aria-hidden="true"
+                          className={iconClassName}
+                        />
+                        <span>Xóa toàn bộ dữ liệu</span>
                       </button>
                     </div>
                   </article>
@@ -7316,7 +7689,10 @@ export default function LocalProductsPage() {
                             void handleCopyField(
                               `album-post-${albumSource.title}`,
                               "post",
-                              albumSource.description,
+                              appendContactText(
+                                albumSource.description,
+                                activeContactText,
+                              ),
                             )
                           }
                         >
@@ -7780,7 +8156,7 @@ export default function LocalProductsPage() {
               Đóng và trở lại tab
             </button>
           </div>
-        </section>
+        </section>      
       </main>
 
       {createPortal(
