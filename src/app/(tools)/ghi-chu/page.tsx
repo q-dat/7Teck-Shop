@@ -23,6 +23,7 @@ import {
   FiDownload,
   FiEdit3,
   FiFileText,
+  FiHash,
   FiImage,
   FiMonitor,
   FiPhone,
@@ -78,11 +79,12 @@ type GlobalSettings = {
   globalNote: string;
   contactOptions: ContactOption[];
   selectedContactId: string;
+  includeSocialTags: boolean;
   updatedAt: string;
 };
 
 type ExportPayload = {
-  version: 5;
+  version: 6;
   settings: GlobalSettings;
   products: LocalProduct[];
   scheduleConfig: ScheduleConfig;
@@ -224,6 +226,17 @@ type NativeShareNavigator = Navigator & {
   canShare?: (data: NativeShareData) => boolean;
 };
 
+type ShareContentMode = "post" | "comment" | "imagesOnly";
+
+type ShareRequest = {
+  title: string;
+  images: ProductImage[];
+  postText: string;
+  commentText: string;
+  shareKey: string;
+  successMessage: string;
+};
+
 type PreparedBackup = {
   blob: Blob;
   filename: string;
@@ -275,6 +288,7 @@ const defaultSettings: GlobalSettings = {
   globalNote: "",
   contactOptions: [],
   selectedContactId: "",
+  includeSocialTags: false,
   updatedAt: "",
 };
 
@@ -762,6 +776,22 @@ const normalizeContactOptions = (value: unknown): ContactOption[] => {
   }, []);
 };
 
+const extractSocialTagText = (value: string): string => {
+  const matches = value.match(/#[\p{L}\p{N}_]+/gu) ?? [];
+
+  return Array.from(new Set(matches)).join(" ");
+};
+
+const removeSocialTags = (value: string): string => {
+  return value
+    .replace(/#[\p{L}\p{N}_]+/gu, "")
+    .split(/\r?\n/u)
+    .map((line) => line.trimEnd())
+    .join("\n")
+    .replace(/\n{3,}/gu, "\n\n")
+    .trim();
+};
+
 const loadGlobalSettings = (): GlobalSettings => {
   if (typeof window === "undefined") return defaultSettings;
 
@@ -794,6 +824,10 @@ const loadGlobalSettings = (): GlobalSettings => {
         typeof record.globalNote === "string" ? record.globalNote : "",
       contactOptions,
       selectedContactId,
+      includeSocialTags:
+        typeof record.includeSocialTags === "boolean"
+          ? record.includeSocialTags
+          : false,
       updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : "",
     };
   } catch {
@@ -1326,6 +1360,10 @@ const normalizeGlobalSettings = (
     globalNote: typeof record.globalNote === "string" ? record.globalNote : "",
     contactOptions,
     selectedContactId,
+    includeSocialTags:
+      typeof record.includeSocialTags === "boolean"
+        ? record.includeSocialTags
+        : false,
     updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : "",
   };
 };
@@ -1498,21 +1536,41 @@ const getSelectedContactText = (settings: GlobalSettings): string => {
   );
 };
 
-const appendContactText = (value: string, contactText: string): string => {
-  const cleanValue = value.trim();
+const composeCopyText = (
+  value: string,
+  contactText: string,
+  includeSocialTags: boolean,
+  socialTagSource = value,
+): string => {
+  const cleanValue = removeSocialTags(value);
   const cleanContactText = contactText.trim();
+  const cleanSocialTagText = includeSocialTags
+    ? extractSocialTagText(socialTagSource)
+    : "";
+  const sections = cleanValue ? [cleanValue] : [];
 
-  if (!cleanContactText) return cleanValue;
-  if (!cleanValue) return cleanContactText;
-  if (cleanValue.endsWith(cleanContactText)) return cleanValue;
+  if (
+    cleanContactText &&
+    !sections.join("\n\n").endsWith(cleanContactText)
+  ) {
+    sections.push(cleanContactText);
+  }
 
-  return `${cleanValue}\n\n${cleanContactText}`;
+  if (
+    cleanSocialTagText &&
+    !sections.join("\n\n").endsWith(cleanSocialTagText)
+  ) {
+    sections.push(cleanSocialTagText);
+  }
+
+  return sections.join("\n\n");
 };
 
 const buildPostText = (
   product: LocalProduct,
   commonDescription: string,
   contactText: string,
+  includeSocialTags: boolean,
 ): string => {
   const description = product.description.trim() || commonDescription.trim();
 
@@ -1523,31 +1581,7 @@ const buildPostText = (
     description,
   ].filter(Boolean);
 
-  return appendContactText(lines.join("\n"), contactText);
-};
-
-const buildShareContentText = (
-  title: string,
-  description: string,
-  priceText: string,
-): string => {
-  const cleanTitle = title.trim();
-  const plusLines = description
-    .split(/\r?\n/u)
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("+"));
-  const cleanPrice = priceText
-    .trim()
-    .replace(/^📌?\s*giá\s*:\s*/iu, "")
-    .trim();
-
-  return [
-    cleanTitle,
-    plusLines.length > 0 ? plusLines.join("\n") : "",
-    cleanPrice ? `📌Giá: ${cleanPrice}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+  return composeCopyText(lines.join("\n"), contactText, includeSocialTags);
 };
 
 const normalizeCommentPrice = (priceText: string): string => {
@@ -1600,7 +1634,12 @@ const buildCommentContentText = (
     .filter(Boolean)
     .join("\n\n");
 
-  return appendContactText(content, contactText);
+  return composeCopyText(
+    content,
+    contactText,
+    false,
+    description,
+  );
 };
 
 const createImageFilenameSuffix = (imageId: string): string => {
@@ -1829,7 +1868,7 @@ const createExportPayload = (params: {
   postedRecords: PostedRecord[];
 }): ExportPayload => {
   return {
-    version: 5,
+    version: 6,
     settings: params.settings,
     products: params.products,
     scheduleConfig: params.scheduleConfig,
@@ -2129,6 +2168,7 @@ const buildRandomSchedule = (
   config: ScheduleConfig,
   commonDescription: string,
   contactText: string,
+  includeSocialTags: boolean,
 ): BuildScheduleResult => {
   const activeProducts = products.filter((product) => !product.isDone);
 
@@ -2234,6 +2274,7 @@ const buildRandomSchedule = (
         candidate,
         commonDescription,
         contactText,
+        includeSocialTags,
       );
 
       dailyUsedProductIds.add(candidate.id);
@@ -2296,12 +2337,14 @@ export default function LocalProductsPage() {
   >(null);
   const [pendingDownload, setPendingDownload] =
     useState<DownloadRequest | null>(null);
+  const [pendingShare, setPendingShare] = useState<ShareRequest | null>(null);
   const [pendingConfirm, setPendingConfirm] = useState<ConfirmRequest | null>(
     null,
   );
   const [pendingBackup, setPendingBackup] =
     useState<PreparedBackup | null>(null);
   const [isConfirmExecuting, setIsConfirmExecuting] = useState<boolean>(false);
+  const [isShareExecuting, setIsShareExecuting] = useState<boolean>(false);
   const [isBackupSaving, setIsBackupSaving] = useState<boolean>(false);
   const [pendingBlobUpload, setPendingBlobUpload] =
     useState<BlobUploadRequest | null>(null);
@@ -2650,8 +2693,15 @@ export default function LocalProductsPage() {
       scheduleConfig,
       settings.commonDescription,
       activeContactText,
+      settings.includeSocialTags,
     );
-  }, [activeContactText, products, scheduleConfig, settings.commonDescription]);
+  }, [
+    activeContactText,
+    products,
+    scheduleConfig,
+    settings.commonDescription,
+    settings.includeSocialTags,
+  ]);
 
   const scheduleTaskIndexes = useMemo(() => {
     return Array.from(
@@ -2918,6 +2968,7 @@ export default function LocalProductsPage() {
         event.code === "Space" &&
         !activeModal &&
         !pendingDownload &&
+        !pendingShare &&
         !pendingBackup &&
         !pendingConfirm &&
         !pendingBlobUpload &&
@@ -2933,6 +2984,11 @@ export default function LocalProductsPage() {
 
       if (pendingDownload) {
         setPendingDownload(null);
+        return;
+      }
+
+      if (pendingShare) {
+        if (!isShareExecuting) setPendingShare(null);
         return;
       }
 
@@ -2978,6 +3034,8 @@ export default function LocalProductsPage() {
   }, [
     activeModal,
     pendingDownload,
+    pendingShare,
+    isShareExecuting,
     pendingBackup,
     isBackupSaving,
     pendingConfirm,
@@ -2998,6 +3056,7 @@ export default function LocalProductsPage() {
     settings.globalNote,
     settings.contactOptions,
     settings.selectedContactId,
+    settings.includeSocialTags,
     isSettingsReady,
   ]);
 
@@ -3222,6 +3281,7 @@ export default function LocalProductsPage() {
     setPendingBlobUpload(null);
     setBlobUploadPassword("");
     setPendingDownload(null);
+    setPendingShare(null);
   };
 
   const closeAllProductModals = (): void => {
@@ -3992,14 +4052,22 @@ export default function LocalProductsPage() {
   const copyDownloadTextIfNeeded = async (
     request: DownloadRequest,
   ): Promise<void> => {
-    const textToCopy = request.textToCopy?.trim();
+    if (request.textToCopy === undefined) return;
+
+    const sourceText = request.textToCopy.trim();
+
+    const textToCopy = composeCopyText(
+      sourceText,
+      activeContactText,
+      settings.includeSocialTags,
+    );
 
     if (!textToCopy) return;
 
     try {
       await copyText(textToCopy);
       setCopiedKey("download-description");
-      Toastify("Đã tự động copy mô tả sản phẩm", 200);
+      Toastify("Đã tự động copy nội dung Post", 200);
 
       window.setTimeout(() => {
         setCopiedKey((current) =>
@@ -4007,7 +4075,7 @@ export default function LocalProductsPage() {
         );
       }, 1200);
     } catch {
-      Toastify("Không thể tự động copy mô tả", 300);
+      Toastify("Không thể tự động copy nội dung Post", 300);
     }
   };
 
@@ -4052,16 +4120,16 @@ export default function LocalProductsPage() {
       return;
     }
 
-    const descriptionText =
+    const postText =
       product.description.trim() || settings.commonDescription.trim();
 
     requestDownload({
       title: "Tải ảnh sản phẩm",
-      description: `Bạn có muốn tải ${product.images.length} ảnh của sản phẩm này về máy không? Mô tả sản phẩm sẽ được tự động copy trước khi tải.`,
+      description: `Bạn có muốn tải ${product.images.length} ảnh của sản phẩm này về máy không? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
       mode: "multiple",
       images: product.images,
       startIndex: 0,
-      textToCopy: descriptionText,
+      textToCopy: postText,
     });
   };
 
@@ -4097,78 +4165,30 @@ export default function LocalProductsPage() {
     });
   };
 
-  const handleShareProduct = async (product: LocalProduct): Promise<void> => {
-    const shareNavigator = getNativeShareNavigator();
-    const shareKey = `share-product-${product.id}`;
+  const handleShareProduct = (product: LocalProduct): void => {
     const descriptionText =
       product.description.trim() || settings.commonDescription.trim();
-    const textValue = buildShareContentText(
-      product.name,
-      descriptionText,
-      product.priceText,
-    );
 
-    const markShared = (): void => {
-      setCopiedKey(shareKey);
-
-      window.setTimeout(() => {
-        setCopiedKey((current) => (current === shareKey ? "" : current));
-      }, 1200);
-    };
-
-    try {
-      if (shareNavigator?.share) {
-        if (product.images.length > 0) {
-          const files = await Promise.all(
-            product.images.map((image, index) =>
-              dataUrlToShareFile(
-                image.dataUrl,
-                image.name || createSystemImageFilename(index, image.id),
-              ),
-            ),
-          );
-          const shareDataWithFiles: NativeShareData = {
-            title: product.name,
-            text: textValue,
-            files,
-          };
-
-          if (shareNavigator.canShare?.(shareDataWithFiles)) {
-            await shareNavigator.share(shareDataWithFiles);
-            markShared();
-            Toastify("Đã mở bảng chia sẻ sản phẩm", 200);
-            return;
-          }
-        }
-
-        await shareNavigator.share({
-          title: product.name,
-          text: textValue,
-        });
-        markShared();
-        Toastify("Thiết bị chưa hỗ trợ gửi toàn bộ ảnh, đã mở chia sẻ nội dung", 200);
-        return;
-      }
-
-      await copyText(textValue);
-      markShared();
-      Toastify("Trình duyệt chưa hỗ trợ chia sẻ, đã copy nội dung", 200);
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        return;
-      }
-
-      try {
-        await copyText(textValue);
-        markShared();
-        Toastify("Không thể mở chia sẻ, đã copy nội dung", 300);
-      } catch {
-        Toastify("Không thể chia sẻ sản phẩm", 400);
-      }
-    }
+    setPendingShare({
+      title: product.name,
+      images: product.images,
+      postText: composeCopyText(
+        descriptionText,
+        activeContactText,
+        settings.includeSocialTags,
+      ),
+      commentText: buildCommentContentText(
+        product.name,
+        descriptionText,
+        product.priceText,
+        activeContactText,
+      ),
+      shareKey: `share-product-${product.id}`,
+      successMessage: "Đã mở bảng chia sẻ sản phẩm",
+    });
   };
 
-  const handleShareSelectedAlbumImages = async (): Promise<void> => {
+  const handleShareSelectedAlbumImages = (): void => {
     if (!albumSource) {
       Toastify("Chưa có album để chia sẻ", 300);
       return;
@@ -4183,51 +4203,103 @@ export default function LocalProductsPage() {
       return;
     }
 
+    setPendingShare({
+      title: albumSource.title,
+      images: selectedImages,
+      postText: composeCopyText(
+        albumSource.description,
+        activeContactText,
+        settings.includeSocialTags,
+      ),
+      commentText: buildCommentContentText(
+        albumSource.title,
+        albumSource.description,
+        albumSource.priceText,
+        activeContactText,
+      ),
+      shareKey: "album-share-selected",
+      successMessage: "Đã mở bảng chia sẻ ảnh",
+    });
+  };
+
+  const executeShareRequest = async (
+    mode: ShareContentMode,
+  ): Promise<void> => {
+    if (!pendingShare || isShareExecuting) return;
+
+    const request = pendingShare;
+    const textValue =
+      mode === "post"
+        ? request.postText
+        : mode === "comment"
+          ? request.commentText
+          : "";
     const shareNavigator = getNativeShareNavigator();
-    const shareKey = "album-share-selected";
-    const textValue = buildShareContentText(
-      albumSource.title,
-      albumSource.description,
-      albumSource.priceText,
-    );
 
     const markShared = (): void => {
-      setCopiedKey(shareKey);
+      setCopiedKey(request.shareKey);
 
-      window.setTimeout(() => {
-        setCopiedKey((current) => (current === shareKey ? "" : current));
+      getActiveInteractionWindow().setTimeout(() => {
+        setCopiedKey((current) =>
+          current === request.shareKey ? "" : current,
+        );
       }, 1200);
     };
 
-    try {
-      if (shareNavigator?.share) {
-        const files = await Promise.all(
-          selectedImages.map((image, index) =>
-            dataUrlToShareFile(
-              image.dataUrl,
-              image.name || createSystemImageFilename(index, image.id),
-            ),
-          ),
-        );
-        const shareDataWithFiles: NativeShareData = {
-          title: albumSource.title,
-          text: textValue,
-          files,
-        };
+    setIsShareExecuting(true);
 
-        if (shareNavigator.canShare?.(shareDataWithFiles)) {
-          await shareNavigator.share(shareDataWithFiles);
+    try {
+      const files = await Promise.all(
+        request.images.map((image, index) =>
+          dataUrlToShareFile(
+            image.dataUrl,
+            image.name || createSystemImageFilename(index, image.id),
+          ),
+        ),
+      );
+
+      if (mode === "imagesOnly" && files.length === 0) {
+        Toastify("Chưa có ảnh để chia sẻ", 300);
+        return;
+      }
+
+      if (shareNavigator?.share) {
+        const shareData: NativeShareData =
+          mode === "imagesOnly"
+            ? { files }
+            : { title: request.title, text: textValue, files };
+        const canShareWithFiles =
+          files.length > 0 &&
+          (shareNavigator.canShare?.(shareData) ?? true);
+
+        if (canShareWithFiles) {
+          await shareNavigator.share(shareData);
           markShared();
-          Toastify("Đã mở bảng chia sẻ ảnh", 200);
+          Toastify(request.successMessage, 200);
+          return;
+        }
+
+        if (mode === "imagesOnly") {
+          Toastify("Thiết bị chưa hỗ trợ chia sẻ ảnh đã chọn", 400);
           return;
         }
 
         await shareNavigator.share({
-          title: albumSource.title,
+          title: request.title,
           text: textValue,
         });
         markShared();
-        Toastify("Thiết bị chưa hỗ trợ gửi nhiều ảnh, đã mở chia sẻ nội dung", 200);
+        Toastify(
+          files.length > 0
+            ? "Thiết bị chưa hỗ trợ gửi toàn bộ ảnh, đã mở chia sẻ nội dung"
+            : request.successMessage,
+          200,
+        );
+        return;
+      }
+
+      if (mode === "imagesOnly") {
+        Toastify("Trình duyệt chưa hỗ trợ chia sẻ chỉ hình ảnh", 400);
         return;
       }
 
@@ -4235,7 +4307,10 @@ export default function LocalProductsPage() {
       markShared();
       Toastify("Trình duyệt chưa hỗ trợ chia sẻ, đã copy nội dung", 200);
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
+      if (isAbortError(error)) return;
+
+      if (mode === "imagesOnly") {
+        Toastify("Không thể chia sẻ ảnh đã chọn", 400);
         return;
       }
 
@@ -4244,8 +4319,11 @@ export default function LocalProductsPage() {
         markShared();
         Toastify("Không thể mở chia sẻ, đã copy nội dung", 300);
       } catch {
-        Toastify("Không thể chia sẻ ảnh đã chọn", 400);
+        Toastify("Không thể chia sẻ nội dung", 400);
       }
+    } finally {
+      setPendingShare(null);
+      setIsShareExecuting(false);
     }
   };
 
@@ -4266,7 +4344,7 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải ảnh đã chọn",
-      description: `Bạn có muốn tải ${selectedImages.length} ảnh đã chọn về máy không? Mô tả sản phẩm sẽ được tự động copy trước khi tải.`,
+      description: `Bạn có muốn tải ${selectedImages.length} ảnh đã chọn về máy không? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
       mode: selectedImages.length === 1 ? "single" : "multiple",
       images: selectedImages,
       startIndex: 0,
@@ -4294,7 +4372,7 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải toàn bộ album",
-      description: `Bạn có muốn tải ${albumSource.images.length} ảnh trong album về máy không? Mô tả sản phẩm sẽ được tự động copy trước khi tải.`,
+      description: `Bạn có muốn tải ${albumSource.images.length} ảnh trong album về máy không? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
       mode: "multiple",
       images: albumSource.images,
       startIndex: 0,
@@ -4348,7 +4426,7 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải toàn bộ ảnh",
-      description: `Bạn có muốn tải ${allImages.length} ảnh của tất cả sản phẩm chưa DONE về máy không? Mô tả của các sản phẩm này sẽ được tự động copy trước khi tải.`,
+      description: `Bạn có muốn tải ${allImages.length} ảnh của tất cả sản phẩm chưa DONE về máy không? Toàn bộ nội dung Post của các sản phẩm này sẽ được tự động copy trước khi tải.`,
       mode: "multiple",
       images: allImages,
       startIndex: 0,
@@ -4965,6 +5043,7 @@ export default function LocalProductsPage() {
         product,
         settings.commonDescription,
         activeContactText,
+        settings.includeSocialTags,
       ),
       done: postedIds.has(createPostedKey(date, slotIndex, taskIndex)),
     };
@@ -4974,6 +5053,7 @@ export default function LocalProductsPage() {
     scheduleAssignments,
     products,
     activeContactText,
+    settings.includeSocialTags,
     settings.commonDescription,
     scheduleConfig,
     postedIds,
@@ -5269,7 +5349,7 @@ export default function LocalProductsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-9 xl:min-w-[960px] xl:grid-cols-10">
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-9 xl:min-w-[1040px] xl:grid-cols-11">
               <button
                 type="button"
                 title="Thêm sản phẩm"
@@ -5290,6 +5370,26 @@ export default function LocalProductsPage() {
               >
                 <FiArchive aria-hidden="true" className={iconClassName} />
                 Data
+              </button>
+
+              <button
+                type="button"
+                title={settings.includeSocialTags ? "Tắt Tag khi copy" : "Bật Tag khi copy"}
+                aria-label={settings.includeSocialTags ? "Tắt Tag khi copy" : "Bật Tag khi copy"}
+                aria-pressed={settings.includeSocialTags}
+                className={`group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border px-2 py-1.5 text-[11px] font-black transition active:opacity-80 ${settings.includeSocialTags
+                  ? "border-fuchsia-200 bg-fuchsia-300 text-slate-950 hover:bg-fuchsia-200"
+                  : "border-slate-600 bg-slate-800 text-slate-300 hover:border-fuchsia-300/50 hover:bg-slate-700"
+                  }`}
+                onClick={() =>
+                  updateSettingField(
+                    "includeSocialTags",
+                    !settings.includeSocialTags,
+                  )
+                }
+              >
+                <FiHash aria-hidden="true" className={iconClassName} />
+                {settings.includeSocialTags ? "Bật Tag" : "Tắt Tag"}
               </button>
 
               <button
@@ -5690,9 +5790,10 @@ export default function LocalProductsPage() {
                               void handleCopyField(
                                 `post-${product.id}`,
                                 "post",
-                                appendContactText(
+                                composeCopyText(
                                   descriptionPreview,
                                   activeContactText,
+                                  settings.includeSocialTags,
                                 ),
                               );
                             }}
@@ -7689,9 +7790,10 @@ export default function LocalProductsPage() {
                             void handleCopyField(
                               `album-post-${albumSource.title}`,
                               "post",
-                              appendContactText(
+                              composeCopyText(
                                 albumSource.description,
                                 activeContactText,
+                                settings.includeSocialTags,
                               ),
                             )
                           }
@@ -8064,6 +8166,60 @@ export default function LocalProductsPage() {
         </div>
       ) : null}
 
+      {pendingShare ? (
+        <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/75 p-2">
+          <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-2">
+            <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
+              <div className="min-w-0">
+                <h2 className="truncate text-xs font-black text-white">
+                  Chọn nội dung chia sẻ
+                </h2>
+                <p className="mt-1 truncate text-[10px] text-slate-400">
+                  {pendingShare.title} · {pendingShare.images.length} ảnh
+                </p>
+              </div>
+
+              <button
+                type="button"
+                disabled={isShareExecuting}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-slate-200 transition hover:bg-slate-700 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                onClick={() => setPendingShare(null)}
+                aria-label="Đóng chọn nội dung chia sẻ"
+              >
+                <FiX aria-hidden="true" className={iconClassName} />
+              </button>
+            </div>
+
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <button
+                type="button"
+                disabled={isShareExecuting}
+                className="rounded-md border border-cyan-300/40 bg-cyan-300/10 p-3 text-xs font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                onClick={() => void executeShareRequest("post")}
+              >
+                Post
+              </button>
+              <button
+                type="button"
+                disabled={isShareExecuting}
+                className="rounded-md border border-amber-300/40 bg-amber-300/10 p-3 text-xs font-black text-amber-100 transition hover:bg-amber-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                onClick={() => void executeShareRequest("comment")}
+              >
+                Cmt
+              </button>
+              <button
+                type="button"
+                disabled={isShareExecuting}
+                className="rounded-md border border-white/10 bg-slate-800 p-3 text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                onClick={() => void executeShareRequest("imagesOnly")}
+              >
+                Chỉ hình ảnh
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {pendingDownload ? (
         <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
           <div className="flex h-[90dvh] w-full items-center justify-center rounded-md border border-white/10 bg-slate-950 p-2 ">
@@ -8156,7 +8312,7 @@ export default function LocalProductsPage() {
               Đóng và trở lại tab
             </button>
           </div>
-        </section>      
+        </section>
       </main>
 
       {createPortal(
