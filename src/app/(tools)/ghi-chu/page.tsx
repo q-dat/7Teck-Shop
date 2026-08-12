@@ -9,6 +9,7 @@ import {
   type ClipboardEvent,
   type DragEvent,
   type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type TouchEvent as ReactTouchEvent,
 } from "react";
 import { createPortal } from "react-dom";
@@ -310,6 +311,18 @@ const iconClassName = "h-3.5 w-3.5 shrink-0";
 const productActionButtonBaseClassName =
   "flex items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full px-0.5 py-1 text-[9px] font-black  transition active:opacity-80";
 
+const headerActionButtonBaseClassName =
+  "group relative flex min-h-9 cursor-pointer items-center justify-start xl:justify-center gap-1 overflow-hidden whitespace-nowrap rounded-lg border px-2 py-1.5 text-[10px] font-semibold text-slate-300 transition-[color,background-color,border-color,transform,box-shadow] duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8c99f]/45 active:scale-[0.97]";
+
+const headerNeutralButtonClassName =
+  "border-transparent bg-transparent hover:border-white/[0.08] hover:bg-white/[0.055]";
+
+const headerPrimaryButtonClassName =
+  "border-[#e6d6aa]/70 bg-[#d8c99f] text-[#111318] shadow-[0_5px_16px_rgba(216,201,159,0.12)] hover:border-[#f1e6c8] hover:bg-[#e2d4ad] hover:text-[#090b0f]";
+
+const headerActiveButtonClassName =
+  "border-[#d8c99f]/35 bg-[#d8c99f]/10 text-[#eadfbe] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-[#d8c99f]/55 hover:bg-[#d8c99f]/15";
+
 const getActiveInteractionWindow = (): Window => {
   if (typeof window === "undefined") {
     throw new Error("Cửa sổ trình duyệt chưa sẵn sàng");
@@ -402,15 +415,22 @@ const copyStylesToDocument = (
 };
 
 const isTypingTarget = (target: EventTarget | null): boolean => {
-  if (!(target instanceof HTMLElement)) return false;
+  if (!target) return false;
 
-  const tagName = target.tagName.toLowerCase();
+  const editableTarget = target as EventTarget & {
+    tagName?: string;
+    isContentEditable?: boolean;
+    closest?: (selector: string) => Element | null;
+  };
+
+  const tagName = editableTarget.tagName?.toLowerCase();
 
   return (
     tagName === "input" ||
     tagName === "textarea" ||
     tagName === "select" ||
-    target.isContentEditable
+    editableTarget.isContentEditable === true ||
+    Boolean(editableTarget.closest?.('[contenteditable="true"]'))
   );
 };
 
@@ -2312,6 +2332,16 @@ const buildRandomSchedule = (
 
 export default function LocalProductsPage() {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const handleLocalWorkspaceKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLElement>): void => {
+      if (event.key.toLowerCase() !== "f" || !isTypingTarget(event.target)) {
+        return;
+      }
+
+      event.stopPropagation();
+    },
+    [],
+  );
   const [products, setProducts] = useState<LocalProduct[]>([]);
   const [draft, setDraft] = useState<ProductDraft>(emptyDraft);
   const [settings, setSettings] = useState<GlobalSettings>(defaultSettings);
@@ -5264,13 +5294,14 @@ export default function LocalProductsPage() {
 
   const localProductsWorkspace = (
     <main
-      className={`local-products-workspace min-h-dvh w-full overflow-x-hidden bg-[#0b1220] p-2 text-slate-100 ${pictureInPictureWindow
+      className={`local-products-workspace min-h-dvh w-full overflow-x-hidden bg-[#0b1220] text-slate-100 ${pictureInPictureWindow
         ? "pb-[50px]"
         : "pb-[100px] xl:pb-[50px]"
         }`}
       onPaste={(event) => {
         void handlePaste(event);
       }}
+      onKeyDown={handleLocalWorkspaceKeyDown}
     >
       <ToastContainer />
 
@@ -5333,32 +5364,46 @@ export default function LocalProductsPage() {
  `}</style>
 
       <section className="flex w-full flex-col xl:min-h-[calc(100dvh-4rem)]">
-        <header className="sticky z-30 rounded-md border border-slate-700/70 bg-slate-900/95 p-3 backdrop-blur">
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-            <div className="flex  items-center gap-2">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-600 bg-slate-800 text-slate-100 ">
-                <FiDatabase aria-hidden="true" className={iconClassName} />
-              </div>
+        <header className="sticky top-0 z-30 overflow-hidden border border-white/[0.08] bg-[#090b10]/95 shadow-[0_14px_40px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#d8c99f]/55 to-transparent"
+          />
 
-              <div className="">
-                <h1 className="truncate text-sm font-black tracking-tight text-white xl:text-sm">
-                  Local Product Manager
-                </h1>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] font-semibold text-slate-400">
-                  <span className="text-emerald-300">{activeProductCount} đang bán</span>
-                  <span className="text-rose-300">{soldProductCount} đã bán</span>
-                  <span className="text-slate-300">{totalImages} ảnh</span>
-                  <span className="text-sky-300">{postedTodayCount}/{totalTodayTaskCount} đã đăng</span>
-                </div>
-              </div>
+          <div className="relative grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+            <div className="grid min-w-0 grid-cols-4 divide-x divide-white/[0.07]  overflow-hidden border border-white/[0.07] bg-white/[0.025] xl:w-fit">
+              <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500">
+                <span className="font-bold tabular-nums text-[#d8c99f]">
+                  {activeProductCount}
+                </span>
+                đang bán
+              </span>
+              <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500">
+                <span className="font-bold tabular-nums text-[#d8c99f]">
+                  {soldProductCount}
+                </span>
+                đã bán
+              </span>
+              <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500">
+                <span className="font-bold tabular-nums text-[#d8c99f]">
+                  {totalImages}
+                </span>
+                ảnh
+              </span>
+              <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500">
+                <span className="font-bold tabular-nums text-[#d8c99f]">
+                  {postedTodayCount}/{totalTodayTaskCount}
+                </span>
+                đã đăng
+              </span>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-9 xl:min-w-[1040px] xl:grid-cols-11">
+            <div className="grid grid-cols-4 gap-1 border border-white/[0.07] bg-black/20 p-2 xl:min-w-[1040px] xl:grid-cols-11">
               <button
                 type="button"
                 title="Thêm sản phẩm"
                 aria-label="Thêm sản phẩm"
-                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-300 bg-slate-100 px-2 py-1.5 text-[11px] font-black text-slate-950  transition hover:bg-white active:opacity-80"
+                className={`${headerActionButtonBaseClassName} ${headerPrimaryButtonClassName}`}
                 onClick={openProductModalForCreate}
               >
                 <FiPlus aria-hidden="true" className={iconClassName} />
@@ -5369,7 +5414,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Import Export dữ liệu"
                 aria-label="Import Export dữ liệu"
-                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-amber-300/80 bg-amber-200 px-2 py-1.5 text-[11px] font-black text-amber-950  transition hover:bg-amber-100 active:opacity-80"
+                className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
                 onClick={() => openModal("importExport")}
               >
                 <FiArchive aria-hidden="true" className={iconClassName} />
@@ -5381,9 +5426,9 @@ export default function LocalProductsPage() {
                 title={settings.includeSocialTags ? "Tắt Tag khi copy" : "Bật Tag khi copy"}
                 aria-label={settings.includeSocialTags ? "Tắt Tag khi copy" : "Bật Tag khi copy"}
                 aria-pressed={settings.includeSocialTags}
-                className={`group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border px-2 py-1.5 text-[11px] font-black transition active:opacity-80 ${settings.includeSocialTags
-                  ? "border-fuchsia-200 bg-fuchsia-300 text-slate-950 hover:bg-fuchsia-200"
-                  : "border-slate-600 bg-slate-800 text-slate-300 hover:border-fuchsia-300/50 hover:bg-slate-700"
+                className={`${headerActionButtonBaseClassName} ${settings.includeSocialTags
+                  ? headerActiveButtonClassName
+                  : headerNeutralButtonClassName
                   }`}
                 onClick={() =>
                   updateSettingField(
@@ -5393,14 +5438,14 @@ export default function LocalProductsPage() {
                 }
               >
                 <FiHash aria-hidden="true" className={iconClassName} />
-                {settings.includeSocialTags ? "Tag Bật" : "Tag Tắt"}
+                {settings.includeSocialTags ? "Bật Tag" : "Tắt Tag"}
               </button>
 
               <button
                 type="button"
                 title="Bảng sản phẩm"
                 aria-label="Bảng sản phẩm"
-                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-[11px] font-black text-slate-100  transition hover:border-slate-400 hover:bg-slate-700 active:opacity-80"
+                className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
                 onClick={() => openModal("productList")}
               >
                 <FiDatabase aria-hidden="true" className={iconClassName} />
@@ -5411,7 +5456,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Lịch đăng"
                 aria-label="Lịch đăng"
-                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-[11px] font-black text-slate-100  transition hover:border-slate-400 hover:bg-slate-700 active:opacity-80"
+                className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
                 onClick={() => openModal("schedule")}
               >
                 <FiCalendar aria-hidden="true" className={iconClassName} />
@@ -5422,7 +5467,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Ghi chú"
                 aria-label="Ghi chú"
-                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-[11px] font-black text-slate-100  transition hover:border-slate-400 hover:bg-slate-700 active:opacity-80"
+                className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
                 onClick={() => openModal("globalNote")}
               >
                 <FiClipboard aria-hidden="true" className={iconClassName} />
@@ -5433,7 +5478,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Mô tả chung"
                 aria-label="Mô tả chung"
-                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-[11px] font-black text-slate-100  transition hover:border-slate-400 hover:bg-slate-700 active:opacity-80"
+                className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
                 onClick={() => openModal("globalDescription")}
               >
                 <FiFileText aria-hidden="true" className={iconClassName} />
@@ -5444,7 +5489,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Tải ảnh"
                 aria-label="Tải ảnh"
-                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-[11px] font-black text-slate-100  transition hover:border-slate-400 hover:bg-slate-700 active:opacity-80"
+                className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
                 onClick={() => openModal("imageDownload")}
               >
                 <FiDownload aria-hidden="true" className={iconClassName} />
@@ -5463,7 +5508,7 @@ export default function LocalProductsPage() {
                     ? "Đóng cửa sổ nổi và trở lại tab"
                     : "Mở Local Product Manager dạng cửa sổ nổi"
                 }
-                className="group xl:flex hidden  items-center justify-center gap-2 whitespace-nowrap rounded-md border border-violet-300/80 bg-violet-200 px-2 py-1.5 text-[11px] font-black text-violet-950 transition hover:bg-violet-100 active:opacity-80"
+                className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName} hidden xl:flex`}
                 onClick={() => {
                   if (pictureInPictureWindow) {
                     handleClosePictureInPicture();
@@ -5481,7 +5526,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Liên hệ khi copy Post hoặc Cmt"
                 aria-label="Liên hệ khi copy Post hoặc Cmt"
-                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-emerald-300/40 bg-emerald-300/10 px-2 py-1.5 text-[11px] font-black text-emerald-100 transition hover:bg-emerald-300/20 active:opacity-80"
+                className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
                 onClick={() => openModal("contact")}
               >
                 <FiPhone aria-hidden="true" className={iconClassName} />
@@ -5492,7 +5537,7 @@ export default function LocalProductsPage() {
                 type="button"
                 title="Đồng bộ dữ liệu từ Vercel Blob về local"
                 aria-label="Đồng bộ dữ liệu từ Vercel Blob về local"
-                className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-emerald-300/80 bg-emerald-200 px-2 py-1.5 text-[11px] font-black text-emerald-950  transition hover:bg-emerald-100 active:opacity-80"
+                className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
                 onClick={() => void handleRestoreLatestBackupFromBlob()}
               >
                 <FiRefreshCcw aria-hidden="true" className={iconClassName} />
@@ -5502,7 +5547,7 @@ export default function LocalProductsPage() {
           </div>
         </header>
 
-        <section className="rounded-md border border-slate-700/70 bg-slate-900/70 p-3 (0,0,0,0.22)]">
+        <section className="border border-slate-700/70 bg-slate-900/70 p-3 (0,0,0,0.22)]">
           <div className="mb-3">
             <label className="flex items-center gap-2 rounded-md border border-slate-600 bg-slate-950/70 px-2 py-1.5 text-slate-400 transition focus-within:border-slate-300 focus-within:bg-slate-950">
               <FiSearch
