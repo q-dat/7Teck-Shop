@@ -312,16 +312,16 @@ const productActionButtonBaseClassName =
   "flex items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full px-0.5 py-1 text-[9px] font-black  transition active:opacity-80";
 
 const headerActionButtonBaseClassName =
-  "group relative flex min-h-9 cursor-pointer items-center justify-start xl:justify-center gap-1 overflow-hidden whitespace-nowrap rounded-lg border px-2 py-1.5 text-[10px] font-semibold text-slate-300 transition-[color,background-color,border-color,transform,box-shadow] duration-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8c99f]/45 active:scale-[0.97]";
+  "group relative flex min-h-9 cursor-pointer items-center justify-start gap-1 overflow-hidden whitespace-nowrap border px-2 py-1.5 text-[10px] font-semibold [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)] transition-[color,background-color,border-color,transform,box-shadow,filter] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8c99f]/45 active:scale-[0.97] active:brightness-95 xl:justify-center";
 
 const headerNeutralButtonClassName =
-  "border-transparent bg-transparent hover:border-white/[0.08] hover:bg-white/[0.055]";
+  "border-white/[0.06] bg-white/[0.025] text-slate-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] hover:border-[#d8c99f]/30 hover:bg-[#d8c99f]/[0.065] hover:text-[#eadfbe]";
 
 const headerPrimaryButtonClassName =
-  "border-[#e6d6aa]/70 bg-[#d8c99f] text-[#111318] shadow-[0_5px_16px_rgba(216,201,159,0.12)] hover:border-[#f1e6c8] hover:bg-[#e2d4ad] hover:text-[#090b0f]";
+  "border-[#f0e3c0]/80 bg-[linear-gradient(135deg,#f2e8cd_0%,#c9b47c_52%,#eadcb8_100%)] !text-[#17130a] shadow-[inset_0_1px_0_rgba(255,255,255,0.62),0_6px_18px_rgba(190,164,99,0.16)] hover:border-[#fff4d7] hover:brightness-105";
 
 const headerActiveButtonClassName =
-  "border-[#d8c99f]/35 bg-[#d8c99f]/10 text-[#eadfbe] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-[#d8c99f]/55 hover:bg-[#d8c99f]/15";
+  "border-[#e8d9ae]/75 bg-[linear-gradient(135deg,#e8dbb9_0%,#bda66d_100%)] !text-[#18140b] shadow-[inset_0_1px_0_rgba(255,255,255,0.48),0_5px_16px_rgba(190,164,99,0.13)] hover:border-[#f5e8c5] hover:brightness-105";
 
 const getActiveInteractionWindow = (): Window => {
   if (typeof window === "undefined") {
@@ -3820,31 +3820,8 @@ export default function LocalProductsPage() {
         await waitForUiPaint();
 
         try {
-          const today = getTodayString();
-          const nextSettings: GlobalSettings = {
-            ...defaultSettings,
-            contactOptions: [],
-          };
-          const nextScheduleConfig: ScheduleConfig = {
-            ...defaultScheduleConfig,
-            dateFrom: today,
-            dateTo: today,
-            taskNames: [...defaultScheduleConfig.taskNames],
-            selectedCategories: [],
-          };
-
           await clearAllLocalProductData();
-
-          setProducts([]);
-          setSettings(nextSettings);
-          setContactDraft("");
-          setPostedRecords([]);
-          setScheduleConfig(nextScheduleConfig);
-          setScheduleAssignments({});
-          setDraft(emptyDraft);
-          setEditingId("");
-          setQuery("");
-          setActiveCategoryTab("all");
+          resetLocalProductState();
           closeAllModals();
           Toastify("Đã xóa toàn bộ dữ liệu local", 200);
         } finally {
@@ -3852,6 +3829,66 @@ export default function LocalProductsPage() {
         }
       },
     });
+  };
+
+  const resetLocalProductState = (): void => {
+    const today = getTodayString();
+    const nextSettings: GlobalSettings = {
+      ...defaultSettings,
+      contactOptions: [],
+    };
+    const nextScheduleConfig: ScheduleConfig = {
+      ...defaultScheduleConfig,
+      dateFrom: today,
+      dateTo: today,
+      taskNames: [...defaultScheduleConfig.taskNames],
+      selectedCategories: [],
+    };
+
+    setProducts([]);
+    setSettings(nextSettings);
+    setContactDraft("");
+    setPostedRecords([]);
+    setScheduleConfig(nextScheduleConfig);
+    setScheduleAssignments({});
+    setDraft(emptyDraft);
+    setEditingId("");
+    setQuery("");
+    setActiveCategoryTab("all");
+  };
+
+  const replaceLocalDataFromBackup = async (
+    payload: ParsedImportPayload,
+  ): Promise<void> => {
+    setPageLoadingText("Đang xóa dữ liệu hiện tại...");
+    await waitForUiPaint();
+
+    try {
+      await clearAllLocalProductData();
+      resetLocalProductState();
+
+      setPageLoadingText(
+        `Đang import ${payload.products.length} sản phẩm vào local...`,
+      );
+      await waitForUiPaint();
+
+      await restorePayloadToLocal(payload, {
+        setSettings,
+        setScheduleConfig,
+        setScheduleAssignments,
+        setPostedRecords,
+        loadProducts,
+      });
+
+      setContactDraft("");
+      closeAllModals();
+      Toastify(
+        `Đã import ${payload.products.length} sản phẩm vào local`,
+        200,
+      );
+    } finally {
+      setPageLoadingText("");
+    }
   };
 
   const handleImportJson = async (
@@ -3880,34 +3917,10 @@ export default function LocalProductsPage() {
 
       requestConfirm({
         title: "Bạn có muốn thay thế bằng dữ liệu mới?",
-        description: `File ${isGzipFile(file) ? "JSON.GZ" : "JSON"} có ${payload.products.length} sản phẩm (${formatFileSize(file.size)}). Dữ liệu hiện tại trong IndexedDB và localStorage sẽ được xóa sạch trước khi thay thế.`,
-        confirmLabel: "Import dữ liệu",
+        description: `File ${isGzipFile(file) ? "JSON.GZ" : "JSON"} có ${payload.products.length} sản phẩm (${formatFileSize(file.size)}). Khi đồng ý, toàn bộ dữ liệu hiện tại sẽ được xóa hoàn tất trước, sau đó tệp mới mới bắt đầu được import.`,
+        confirmLabel: "Đồng ý, thay thế",
         tone: "warning",
-        onConfirm: async () => {
-          setPageLoadingText(
-            `Đang import ${payload.products.length} sản phẩm vào local...`,
-          );
-          await waitForUiPaint();
-
-          try {
-            await restorePayloadToLocal(payload, {
-              setSettings,
-              setScheduleConfig,
-              setScheduleAssignments,
-              setPostedRecords,
-              loadProducts,
-            });
-
-            setContactDraft("");
-            closeAllModals();
-            Toastify(
-              `Đã import ${payload.products.length} sản phẩm vào local`,
-              200,
-            );
-          } finally {
-            setPageLoadingText("");
-          }
-        },
+        onConfirm: () => replaceLocalDataFromBackup(payload),
       });
     } catch (error) {
       const message =
@@ -5286,7 +5299,7 @@ export default function LocalProductsPage() {
   if (!isSettingsReady) {
     return (
       <main className="min-h-dvh w-full bg-[#0b1220] text-slate-100">
-        <ToastContainer />
+        <ToastContainer style={{ zIndex: 1000000 }} />
         <LoadingOverlay text="Đang tải dữ liệu local, vui lòng chờ..." />
       </main>
     );
@@ -5303,7 +5316,7 @@ export default function LocalProductsPage() {
       }}
       onKeyDown={handleLocalWorkspaceKeyDown}
     >
-      <ToastContainer />
+      <ToastContainer style={{ zIndex: 1000000 }} />
 
       <input
         id={IMPORT_BACKUP_INPUT_ID}
@@ -7693,6 +7706,19 @@ export default function LocalProductsPage() {
                         />
                         <span>Upload Blob</span>
                       </button>
+                    </div>
+                  </article>
+
+                  <article className="rounded-md border border-rose-300/20 bg-rose-300/[0.06] p-2 xl:col-span-2">
+                    <div className="grid grid-cols-1 items-center gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                      <div>
+                        <h3 className="text-xs font-black text-white">
+                          Xóa dữ liệu local
+                        </h3>
+                        <p className="mt-1 text-xs leading-5 text-rose-100/75">
+                          Xóa toàn bộ sản phẩm, ảnh và dữ liệu ứng dụng đang lưu trong trình duyệt.
+                        </p>
+                      </div>
 
                       <button
                         type="button"
