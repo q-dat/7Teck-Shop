@@ -1,52 +1,42 @@
 import './globals.css';
-import { ToastContainer } from 'react-toastify';
-import ErrorBoundary from '@/components/orther/error/ErrorBoundary';
-import ScrollToTopButton from '@/components/orther/scrollToTop/ScrollToTopButton';
-import ContactForm from '@/components/userPage/ContactForm';
-import NavBottom from '@/components/userPage/NavBottom';
-import FooterFC from '@/components/userPage/ui/Footer';
-import Header from '@/components/userPage/ui/Header';
-import { homeMetadata } from '@/app/(SEO)/metadata/homeMetadata';
-// import NotificationPopup from '@/components/userPage/NotificationPopup';
+import { homeMetadata } from '@/app/(website)/(SEO)/metadata/homeMetadata';
 import { Inter, Roboto_Mono } from 'next/font/google';
-import { PreloadSearch } from '@/components/userPage/PreloadSearch';
-import CustomCursor from '@/components/userPage/CustomCursor';
 import { Metadata } from 'next';
 
 const geistSans = Inter({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-  display: 'swap', // Giảm CLS
+    variable: '--font-geist-sans',
+    subsets: ['latin'],
+    display: 'swap', // Giảm CLS
 });
 
 const geistMono = Roboto_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-  display: 'swap', // Giảm CLS
+    variable: '--font-geist-mono',
+    subsets: ['latin'],
+    display: 'swap', // Giảm CLS
 });
 
 export const metadata = {
-  ...homeMetadata,
-  icons: {
-    icon: {
-      url: '/favicon.png',
-      type: 'image/png',
+    ...homeMetadata,
+    icons: {
+        icon: {
+            url: '/favicon.png',
+            type: 'image/png',
+        },
+        shortcut: '/favicon.png',
+        apple: '/favicon.png',
     },
-    shortcut: '/favicon.png',
-    apple: '/favicon.png',
-  },
 } satisfies Metadata;
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
-  return (
-    <html lang="vi" data-theme="mytheme">
-      <head>
-        {/* Script Google SWG */}
-        {/* <script async type="application/javascript" src="https://news.google.com/swg/js/v1/swg-basic.js"></script>
+    return (
+        <html lang="vi" data-theme="mytheme">
+            <head>
+                {/* Script Google SWG */}
+                {/* <script async type="application/javascript" src="https://news.google.com/swg/js/v1/swg-basic.js"></script>
         <script>
           {`
             (function() {
@@ -70,23 +60,10 @@ export default function RootLayout({
                       })();
                       `}
         </script> */}
-      </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ErrorBoundary>
-          <CustomCursor />
-          <ToastContainer style={{ marginTop: '50px' }} />
-          <div className="flex min-h-screen flex-col bg-primary-white xl:pt-[130px]">
-            <Header />
-            <div className="flex-1 bg-primary-white selection:bg-primary selection:text-white xl:pt-0">{children}</div>
-            {/* <NotificationPopup /> */}
-            <PreloadSearch query="gb" />
-            <ScrollToTopButton />
-            <NavBottom />
-            <ContactForm />
-            <FooterFC />
-          </div>
-        </ErrorBoundary>
-      </body>
-    </html>
-  );
+            </head>
+            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+                {children}
+            </body>
+        </html>
+    );
 }

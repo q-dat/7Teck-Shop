@@ -2779,22 +2779,6 @@ export default function LocalProductsPage() {
     return new Set(postedRecords.map((record) => record.slotId));
   }, [postedRecords]);
 
-  const nextSlot = useMemo(() => {
-    return todaySlots.find(
-      (slot) =>
-        !postedIds.has(createSlotPostedKey(slot)) &&
-        toMinutes(slot.time) >= toMinutes(currentTime),
-    );
-  }, [todaySlots, postedIds, currentTime]);
-
-  const overdueSlots = useMemo(() => {
-    return todaySlots.filter(
-      (slot) =>
-        !postedIds.has(createSlotPostedKey(slot)) &&
-        toMinutes(slot.time) < toMinutes(currentTime),
-    );
-  }, [todaySlots, postedIds, currentTime]);
-
   const selectedAlbumImage = useMemo(() => {
     if (!albumSource || albumSource.images.length === 0) return null;
 
@@ -5418,51 +5402,50 @@ export default function LocalProductsPage() {
       {pageLoadingText ? <LoadingOverlay text={pageLoadingText} /> : null}
 
       <style>{`
- .local-products-workspace button {
-  min-width: 0;
-  white-space: nowrap;
-  flex-wrap: nowrap;
- }
- .local-products-workspace button:not(:disabled),
- .local-products-workspace label[for],
- .local-products-workspace input[type="radio"],
- .local-products-workspace [role="button"] {
-  cursor: pointer;
- }
- .local-products-workspace button:disabled {
-  cursor: not-allowed;
- }
- .local-products-workspace button > span {
-  min-width: 0;
-  white-space: nowrap;
- }
- .local-products-workspace button[data-description-line="true"] {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  flex-wrap: wrap;
- }
- .local-products-workspace button[data-description-line="true"] > span {
-  min-width: 0;
-  max-width: 100%;
-  white-space: inherit;
-  overflow-wrap: inherit;
-  word-break: inherit;
- }
- @keyframes productWaveIn {
- 0% { opacity: 0; transform: translateY(18px) scale(0.985); }
- 45% { opacity: 1; transform: translateY(-4px) scale(1); }
- 100% { opacity: 1; transform: translateY(0) scale(1); }
- }
- .product-wave-card {
- animation: productWaveIn 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
- will-change: transform, opacity;
- }
- `}</style>
-
+                    .local-products-workspace button {
+                      min-width: 0;
+                      white-space: nowrap;
+                      flex-wrap: nowrap;
+                    }
+                    .local-products-workspace button:not(:disabled),
+                    .local-products-workspace label[for],
+                    .local-products-workspace input[type="radio"],
+                    .local-products-workspace [role="button"] {
+                      cursor: pointer;
+                    }
+                    .local-products-workspace button:disabled {
+                      cursor: not-allowed;
+                    }
+                    .local-products-workspace button > span {
+                      min-width: 0;
+                      white-space: nowrap;
+                    }
+                    .local-products-workspace button[data-description-line="true"] {
+                      width: 100%;
+                      min-width: 0;
+                      max-width: 100%;
+                      white-space: pre-wrap;
+                      overflow-wrap: anywhere;
+                      word-break: break-word;
+                      flex-wrap: wrap;
+                    }
+                    .local-products-workspace button[data-description-line="true"] > span {
+                      min-width: 0;
+                      max-width: 100%;
+                      white-space: inherit;
+                      overflow-wrap: inherit;
+                      word-break: inherit;
+                    }
+                    @keyframes productWaveIn {
+                    0% { opacity: 0; transform: translateY(18px) scale(0.985); }
+                    45% { opacity: 1; transform: translateY(-4px) scale(1); }
+                    100% { opacity: 1; transform: translateY(0) scale(1); }
+                    }
+                    .product-wave-card {
+                    animation: productWaveIn 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+                    will-change: transform, opacity;
+                    }
+                    `}</style>
       <section className="flex w-full flex-col xl:min-h-[calc(100dvh-4rem)]">
         <header className="sticky top-0 z-30 overflow-hidden border border-white/[0.08] bg-[#090b10]/95 shadow-[0_14px_40px_rgba(0,0,0,0.28)] backdrop-blur-xl">
           <div
@@ -8641,39 +8624,39 @@ export default function LocalProductsPage() {
   return (
     <>
       <main className="flex min-h-dvh w-full items-center justify-center bg-[#0b1220] p-4 text-slate-100">
-        <section className="w-full max-w-md rounded-md border border-slate-700 bg-slate-900 p-4 text-center shadow-2xl">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-md border border-violet-300/50 bg-violet-200 text-violet-950">
-            <FiMonitor aria-hidden="true" className="h-5 w-5" />
-          </div>
-          <h1 className="mt-3 text-sm font-black text-white">
-            Local Product Manager đang mở dạng cửa sổ nổi
-          </h1>
-          <p className="mt-2 text-xs leading-5 text-slate-400">
-            Chuyển sang Facebook để tiếp tục thao tác trong cửa sổ nổi.
-          </p>
-          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <button
-              type="button"
-              className="rounded-md bg-violet-200 px-3 py-2 text-xs font-black text-violet-950 transition hover:bg-violet-100 active:opacity-80"
-              onClick={handleFocusPictureInPicture}
-            >
-              Hiện cửa sổ nổi
-            </button>
-            <button
-              type="button"
-              className="rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80"
-              onClick={handleClosePictureInPicture}
-            >
-              Đóng và trở lại tab
-            </button>
-          </div>
-        </section>
-      </main>
+            <section className="w-full max-w-md rounded-md border border-slate-700 bg-slate-900 p-4 text-center shadow-2xl">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-md border border-violet-300/50 bg-violet-200 text-violet-950">
+                <FiMonitor aria-hidden="true" className="h-5 w-5" />
+              </div>
+              <h1 className="mt-3 text-sm font-black text-white">
+                Local Product Manager đang mở dạng cửa sổ nổi
+              </h1>
+              <p className="mt-2 text-xs leading-5 text-slate-400">
+                Chuyển sang Facebook để tiếp tục thao tác trong cửa sổ nổi.
+              </p>
+              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  className="rounded-md bg-violet-200 px-3 py-2 text-xs font-black text-violet-950 transition hover:bg-violet-100 active:opacity-80"
+                  onClick={handleFocusPictureInPicture}
+                >
+                  Hiện cửa sổ nổi
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80"
+                  onClick={handleClosePictureInPicture}
+                >
+                  Đóng và trở lại tab
+                </button>
+              </div>
+            </section>
+          </main>
 
       {createPortal(
-        localProductsWorkspace, 
-        pictureInPictureWindow.document.body,
-      )}
+          localProductsWorkspace,
+          pictureInPictureWindow.document.body,
+        )}
     </>
   );
 }

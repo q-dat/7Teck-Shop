@@ -1,8 +1,6 @@
 'use client';
-
 import Link from 'next/link';
 import React from 'react';
-import { usePathname } from 'next/navigation';
 import { FaMobileAlt, FaTabletAlt, FaWindows } from 'react-icons/fa';
 import { MdListAlt } from 'react-icons/md';
 import { RiMacbookFill } from 'react-icons/ri';
@@ -35,16 +33,7 @@ const navLink = [
   },
 ];
 
-const HIDDEN_NAV_ROUTES = ['/ghi-chu', '/sub-note'] as const;
-
 const NavBottom: React.FC = () => {
-  const pathname = usePathname();
-
-  const shouldHideNavBottom = HIDDEN_NAV_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
-
-  if (shouldHideNavBottom) return null;
 
   return (
     <div className="fixed bottom-0 left-0 z-header-mobile w-full bg-white xl:hidden">

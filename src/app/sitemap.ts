@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { getServerApiUrl } from '../../hooks/useApiUrl';
-import { SITE_URL, postPath } from '@/app/(SEO)/lib/seo';
+import { SITE_URL, postPath } from '@/app/(website)/(SEO)/lib/seo';
 
 // Sitemap chính: LẤY DỮ LIỆU QUA API NỘI BỘ (getServerApiUrl) — cùng cơ chế với
 // services của shop, KHÔNG gọi thẳng external BE. URL trong sitemap PHẢI khớp

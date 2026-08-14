@@ -1,0 +1,86 @@
+import { Metadata } from 'next';
+import { SITE_NAME, SITE_URL, absoluteUrl } from '@/app/(website)/(SEO)/lib/seo';
+
+const tit = 'Điện thoại, smartphone chính hãng giá rẻ, trả góp 0% lãi suất - 12/2025';
+const des =
+  'Mua online điện thoại, smartphone, điện thoại thông minh giá rẻ, chính hãng. Giao nhanh, đem nhiều mẫu chọn, cà thẻ tại nhà. Trả góp 0%, bảo hành chính hãng';
+
+export const homeMetadata: Metadata = {
+  icons: {
+    icon: '/favicon.png',
+  },
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: tit,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: des,
+  keywords: [
+    'Đth',
+    'điện thoại',
+    'dtdd',
+    'smartphone',
+    'điện thoại thông minh',
+    'điện thoại di động',
+    'Samsung',
+    'Apple',
+    'iPhone',
+    'OPPO',
+    'Vivo',
+    'Xiaomi',
+    'Huawei',
+    'Realme',
+    'Vsmart',
+    'Nokia',
+    'Mobell',
+    'Itel',
+    'Coolpad',
+    'Mobiistar',
+    'ASUS',
+    'ASUS',
+    'Zenfone',
+    'BlackBerry',
+    'HTC',
+    'Redmi',
+    'Mi',
+    'Điên thoại',
+    ' điê n thoa i',
+
+    'mua điện thoại chính hãng',
+    'điện thoại giá rẻ',
+    'smartphone 2025',
+    'máy tính bảng chính hãng',
+    'tablet giá tốt',
+    'laptop Windows 2025',
+    'laptop giá rẻ cho sinh viên',
+    'mua MacBook chính hãng',
+    'MacBook M3 giá tốt',
+    'laptop văn phòng',
+    'thiết bị công nghệ 2025',
+    '7teck.vn điện tử',
+    'cửa hàng laptop uy tín',
+    'giao hàng nhanh toàn quốc',
+    'bảo hành điện tử',
+    'thiết bị Apple chính hãng',
+    'điện thoại Android mới nhất',
+  ],
+  robots: 'index, follow',
+  alternates: {
+    canonical: SITE_URL,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'vi_VN',
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: tit,
+    description: des,
+    images: [{ url: absoluteUrl('/logo.png'), width: 1200, height: 630, alt: SITE_NAME }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: tit,
+    description: des,
+    images: [absoluteUrl('/logo.png')],
+  },
+};
