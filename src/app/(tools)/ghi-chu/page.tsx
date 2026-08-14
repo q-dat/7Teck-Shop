@@ -315,22 +315,26 @@ const defaultScheduleConfig: ScheduleConfig = {
 };
 
 
-const iconClassName = "h-3.5 w-3.5 shrink-0";
+const iconClassName =
+  "h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:scale-110";
 
 const productActionButtonBaseClassName =
-  "flex items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full px-0.5 py-1 text-[9px] font-black  transition active:opacity-80";
+  "group relative flex min-h-7 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border px-1.5 py-1 text-[9px] font-black tracking-[0.025em] [clip-path:polygon(6px_0,calc(100%_-_6px)_0,100%_6px,100%_calc(100%_-_6px),calc(100%_-_6px)_100%,6px_100%,0_calc(100%_-_6px),0_6px)] transition-[color,background-color,border-color,transform,box-shadow,filter] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8c99f]/[0.45] active:scale-[0.97] active:brightness-95";
 
 const headerActionButtonBaseClassName =
-  "group relative flex min-h-9 cursor-pointer items-center justify-start gap-1 overflow-hidden whitespace-nowrap border px-2 py-1.5 text-[10px] font-semibold [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)] transition-[color,background-color,border-color,transform,box-shadow,filter] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8c99f]/45 active:scale-[0.97] active:brightness-95 xl:justify-center";
+  "group relative flex min-h-9 cursor-pointer items-center justify-start gap-1 overflow-hidden whitespace-nowrap border px-2 py-1.5 text-[10px] font-semibold [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)] transition-[color,background-color,border-color,transform,box-shadow,filter] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8c99f]/[0.45] active:scale-[0.97] active:brightness-95 xl:justify-center";
 
 const headerNeutralButtonClassName =
-  "border-white/[0.06] bg-white/[0.025] text-slate-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] hover:border-[#d8c99f]/30 hover:bg-[#d8c99f]/[0.065] hover:text-[#eadfbe]";
+  "border-white/[0.07] bg-[linear-gradient(145deg,rgba(255,255,255,0.035),rgba(255,255,255,0.012))] text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] hover:-translate-y-px hover:border-[#d8c99f]/40 hover:bg-[#d8c99f]/[0.075] hover:text-[#f3e7c6] hover:shadow-[0_8px_20px_rgba(0,0,0,0.26)]";
 
 const headerPrimaryButtonClassName =
   "border-[#f0e3c0]/80 bg-[linear-gradient(135deg,#f2e8cd_0%,#c9b47c_52%,#eadcb8_100%)] !text-[#17130a] shadow-[inset_0_1px_0_rgba(255,255,255,0.62),0_6px_18px_rgba(190,164,99,0.16)] hover:border-[#fff4d7] hover:brightness-105";
 
 const headerActiveButtonClassName =
   "border-[#e8d9ae]/75 bg-[linear-gradient(135deg,#e8dbb9_0%,#bda66d_100%)] !text-[#18140b] shadow-[inset_0_1px_0_rgba(255,255,255,0.48),0_5px_16px_rgba(190,164,99,0.13)] hover:border-[#f5e8c5] hover:brightness-105";
+
+const albumActionButtonBaseClassName =
+  "group flex min-h-8 shrink-0 items-center justify-center gap-1 overflow-hidden border px-1.5 py-1 text-[9px] font-black tracking-[0.025em] transition-[color,background-color,border-color,transform,box-shadow,filter] duration-200 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40";
 
 const getActiveInteractionWindow = (): Window => {
   if (typeof window === "undefined") {
@@ -352,15 +356,16 @@ const IMPORT_BACKUP_INPUT_ID = "local-products-backup-input";
 const LoadingOverlay = ({ text }: { text: string }) => {
   return (
     <div
-      className="fixed inset-0 z-[999998] flex h-dvh w-full items-center justify-center bg-slate-950/85 backdrop-blur-sm"
+      className="fixed inset-0 z-[999998] flex h-dvh w-full items-center justify-center bg-[#05070a]/[0.85] backdrop-blur-xl"
       role="status"
       aria-live="polite"
       aria-busy="true"
     >
-      <div
-        aria-hidden="true"
-        className="h-10 w-10 animate-spin rounded-full border-4 border-white/20 border-t-cyan-300"
-      />
+      <div aria-hidden="true" className="relative h-12 w-12">
+        <div className="absolute inset-0 animate-spin border border-[#d8c99f]/70 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)]" />
+        <div className="absolute inset-[9px] animate-[spin_1.4s_linear_infinite_reverse] border border-white/35 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)]" />
+        <div className="absolute inset-[19px] animate-pulse bg-[#eadfbe] [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)]" />
+      </div>
       <span className="sr-only">{text}</span>
     </div>
   );
@@ -4287,16 +4292,16 @@ export default function LocalProductsPage() {
     const textValue =
       mode === "post"
         ? composeCopyText(
-          request.postText,
-          activeContactText,
-          settings.includeSocialTags,
-        )
+            request.postText,
+            activeContactText,
+            settings.includeSocialTags,
+          )
         : mode === "comment"
           ? composeCopyText(
-            request.commentText,
-            activeContactText,
-            false,
-          )
+              request.commentText,
+              activeContactText,
+              false,
+            )
           : "";
     const contentLabel = mode === "post" ? "Post" : "Cmt";
     const shouldCopyText = mode !== "imagesOnly";
@@ -5369,7 +5374,7 @@ export default function LocalProductsPage() {
 
   if (!isSettingsReady) {
     return (
-      <main className="min-h-dvh w-full bg-[#0b1220] text-slate-100">
+      <main className="min-h-dvh w-full bg-[#07090d] text-slate-100">
         <ToastContainer style={{ zIndex: 1000000 }} />
         <LoadingOverlay text="Đang tải dữ liệu local, vui lòng chờ..." />
       </main>
@@ -5378,7 +5383,7 @@ export default function LocalProductsPage() {
 
   const localProductsWorkspace = (
     <main
-      className={`local-products-workspace min-h-dvh w-full overflow-x-hidden bg-[#0b1220] text-slate-100 ${pictureInPictureWindow
+      className={`local-products-workspace min-h-dvh w-full overflow-x-hidden bg-[#07090d] text-slate-100 ${pictureInPictureWindow
         ? "pb-[50px]"
         : "pb-[100px] xl:pb-[50px]"
         }`}
@@ -5402,59 +5407,481 @@ export default function LocalProductsPage() {
       {pageLoadingText ? <LoadingOverlay text={pageLoadingText} /> : null}
 
       <style>{`
-                    .local-products-workspace button {
-                      min-width: 0;
-                      white-space: nowrap;
-                      flex-wrap: nowrap;
-                    }
-                    .local-products-workspace button:not(:disabled),
-                    .local-products-workspace label[for],
-                    .local-products-workspace input[type="radio"],
-                    .local-products-workspace [role="button"] {
-                      cursor: pointer;
-                    }
-                    .local-products-workspace button:disabled {
-                      cursor: not-allowed;
-                    }
-                    .local-products-workspace button > span {
-                      min-width: 0;
-                      white-space: nowrap;
-                    }
-                    .local-products-workspace button[data-description-line="true"] {
-                      width: 100%;
-                      min-width: 0;
-                      max-width: 100%;
-                      white-space: pre-wrap;
-                      overflow-wrap: anywhere;
-                      word-break: break-word;
-                      flex-wrap: wrap;
-                    }
-                    .local-products-workspace button[data-description-line="true"] > span {
-                      min-width: 0;
-                      max-width: 100%;
-                      white-space: inherit;
-                      overflow-wrap: inherit;
-                      word-break: inherit;
-                    }
-                    @keyframes productWaveIn {
-                    0% { opacity: 0; transform: translateY(18px) scale(0.985); }
-                    45% { opacity: 1; transform: translateY(-4px) scale(1); }
-                    100% { opacity: 1; transform: translateY(0) scale(1); }
-                    }
-                    .product-wave-card {
-                    animation: productWaveIn 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
-                    will-change: transform, opacity;
-                    }
-                    `}</style>
+        .local-products-workspace {
+          --luxury-ink: #07090d;
+          --luxury-panel: #0b0e14;
+          --luxury-panel-raised: #11151d;
+          --luxury-gold: #d8c99f;
+          --luxury-gold-bright: #f1e5c2;
+          --luxury-line: rgba(216, 201, 159, 0.2);
+          --luxury-line-soft: rgba(255, 255, 255, 0.075);
+          color-scheme: dark;
+          background:
+            linear-gradient(rgba(216, 201, 159, 0.011) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(216, 201, 159, 0.011) 1px, transparent 1px),
+            radial-gradient(circle at 12% -8%, rgba(216, 201, 159, 0.085), transparent 31%),
+            radial-gradient(circle at 92% 24%, rgba(87, 96, 117, 0.055), transparent 29%),
+            linear-gradient(145deg, #07090d 0%, #0a0d13 52%, #07090d 100%) !important;
+          background-attachment: fixed;
+          background-size: 42px 42px, 42px 42px, auto, auto, auto;
+        }
+
+        .local-products-workspace ::selection {
+          background: rgba(216, 201, 159, 0.92);
+          color: #151109;
+        }
+
+        .local-products-workspace * {
+          scrollbar-color: rgba(216, 201, 159, 0.42) rgba(255, 255, 255, 0.025);
+          scrollbar-width: thin;
+        }
+
+        .local-products-workspace *::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+
+        .local-products-workspace *::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .local-products-workspace *::-webkit-scrollbar-thumb {
+          border: 1px solid rgba(7, 9, 13, 0.8);
+          background: linear-gradient(180deg, rgba(241, 229, 194, 0.68), rgba(154, 135, 88, 0.55));
+        }
+
+        .local-products-workspace button {
+          min-width: 0;
+          white-space: nowrap;
+          flex-wrap: nowrap;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .local-products-workspace button:not([data-description-line="true"]):not([data-category-bubble="true"]):not([data-image-surface="true"]) {
+          position: relative;
+          isolation: isolate;
+          border-radius: 0 !important;
+          clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
+          transition: color 320ms ease, background-color 320ms ease, border-color 320ms ease, box-shadow 320ms ease, filter 320ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .local-products-workspace button:not([data-description-line="true"]):not([data-category-bubble="true"]):not([data-image-surface="true"])::after {
+          content: "";
+          position: absolute;
+          z-index: 2;
+          top: -90%;
+          bottom: -90%;
+          left: -28%;
+          width: 10%;
+          pointer-events: none;
+          opacity: 0;
+          transform: skewX(-18deg);
+          background: linear-gradient(90deg, transparent, rgba(255, 248, 224, 0.26), transparent);
+          animation: luxuryMetalGlint 5.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+        }
+
+        .local-products-workspace button:nth-child(2n)::after {
+          animation-delay: 460ms;
+        }
+
+        .local-products-workspace button:nth-child(3n)::after {
+          animation-delay: 920ms;
+        }
+
+        .local-products-workspace button[data-luxury-accent] {
+          letter-spacing: 0.035em;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), inset 0 -1px 0 rgba(0, 0, 0, 0.2), 0 9px 24px rgba(0, 0, 0, 0.22) !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent]::before {
+          content: "";
+          position: absolute;
+          z-index: 1;
+          top: 0;
+          right: 9px;
+          left: 9px;
+          height: 1px;
+          pointer-events: none;
+          opacity: 0.62;
+          background: linear-gradient(90deg, transparent, rgba(255, 248, 224, 0.7), transparent);
+        }
+
+        .local-products-workspace button[data-luxury-accent="gold"] {
+          border-color: rgba(241, 229, 194, 0.78) !important;
+          background: linear-gradient(135deg, #f2e8cd 0%, #c3ad73 52%, #eadcb8 100%) !important;
+          color: #17130a !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent="sapphire"] {
+          border-color: rgba(128, 170, 207, 0.3) !important;
+          background: linear-gradient(145deg, rgba(28, 63, 96, 0.3), rgba(10, 20, 33, 0.94)) !important;
+          color: #d8e9f8 !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent="emerald"] {
+          border-color: rgba(110, 187, 154, 0.3) !important;
+          background: linear-gradient(145deg, rgba(22, 78, 58, 0.3), rgba(8, 28, 22, 0.94)) !important;
+          color: #d9f1e7 !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent="emerald"][aria-pressed="true"] {
+          border-color: rgba(203, 239, 221, 0.7) !important;
+          background: linear-gradient(135deg, #d7eee2 0%, #7cab93 56%, #c3dfd0 100%) !important;
+          color: #092319 !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent="violet"] {
+          border-color: rgba(169, 148, 210, 0.3) !important;
+          background: linear-gradient(145deg, rgba(68, 48, 111, 0.3), rgba(24, 18, 40, 0.94)) !important;
+          color: #ebe4f8 !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent="amber"] {
+          border-color: rgba(209, 173, 106, 0.32) !important;
+          background: linear-gradient(145deg, rgba(105, 70, 24, 0.32), rgba(37, 25, 11, 0.94)) !important;
+          color: #f5e5c2 !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent="rose"] {
+          border-color: rgba(205, 139, 154, 0.3) !important;
+          background: linear-gradient(145deg, rgba(92, 40, 54, 0.3), rgba(37, 17, 23, 0.94)) !important;
+          color: #f6e0e5 !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent="indigo"] {
+          border-color: rgba(137, 151, 207, 0.3) !important;
+          background: linear-gradient(145deg, rgba(46, 57, 111, 0.3), rgba(18, 22, 46, 0.94)) !important;
+          color: #e1e5f5 !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent="cyan"] {
+          border-color: rgba(105, 181, 190, 0.3) !important;
+          background: linear-gradient(145deg, rgba(22, 82, 91, 0.3), rgba(8, 30, 34, 0.94)) !important;
+          color: #d9eff1 !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent="amethyst"] {
+          border-color: rgba(187, 139, 202, 0.3) !important;
+          background: linear-gradient(145deg, rgba(82, 39, 96, 0.3), rgba(33, 16, 38, 0.94)) !important;
+          color: #efe1f3 !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent="teal"] {
+          border-color: rgba(99, 178, 166, 0.3) !important;
+          background: linear-gradient(145deg, rgba(20, 77, 69, 0.3), rgba(8, 29, 27, 0.94)) !important;
+          color: #d8eee9 !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent="blue"] {
+          border-color: rgba(112, 151, 205, 0.3) !important;
+          background: linear-gradient(145deg, rgba(31, 67, 120, 0.3), rgba(11, 24, 49, 0.94)) !important;
+          color: #dce7f7 !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent]:hover {
+          border-color: rgba(241, 229, 194, 0.46) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.065), inset 0 -1px 0 rgba(0, 0, 0, 0.22), 0 14px 30px rgba(0, 0, 0, 0.3), 0 0 16px rgba(216, 201, 159, 0.055) !important;
+        }
+
+        .local-products-workspace button:not(:disabled),
+        .local-products-workspace label[for],
+        .local-products-workspace input[type="radio"],
+        .local-products-workspace [role="button"] {
+          cursor: pointer;
+        }
+
+        .local-products-workspace button:not(:disabled):not([data-description-line="true"]):not([data-image-surface="true"]):hover {
+          transform: translateY(-1px);
+          filter: brightness(1.035);
+        }
+
+        .local-products-workspace button:not(:disabled):active {
+          transform: scale(0.975);
+        }
+
+        .local-products-workspace button:focus-visible,
+        .local-products-workspace input:focus-visible,
+        .local-products-workspace textarea:focus-visible,
+        .local-products-workspace select:focus-visible,
+        .local-products-workspace [role="button"]:focus-visible {
+          outline: 1px solid rgba(241, 229, 194, 0.88);
+          outline-offset: 2px;
+        }
+
+        .local-products-workspace button:disabled {
+          cursor: not-allowed;
+          filter: saturate(0.35);
+        }
+
+        .local-products-workspace button[class~="bg-cyan-300"],
+        .local-products-workspace button[class~="bg-sky-300"],
+        .local-products-workspace button[class~="bg-amber-300"],
+        .local-products-workspace button[class~="bg-violet-200"] {
+          border: 1px solid rgba(241, 229, 194, 0.76) !important;
+          background: linear-gradient(135deg, #f2e8cd 0%, #c6b079 54%, #e8dab3 100%) !important;
+          color: #17130a !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58), 0 10px 26px rgba(190, 164, 99, 0.14);
+        }
+
+        .local-products-workspace button[class~="bg-cyan-300"]:hover,
+        .local-products-workspace button[class~="bg-sky-300"]:hover,
+        .local-products-workspace button[class~="bg-amber-300"]:hover,
+        .local-products-workspace button[class~="bg-violet-200"]:hover {
+          border-color: #fff2cf !important;
+          filter: brightness(1.055);
+        }
+
+        .local-products-workspace button > span {
+          min-width: 0;
+          white-space: nowrap;
+        }
+
+        .local-products-workspace button[data-description-line="true"] {
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+          white-space: pre-wrap;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+          flex-wrap: wrap;
+        }
+
+        .local-products-workspace button[data-description-line="true"] > span {
+          min-width: 0;
+          max-width: 100%;
+          white-space: inherit;
+          overflow-wrap: inherit;
+          word-break: inherit;
+        }
+
+        .local-products-workspace input:not([type="radio"]):not([type="checkbox"]):not([type="file"]),
+        .local-products-workspace textarea,
+        .local-products-workspace select {
+          border-radius: 2px !important;
+          border-color: rgba(216, 201, 159, 0.16) !important;
+          background: linear-gradient(145deg, rgba(5, 7, 10, 0.94), rgba(16, 20, 27, 0.9)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025), 0 8px 24px rgba(0, 0, 0, 0.12);
+          transition: border-color 240ms ease, box-shadow 240ms ease, background-color 240ms ease;
+        }
+
+        .local-products-workspace input:not([type="radio"]):not([type="checkbox"]):not([type="file"]):focus,
+        .local-products-workspace textarea:focus,
+        .local-products-workspace select:focus {
+          border-color: rgba(241, 229, 194, 0.62) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 0 0 3px rgba(216, 201, 159, 0.075), 0 14px 34px rgba(0, 0, 0, 0.2);
+        }
+
+        .local-products-workspace [class*="rounded-md"][class*="border"][class*="bg-slate-950"],
+        .local-products-workspace [class*="rounded-xl"][class*="border"][class*="bg-slate-950"] {
+          border-color: rgba(216, 201, 159, 0.15);
+          background: linear-gradient(145deg, rgba(7, 9, 13, 0.98), rgba(12, 15, 21, 0.97));
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025), 0 18px 42px rgba(0, 0, 0, 0.18);
+        }
+
+        .local-products-workspace [class*="rounded-md"][class*="border"][class*="bg-slate-900"],
+        .local-products-workspace [class*="rounded-md"][class*="border"][class*="bg-slate-800"] {
+          border-color: rgba(216, 201, 159, 0.14);
+          background: linear-gradient(145deg, rgba(17, 21, 29, 0.94), rgba(10, 13, 18, 0.96));
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+        }
+
+        .luxury-header {
+          clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%, 0 12px);
+          border-color: rgba(216, 201, 159, 0.14) !important;
+          background: linear-gradient(180deg, rgba(11, 13, 18, 0.975), rgba(7, 9, 13, 0.96)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025), 0 18px 52px rgba(0, 0, 0, 0.36) !important;
+        }
+
+        .luxury-header::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: -35%;
+          width: 16%;
+          pointer-events: none;
+          background: linear-gradient(105deg, transparent, rgba(241, 229, 194, 0.04), transparent);
+          animation: luxuryVectorSweep 7.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+        }
+
+        .luxury-content-panel {
+          position: relative;
+          border-color: rgba(216, 201, 159, 0.13) !important;
+          background: linear-gradient(180deg, rgba(12, 15, 21, 0.88), rgba(6, 8, 12, 0.74)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.022), inset 0 -1px 0 rgba(0, 0, 0, 0.3), 0 28px 76px rgba(0, 0, 0, 0.27);
+        }
+
+        .luxury-search {
+          clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+          border-color: rgba(216, 201, 159, 0.18) !important;
+          background: linear-gradient(135deg, rgba(5, 7, 10, 0.97), rgba(15, 18, 25, 0.91)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.022), inset 0 -1px 0 rgba(0, 0, 0, 0.24), 0 14px 36px rgba(0, 0, 0, 0.18);
+        }
+
+        .luxury-product-card {
+          position: relative;
+          clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+          border-color: rgba(216, 201, 159, 0.17) !important;
+          background: linear-gradient(155deg, rgba(16, 19, 26, 0.985), rgba(7, 9, 13, 0.995)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.028), inset 0 -1px 0 rgba(0, 0, 0, 0.34), 0 18px 42px rgba(0, 0, 0, 0.31);
+        }
+
+        .luxury-product-card::before {
+          content: "";
+          position: absolute;
+          z-index: 6;
+          top: 0;
+          right: 14px;
+          left: 14px;
+          height: 1px;
+          pointer-events: none;
+          background: linear-gradient(90deg, transparent, rgba(241, 229, 194, 0.45), transparent);
+        }
+
+        .luxury-product-card::after {
+          content: "";
+          position: absolute;
+          z-index: 5;
+          top: -40%;
+          bottom: -40%;
+          left: -42%;
+          width: 9%;
+          pointer-events: none;
+          opacity: 0;
+          transform: skewX(-17deg);
+          background: linear-gradient(90deg, transparent, rgba(241, 229, 194, 0.1), transparent);
+          animation: luxuryCardGlint 8.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+        }
+
+        .local-products-workspace .luxury-product-card[data-active="true"] {
+          border-color: rgba(241, 229, 194, 0.62) !important;
+          background: linear-gradient(155deg, rgba(31, 29, 23, 0.97), rgba(11, 13, 17, 0.995)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), inset 0 -1px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(216, 201, 159, 0.11), 0 24px 54px rgba(0, 0, 0, 0.37);
+        }
+
+        .luxury-product-card:hover {
+          border-color: rgba(216, 201, 159, 0.36) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), inset 0 -1px 0 rgba(0, 0, 0, 0.34), 0 26px 58px rgba(0, 0, 0, 0.37);
+        }
+
+        .luxury-product-image {
+          background:
+            radial-gradient(circle at 50% 36%, rgba(216, 201, 159, 0.055), transparent 44%),
+            linear-gradient(145deg, #0c0f15, #06080c) !important;
+        }
+
+        .luxury-category-bar {
+          border-color: rgba(216, 201, 159, 0.18) !important;
+          background: rgba(5, 7, 10, 0.94) !important;
+          box-shadow: 0 -14px 38px rgba(0, 0, 0, 0.35);
+          backdrop-filter: blur(18px);
+        }
+
+        .luxury-modal-overlay {
+          background: rgba(3, 5, 8, 0.78) !important;
+          backdrop-filter: blur(14px) saturate(0.8);
+        }
+
+        .luxury-modal,
+        .luxury-dialog,
+        .luxury-modal-overlay > div,
+        .luxury-modal-overlay > form {
+          animation: luxuryModalIn 440ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .luxury-modal,
+        .luxury-dialog {
+          clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
+          border-color: rgba(216, 201, 159, 0.24) !important;
+          background: linear-gradient(145deg, rgba(8, 10, 15, 0.995), rgba(14, 17, 23, 0.99)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 34px 90px rgba(0, 0, 0, 0.56);
+        }
+
+        .luxury-modal-titlebar {
+          position: relative;
+          border-color: rgba(216, 201, 159, 0.14) !important;
+          background: linear-gradient(90deg, rgba(216, 201, 159, 0.08), rgba(14, 17, 23, 0.96) 38%, rgba(7, 9, 13, 0.98)) !important;
+        }
+
+        .luxury-modal-titlebar::after {
+          content: "";
+          position: absolute;
+          right: 2rem;
+          bottom: -1px;
+          left: 2rem;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(216, 201, 159, 0.48), transparent);
+        }
+
+        .local-products-workspace .Toastify__toast {
+          border: 1px solid rgba(216, 201, 159, 0.22);
+          border-radius: 2px;
+          background: linear-gradient(145deg, rgba(13, 16, 22, 0.98), rgba(6, 8, 12, 0.99));
+          color: #eef0f4;
+          box-shadow: 0 20px 52px rgba(0, 0, 0, 0.42);
+          clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+        }
+
+        .local-products-workspace .Toastify__progress-bar {
+          background: linear-gradient(90deg, #9f8b55, #f1e5c2, #b8a16a);
+        }
+
+        @keyframes luxuryVectorSweep {
+          0%, 68% { transform: translateX(0); opacity: 0; }
+          76% { opacity: 1; }
+          100% { transform: translateX(620%); opacity: 0; }
+        }
+
+        @keyframes luxuryMetalGlint {
+          0%, 48% { left: -34%; opacity: 0; }
+          54% { opacity: 0.56; }
+          72% { left: 122%; opacity: 0; }
+          100% { left: 122%; opacity: 0; }
+        }
+
+        @keyframes luxuryCardGlint {
+          0%, 42% { left: -42%; opacity: 0; }
+          49% { opacity: 0.5; }
+          69% { left: 126%; opacity: 0; }
+          100% { left: 126%; opacity: 0; }
+        }
+
+        @keyframes luxuryModalIn {
+          0% { opacity: 0; transform: translateY(14px) scale(0.985); filter: blur(5px); }
+          100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        @keyframes productWaveIn {
+          0% { opacity: 0; transform: translateY(20px) scale(0.975); filter: blur(4px); }
+          52% { opacity: 1; transform: translateY(-3px) scale(1); filter: blur(0); }
+          100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        .product-wave-card {
+          animation: productWaveIn 680ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          will-change: transform, opacity;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .local-products-workspace *,
+          .local-products-workspace *::before,
+          .local-products-workspace *::after {
+            scroll-behavior: auto !important;
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `}</style>
       <section className="flex w-full flex-col xl:min-h-[calc(100dvh-4rem)]">
-        <header className="sticky top-0 z-30 overflow-hidden border border-white/[0.08] bg-[#090b10]/95 shadow-[0_14px_40px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+        <header className="luxury-header sticky top-0 z-30 overflow-hidden border border-white/[0.08] bg-[#090b10]/95 shadow-[0_16px_46px_rgba(0,0,0,0.34)] backdrop-blur-xl">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#d8c99f]/55 to-transparent"
+            className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#d8c99f]/[0.55] to-transparent"
           />
 
           <div className="relative grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-            <div className="grid min-w-0 grid-cols-4 divide-x divide-white/[0.07]  overflow-hidden border border-white/[0.07] bg-white/[0.025] xl:w-fit">
+            <div className="grid min-w-0 grid-cols-4 divide-x divide-[#d8c99f]/10 overflow-hidden border border-[#d8c99f]/[0.15] bg-[linear-gradient(135deg,rgba(216,201,159,0.055),rgba(255,255,255,0.012))] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] xl:w-fit">
               <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500">
                 <span className="font-bold tabular-nums text-[#d8c99f]">
                   {activeProductCount}
@@ -5481,9 +5908,10 @@ export default function LocalProductsPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-4 gap-1 border border-white/[0.07] bg-black/20 p-2 xl:min-w-[1040px] xl:grid-cols-11">
+            <div className="grid grid-cols-4 gap-1 border border-[#d8c99f]/10 bg-black/25 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] xl:min-w-[1040px] xl:grid-cols-11">
               <button
                 type="button"
+                data-luxury-accent="gold"
                 title="Thêm sản phẩm"
                 aria-label="Thêm sản phẩm"
                 className={`${headerActionButtonBaseClassName} ${headerPrimaryButtonClassName}`}
@@ -5495,6 +5923,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
+                data-luxury-accent="sapphire"
                 title="Import Export dữ liệu"
                 aria-label="Import Export dữ liệu"
                 className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
@@ -5506,6 +5935,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
+                data-luxury-accent="emerald"
                 title={settings.includeSocialTags ? "Tắt Tag khi copy" : "Bật Tag khi copy"}
                 aria-label={settings.includeSocialTags ? "Tắt Tag khi copy" : "Bật Tag khi copy"}
                 aria-pressed={settings.includeSocialTags}
@@ -5526,6 +5956,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
+                data-luxury-accent="violet"
                 title="Bảng sản phẩm"
                 aria-label="Bảng sản phẩm"
                 className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
@@ -5537,6 +5968,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
+                data-luxury-accent="amber"
                 title="Lịch đăng"
                 aria-label="Lịch đăng"
                 className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
@@ -5548,6 +5980,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
+                data-luxury-accent="rose"
                 title="Ghi chú"
                 aria-label="Ghi chú"
                 className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
@@ -5559,6 +5992,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
+                data-luxury-accent="indigo"
                 title="Mô tả chung"
                 aria-label="Mô tả chung"
                 className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
@@ -5570,6 +6004,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
+                data-luxury-accent="cyan"
                 title="Tải ảnh"
                 aria-label="Tải ảnh"
                 className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
@@ -5581,6 +6016,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
+                data-luxury-accent="amethyst"
                 title={
                   pictureInPictureWindow
                     ? "Đóng cửa sổ nổi và trở lại tab"
@@ -5607,6 +6043,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
+                data-luxury-accent="teal"
                 title="Liên hệ khi copy Post hoặc Cmt"
                 aria-label="Liên hệ khi copy Post hoặc Cmt"
                 className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
@@ -5618,6 +6055,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
+                data-luxury-accent="blue"
                 title="Đồng bộ dữ liệu từ Vercel Blob về local"
                 aria-label="Đồng bộ dữ liệu từ Vercel Blob về local"
                 className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
@@ -5630,9 +6068,9 @@ export default function LocalProductsPage() {
           </div>
         </header>
 
-        <section className="border border-slate-700/70 bg-slate-900/70 p-3 (0,0,0,0.22)]">
+        <section className="luxury-content-panel border p-3">
           <div className="mb-3">
-            <label className="flex items-center gap-2 rounded-md border border-slate-600 bg-slate-950/70 px-2 py-1.5 text-slate-400 transition focus-within:border-slate-300 focus-within:bg-slate-950">
+            <label className="luxury-search flex items-center gap-2 border px-3 py-2 text-slate-400 transition focus-within:text-[#eadfbe]">
               <FiSearch
                 aria-hidden="true"
                 className={`${iconClassName} shrink-0`}
@@ -5671,7 +6109,7 @@ export default function LocalProductsPage() {
                     duration: prefersReducedMotion ? 0.12 : 0.3,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="absolute bottom-[calc(100%+0.65rem)] right-0 flex max-h-[68dvh] w-[min(84vw,320px)] touch-pan-y flex-col items-end gap-2 overflow-x-hidden overflow-y-auto overscroll-x-none overscroll-y-contain py-2 pl-8 pr-1"
+                  className="absolute bottom-[calc(100%+0.65rem)] right-0 flex max-h-[68dvh] w-[min(84vw,320px)] touch-pan-y flex-col items-end gap-2 overflow-x-hidden overflow-y-auto overscroll-x-none overscroll-y-contain py-2 pl-8 pr-1 [mask-image:linear-gradient(to_bottom,transparent,black_5%,black_95%,transparent)]"
                 >
                   {orderedCategoryTabs.map((category, index) => {
                     const isActive =
@@ -5682,6 +6120,7 @@ export default function LocalProductsPage() {
                       <motion.button
                         key={category}
                         type="button"
+                        data-category-bubble="true"
                         initial={
                           prefersReducedMotion
                             ? { opacity: 0 }
@@ -5712,9 +6151,9 @@ export default function LocalProductsPage() {
                         whileTap={
                           prefersReducedMotion ? undefined : { scale: 0.96, x: -3 }
                         }
-                        className={`relative flex w-fit max-w-[calc(50vw-8px)] items-center justify-end rounded-[20px] border px-4 py-2.5 text-right text-xs font-black uppercase tracking-[0.04em] backdrop-blur-xl ${isActive
-                          ? "border-amber-200/70 bg-gradient-to-br from-amber-50 via-white to-amber-100 text-slate-950 shadow-[0_14px_38px_rgba(251,191,36,0.24)]"
-                          : "border-white/10 bg-slate-950/90 text-slate-100 shadow-[0_14px_36px_rgba(0,0,0,0.45)]"
+                        className={`relative flex w-fit max-w-[calc(50vw-8px)] items-center justify-end rounded-[18px] border px-4 py-2.5 text-right text-xs font-black uppercase tracking-[0.055em] backdrop-blur-xl ${isActive
+                          ? "border-[#f1e5c2]/75 bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a] shadow-[0_16px_42px_rgba(190,164,99,0.24)]"
+                          : "border-[#d8c99f]/[0.18] bg-[linear-gradient(145deg,rgba(15,18,25,0.96),rgba(6,8,12,0.98))] text-slate-200 shadow-[0_16px_42px_rgba(0,0,0,0.48)]"
                           }`}
                         onClick={() => {
                           setActiveCategoryTab(category);
@@ -5727,8 +6166,8 @@ export default function LocalProductsPage() {
                         <span
                           aria-hidden="true"
                           className={`absolute -bottom-1 right-4 h-2.5 w-2.5 rotate-45 border-b border-r ${isActive
-                            ? "border-amber-200/70 bg-amber-100"
-                            : "border-white/10 bg-slate-950"
+                            ? "border-[#f1e5c2]/70 bg-[#cdbb88]"
+                            : "border-[#d8c99f]/[0.18] bg-[#090c11]"
                             }`}
                         />
                       </motion.button>
@@ -5743,9 +6182,9 @@ export default function LocalProductsPage() {
               aria-controls="mobile-category-menu"
               aria-expanded={isMobileCategoryMenuOpen}
               whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
-              className={`flex min-h-11 min-w-24 items-center justify-center rounded-full border px-4 text-xs font-black tracking-wide backdrop-blur-xl transition ${isMobileCategoryMenuOpen
-                ? "border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-amber-100 text-slate-950 shadow-[0_12px_34px_rgba(251,191,36,0.28)]"
-                : "border-white/15 bg-slate-950/90 text-white shadow-[0_12px_34px_rgba(0,0,0,0.5)]"
+              className={`flex min-h-11 min-w-24 items-center justify-center border px-4 text-xs font-black tracking-[0.08em] backdrop-blur-xl transition ${isMobileCategoryMenuOpen
+                ? "border-[#f1e5c2]/80 bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a] shadow-[0_14px_38px_rgba(190,164,99,0.26)]"
+                : "border-[#d8c99f]/25 bg-[linear-gradient(145deg,rgba(15,18,25,0.96),rgba(5,7,10,0.98))] text-[#eadfbe] shadow-[0_14px_38px_rgba(0,0,0,0.52)]"
                 }`}
               onClick={() =>
                 setIsMobileCategoryMenuOpen((current) => !current)
@@ -5757,14 +6196,14 @@ export default function LocalProductsPage() {
 
           <div
             ref={categoryTabsRef}
-            className="fixed bottom-0 left-0 right-0 z-bar hidden overflow-x-auto border-t border-black bg-black md:flex"
+            className="luxury-category-bar fixed bottom-0 left-0 right-0 z-bar hidden overflow-x-auto border-t md:flex"
           >
             <button
               type="button"
               data-category-tab="all"
-              className={`flex h-[42px] shrink-0 items-center justify-center px-5 text-xs font-black uppercase tracking-wide transition ${activeCategoryTab === "all"
-                ? "bg-slate-100 text-slate-950"
-                : "bg-black text-slate-200 hover:bg-slate-800"
+              className={`flex h-[42px] shrink-0 items-center justify-center border-r border-[#d8c99f]/10 px-5 text-xs font-black uppercase tracking-[0.08em] transition ${activeCategoryTab === "all"
+                ? "bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a]"
+                : "bg-black/20 text-slate-300 hover:bg-[#d8c99f]/10 hover:text-[#eadfbe]"
                 }`}
               onClick={() => setActiveCategoryTab("all")}
             >
@@ -5776,10 +6215,10 @@ export default function LocalProductsPage() {
                 key={category}
                 type="button"
                 data-category-tab={normalizeTextKey(category)}
-                className={`flex h-[42px] shrink-0 items-center justify-center px-5 text-xs font-black uppercase tracking-wide transition ${normalizeTextKey(activeCategoryTab) ===
+                className={`flex h-[42px] shrink-0 items-center justify-center border-r border-[#d8c99f]/10 px-5 text-xs font-black uppercase tracking-[0.08em] transition ${normalizeTextKey(activeCategoryTab) ===
                   normalizeTextKey(category)
-                  ? "bg-slate-100 text-slate-950"
-                  : "bg-black text-white hover:bg-slate-800"
+                  ? "bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a]"
+                  : "bg-black/20 text-slate-200 hover:bg-[#d8c99f]/10 hover:text-[#eadfbe]"
                   }`}
                 onClick={() => setActiveCategoryTab(category)}
               >
@@ -5793,7 +6232,7 @@ export default function LocalProductsPage() {
             onTouchEnd={handleProductsTouchEnd}
           >
             {filteredProducts.length === 0 ? (
-              <div className="rounded-md border border-slate-700 bg-slate-900 p-3 text-center text-xs font-semibold text-slate-400 ">
+              <div className="luxury-dialog border p-5 text-center text-xs font-semibold tracking-wide text-slate-400">
                 Chưa có sản phẩm phù hợp.
               </div>
             ) : (
@@ -5811,11 +6250,13 @@ export default function LocalProductsPage() {
                   return (
                     <article
                       key={`${activeCategoryTab}-${product.id}`}
+                      data-active={active}
+                      data-done={productDone}
                       style={{ animationDelay: `${Math.min(index * 34, 340)}ms` }}
-                      className={`product-wave-card group min-w-0 overflow-hidden rounded-md border  transition duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-800 ${productDone ? "opacity-70" : ""
+                      className={`luxury-product-card product-wave-card group min-w-0 overflow-hidden border transition duration-300 hover:-translate-y-1 ${productDone ? "opacity-65" : ""
                         } ${active
-                          ? "border-slate-200 bg-slate-800  "
-                          : "border-slate-700 bg-slate-900"
+                          ? "border-[#e8d9ae]/70 bg-[#15140f]"
+                          : "border-[#d8c99f]/[0.15] bg-[#0b0e14]"
                         }`}
                       onClick={() => {
                         setSelectedProductId(product.id);
@@ -5824,7 +6265,8 @@ export default function LocalProductsPage() {
                     >
                       <button
                         type="button"
-                        className={`relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-slate-900 ${productDone
+                        data-image-surface="true"
+                        className={`luxury-product-image relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden ${productDone
                           ? "after:absolute after:inset-0 after:bg-slate-950/30"
                           : ""
                           }`}
@@ -5854,7 +6296,7 @@ export default function LocalProductsPage() {
                           />
                         )}
 
-                        <div className="absolute left-2 top-2 z-10 flex items-center gap-1 rounded-md border border-white/10 bg-black/65 px-2 py-0.5 text-[10px] font-black text-white  ">
+                        <div className="absolute left-2 top-2 z-10 flex items-center gap-1 border border-[#d8c99f]/20 bg-black/70 px-2 py-0.5 text-[10px] font-black text-[#eadfbe] backdrop-blur-md [clip-path:polygon(5px_0,100%_0,100%_calc(100%_-_5px),calc(100%_-_5px)_100%,0_100%,0_5px)]">
                           <FiImage aria-hidden="true" className={iconClassName} />
                           {product.images.length}
                         </div>
@@ -5863,7 +6305,7 @@ export default function LocalProductsPage() {
                           {pinText ? (
                             <span
                               title={`Pin: ${pinText}`}
-                              className="flex max-w-[120px] items-center gap-1 rounded-md border border-emerald-200/25 bg-black/65 px-2 py-0.5 text-[10px] font-black text-emerald-100"
+                              className="flex max-w-[120px] items-center gap-1 border border-emerald-200/25 bg-black/70 px-2 py-0.5 text-[10px] font-black text-emerald-100 backdrop-blur-md [clip-path:polygon(5px_0,100%_0,100%_calc(100%_-_5px),calc(100%_-_5px)_100%,0_100%,0_5px)]"
                             >
                               <FiBattery
                                 aria-hidden="true"
@@ -5876,20 +6318,20 @@ export default function LocalProductsPage() {
                           {statusText ? (
                             <span
                               title={`Trạng thái: ${statusText}`}
-                              className="max-w-[120px] truncate rounded-md border border-amber-200/25 bg-black/65 px-2 py-0.5 text-[9px] font-black text-amber-100"
+                              className="max-w-[120px] truncate border border-[#d8c99f]/25 bg-black/70 px-2 py-0.5 text-[9px] font-black text-[#eadfbe] backdrop-blur-md [clip-path:polygon(5px_0,100%_0,100%_calc(100%_-_5px),calc(100%_-_5px)_100%,0_100%,0_5px)]"
                             >
                               {statusText}
                             </span>
                           ) : null}
 
                           {productDone ? (
-                            <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-950">
+                            <span className="border border-white/35 bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-950 [clip-path:polygon(5px_0,100%_0,100%_calc(100%_-_5px),calc(100%_-_5px)_100%,0_100%,0_5px)]">
                               DONE
                             </span>
                           ) : null}
 
                           {active ? (
-                            <span className="rounded-md bg-slate-200 px-2 py-1 text-[10px] font-black text-slate-950">
+                            <span className="border border-[#f1e5c2]/80 bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] px-2 py-1 text-[10px] font-black text-[#17130a] [clip-path:polygon(5px_0,100%_0,100%_calc(100%_-_5px),calc(100%_-_5px)_100%,0_100%,0_5px)]">
                               ACTIVE
                             </span>
                           ) : null}
@@ -5899,7 +6341,7 @@ export default function LocalProductsPage() {
                       <div className="flex min-w-0 flex-col gap-2 p-2">
                         <div className="">
                           {product.category ? (
-                            <div className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">
+                            <div className="truncate text-[10px] font-black uppercase tracking-[0.2em] text-[#cdbf98]">
                               {product.category}
                             </div>
                           ) : null}
@@ -5907,7 +6349,7 @@ export default function LocalProductsPage() {
                           <h3 className="line-clamp-2 min-h-9 text-[12px] font-black leading-[18px] text-white">
                             {product.name}
                           </h3>
-                          <div className="mt-1 truncate text-xs font-black text-amber-100">
+                          <div className="mt-1 truncate text-xs font-black text-[#f1e5c2]">
                             {product.priceText || "Chưa có giá"}
                           </div>
                         </div>
@@ -5916,8 +6358,8 @@ export default function LocalProductsPage() {
                           role={descriptionPreview.length > 90 ? "button" : undefined}
                           tabIndex={descriptionPreview.length > 90 ? 0 : undefined}
                           aria-expanded={descriptionPreview.length > 90 ? expanded : undefined}
-                          className={`w-full min-w-0 rounded-md border bg-white/10 border-white/10 p-2 ${descriptionPreview.length > 90
-                            ? "cursor-pointer transition hover:border-slate-400/40 hover:bg-slate-800"
+                          className={`w-full min-w-0 border border-[#d8c99f]/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.035),rgba(255,255,255,0.012))] p-2 [clip-path:polygon(7px_0,100%_0,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,0_100%,0_7px)] ${descriptionPreview.length > 90
+                            ? "cursor-pointer transition hover:border-[#d8c99f]/30 hover:bg-[#d8c99f]/[0.045]"
                             : ""
                             }`}
                           onMouseUp={(event) => {
@@ -5974,7 +6416,8 @@ export default function LocalProductsPage() {
                             selectedDescriptionCopy.text ? (
                             <button
                               type="button"
-                              className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-full border border-emerald-300/70 bg-emerald-300/10 px-0.5 py-1 text-[9px] font-black text-emerald-100 transition hover:bg-emerald-300/15 active:opacity-80"
+                              data-luxury-accent="emerald"
+                              className="mt-2 inline-flex w-full items-center justify-center gap-1 border border-emerald-300/40 bg-emerald-300/[0.07] px-1.5 py-1 text-[9px] font-black text-emerald-100 transition hover:border-emerald-200/60 hover:bg-emerald-300/[0.12] active:opacity-80"
                               onClick={(event) => {
                                 event.stopPropagation();
                                 void handleCopySelectedDescription(product.id);
@@ -6001,9 +6444,10 @@ export default function LocalProductsPage() {
                         <div className="grid  grid-cols-2 gap-1.5">
                           <button
                             type="button"
+                            data-luxury-accent="cyan"
                             title="Copy ảnh chính"
                             aria-label="Copy ảnh chính"
-                            className={`${productActionButtonBaseClassName} border border-cyan-400/70 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/15`}
+                            className={`${productActionButtonBaseClassName} border-[#d8c99f]/[0.32] bg-[#d8c99f]/[0.055] text-[#eadfbe] hover:border-[#f1e5c2]/[0.55] hover:bg-[#d8c99f]/10`}
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopyProductRepresentativeImage(product);
@@ -6015,9 +6459,10 @@ export default function LocalProductsPage() {
 
                           <button
                             type="button"
+                            data-luxury-accent="sapphire"
                             title="Chia sẻ sản phẩm"
                             aria-label="Chia sẻ sản phẩm"
-                            className={`${productActionButtonBaseClassName} border border-cyan-400/70 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/15`}
+                            className={`${productActionButtonBaseClassName} border-[#d8c99f]/[0.32] bg-[#d8c99f]/[0.055] text-[#eadfbe] hover:border-[#f1e5c2]/[0.55] hover:bg-[#d8c99f]/10`}
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleShareProduct(product);
@@ -6039,9 +6484,10 @@ export default function LocalProductsPage() {
 
                           <button
                             type="button"
+                            data-luxury-accent="indigo"
                             title="Copy nguyên bản mô tả"
                             aria-label="Copy nguyên bản mô tả"
-                            className={`${productActionButtonBaseClassName} border border-slate-500/90 bg-slate-400/10 text-slate-100 hover:border-slate-300 hover:bg-slate-400/15`}
+                            className={`${productActionButtonBaseClassName} border-white/[0.12] bg-white/[0.025] text-slate-200 hover:border-[#d8c99f]/[0.35] hover:bg-[#d8c99f]/[0.055] hover:text-[#eadfbe]`}
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopyField(
@@ -6061,9 +6507,10 @@ export default function LocalProductsPage() {
 
                           <button
                             type="button"
+                            data-luxury-accent="amber"
                             title="Copy comment sản phẩm"
                             aria-label="Copy comment sản phẩm"
-                            className={`${productActionButtonBaseClassName} border border-amber-300/70 bg-amber-300/10 text-amber-100 hover:bg-amber-300/15`}
+                            className={`${productActionButtonBaseClassName} border-[#d8c99f]/[0.42] bg-[#d8c99f]/[0.07] text-[#f1e5c2] hover:border-[#f1e5c2]/[0.65] hover:bg-[#d8c99f]/[0.12]`}
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopyField(
@@ -6084,9 +6531,10 @@ export default function LocalProductsPage() {
 
                           <button
                             type="button"
+                            data-luxury-accent="violet"
                             title="Copy tên sản phẩm"
                             aria-label="Copy tên sản phẩm"
-                            className={`${productActionButtonBaseClassName} border border-slate-500/90 bg-slate-400/10 text-slate-100 hover:border-slate-300 hover:bg-slate-400/15`}
+                            className={`${productActionButtonBaseClassName} border-white/[0.12] bg-white/[0.025] text-slate-200 hover:border-[#d8c99f]/[0.35] hover:bg-[#d8c99f]/[0.055] hover:text-[#eadfbe]`}
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleCopyField(
@@ -6102,11 +6550,12 @@ export default function LocalProductsPage() {
 
                           <button
                             type="button"
+                            data-luxury-accent={productDone ? "sapphire" : "emerald"}
                             title={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
                             aria-label={productDone ? "Bỏ DONE" : "Đánh dấu DONE"}
                             className={`${productActionButtonBaseClassName} ${productDone
-                              ? "border border-slate-400/80 bg-slate-400/10 text-slate-100 hover:bg-slate-400/15"
-                              : "border border-emerald-300/70 bg-emerald-300/10 text-emerald-100 hover:bg-emerald-300/15"
+                              ? "border-white/20 bg-white/[0.055] text-slate-100 hover:border-white/35 hover:bg-white/[0.08]"
+                              : "border-emerald-300/[0.38] bg-emerald-300/[0.06] text-emerald-100 hover:border-emerald-200/60 hover:bg-emerald-300/10"
                               }`}
                             onClick={(event) => {
                               event.stopPropagation();
@@ -6123,9 +6572,10 @@ export default function LocalProductsPage() {
                           </button>
                           <button
                             type="button"
+                            data-luxury-accent="teal"
                             title="Tải ảnh sản phẩm"
                             aria-label="Tải ảnh sản phẩm"
-                            className={`${productActionButtonBaseClassName} border border-sky-400/70 bg-sky-400/10 text-sky-100 hover:bg-sky-400/15`}
+                            className={`${productActionButtonBaseClassName} border-[#b9c4d6]/25 bg-[#b9c4d6]/[0.045] text-[#d9e1ed] hover:border-[#d8c99f]/40 hover:bg-[#d8c99f]/[0.065] hover:text-[#eadfbe]`}
                             onClick={(event) => {
                               event.stopPropagation();
                               handleDownloadProductImages(product);
@@ -6140,9 +6590,10 @@ export default function LocalProductsPage() {
 
                           <button
                             type="button"
+                            data-luxury-accent="rose"
                             title="Xóa sản phẩm"
                             aria-label="Xóa sản phẩm"
-                            className={`${productActionButtonBaseClassName} border border-rose-400/70 bg-rose-400/10 text-rose-100 hover:bg-rose-400/15`}
+                            className={`${productActionButtonBaseClassName} border-rose-300/[0.28] bg-rose-300/[0.045] text-rose-100 hover:border-rose-300/[0.55] hover:bg-rose-300/[0.08]`}
                             onClick={(event) => {
                               event.stopPropagation();
                               void handleDelete(product.id);
@@ -6166,11 +6617,11 @@ export default function LocalProductsPage() {
       </section>
 
       {activeModal ? (
-        <div className="fixed inset-0 z-modal flex h-dvh w-full items-center justify-center overflow-hidden bg-black/75 p-3 xl:p-8">
-          <div className="h-[calc(100dvh-1.5rem)] w-full overflow-hidden rounded-md border border-slate-700 bg-slate-950  xl:h-[calc(100dvh-4rem)]">
-            <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-slate-900 p-2">
+        <div className="luxury-modal-overlay fixed inset-0 z-modal flex h-dvh w-full items-center justify-center overflow-hidden p-2 xl:p-8">
+          <div className="luxury-modal h-[calc(100dvh-1rem)] w-full overflow-hidden border xl:h-[calc(100dvh-4rem)]">
+            <div className="luxury-modal-titlebar flex items-center justify-between gap-2 border-b p-2.5">
               <div className="flex  items-center gap-2">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-600 bg-slate-800 text-slate-100 ">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-[#d8c99f]/30 bg-[#d8c99f]/[0.07] text-[#eadfbe] [clip-path:polygon(7px_0,100%_0,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,0_100%,0_7px)]">
                   {activeModal === "product" ? (
                     <FiPlus aria-hidden="true" className={iconClassName} />
                   ) : null}
@@ -6229,7 +6680,7 @@ export default function LocalProductsPage() {
 
               <button
                 type="button"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-slate-200  transition hover:bg-slate-700 active:opacity-80"
+                className="group flex h-8 w-8 shrink-0 items-center justify-center border border-[#d8c99f]/20 bg-white/[0.025] text-slate-300 transition hover:border-[#d8c99f]/[0.45] hover:bg-[#d8c99f]/[0.07] hover:text-[#eadfbe] active:opacity-80"
                 onClick={closeModal}
               >
                 <FiX aria-hidden="true" className={iconClassName} />
@@ -6237,7 +6688,7 @@ export default function LocalProductsPage() {
             </div>
 
             <div
-              className={`h-[calc(92dvh-66px)] p-2 ${activeModal === "imageAlbum" || activeModal === "productList" ? "overflow-hidden" : "overflow-y-auto"}`}
+              className={`h-[calc(92dvh-66px)] bg-[radial-gradient(circle_at_50%_0,rgba(216,201,159,0.035),transparent_36%)] p-2 ${activeModal === "imageAlbum" || activeModal === "productList" ? "overflow-hidden" : "overflow-y-auto"}`}
             >
               {activeModal === "imageDownload" ? (
                 <section className="grid w-full grid-cols-1 gap-3 xl:grid-cols-2">
@@ -6470,20 +6921,20 @@ export default function LocalProductsPage() {
 
                           return (
                             <div key={group.category}>
-                              <div className="grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-cyan-400/20 bg-cyan-400/10 text-xs font-black text-cyan-100">
-                                <div className="border-r border-cyan-400/20 px-2 py-2">
+                              <div className="grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-[#d8c99f]/20 bg-[#d8c99f]/[0.065] text-xs font-black text-[#eadfbe]">
+                                <div className="border-r border-[#d8c99f]/20 px-2 py-2">
                                   {group.category}
                                 </div>
 
-                                <div className="border-r border-cyan-400/20 px-2 py-2">
+                                <div className="border-r border-[#d8c99f]/20 px-2 py-2">
                                   {group.products.length} sản phẩm
                                 </div>
 
-                                <div className="border-r border-cyan-400/20 px-2 py-2">
+                                <div className="border-r border-[#d8c99f]/20 px-2 py-2">
                                   {groupSoldCount} bán / {groupActiveCount} còn
                                 </div>
 
-                                <div className="border-r border-cyan-400/20 px-2 py-2" />
+                                <div className="border-r border-[#d8c99f]/20 px-2 py-2" />
 
                                 <div className="px-2 py-2" />
                               </div>
@@ -8087,7 +8538,8 @@ export default function LocalProductsPage() {
                       <div className="flex shrink-0 gap-1 overflow-x-auto pb-1 xl:justify-end xl:overflow-visible xl:pb-0">
                         <button
                           type="button"
-                          className="flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-white  transition hover:bg-slate-700 active:opacity-80"
+                          data-luxury-accent="indigo"
+                          className={albumActionButtonBaseClassName}
                           onClick={() =>
                             void handleCopyField(
                               `album-post-${albumSource.title}`,
@@ -8106,7 +8558,8 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-sky-200/50 bg-sky-300/12 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-sky-100  transition hover:bg-sky-300/20 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                          data-luxury-accent="sapphire"
+                          className={albumActionButtonBaseClassName}
                           onClick={() => void handleShareSelectedAlbumImages()}
                           title="Chia sẻ ảnh đã chọn"
                           aria-label="Chia sẻ ảnh đã chọn"
@@ -8128,7 +8581,8 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-emerald-200/70 bg-emerald-500 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-slate-950  transition hover:bg-emerald-400 active:opacity-80"
+                          data-luxury-accent="emerald"
+                          className={albumActionButtonBaseClassName}
                           onClick={handleDownloadSelectedAlbumImages}
                           title="Tải ảnh đã chọn"
                           aria-label="Tải ảnh đã chọn"
@@ -8142,7 +8596,8 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-white  transition hover:bg-slate-700 active:opacity-80"
+                          data-luxury-accent="gold"
+                          className={albumActionButtonBaseClassName}
                           onClick={handleSelectAllAlbumImages}
                           title="Chọn tất cả ảnh"
                           aria-label="Chọn tất cả ảnh"
@@ -8156,7 +8611,8 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-white  transition hover:bg-slate-700 active:opacity-80"
+                          data-luxury-accent="rose"
+                          className={albumActionButtonBaseClassName}
                           onClick={handleClearSelectedAlbumImages}
                           title="Bỏ chọn ảnh"
                           aria-label="Bỏ chọn ảnh"
@@ -8170,7 +8626,8 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-slate-800 px-2 py-1.5 whitespace-nowrap text-[10px] font-black text-white  transition hover:bg-slate-700 active:opacity-80"
+                          data-luxury-accent="amber"
+                          className={albumActionButtonBaseClassName}
                           onClick={handleDownloadAlbumImages}
                           title="Tải toàn bộ album"
                           aria-label="Tải toàn bộ album"
@@ -8271,9 +8728,9 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingBlobUpload ? (
-        <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
+        <div className="luxury-modal-overlay fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center p-2">
           <form
-            className="w-full max-w-md rounded-md border border-emerald-300/20 bg-slate-950 p-2 "
+            className="luxury-dialog w-full max-w-md border p-3"
             onSubmit={(event) => {
               event.preventDefault();
               void executeBlobUploadConfirm();
@@ -8336,8 +8793,8 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingConfirm ? (
-        <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
-          <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-2 ">
+        <div className="luxury-modal-overlay fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center p-2">
+          <div className="luxury-dialog w-full max-w-md border p-3">
             <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2">
               <div className="">
                 <h3 className="text-xs font-black text-white">
@@ -8387,8 +8844,8 @@ export default function LocalProductsPage() {
         </div>
       ) : null}
       {pendingBackup ? (
-        <div className="fixed inset-0 z-[999999] flex h-dvh w-full items-center justify-center bg-black/80 p-2 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-cyan-300/20 bg-slate-950 p-3 shadow-2xl">
+        <div className="luxury-modal-overlay fixed inset-0 z-[999999] flex h-dvh w-full items-center justify-center p-2">
+          <div className="luxury-dialog w-full max-w-md border p-3">
             <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
               <div className="">
                 <h3 className="text-sm font-black text-white">
@@ -8440,8 +8897,8 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingRemoveTaskIndex !== null ? (
-        <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/70 p-2 ">
-          <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-2 ">
+        <div className="luxury-modal-overlay fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center p-2">
+          <div className="luxury-dialog w-full max-w-md border p-3">
             <h3 className="text-xs font-black text-white">Xoá task đã chọn?</h3>
             <p className="mt-2 text-xs leading-5 text-slate-400">
               Thao tác này chỉ xoá{" "}
@@ -8469,8 +8926,8 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingShare ? (
-        <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/75 p-2">
-          <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-2">
+        <div className="luxury-modal-overlay fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center p-2">
+          <div className="luxury-dialog w-full max-w-md border p-3">
             <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
               <div className="min-w-0">
                 <h2 className="truncate text-xs font-black text-white">
@@ -8559,9 +9016,9 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingDownload ? (
-        <div className="fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center bg-black/75 p-2 ">
-          <div className="flex h-[90dvh] w-full items-center justify-center rounded-md border border-white/10 bg-slate-950 p-2 ">
-            <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-900 p-2">
+        <div className="luxury-modal-overlay fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center p-2">
+          <div className="flex h-[90dvh] w-full items-center justify-center bg-transparent p-2">
+            <div className="luxury-dialog w-full max-w-md border p-3">
               <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
                 <div className="">
                   <h2 className="truncate text-xs font-black text-white">
@@ -8623,40 +9080,40 @@ export default function LocalProductsPage() {
 
   return (
     <>
-      <main className="flex min-h-dvh w-full items-center justify-center bg-[#0b1220] p-4 text-slate-100">
-        <section className="w-full max-w-md rounded-md border border-slate-700 bg-slate-900 p-4 text-center shadow-2xl">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-md border border-violet-300/50 bg-violet-200 text-violet-950">
-            <FiMonitor aria-hidden="true" className="h-5 w-5" />
-          </div>
-          <h1 className="mt-3 text-sm font-black text-white">
-            Local Product Manager đang mở dạng cửa sổ nổi
-          </h1>
-          <p className="mt-2 text-xs leading-5 text-slate-400">
-            Chuyển sang Facebook để tiếp tục thao tác trong cửa sổ nổi.
-          </p>
-          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <button
-              type="button"
-              className="rounded-md bg-violet-200 px-3 py-2 text-xs font-black text-violet-950 transition hover:bg-violet-100 active:opacity-80"
-              onClick={handleFocusPictureInPicture}
-            >
-              Hiện cửa sổ nổi
-            </button>
-            <button
-              type="button"
-              className="rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80"
-              onClick={handleClosePictureInPicture}
-            >
-              Đóng và trở lại tab
-            </button>
-          </div>
-        </section>
-      </main>
+      <main className="flex min-h-dvh w-full items-center justify-center bg-[radial-gradient(circle_at_50%_0,rgba(216,201,159,0.12),transparent_32%),linear-gradient(145deg,#07090d,#0b0e14)] p-4 text-slate-100">
+            <section className="w-full max-w-md border border-[#d8c99f]/25 bg-[linear-gradient(145deg,rgba(16,20,27,0.98),rgba(6,8,12,0.99))] p-5 text-center shadow-[0_32px_90px_rgba(0,0,0,0.55)] [clip-path:polygon(12px_0,calc(100%_-_12px)_0,100%_12px,100%_calc(100%_-_12px),calc(100%_-_12px)_100%,12px_100%,0_calc(100%_-_12px),0_12px)]">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center border border-[#f1e5c2]/60 bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a] shadow-[0_12px_32px_rgba(190,164,99,0.22)] [clip-path:polygon(8px_0,100%_0,100%_calc(100%_-_8px),calc(100%_-_8px)_100%,0_100%,0_8px)]">
+                <FiMonitor aria-hidden="true" className="h-5 w-5" />
+              </div>
+              <h1 className="mt-3 text-sm font-black text-white">
+                Local Product Manager đang mở dạng cửa sổ nổi
+              </h1>
+              <p className="mt-2 text-xs leading-5 text-slate-400">
+                Chuyển sang Facebook để tiếp tục thao tác trong cửa sổ nổi.
+              </p>
+              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  className="border border-[#f1e5c2]/75 bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] px-3 py-2 text-xs font-black text-[#17130a] transition hover:brightness-105 active:opacity-80 [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)]"
+                  onClick={handleFocusPictureInPicture}
+                >
+                  Hiện cửa sổ nổi
+                </button>
+                <button
+                  type="button"
+                  className="border border-[#d8c99f]/20 bg-white/[0.025] px-3 py-2 text-xs font-black text-slate-200 transition hover:border-[#d8c99f]/40 hover:bg-[#d8c99f]/[0.06] hover:text-[#eadfbe] active:opacity-80 [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)]"
+                  onClick={handleClosePictureInPicture}
+                >
+                  Đóng và trở lại tab
+                </button>
+              </div>
+            </section>
+          </main>
 
       {createPortal(
-        localProductsWorkspace,
-        pictureInPictureWindow.document.body,
-      )}
+          localProductsWorkspace,
+          pictureInPictureWindow.document.body,
+        )}
     </>
   );
 }
