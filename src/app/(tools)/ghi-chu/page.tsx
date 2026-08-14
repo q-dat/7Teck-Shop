@@ -4234,16 +4234,12 @@ export default function LocalProductsPage() {
     setPendingShare({
       title: product.name,
       images: product.images,
-      postText: composeCopyText(
-        descriptionText,
-        activeContactText,
-        settings.includeSocialTags,
-      ),
+      postText: descriptionText,
       commentText: buildCommentContentText(
         product.name,
         descriptionText,
         product.priceText,
-        activeContactText,
+        "",
       ),
       shareKey: `share-product-${product.id}`,
       successMessage: "Đã mở bảng chia sẻ sản phẩm",
@@ -4269,16 +4265,12 @@ export default function LocalProductsPage() {
     setPendingShare({
       title: albumSource.title,
       images: selectedImages,
-      postText: composeCopyText(
-        albumSource.description,
-        activeContactText,
-        settings.includeSocialTags,
-      ),
+      postText: albumSource.description,
       commentText: buildCommentContentText(
         albumSource.title,
         albumSource.description,
         albumSource.priceText,
-        activeContactText,
+        "",
       ),
       shareKey: "album-share-selected",
       successMessage: "Đã mở bảng chia sẻ ảnh",
@@ -4294,9 +4286,17 @@ export default function LocalProductsPage() {
     const request = pendingShare;
     const textValue =
       mode === "post"
-        ? request.postText
+        ? composeCopyText(
+          request.postText,
+          activeContactText,
+          settings.includeSocialTags,
+        )
         : mode === "comment"
-          ? request.commentText
+          ? composeCopyText(
+            request.commentText,
+            activeContactText,
+            false,
+          )
           : "";
     const contentLabel = mode === "post" ? "Post" : "Cmt";
     const shouldCopyText = mode !== "imagesOnly";
@@ -8624,39 +8624,39 @@ export default function LocalProductsPage() {
   return (
     <>
       <main className="flex min-h-dvh w-full items-center justify-center bg-[#0b1220] p-4 text-slate-100">
-            <section className="w-full max-w-md rounded-md border border-slate-700 bg-slate-900 p-4 text-center shadow-2xl">
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-md border border-violet-300/50 bg-violet-200 text-violet-950">
-                <FiMonitor aria-hidden="true" className="h-5 w-5" />
-              </div>
-              <h1 className="mt-3 text-sm font-black text-white">
-                Local Product Manager đang mở dạng cửa sổ nổi
-              </h1>
-              <p className="mt-2 text-xs leading-5 text-slate-400">
-                Chuyển sang Facebook để tiếp tục thao tác trong cửa sổ nổi.
-              </p>
-              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <button
-                  type="button"
-                  className="rounded-md bg-violet-200 px-3 py-2 text-xs font-black text-violet-950 transition hover:bg-violet-100 active:opacity-80"
-                  onClick={handleFocusPictureInPicture}
-                >
-                  Hiện cửa sổ nổi
-                </button>
-                <button
-                  type="button"
-                  className="rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80"
-                  onClick={handleClosePictureInPicture}
-                >
-                  Đóng và trở lại tab
-                </button>
-              </div>
-            </section>
-          </main>
+        <section className="w-full max-w-md rounded-md border border-slate-700 bg-slate-900 p-4 text-center shadow-2xl">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-md border border-violet-300/50 bg-violet-200 text-violet-950">
+            <FiMonitor aria-hidden="true" className="h-5 w-5" />
+          </div>
+          <h1 className="mt-3 text-sm font-black text-white">
+            Local Product Manager đang mở dạng cửa sổ nổi
+          </h1>
+          <p className="mt-2 text-xs leading-5 text-slate-400">
+            Chuyển sang Facebook để tiếp tục thao tác trong cửa sổ nổi.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              className="rounded-md bg-violet-200 px-3 py-2 text-xs font-black text-violet-950 transition hover:bg-violet-100 active:opacity-80"
+              onClick={handleFocusPictureInPicture}
+            >
+              Hiện cửa sổ nổi
+            </button>
+            <button
+              type="button"
+              className="rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80"
+              onClick={handleClosePictureInPicture}
+            >
+              Đóng và trở lại tab
+            </button>
+          </div>
+        </section>
+      </main>
 
       {createPortal(
-          localProductsWorkspace,
-          pictureInPictureWindow.document.body,
-        )}
+        localProductsWorkspace,
+        pictureInPictureWindow.document.body,
+      )}
     </>
   );
 }
