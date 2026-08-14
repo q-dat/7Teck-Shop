@@ -230,6 +230,8 @@ type NativeShareNavigator = Navigator & {
 
 type ShareContentMode = "post" | "comment" | "imagesOnly";
 
+type ShareDialogStep = "share" | "facebookGroup";
+
 type ShareRequest = {
   title: string;
   images: ProductImage[];
@@ -2372,6 +2374,8 @@ export default function LocalProductsPage() {
   const [pendingDownload, setPendingDownload] =
     useState<DownloadRequest | null>(null);
   const [pendingShare, setPendingShare] = useState<ShareRequest | null>(null);
+  const [shareDialogStep, setShareDialogStep] =
+    useState<ShareDialogStep>("share");
   const [pendingConfirm, setPendingConfirm] = useState<ConfirmRequest | null>(
     null,
   );
@@ -3022,7 +3026,14 @@ export default function LocalProductsPage() {
       }
 
       if (pendingShare) {
-        if (!isShareExecuting) setPendingShare(null);
+        if (!isShareExecuting) {
+          if (shareDialogStep === "facebookGroup") {
+            setShareDialogStep("share");
+            return;
+          }
+
+          setPendingShare(null);
+        }
         return;
       }
 
@@ -3069,6 +3080,7 @@ export default function LocalProductsPage() {
     activeModal,
     pendingDownload,
     pendingShare,
+    shareDialogStep,
     isShareExecuting,
     pendingBackup,
     isBackupSaving,
@@ -3316,6 +3328,7 @@ export default function LocalProductsPage() {
     setBlobUploadPassword("");
     setPendingDownload(null);
     setPendingShare(null);
+    setShareDialogStep("share");
   };
 
   const closeAllProductModals = (): void => {
@@ -3916,7 +3929,7 @@ export default function LocalProductsPage() {
       setPageLoadingText("");
 
       requestConfirm({
-        title: "Bạn có muốn thay thế bằng dữ liệu mới?",
+        title: "Thay thế bằng dữ liệu mới?",
         description: `File ${isGzipFile(file) ? "JSON.GZ" : "JSON"} có ${payload.products.length} sản phẩm (${formatFileSize(file.size)}). Khi đồng ý, toàn bộ dữ liệu hiện tại sẽ được xóa hoàn tất trước, sau đó tệp mới mới bắt đầu được import.`,
         confirmLabel: "Đồng ý, thay thế",
         tone: "warning",
@@ -4026,7 +4039,7 @@ export default function LocalProductsPage() {
 
   const handleRestoreLatestBackupFromBlob = async (): Promise<void> => {
     requestConfirm({
-      title: "Bạn có muốn thay thế bằng dữ liệu mới?",
+      title: "Thay thế bằng dữ liệu mới?",
       description:
         "Hệ thống sẽ tải bản JSON.GZ mới nhất từ Vercel Blob. Dữ liệu hiện tại trong IndexedDB và localStorage sẽ được xóa sạch trước khi thay thế.",
       confirmLabel: "Tải về local",
@@ -4172,7 +4185,7 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải ảnh sản phẩm",
-      description: `Bạn có muốn tải ${product.images.length} ảnh của sản phẩm này về máy không? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
+      description: `Tải ${product.images.length} ảnh của sản phẩm này về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
       mode: "multiple",
       images: product.images,
       startIndex: 0,
@@ -4216,6 +4229,7 @@ export default function LocalProductsPage() {
     const descriptionText =
       product.description.trim() || settings.commonDescription.trim();
 
+    setShareDialogStep("share");
     setPendingShare({
       title: product.name,
       images: product.images,
@@ -4250,6 +4264,7 @@ export default function LocalProductsPage() {
       return;
     }
 
+    setShareDialogStep("share");
     setPendingShare({
       title: albumSource.title,
       images: selectedImages,
@@ -4271,6 +4286,7 @@ export default function LocalProductsPage() {
 
   const executeShareRequest = async (
     mode: ShareContentMode,
+    shareImagesOnly = mode === "imagesOnly",
   ): Promise<void> => {
     if (!pendingShare || isShareExecuting) return;
 
@@ -4281,7 +4297,10 @@ export default function LocalProductsPage() {
         : mode === "comment"
           ? request.commentText
           : "";
+    const contentLabel = mode === "post" ? "Post" : "Cmt";
+    const shouldCopyText = mode !== "imagesOnly";
     const shareNavigator = getNativeShareNavigator();
+    let copiedToClipboard = false;
 
     const markShared = (): void => {
       setCopiedKey(request.shareKey);
@@ -4296,6 +4315,15 @@ export default function LocalProductsPage() {
     setIsShareExecuting(true);
 
     try {
+      if (shouldCopyText && textValue) {
+        try {
+          await copyText(textValue);
+          copiedToClipboard = true;
+        } catch {
+          copiedToClipboard = false;
+        }
+      }
+
       const files = await Promise.all(
         request.images.map((image, index) =>
           dataUrlToShareFile(
@@ -4305,14 +4333,14 @@ export default function LocalProductsPage() {
         ),
       );
 
-      if (mode === "imagesOnly" && files.length === 0) {
+      if (shareImagesOnly && files.length === 0) {
         Toastify("Chưa có ảnh để chia sẻ", 300);
         return;
       }
 
       if (shareNavigator?.share) {
         const shareData: NativeShareData =
-          mode === "imagesOnly"
+          shareImagesOnly
             ? { files }
             : { title: request.title, text: textValue, files };
         const canShareWithFiles =
@@ -4322,12 +4350,26 @@ export default function LocalProductsPage() {
         if (canShareWithFiles) {
           await shareNavigator.share(shareData);
           markShared();
-          Toastify(request.successMessage, 200);
+          Toastify(
+            shouldCopyText
+              ? copiedToClipboard
+                ? shareImagesOnly
+                  ? `Đã copy ${contentLabel} và mở chia sẻ chỉ hình ảnh`
+                  : `Đã copy ${contentLabel} và mở bảng chia sẻ`
+                : "Đã mở bảng chia sẻ nhưng không thể tự động copy nội dung"
+              : request.successMessage,
+            shouldCopyText && !copiedToClipboard ? 300 : 200,
+          );
           return;
         }
 
-        if (mode === "imagesOnly") {
-          Toastify("Thiết bị chưa hỗ trợ chia sẻ ảnh đã chọn", 400);
+        if (shareImagesOnly) {
+          Toastify(
+            copiedToClipboard
+              ? `Đã copy ${contentLabel} nhưng thiết bị chưa hỗ trợ chia sẻ ảnh đã chọn`
+              : "Thiết bị chưa hỗ trợ chia sẻ ảnh đã chọn",
+            copiedToClipboard ? 300 : 400,
+          );
           return;
         }
 
@@ -4337,39 +4379,67 @@ export default function LocalProductsPage() {
         });
         markShared();
         Toastify(
-          files.length > 0
-            ? "Thiết bị chưa hỗ trợ gửi toàn bộ ảnh, đã mở chia sẻ nội dung"
-            : request.successMessage,
+          copiedToClipboard
+            ? files.length > 0
+              ? `Đã copy ${contentLabel}; thiết bị chỉ mở chia sẻ nội dung`
+              : `Đã copy ${contentLabel} và mở bảng chia sẻ`
+            : files.length > 0
+              ? "Thiết bị chỉ mở chia sẻ nội dung và không thể tự động copy"
+              : "Đã mở bảng chia sẻ nhưng không thể tự động copy nội dung",
+          copiedToClipboard ? 200 : 300,
+        );
+        return;
+      }
+
+      if (shareImagesOnly) {
+        Toastify(
+          copiedToClipboard
+            ? `Đã copy ${contentLabel} nhưng trình duyệt chưa hỗ trợ chia sẻ chỉ hình ảnh`
+            : "Trình duyệt chưa hỗ trợ chia sẻ chỉ hình ảnh",
+          copiedToClipboard ? 300 : 400,
+        );
+        return;
+      }
+
+      if (copiedToClipboard) {
+        markShared();
+        Toastify(
+          `Trình duyệt chưa hỗ trợ chia sẻ, đã copy ${contentLabel}`,
           200,
         );
         return;
       }
 
-      if (mode === "imagesOnly") {
-        Toastify("Trình duyệt chưa hỗ trợ chia sẻ chỉ hình ảnh", 400);
-        return;
-      }
-
-      await copyText(textValue);
-      markShared();
-      Toastify("Trình duyệt chưa hỗ trợ chia sẻ, đã copy nội dung", 200);
+      Toastify("Trình duyệt chưa hỗ trợ chia sẻ hoặc clipboard", 400);
     } catch (error) {
-      if (isAbortError(error)) return;
-
-      if (mode === "imagesOnly") {
-        Toastify("Không thể chia sẻ ảnh đã chọn", 400);
+      if (isAbortError(error)) {
+        if (copiedToClipboard) {
+          markShared();
+          Toastify(`Đã copy ${contentLabel}`, 200);
+        }
         return;
       }
 
-      try {
-        await copyText(textValue);
-        markShared();
-        Toastify("Không thể mở chia sẻ, đã copy nội dung", 300);
-      } catch {
-        Toastify("Không thể chia sẻ nội dung", 400);
+      if (shareImagesOnly) {
+        Toastify(
+          copiedToClipboard
+            ? `Đã copy ${contentLabel} nhưng không thể chia sẻ ảnh đã chọn`
+            : "Không thể chia sẻ ảnh đã chọn",
+          copiedToClipboard ? 300 : 400,
+        );
+        return;
       }
+
+      if (copiedToClipboard) {
+        markShared();
+        Toastify(`Không thể mở chia sẻ, đã copy ${contentLabel}`, 300);
+        return;
+      }
+
+      Toastify("Không thể chia sẻ hoặc copy nội dung", 400);
     } finally {
       setPendingShare(null);
+      setShareDialogStep("share");
       setIsShareExecuting(false);
     }
   };
@@ -4391,7 +4461,7 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải ảnh đã chọn",
-      description: `Bạn có muốn tải ${selectedImages.length} ảnh đã chọn về máy không? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
+      description: `Tải ${selectedImages.length} ảnh đã chọn về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
       mode: selectedImages.length === 1 ? "single" : "multiple",
       images: selectedImages,
       startIndex: 0,
@@ -4419,7 +4489,7 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải toàn bộ album",
-      description: `Bạn có muốn tải ${albumSource.images.length} ảnh trong album về máy không? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
+      description: `Tải ${albumSource.images.length} ảnh trong album về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
       mode: "multiple",
       images: albumSource.images,
       startIndex: 0,
@@ -4444,7 +4514,7 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải ảnh đại diện",
-      description: `Bạn có muốn tải ${representativeImages.length} ảnh đại diện, là ảnh đầu tiên có index 0 của mỗi sản phẩm thuộc ${categoryLabel}, về máy không?`,
+      description: `Tải ${representativeImages.length} ảnh đại diện, là ảnh đầu tiên có index 0 của mỗi sản phẩm thuộc ${categoryLabel}, về máy?`,
       mode: representativeImages.length === 1 ? "single" : "multiple",
       images: representativeImages,
       startIndex: 0,
@@ -4473,7 +4543,7 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải toàn bộ ảnh",
-      description: `Bạn có muốn tải ${allImages.length} ảnh của tất cả sản phẩm chưa DONE về máy không? Toàn bộ nội dung Post của các sản phẩm này sẽ được tự động copy trước khi tải.`,
+      description: `Tải ${allImages.length} ảnh của tất cả sản phẩm chưa DONE về máy? Toàn bộ nội dung Post của các sản phẩm này sẽ được tự động copy trước khi tải.`,
       mode: "multiple",
       images: allImages,
       startIndex: 0,
@@ -8348,10 +8418,14 @@ export default function LocalProductsPage() {
             <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
               <div className="min-w-0">
                 <h2 className="truncate text-xs font-black text-white">
-                  Chọn nội dung chia sẻ
+                  {shareDialogStep === "facebookGroup"
+                    ? "Chọn nội dung copy cho Group FB"
+                    : "Chọn nội dung chia sẻ"}
                 </h2>
-                <p className="mt-1 truncate text-[10px] text-slate-400">
-                  {pendingShare.title} · {pendingShare.images.length} ảnh
+                <p className="mt-1 text-[10px] leading-4 text-slate-400">
+                  {shareDialogStep === "facebookGroup"
+                    ? "Nội dung được copy vào clipboard, bảng chia sẻ chỉ gửi hình ảnh."
+                    : `${pendingShare.title} · ${pendingShare.images.length} ảnh`}
                 </p>
               </div>
 
@@ -8359,39 +8433,71 @@ export default function LocalProductsPage() {
                 type="button"
                 disabled={isShareExecuting}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-slate-200 transition hover:bg-slate-700 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
-                onClick={() => setPendingShare(null)}
+                onClick={() => {
+                  setPendingShare(null);
+                  setShareDialogStep("share");
+                }}
                 aria-label="Đóng chọn nội dung chia sẻ"
               >
                 <FiX aria-hidden="true" className={iconClassName} />
               </button>
             </div>
 
-            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <button
-                type="button"
-                disabled={isShareExecuting}
-                className="rounded-md border border-cyan-300/40 bg-cyan-300/10 p-3 text-xs font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
-                onClick={() => void executeShareRequest("post")}
-              >
-                Post
-              </button>
-              <button
-                type="button"
-                disabled={isShareExecuting}
-                className="rounded-md border border-amber-300/40 bg-amber-300/10 p-3 text-xs font-black text-amber-100 transition hover:bg-amber-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
-                onClick={() => void executeShareRequest("comment")}
-              >
-                Cmt
-              </button>
-              <button
-                type="button"
-                disabled={isShareExecuting}
-                className="rounded-md border border-white/10 bg-slate-800 p-3 text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
-                onClick={() => void executeShareRequest("imagesOnly")}
-              >
-                Chỉ hình ảnh
-              </button>
-            </div>
+            {shareDialogStep === "facebookGroup" ? (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={isShareExecuting}
+                  className="rounded-md border border-cyan-300/40 bg-cyan-300/10 p-3 text-xs font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                  onClick={() => void executeShareRequest("post", true)}
+                >
+                  Copy Post
+                </button>
+                <button
+                  type="button"
+                  disabled={isShareExecuting}
+                  className="rounded-md border border-amber-300/40 bg-amber-300/10 p-3 text-xs font-black text-amber-100 transition hover:bg-amber-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                  onClick={() => void executeShareRequest("comment", true)}
+                >
+                  Copy Cmt
+                </button>
+              </div>
+            ) : (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={isShareExecuting}
+                  className="rounded-md border border-cyan-300/40 bg-cyan-300/10 p-3 text-xs font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                  onClick={() => void executeShareRequest("post")}
+                >
+                  Post
+                </button>
+                <button
+                  type="button"
+                  disabled={isShareExecuting}
+                  className="rounded-md border border-amber-300/40 bg-amber-300/10 p-3 text-xs font-black text-amber-100 transition hover:bg-amber-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                  onClick={() => void executeShareRequest("comment")}
+                >
+                  Cmt
+                </button>
+                <button
+                  type="button"
+                  disabled={isShareExecuting}
+                  className="rounded-md border border-white/10 bg-slate-800 p-3 text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                  onClick={() => void executeShareRequest("imagesOnly")}
+                >
+                  Chỉ hình ảnh
+                </button>
+                <button
+                  type="button"
+                  disabled={isShareExecuting}
+                  className="rounded-md border border-violet-300/30 bg-violet-300/10 p-3 text-[9px] font-black text-violet-100 transition hover:bg-violet-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                  onClick={() => setShareDialogStep("facebookGroup")}
+                >
+                  Gruop FB(Dành cho iPhone)
+                </button>
+              </div>
+            )}
           </div>
         </div>
       ) : null}
@@ -8470,7 +8576,7 @@ export default function LocalProductsPage() {
             Local Product Manager đang mở dạng cửa sổ nổi
           </h1>
           <p className="mt-2 text-xs leading-5 text-slate-400">
-            Ngài có thể chuyển sang Facebook và tiếp tục thao tác trong cửa sổ nhỏ nằm phía trên.
+            Chuyển sang Facebook để tiếp tục thao tác trong cửa sổ nổi.
           </p>
           <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <button
