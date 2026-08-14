@@ -16,6 +16,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   FiArchive,
+  FiBattery,
   FiCalendar,
   FiCheck,
   FiCheckCircle,
@@ -53,6 +54,8 @@ type LocalProduct = {
   id: string;
   name: string;
   description: string;
+  pin: string;
+  status: string;
   price: number;
   priceText: string;
   category: string;
@@ -66,6 +69,8 @@ type LocalProduct = {
 type ProductDraft = {
   name: string;
   description: string;
+  pin: string;
+  status: string;
   priceText: string;
   category: string;
   images: ProductImage[];
@@ -86,7 +91,7 @@ type GlobalSettings = {
 };
 
 type ExportPayload = {
-  version: 6;
+  version: 7;
   settings: GlobalSettings;
   products: LocalProduct[];
   scheduleConfig: ScheduleConfig;
@@ -282,6 +287,8 @@ const SCHEDULE_ASSIGNMENTS_KEY = "local_product_schedule_assignments_v1";
 const emptyDraft: ProductDraft = {
   name: "",
   description: "",
+  pin: "",
+  status: "",
   priceText: "",
   category: "",
   images: [],
@@ -1324,6 +1331,8 @@ const normalizeProduct = (value: unknown): LocalProduct | null => {
     typeof record.priceText === "string" ? record.priceText : "";
   const description =
     typeof record.description === "string" ? record.description : "";
+  const pin = typeof record.pin === "string" ? record.pin : "";
+  const status = typeof record.status === "string" ? record.status : "";
   const category = typeof record.category === "string" ? record.category : "";
   const isDone =
     typeof record.isDone === "boolean"
@@ -1334,6 +1343,8 @@ const normalizeProduct = (value: unknown): LocalProduct | null => {
     id: record.id,
     name: normalizeDoneProductName(record.name, isDone),
     description,
+    pin,
+    status,
     price:
       typeof record.price === "number"
         ? record.price
@@ -1891,7 +1902,7 @@ const createExportPayload = (params: {
   postedRecords: PostedRecord[];
 }): ExportPayload => {
   return {
-    version: 6,
+    version: 7,
     settings: params.settings,
     products: params.products,
     scheduleConfig: params.scheduleConfig,
@@ -3463,6 +3474,8 @@ export default function LocalProductsPage() {
     const now = new Date().toISOString();
     const rawName = draft.name.trim();
     const description = draft.description.trim();
+    const pin = draft.pin.trim();
+    const status = draft.status.trim();
     const priceText = draft.priceText.trim();
     const category = draft.category.trim();
 
@@ -3481,6 +3494,8 @@ export default function LocalProductsPage() {
       id: currentProduct?.id ?? crypto.randomUUID(),
       name,
       description,
+      pin,
+      status,
       price: parsePriceNumber(priceText),
       priceText,
       category,
@@ -3512,6 +3527,8 @@ export default function LocalProductsPage() {
     setDraft({
       name: product.name,
       description: product.description,
+      pin: product.pin,
+      status: product.status,
       priceText: product.priceText,
       category: product.category,
       images: product.images,
@@ -5805,6 +5822,8 @@ export default function LocalProductsPage() {
                   const active = selectedProductId === product.id;
                   const expanded = expandedProductIds.has(product.id);
                   const productDone = product.isDone;
+                  const pinText = product.pin.trim();
+                  const statusText = product.status.trim();
 
                   return (
                     <article
@@ -5852,12 +5871,34 @@ export default function LocalProductsPage() {
                           />
                         )}
 
-                        <div className="absolute left-2 top-2 flex items-center gap-1 rounded-md border border-white/10 bg-black/65 px-2 py-0.5 text-[10px] font-black text-white  ">
+                        <div className="absolute left-2 top-2 z-10 flex items-center gap-1 rounded-md border border-white/10 bg-black/65 px-2 py-0.5 text-[10px] font-black text-white  ">
                           <FiImage aria-hidden="true" className={iconClassName} />
                           {product.images.length}
                         </div>
 
-                        <div className="absolute right-2 top-2 flex flex-col items-end gap-1">
+                        <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
+                          {pinText ? (
+                            <span
+                              title={`Pin: ${pinText}`}
+                              className="flex max-w-[120px] items-center gap-1 rounded-md border border-emerald-200/25 bg-black/65 px-2 py-0.5 text-[10px] font-black text-emerald-100"
+                            >
+                              <FiBattery
+                                aria-hidden="true"
+                                className={iconClassName}
+                              />
+                              <span className="truncate">{pinText}</span>
+                            </span>
+                          ) : null}
+
+                          {statusText ? (
+                            <span
+                              title={`Trạng thái: ${statusText}`}
+                              className="max-w-[120px] truncate rounded-md border border-amber-200/25 bg-black/65 px-2 py-0.5 text-[9px] font-black text-amber-100"
+                            >
+                              {statusText}
+                            </span>
+                          ) : null}
+
                           {productDone ? (
                             <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-950">
                               DONE
@@ -6638,6 +6679,38 @@ export default function LocalProductsPage() {
                                 <option key={category} value={category} />
                               ))}
                             </datalist>
+                          </label>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <label className="flex flex-col gap-1.5">
+                            <span className="text-xs font-bold text-slate-300">
+                              Pin
+                            </span>
+                            <input
+                              value={draft.pin}
+                              maxLength={20}
+                              onChange={(event) =>
+                                updateDraftField("pin", event.target.value)
+                              }
+                              className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-300/60"
+                              placeholder="8x%, 9x%, New"
+                            />
+                          </label>
+
+                          <label className="flex flex-col gap-1.5">
+                            <span className="text-xs font-bold text-slate-300">
+                              Trạng thái
+                            </span>
+                            <input
+                              value={draft.status}
+                              maxLength={40}
+                              onChange={(event) =>
+                                updateDraftField("status", event.target.value)
+                              }
+                              className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-amber-300/60"
+                              placeholder="Nguyên zin"
+                            />
                           </label>
                         </div>
 
@@ -8598,7 +8671,7 @@ export default function LocalProductsPage() {
       </main>
 
       {createPortal(
-        localProductsWorkspace,
+        localProductsWorkspace, 
         pictureInPictureWindow.document.body,
       )}
     </>
