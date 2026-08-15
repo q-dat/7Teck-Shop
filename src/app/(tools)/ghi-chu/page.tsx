@@ -322,7 +322,7 @@ const productActionButtonBaseClassName =
   "group relative flex min-h-7 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border px-1.5 py-1 text-[9px] font-black tracking-[0.025em] [clip-path:polygon(6px_0,calc(100%_-_6px)_0,100%_6px,100%_calc(100%_-_6px),calc(100%_-_6px)_100%,6px_100%,0_calc(100%_-_6px),0_6px)] transition-[color,background-color,border-color,transform,box-shadow,filter] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8c99f]/[0.45] active:scale-[0.97] active:brightness-95";
 
 const headerActionButtonBaseClassName =
-  "group relative flex min-h-9 cursor-pointer items-center justify-start gap-1 overflow-hidden whitespace-nowrap border px-2 py-1.5 text-[10px] font-semibold [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)] transition-[color,background-color,border-color,transform,box-shadow,filter] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8c99f]/[0.45] active:scale-[0.97] active:brightness-95 xl:justify-center";
+  "group relative flex min-h-5 cursor-pointer items-center justify-start gap-1 overflow-hidden whitespace-nowrap border p-1.5 text-[10px] font-semibold [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)] transition-[color,background-color,border-color,transform,box-shadow,filter] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8c99f]/[0.45] active:scale-[0.97] active:brightness-95 xl:justify-center";
 
 const headerNeutralButtonClassName =
   "border-white/[0.07] bg-[linear-gradient(145deg,rgba(255,255,255,0.035),rgba(255,255,255,0.012))] text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] hover:-translate-y-px hover:border-[#d8c99f]/40 hover:bg-[#d8c99f]/[0.075] hover:text-[#f3e7c6] hover:shadow-[0_8px_20px_rgba(0,0,0,0.26)]";
@@ -2568,24 +2568,42 @@ export default function LocalProductsPage() {
   // Lưu điểm chạm để phát hiện thao tác vuốt ngang
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  // Thanh tab danh mục — dùng để tự cuộn tab đang chọn về đầu
+  // Thanh tab danh mục — giữ lại một tab phía trước tab đang chọn
   const categoryTabsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const container = categoryTabsRef.current;
     if (!container) return;
 
-    const activeButton = container.querySelector<HTMLElement>(
-      `[data-category-tab="${normalizeTextKey(activeCategoryTab)}"]`,
+    const categoryButtons = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-category-tab]"),
     );
-    if (!activeButton) return;
+    const activeCategoryKey = normalizeTextKey(activeCategoryTab);
+    const activeButtonIndex = categoryButtons.findIndex(
+      (button) => button.dataset.categoryTab === activeCategoryKey,
+    );
+    if (activeButtonIndex < 0) return;
 
-    // Cuộn sao cho tab đang chọn nằm ở đầu thanh danh mục
+    const leadingButton =
+      categoryButtons[Math.max(0, activeButtonIndex - 1)] ??
+      categoryButtons[activeButtonIndex];
+    if (!leadingButton) return;
+
+    const maximumScrollLeft = Math.max(
+      0,
+      container.scrollWidth - container.clientWidth,
+    );
+    const targetScrollLeft =
+      activeButtonIndex === 0
+        ? 0
+        : Math.min(leadingButton.offsetLeft, maximumScrollLeft);
+
+    // Khi về Tất cả luôn cuộn hẳn về đầu; các tab khác chừa một tab phía trước.
     container.scrollTo({
-      left: activeButton.offsetLeft - container.offsetLeft,
-      behavior: "smooth",
+      left: targetScrollLeft,
+      behavior: prefersReducedMotion ? "auto" : "smooth",
     });
-  }, [activeCategoryTab]);
+  }, [activeCategoryTab, prefersReducedMotion]);
 
   const handleProductsTouchStart = useCallback(
     (event: ReactTouchEvent<HTMLDivElement>) => {
@@ -4292,16 +4310,16 @@ export default function LocalProductsPage() {
     const textValue =
       mode === "post"
         ? composeCopyText(
-            request.postText,
-            activeContactText,
-            settings.includeSocialTags,
-          )
+          request.postText,
+          activeContactText,
+          settings.includeSocialTags,
+        )
         : mode === "comment"
           ? composeCopyText(
-              request.commentText,
-              activeContactText,
-              false,
-            )
+            request.commentText,
+            activeContactText,
+            false,
+          )
           : "";
     const contentLabel = mode === "post" ? "Post" : "Cmt";
     const shouldCopyText = mode !== "imagesOnly";
@@ -5490,7 +5508,7 @@ export default function LocalProductsPage() {
 
         .local-products-workspace button[data-luxury-accent] {
           letter-spacing: 0.035em;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), inset 0 -1px 0 rgba(0, 0, 0, 0.2), 0 9px 24px rgba(0, 0, 0, 0.22) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.085), inset 0 -1px 0 rgba(0, 0, 0, 0.22), 0 8px 20px rgba(0, 0, 0, 0.2) !important;
         }
 
         .local-products-workspace button[data-luxury-accent]::before {
@@ -5507,21 +5525,21 @@ export default function LocalProductsPage() {
         }
 
         .local-products-workspace button[data-luxury-accent="gold"] {
-          border-color: rgba(241, 229, 194, 0.78) !important;
-          background: linear-gradient(135deg, #f2e8cd 0%, #c3ad73 52%, #eadcb8 100%) !important;
+          border-color: rgba(250, 240, 211, 0.88) !important;
+          background: linear-gradient(135deg, #f7efd9 0%, #cdbb89 52%, #eee3c4 100%) !important;
           color: #17130a !important;
         }
 
         .local-products-workspace button[data-luxury-accent="sapphire"] {
-          border-color: rgba(128, 170, 207, 0.3) !important;
-          background: linear-gradient(145deg, rgba(28, 63, 96, 0.3), rgba(10, 20, 33, 0.94)) !important;
-          color: #d8e9f8 !important;
+          border-color: rgba(142, 187, 225, 0.46) !important;
+          background: linear-gradient(145deg, rgba(37, 79, 116, 0.43), rgba(13, 27, 43, 0.94)) !important;
+          color: #e1f0fb !important;
         }
 
         .local-products-workspace button[data-luxury-accent="emerald"] {
-          border-color: rgba(110, 187, 154, 0.3) !important;
-          background: linear-gradient(145deg, rgba(22, 78, 58, 0.3), rgba(8, 28, 22, 0.94)) !important;
-          color: #d9f1e7 !important;
+          border-color: rgba(125, 202, 169, 0.46) !important;
+          background: linear-gradient(145deg, rgba(29, 94, 70, 0.42), rgba(11, 36, 28, 0.94)) !important;
+          color: #e1f5ec !important;
         }
 
         .local-products-workspace button[data-luxury-accent="emerald"][aria-pressed="true"] {
@@ -5531,56 +5549,56 @@ export default function LocalProductsPage() {
         }
 
         .local-products-workspace button[data-luxury-accent="violet"] {
-          border-color: rgba(169, 148, 210, 0.3) !important;
-          background: linear-gradient(145deg, rgba(68, 48, 111, 0.3), rgba(24, 18, 40, 0.94)) !important;
-          color: #ebe4f8 !important;
+          border-color: rgba(184, 163, 226, 0.45) !important;
+          background: linear-gradient(145deg, rgba(82, 60, 129, 0.42), rgba(31, 24, 49, 0.94)) !important;
+          color: #f0eafa !important;
         }
 
         .local-products-workspace button[data-luxury-accent="amber"] {
-          border-color: rgba(209, 173, 106, 0.32) !important;
-          background: linear-gradient(145deg, rgba(105, 70, 24, 0.32), rgba(37, 25, 11, 0.94)) !important;
-          color: #f5e5c2 !important;
+          border-color: rgba(224, 190, 124, 0.47) !important;
+          background: linear-gradient(145deg, rgba(122, 84, 32, 0.42), rgba(47, 33, 15, 0.94)) !important;
+          color: #faebc9 !important;
         }
 
         .local-products-workspace button[data-luxury-accent="rose"] {
-          border-color: rgba(205, 139, 154, 0.3) !important;
-          background: linear-gradient(145deg, rgba(92, 40, 54, 0.3), rgba(37, 17, 23, 0.94)) !important;
-          color: #f6e0e5 !important;
+          border-color: rgba(220, 154, 169, 0.45) !important;
+          background: linear-gradient(145deg, rgba(108, 50, 66, 0.42), rgba(47, 23, 30, 0.94)) !important;
+          color: #fae6ea !important;
         }
 
         .local-products-workspace button[data-luxury-accent="indigo"] {
-          border-color: rgba(137, 151, 207, 0.3) !important;
-          background: linear-gradient(145deg, rgba(46, 57, 111, 0.3), rgba(18, 22, 46, 0.94)) !important;
-          color: #e1e5f5 !important;
+          border-color: rgba(151, 167, 222, 0.45) !important;
+          background: linear-gradient(145deg, rgba(57, 69, 128, 0.42), rgba(24, 29, 58, 0.94)) !important;
+          color: #e9ecf9 !important;
         }
 
         .local-products-workspace button[data-luxury-accent="cyan"] {
-          border-color: rgba(105, 181, 190, 0.3) !important;
-          background: linear-gradient(145deg, rgba(22, 82, 91, 0.3), rgba(8, 30, 34, 0.94)) !important;
-          color: #d9eff1 !important;
+          border-color: rgba(121, 197, 206, 0.45) !important;
+          background: linear-gradient(145deg, rgba(29, 97, 107, 0.42), rgba(11, 39, 44, 0.94)) !important;
+          color: #e1f4f5 !important;
         }
 
         .local-products-workspace button[data-luxury-accent="amethyst"] {
-          border-color: rgba(187, 139, 202, 0.3) !important;
-          background: linear-gradient(145deg, rgba(82, 39, 96, 0.3), rgba(33, 16, 38, 0.94)) !important;
-          color: #efe1f3 !important;
+          border-color: rgba(202, 154, 217, 0.45) !important;
+          background: linear-gradient(145deg, rgba(98, 49, 112, 0.42), rgba(42, 21, 49, 0.94)) !important;
+          color: #f4e7f7 !important;
         }
 
         .local-products-workspace button[data-luxury-accent="teal"] {
-          border-color: rgba(99, 178, 166, 0.3) !important;
-          background: linear-gradient(145deg, rgba(20, 77, 69, 0.3), rgba(8, 29, 27, 0.94)) !important;
-          color: #d8eee9 !important;
+          border-color: rgba(115, 194, 182, 0.45) !important;
+          background: linear-gradient(145deg, rgba(27, 92, 83, 0.42), rgba(11, 38, 35, 0.94)) !important;
+          color: #e0f3ee !important;
         }
 
         .local-products-workspace button[data-luxury-accent="blue"] {
-          border-color: rgba(112, 151, 205, 0.3) !important;
-          background: linear-gradient(145deg, rgba(31, 67, 120, 0.3), rgba(11, 24, 49, 0.94)) !important;
-          color: #dce7f7 !important;
+          border-color: rgba(128, 167, 221, 0.45) !important;
+          background: linear-gradient(145deg, rgba(41, 81, 137, 0.42), rgba(16, 32, 61, 0.94)) !important;
+          color: #e5eefb !important;
         }
 
         .local-products-workspace button[data-luxury-accent]:hover {
-          border-color: rgba(241, 229, 194, 0.46) !important;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.065), inset 0 -1px 0 rgba(0, 0, 0, 0.22), 0 14px 30px rgba(0, 0, 0, 0.3), 0 0 16px rgba(216, 201, 159, 0.055) !important;
+          border-color: rgba(245, 235, 205, 0.58) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.11), inset 0 -1px 0 rgba(0, 0, 0, 0.22), 0 11px 26px rgba(0, 0, 0, 0.28), 0 0 14px rgba(216, 201, 159, 0.07) !important;
         }
 
         .local-products-workspace button:not(:disabled),
@@ -5658,9 +5676,9 @@ export default function LocalProductsPage() {
         .local-products-workspace textarea,
         .local-products-workspace select {
           border-radius: 2px !important;
-          border-color: rgba(216, 201, 159, 0.16) !important;
-          background: linear-gradient(145deg, rgba(5, 7, 10, 0.94), rgba(16, 20, 27, 0.9)) !important;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025), 0 8px 24px rgba(0, 0, 0, 0.12);
+          border-color: rgba(216, 201, 159, 0.24) !important;
+          background: linear-gradient(145deg, rgba(13, 17, 23, 0.97), rgba(22, 28, 37, 0.94)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 8px 24px rgba(0, 0, 0, 0.14);
           transition: border-color 240ms ease, box-shadow 240ms ease, background-color 240ms ease;
         }
 
@@ -5673,16 +5691,16 @@ export default function LocalProductsPage() {
 
         .local-products-workspace [class*="rounded-md"][class*="border"][class*="bg-slate-950"],
         .local-products-workspace [class*="rounded-xl"][class*="border"][class*="bg-slate-950"] {
-          border-color: rgba(216, 201, 159, 0.15);
-          background: linear-gradient(145deg, rgba(7, 9, 13, 0.98), rgba(12, 15, 21, 0.97));
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025), 0 18px 42px rgba(0, 0, 0, 0.18);
+          border-color: rgba(216, 201, 159, 0.23);
+          background: linear-gradient(145deg, rgba(14, 18, 25, 0.99), rgba(21, 27, 36, 0.98));
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 18px 42px rgba(0, 0, 0, 0.2);
         }
 
         .local-products-workspace [class*="rounded-md"][class*="border"][class*="bg-slate-900"],
         .local-products-workspace [class*="rounded-md"][class*="border"][class*="bg-slate-800"] {
-          border-color: rgba(216, 201, 159, 0.14);
-          background: linear-gradient(145deg, rgba(17, 21, 29, 0.94), rgba(10, 13, 18, 0.96));
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+          border-color: rgba(216, 201, 159, 0.22);
+          background: linear-gradient(145deg, rgba(25, 31, 41, 0.96), rgba(15, 20, 27, 0.98));
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
         }
 
         .luxury-header {
@@ -5706,24 +5724,24 @@ export default function LocalProductsPage() {
 
         .luxury-content-panel {
           position: relative;
-          border-color: rgba(216, 201, 159, 0.13) !important;
-          background: linear-gradient(180deg, rgba(12, 15, 21, 0.88), rgba(6, 8, 12, 0.74)) !important;
+          border-color: rgba(216, 201, 159, 0.2) !important;
+          background: linear-gradient(180deg, rgba(16, 21, 29, 0.92), rgba(8, 12, 17, 0.82)) !important;
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.022), inset 0 -1px 0 rgba(0, 0, 0, 0.3), 0 28px 76px rgba(0, 0, 0, 0.27);
         }
 
         .luxury-search {
           clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-          border-color: rgba(216, 201, 159, 0.18) !important;
-          background: linear-gradient(135deg, rgba(5, 7, 10, 0.97), rgba(15, 18, 25, 0.91)) !important;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.022), inset 0 -1px 0 rgba(0, 0, 0, 0.24), 0 14px 36px rgba(0, 0, 0, 0.18);
+          border-color: rgba(216, 201, 159, 0.28) !important;
+          background: linear-gradient(135deg, rgba(14, 18, 24, 0.98), rgba(24, 30, 39, 0.94)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.24), 0 14px 36px rgba(0, 0, 0, 0.2);
         }
 
         .luxury-product-card {
           position: relative;
           clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
-          border-color: rgba(216, 201, 159, 0.17) !important;
-          background: linear-gradient(155deg, rgba(16, 19, 26, 0.985), rgba(7, 9, 13, 0.995)) !important;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.028), inset 0 -1px 0 rgba(0, 0, 0, 0.34), 0 18px 42px rgba(0, 0, 0, 0.31);
+          border-color: rgba(226, 214, 180, 0.3) !important;
+          background: linear-gradient(155deg, rgba(34, 42, 54, 0.99), rgba(16, 22, 30, 0.995)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.075), inset 0 -2px 0 rgba(0, 0, 0, 0.32), 0 3px 0 rgba(255, 255, 255, 0.015), 0 18px 42px rgba(0, 0, 0, 0.34), 0 8px 18px rgba(0, 0, 0, 0.24);
         }
 
         .luxury-product-card::before {
@@ -5735,7 +5753,7 @@ export default function LocalProductsPage() {
           left: 14px;
           height: 1px;
           pointer-events: none;
-          background: linear-gradient(90deg, transparent, rgba(241, 229, 194, 0.45), transparent);
+          background: linear-gradient(90deg, transparent, rgba(247, 237, 207, 0.62), transparent);
         }
 
         .luxury-product-card::after {
@@ -5754,20 +5772,20 @@ export default function LocalProductsPage() {
         }
 
         .local-products-workspace .luxury-product-card[data-active="true"] {
-          border-color: rgba(241, 229, 194, 0.62) !important;
-          background: linear-gradient(155deg, rgba(31, 29, 23, 0.97), rgba(11, 13, 17, 0.995)) !important;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), inset 0 -1px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(216, 201, 159, 0.11), 0 24px 54px rgba(0, 0, 0, 0.37);
+          border-color: rgba(247, 237, 207, 0.72) !important;
+          background: linear-gradient(155deg, rgba(47, 47, 42, 0.99), rgba(22, 27, 33, 0.997)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.095), inset 0 -2px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(216, 201, 159, 0.14), 0 26px 58px rgba(0, 0, 0, 0.4), 0 9px 20px rgba(0, 0, 0, 0.25);
         }
 
         .luxury-product-card:hover {
-          border-color: rgba(216, 201, 159, 0.36) !important;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), inset 0 -1px 0 rgba(0, 0, 0, 0.34), 0 26px 58px rgba(0, 0, 0, 0.37);
+          border-color: rgba(235, 224, 192, 0.48) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), inset 0 -2px 0 rgba(0, 0, 0, 0.32), 0 28px 62px rgba(0, 0, 0, 0.4), 0 10px 22px rgba(0, 0, 0, 0.24);
         }
 
         .luxury-product-image {
           background:
-            radial-gradient(circle at 50% 36%, rgba(216, 201, 159, 0.055), transparent 44%),
-            linear-gradient(145deg, #0c0f15, #06080c) !important;
+            radial-gradient(circle at 50% 36%, rgba(216, 201, 159, 0.09), transparent 44%),
+            linear-gradient(145deg, #1a212b, #0d1219) !important;
         }
 
         .luxury-category-bar {
@@ -6089,7 +6107,24 @@ export default function LocalProductsPage() {
             </label>
           </div>
 
-          <div className="fixed bottom-3 right-2 z-bar md:hidden">
+          <AnimatePresence initial={false}>
+            {isMobileCategoryMenuOpen ? (
+              <motion.div
+                aria-hidden="true"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{
+                  duration: prefersReducedMotion ? 0.1 : 0.22,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                className="fixed inset-0 z-[999] touch-none bg-black/60 backdrop-blur-[2px] md:hidden"
+                onClick={() => setIsMobileCategoryMenuOpen(false)}
+              />
+            ) : null}
+          </AnimatePresence>
+
+          <div className="fixed bottom-3 right-2 z-[1000] md:hidden">
             <AnimatePresence initial={false}>
               {isMobileCategoryMenuOpen ? (
                 <motion.div
@@ -6201,7 +6236,7 @@ export default function LocalProductsPage() {
             <button
               type="button"
               data-category-tab="all"
-              className={`flex h-[42px] shrink-0 items-center justify-center border-r border-[#d8c99f]/10 px-5 text-xs font-black uppercase tracking-[0.08em] transition ${activeCategoryTab === "all"
+              className={`flex h-[35px] shrink-0 items-center justify-center border-r border-[#d8c99f]/10 px-5 text-xs font-black uppercase tracking-[0.08em] transition ${activeCategoryTab === "all"
                 ? "bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a]"
                 : "bg-black/20 text-slate-300 hover:bg-[#d8c99f]/10 hover:text-[#eadfbe]"
                 }`}
@@ -6215,7 +6250,7 @@ export default function LocalProductsPage() {
                 key={category}
                 type="button"
                 data-category-tab={normalizeTextKey(category)}
-                className={`flex h-[42px] shrink-0 items-center justify-center border-r border-[#d8c99f]/10 px-5 text-xs font-black uppercase tracking-[0.08em] transition ${normalizeTextKey(activeCategoryTab) ===
+                className={`flex h-[35px] shrink-0 items-center justify-center border-r border-[#d8c99f]/10 px-5 text-xs font-black uppercase tracking-[0.08em] transition ${normalizeTextKey(activeCategoryTab) ===
                   normalizeTextKey(category)
                   ? "bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a]"
                   : "bg-black/20 text-slate-200 hover:bg-[#d8c99f]/10 hover:text-[#eadfbe]"
@@ -9081,39 +9116,39 @@ export default function LocalProductsPage() {
   return (
     <>
       <main className="flex min-h-dvh w-full items-center justify-center bg-[radial-gradient(circle_at_50%_0,rgba(216,201,159,0.12),transparent_32%),linear-gradient(145deg,#07090d,#0b0e14)] p-4 text-slate-100">
-            <section className="w-full max-w-md border border-[#d8c99f]/25 bg-[linear-gradient(145deg,rgba(16,20,27,0.98),rgba(6,8,12,0.99))] p-5 text-center shadow-[0_32px_90px_rgba(0,0,0,0.55)] [clip-path:polygon(12px_0,calc(100%_-_12px)_0,100%_12px,100%_calc(100%_-_12px),calc(100%_-_12px)_100%,12px_100%,0_calc(100%_-_12px),0_12px)]">
-              <div className="mx-auto flex h-10 w-10 items-center justify-center border border-[#f1e5c2]/60 bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a] shadow-[0_12px_32px_rgba(190,164,99,0.22)] [clip-path:polygon(8px_0,100%_0,100%_calc(100%_-_8px),calc(100%_-_8px)_100%,0_100%,0_8px)]">
-                <FiMonitor aria-hidden="true" className="h-5 w-5" />
-              </div>
-              <h1 className="mt-3 text-sm font-black text-white">
-                Local Product Manager đang mở dạng cửa sổ nổi
-              </h1>
-              <p className="mt-2 text-xs leading-5 text-slate-400">
-                Chuyển sang Facebook để tiếp tục thao tác trong cửa sổ nổi.
-              </p>
-              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <button
-                  type="button"
-                  className="border border-[#f1e5c2]/75 bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] px-3 py-2 text-xs font-black text-[#17130a] transition hover:brightness-105 active:opacity-80 [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)]"
-                  onClick={handleFocusPictureInPicture}
-                >
-                  Hiện cửa sổ nổi
-                </button>
-                <button
-                  type="button"
-                  className="border border-[#d8c99f]/20 bg-white/[0.025] px-3 py-2 text-xs font-black text-slate-200 transition hover:border-[#d8c99f]/40 hover:bg-[#d8c99f]/[0.06] hover:text-[#eadfbe] active:opacity-80 [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)]"
-                  onClick={handleClosePictureInPicture}
-                >
-                  Đóng và trở lại tab
-                </button>
-              </div>
-            </section>
-          </main>
+        <section className="w-full max-w-md border border-[#d8c99f]/25 bg-[linear-gradient(145deg,rgba(16,20,27,0.98),rgba(6,8,12,0.99))] p-5 text-center shadow-[0_32px_90px_rgba(0,0,0,0.55)] [clip-path:polygon(12px_0,calc(100%_-_12px)_0,100%_12px,100%_calc(100%_-_12px),calc(100%_-_12px)_100%,12px_100%,0_calc(100%_-_12px),0_12px)]">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center border border-[#f1e5c2]/60 bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a] shadow-[0_12px_32px_rgba(190,164,99,0.22)] [clip-path:polygon(8px_0,100%_0,100%_calc(100%_-_8px),calc(100%_-_8px)_100%,0_100%,0_8px)]">
+            <FiMonitor aria-hidden="true" className="h-5 w-5" />
+          </div>
+          <h1 className="mt-3 text-sm font-black text-white">
+            Local Product Manager đang mở dạng cửa sổ nổi
+          </h1>
+          <p className="mt-2 text-xs leading-5 text-slate-400">
+            Chuyển sang Facebook để tiếp tục thao tác trong cửa sổ nổi.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              className="border border-[#f1e5c2]/75 bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] px-3 py-2 text-xs font-black text-[#17130a] transition hover:brightness-105 active:opacity-80 [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)]"
+              onClick={handleFocusPictureInPicture}
+            >
+              Hiện cửa sổ nổi
+            </button>
+            <button
+              type="button"
+              className="border border-[#d8c99f]/20 bg-white/[0.025] px-3 py-2 text-xs font-black text-slate-200 transition hover:border-[#d8c99f]/40 hover:bg-[#d8c99f]/[0.06] hover:text-[#eadfbe] active:opacity-80 [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)]"
+              onClick={handleClosePictureInPicture}
+            >
+              Đóng và trở lại tab
+            </button>
+          </div>
+        </section>
+      </main>
 
       {createPortal(
-          localProductsWorkspace,
-          pictureInPictureWindow.document.body,
-        )}
+        localProductsWorkspace,
+        pictureInPictureWindow.document.body,
+      )}
     </>
   );
 }
