@@ -352,6 +352,8 @@ const getActiveInteractionWindow = (): Window => {
 };
 
 const IMPORT_BACKUP_INPUT_ID = "local-products-backup-input";
+const RESTORE_BACKUP_AFTER_RELOAD_KEY =
+  "local-products-restore-backup-after-reload";
 
 const LoadingOverlay = ({ text }: { text: string }) => {
   return (
@@ -2403,6 +2405,8 @@ export default function LocalProductsPage() {
   const [isConfirmExecuting, setIsConfirmExecuting] = useState<boolean>(false);
   const [isShareExecuting, setIsShareExecuting] = useState<boolean>(false);
   const [isBackupSaving, setIsBackupSaving] = useState<boolean>(false);
+  const [isBackupRestoreReady, setIsBackupRestoreReady] =
+    useState<boolean>(false);
   const [pendingBlobUpload, setPendingBlobUpload] =
     useState<BlobUploadRequest | null>(null);
   const [blobUploadPassword, setBlobUploadPassword] = useState<string>("");
@@ -2963,6 +2967,37 @@ export default function LocalProductsPage() {
     setIsSettingsReady(true);
     void loadProducts();
   }, []);
+
+  useEffect(() => {
+    if (!isSettingsReady) return;
+
+    const shouldContinueBackupRestore =
+      window.sessionStorage.getItem(RESTORE_BACKUP_AFTER_RELOAD_KEY) === "1";
+    if (!shouldContinueBackupRestore) return;
+
+    window.sessionStorage.removeItem(RESTORE_BACKUP_AFTER_RELOAD_KEY);
+    setIsBackupRestoreReady(true);
+    setModalStack(["importExport"]);
+    setPendingConfirm({
+      title: "Chọn tệp backup mới",
+      description:
+        "Dữ liệu hiện tại đã được xóa. Chọn tệp JSON hoặc JSON.GZ để khôi phục dữ liệu mới.",
+      confirmLabel: "Chọn tệp backup",
+      cancelLabel: "Để sau",
+      tone: "default",
+      onConfirm: () => {
+        const input = window.document.getElementById(
+          IMPORT_BACKUP_INPUT_ID,
+        ) as HTMLInputElement | null;
+
+        if (!input) {
+          throw new Error("Không thể mở trình chọn tệp backup");
+        }
+
+        input.click();
+      },
+    });
+  }, [isSettingsReady]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -3901,6 +3936,51 @@ export default function LocalProductsPage() {
     }
   };
 
+  const openBackupFilePicker = (): void => {
+    const input = getActiveInteractionWindow().document.getElementById(
+      IMPORT_BACKUP_INPUT_ID,
+    ) as HTMLInputElement | null;
+
+    if (!input) {
+      Toastify("Không thể mở trình chọn tệp backup", 400);
+      return;
+    }
+
+    input.click();
+  };
+
+  const handleBeginBackupRestore = (): void => {
+    if (isBackupRestoreReady) {
+      openBackupFilePicker();
+      return;
+    }
+
+    requestConfirm({
+      title: "Xóa dữ liệu hiện tại trước khi khôi phục?",
+      description:
+        "Toàn bộ sản phẩm, ảnh và dữ liệu ứng dụng hiện tại sẽ bị xóa. Sau đó trang sẽ tải lại và mở bước chọn tệp backup mới.",
+      confirmLabel: "Xóa và tiếp tục",
+      tone: "danger",
+      onConfirm: async () => {
+        setPageLoadingText("Đang xóa toàn bộ dữ liệu hiện tại...");
+        await waitForUiPaint();
+
+        try {
+          window.sessionStorage.setItem(
+            RESTORE_BACKUP_AFTER_RELOAD_KEY,
+            "1",
+          );
+          await clearAllLocalProductData();
+          window.location.reload();
+        } catch (error) {
+          window.sessionStorage.removeItem(RESTORE_BACKUP_AFTER_RELOAD_KEY);
+          setPageLoadingText("");
+          throw error;
+        }
+      },
+    });
+  };
+
   const handleClearAllLocalData = (): void => {
     requestConfirm({
       title: "Xóa toàn bộ dữ liệu local?",
@@ -3952,13 +4032,15 @@ export default function LocalProductsPage() {
 
   const replaceLocalDataFromBackup = async (
     payload: ParsedImportPayload,
+    clearExistingData = true,
   ): Promise<void> => {
-    setPageLoadingText("Đang xóa dữ liệu hiện tại...");
-    await waitForUiPaint();
-
     try {
-      await clearAllLocalProductData();
-      resetLocalProductState();
+      if (clearExistingData) {
+        setPageLoadingText("Đang xóa dữ liệu hiện tại...");
+        await waitForUiPaint();
+        await clearAllLocalProductData();
+        resetLocalProductState();
+      }
 
       setPageLoadingText(
         `Đang import ${payload.products.length} sản phẩm vào local...`,
@@ -4007,6 +4089,12 @@ export default function LocalProductsPage() {
       }
 
       setPageLoadingText("");
+
+      if (isBackupRestoreReady) {
+        await replaceLocalDataFromBackup(payload, false);
+        setIsBackupRestoreReady(false);
+        return;
+      }
 
       requestConfirm({
         title: "Thay thế bằng dữ liệu mới?",
@@ -8647,17 +8735,22 @@ export default function LocalProductsPage() {
                     </div>
 
                     <div className="mt-2 grid grid-cols-1 gap-2">
-                      <label
-                        htmlFor={IMPORT_BACKUP_INPUT_ID}
+                      <button
+                        type="button"
                         className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-amber-300/40 bg-amber-300/15 p-2 text-xs font-black text-amber-50 transition hover:bg-amber-300/25 active:opacity-80"
                         title="Import JSON hoặc JSON.GZ"
+                        onClick={handleBeginBackupRestore}
                       >
                         <FiUploadCloud
                           aria-hidden="true"
                           className={iconClassName}
                         />
-                        <span>Chọn file backup</span>
-                      </label>
+                        <span>
+                          {isBackupRestoreReady
+                            ? "Chọn tệp backup mới"
+                            : "Chọn file backup"}
+                        </span>
+                      </button>
 
                       <button
                         type="button"
