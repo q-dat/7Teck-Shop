@@ -5475,7 +5475,7 @@ export default function LocalProductsPage() {
           -webkit-tap-highlight-color: transparent;
         }
 
-        .local-products-workspace button:not([data-description-line="true"]):not([data-category-bubble="true"]):not([data-image-surface="true"]) {
+        .local-products-workspace button:not([data-description-line="true"]):not([data-category-bubble="true"]):not([data-image-surface="true"]):not([data-image-control="true"]) {
           position: relative;
           isolation: isolate;
           border-radius: 0 !important;
@@ -5483,7 +5483,7 @@ export default function LocalProductsPage() {
           transition: color 320ms ease, background-color 320ms ease, border-color 320ms ease, box-shadow 320ms ease, filter 320ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        .local-products-workspace button:not([data-description-line="true"]):not([data-category-bubble="true"]):not([data-image-surface="true"])::after {
+        .local-products-workspace button:not([data-description-line="true"]):not([data-category-bubble="true"]):not([data-image-surface="true"]):not([data-image-control="true"])::after {
           content: "";
           position: absolute;
           z-index: 2;
@@ -5608,9 +5608,20 @@ export default function LocalProductsPage() {
           cursor: pointer;
         }
 
-        .local-products-workspace button:not(:disabled):not([data-description-line="true"]):not([data-image-surface="true"]):hover {
+        .local-products-workspace button:not(:disabled):not([data-description-line="true"]):not([data-image-surface="true"]):not([data-image-control="true"]):hover {
           transform: translateY(-1px);
           filter: brightness(1.035);
+        }
+
+        .local-products-workspace button[data-image-control="true"] {
+          position: absolute !important;
+          isolation: auto;
+          clip-path: none !important;
+        }
+
+        .local-products-workspace button[data-image-control="true"]::before,
+        .local-products-workspace button[data-image-control="true"]::after {
+          display: none !important;
         }
 
         .local-products-workspace button:not(:disabled):active {
@@ -7308,8 +7319,17 @@ export default function LocalProductsPage() {
 
                                     <button
                                       type="button"
-                                      className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-md bg-rose-500 text-xs text-white opacity-100 transition hover:bg-rose-400 xl:opacity-0 xl:group-hover:opacity-100"
-                                      onClick={() => removeDraftImage(image.id)}
+                                      data-image-control="true"
+                                      title={`Xóa ảnh ${index + 1}`}
+                                      aria-label={`Xóa ảnh ${index + 1}`}
+                                      className="absolute right-1 top-1 z-20 flex h-6 w-6 items-center justify-center rounded-md border border-white/35 bg-rose-500 text-xs text-white opacity-100 shadow-[0_6px_16px_rgba(0,0,0,0.45)] transition hover:border-white/60 hover:bg-rose-400"
+                                      onPointerDown={(event) =>
+                                        event.stopPropagation()
+                                      }
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        removeDraftImage(image.id);
+                                      }}
                                     >
                                       <FiX
                                         aria-hidden="true"
