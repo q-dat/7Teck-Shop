@@ -26,7 +26,6 @@ import {
   FiDownload,
   FiEdit3,
   FiFileText,
-  FiHash,
   FiImage,
   FiMonitor,
   FiPhone,
@@ -60,6 +59,7 @@ type LocalProduct = {
   priceText: string;
   category: string;
   images: ProductImage[];
+  internalImages: ProductImage[];
   isDone: boolean;
   doneAt: string;
   createdAt: string;
@@ -74,7 +74,10 @@ type ProductDraft = {
   priceText: string;
   category: string;
   images: ProductImage[];
+  internalImages: ProductImage[];
 };
+
+type ProductImageField = "images" | "internalImages";
 
 type ContactOption = {
   id: string;
@@ -91,7 +94,7 @@ type GlobalSettings = {
 };
 
 type ExportPayload = {
-  version: 7;
+  version: 8;
   settings: GlobalSettings;
   products: LocalProduct[];
   scheduleConfig: ScheduleConfig;
@@ -188,6 +191,7 @@ type AlbumSource = {
   description: string;
   priceText: string;
   images: ProductImage[];
+  internalImages?: ProductImage[];
 };
 
 type ModalName =
@@ -212,6 +216,7 @@ type DownloadRequest = {
   description: string;
   mode: DownloadMode;
   images: ProductImage[];
+  internalImages?: ProductImage[];
   startIndex: number;
   textToCopy?: string;
 };
@@ -240,6 +245,7 @@ type ShareDialogStep = "share" | "facebookGroup";
 type ShareRequest = {
   title: string;
   images: ProductImage[];
+  internalImages?: ProductImage[];
   postText: string;
   commentText: string;
   shareKey: string;
@@ -292,6 +298,7 @@ const emptyDraft: ProductDraft = {
   priceText: "",
   category: "",
   images: [],
+  internalImages: [],
 };
 
 const defaultSettings: GlobalSettings = {
@@ -1362,6 +1369,7 @@ const normalizeProduct = (value: unknown): LocalProduct | null => {
     priceText,
     category,
     images: normalizeImages(record.images),
+    internalImages: normalizeImages(record.internalImages),
     isDone,
     doneAt: typeof record.doneAt === "string" ? record.doneAt : "",
     createdAt:
@@ -1705,6 +1713,24 @@ const renameImagesByOrder = (images: ProductImage[]): ProductImage[] => {
   }));
 };
 
+const renameInternalImagesByOrder = (
+  images: ProductImage[],
+): ProductImage[] => {
+  return images.map((image, index) => ({
+    ...image,
+    name: `anh-noi-bo-${index + 1}-${createImageFilenameSuffix(image.id)}.jpg`,
+  }));
+};
+
+const renameDraftImagesByField = (
+  images: ProductImage[],
+  imageField: ProductImageField,
+): ProductImage[] => {
+  return imageField === "internalImages"
+    ? renameInternalImagesByOrder(images)
+    : renameImagesByOrder(images);
+};
+
 const convertDataUrlToJpeg = async (dataUrl: string): Promise<string> => {
   if (dataUrl.startsWith("data:image/jpeg")) {
     return dataUrl;
@@ -1912,7 +1938,7 @@ const createExportPayload = (params: {
   postedRecords: PostedRecord[];
 }): ExportPayload => {
   return {
-    version: 7,
+    version: 8,
     settings: params.settings,
     products: params.products,
     scheduleConfig: params.scheduleConfig,
@@ -2395,6 +2421,10 @@ export default function LocalProductsPage() {
   const [pendingDownload, setPendingDownload] =
     useState<DownloadRequest | null>(null);
   const [pendingShare, setPendingShare] = useState<ShareRequest | null>(null);
+  const [includeInternalShareImages, setIncludeInternalShareImages] =
+    useState<boolean>(false);
+  const [skipInternalDownloadImages, setSkipInternalDownloadImages] =
+    useState<boolean>(false);
   const [shareDialogStep, setShareDialogStep] =
     useState<ShareDialogStep>("share");
   const [pendingConfirm, setPendingConfirm] = useState<ConfirmRequest | null>(
@@ -2754,7 +2784,8 @@ export default function LocalProductsPage() {
 
   const totalImages = useMemo(() => {
     return downloadableProducts.reduce(
-      (total, product) => total + product.images.length,
+      (total, product) =>
+        total + product.images.length + product.internalImages.length,
       0,
     );
   }, [downloadableProducts]);
@@ -3131,6 +3162,7 @@ export default function LocalProductsPage() {
 
       if (pendingDownload) {
         setPendingDownload(null);
+        setSkipInternalDownloadImages(false);
         return;
       }
 
@@ -3142,6 +3174,7 @@ export default function LocalProductsPage() {
           }
 
           setPendingShare(null);
+          setIncludeInternalShareImages(false);
         }
         return;
       }
@@ -3436,7 +3469,9 @@ export default function LocalProductsPage() {
     setPendingBlobUpload(null);
     setBlobUploadPassword("");
     setPendingDownload(null);
+    setSkipInternalDownloadImages(false);
     setPendingShare(null);
+    setIncludeInternalShareImages(false);
     setShareDialogStep("share");
   };
 
@@ -3452,7 +3487,10 @@ export default function LocalProductsPage() {
     openModal("product");
   };
 
-  const appendImagesToDraft = async (files: File[]): Promise<void> => {
+  const appendImagesToDraft = async (
+    files: File[],
+    imageField: ProductImageField = "images",
+  ): Promise<void> => {
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
 
     if (imageFiles.length === 0) {
@@ -3467,10 +3505,16 @@ export default function LocalProductsPage() {
 
       setDraft((current) => ({
         ...current,
-        images: renameImagesByOrder([...images, ...current.images]),
+        [imageField]: renameDraftImagesByField(
+          [...images, ...current[imageField]],
+          imageField,
+        ),
       }));
 
-      Toastify(`Đã thêm ${images.length} ảnh`, 200);
+      Toastify(
+        `Đã thêm ${images.length} ${imageField === "internalImages" ? "ảnh nội bộ" : "ảnh chính"}`,
+        200,
+      );
     } catch {
       Toastify("Không thể xử lý ảnh", 400);
     } finally {
@@ -3488,6 +3532,16 @@ export default function LocalProductsPage() {
     event.target.value = "";
   };
 
+  const handleInternalImageInput = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ): Promise<void> => {
+    const files = Array.from(event.target.files ?? []) as File[];
+
+    await appendImagesToDraft(files, "internalImages");
+
+    event.target.value = "";
+  };
+
   const handlePaste = async (
     event: ClipboardEvent<HTMLElement>,
   ): Promise<void> => {
@@ -3499,15 +3553,28 @@ export default function LocalProductsPage() {
     await appendImagesToDraft(imageFiles);
   };
 
+  const handleInternalImagePaste = async (
+    event: ClipboardEvent<HTMLElement>,
+  ): Promise<void> => {
+    const files = Array.from(event.clipboardData.files) as File[];
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+
+    if (imageFiles.length === 0) return;
+
+    event.stopPropagation();
+    await appendImagesToDraft(imageFiles, "internalImages");
+  };
+
   const handleDrop = async (
     event: DragEvent<HTMLLabelElement>,
+    imageField: ProductImageField = "images",
   ): Promise<void> => {
     event.preventDefault();
     setIsDragging(false);
 
     const files = Array.from(event.dataTransfer.files) as File[];
 
-    await appendImagesToDraft(files);
+    await appendImagesToDraft(files, imageField);
   };
 
   const handleDragOver = (event: DragEvent<HTMLLabelElement>): void => {
@@ -3519,11 +3586,15 @@ export default function LocalProductsPage() {
     setIsDragging(false);
   };
 
-  const removeDraftImage = (imageId: string): void => {
+  const removeDraftImage = (
+    imageId: string,
+    imageField: ProductImageField = "images",
+  ): void => {
     setDraft((current) => ({
       ...current,
-      images: renameImagesByOrder(
-        current.images.filter((image) => image.id !== imageId),
+      [imageField]: renameDraftImagesByField(
+        current[imageField].filter((image) => image.id !== imageId),
+        imageField,
       ),
     }));
   };
@@ -3531,21 +3602,22 @@ export default function LocalProductsPage() {
   const reorderDraftImage = (
     sourceImageId: string,
     targetImageId: string,
+    imageField: ProductImageField = "images",
   ): void => {
     if (!sourceImageId || !targetImageId || sourceImageId === targetImageId)
       return;
 
     setDraft((current) => {
-      const sourceIndex = current.images.findIndex(
+      const sourceIndex = current[imageField].findIndex(
         (image) => image.id === sourceImageId,
       );
-      const targetIndex = current.images.findIndex(
+      const targetIndex = current[imageField].findIndex(
         (image) => image.id === targetImageId,
       );
 
       if (sourceIndex < 0 || targetIndex < 0) return current;
 
-      const nextImages = [...current.images];
+      const nextImages = [...current[imageField]];
       const [movedImage] = nextImages.splice(sourceIndex, 1);
 
       if (!movedImage) return current;
@@ -3554,7 +3626,7 @@ export default function LocalProductsPage() {
 
       return {
         ...current,
-        images: renameImagesByOrder(nextImages),
+        [imageField]: renameDraftImagesByField(nextImages, imageField),
       };
     });
   };
@@ -3598,6 +3670,7 @@ export default function LocalProductsPage() {
       priceText,
       category,
       images: draft.images,
+      internalImages: draft.internalImages,
       isDone: currentProduct?.isDone ?? false,
       doneAt: currentProduct?.doneAt ?? "",
       createdAt: currentProduct?.createdAt ?? now,
@@ -3630,6 +3703,7 @@ export default function LocalProductsPage() {
       priceText: product.priceText,
       category: product.category,
       images: product.images,
+      internalImages: product.internalImages,
     });
 
     openModal("product");
@@ -4274,7 +4348,14 @@ export default function LocalProductsPage() {
   };
 
   const requestDownload = (request: DownloadRequest): void => {
+    setSkipInternalDownloadImages(false);
     setPendingDownload(request);
+  };
+
+  const getDownloadImages = (request: DownloadRequest): ProductImage[] => {
+    if (skipInternalDownloadImages) return request.images;
+
+    return [...request.images, ...(request.internalImages ?? [])];
   };
 
   const copyDownloadTextIfNeeded = async (
@@ -4311,29 +4392,43 @@ export default function LocalProductsPage() {
     if (!pendingDownload) return;
 
     const request = pendingDownload;
+    const images = getDownloadImages(request);
+
+    if (images.length === 0) {
+      Toastify("Không còn ảnh phù hợp để tải", 300);
+      return;
+    }
 
     await copyDownloadTextIfNeeded(request);
 
-    request.images.forEach((image, index) => {
+    images.forEach((image, index) => {
       window.setTimeout(() => {
         void downloadImageAsJpg(image, request.startIndex + index);
       }, index * 180);
     });
 
-    Toastify(`Đang tải ${request.images.length} ảnh JPG`, 200);
+    Toastify(`Đang tải ${images.length} ảnh JPG`, 200);
     setPendingDownload(null);
+    setSkipInternalDownloadImages(false);
   };
 
   const executeDownloadToFolder = async (): Promise<void> => {
     if (!pendingDownload) return;
 
     const request = pendingDownload;
+    const images = getDownloadImages(request);
+
+    if (images.length === 0) {
+      Toastify("Không còn ảnh phù hợp để tải", 300);
+      return;
+    }
 
     try {
       await copyDownloadTextIfNeeded(request);
-      await saveImagesToChosenFolder(request);
-      Toastify(`Đã lưu ${request.images.length} ảnh vào thư mục đã chọn`, 200);
+      await saveImagesToChosenFolder({ ...request, images });
+      Toastify(`Đã lưu ${images.length} ảnh vào thư mục đã chọn`, 200);
       setPendingDownload(null);
+      setSkipInternalDownloadImages(false);
     } catch {
       Toastify(
         "Trình duyệt chưa cho phép chọn thư mục hoặc thao tác đã bị hủy",
@@ -4343,7 +4438,10 @@ export default function LocalProductsPage() {
   };
 
   const handleDownloadProductImages = (product: LocalProduct): void => {
-    if (product.images.length === 0) {
+    const totalProductImages =
+      product.images.length + product.internalImages.length;
+
+    if (totalProductImages === 0) {
       Toastify("Sản phẩm chưa có ảnh để tải", 300);
       return;
     }
@@ -4353,9 +4451,11 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải ảnh sản phẩm",
-      description: `Tải ${product.images.length} ảnh của sản phẩm này về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
+      description:
+        "Tải ảnh của sản phẩm này về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.",
       mode: "multiple",
       images: product.images,
+      internalImages: product.internalImages,
       startIndex: 0,
       textToCopy: postText,
     });
@@ -4398,9 +4498,11 @@ export default function LocalProductsPage() {
       product.description.trim() || settings.commonDescription.trim();
 
     setShareDialogStep("share");
+    setIncludeInternalShareImages(false);
     setPendingShare({
       title: product.name,
       images: product.images,
+      internalImages: product.internalImages,
       postText: descriptionText,
       commentText: buildCommentContentText(
         product.name,
@@ -4429,9 +4531,11 @@ export default function LocalProductsPage() {
     }
 
     setShareDialogStep("share");
+    setIncludeInternalShareImages(false);
     setPendingShare({
       title: albumSource.title,
       images: selectedImages,
+      internalImages: albumSource.internalImages ?? [],
       postText: albumSource.description,
       commentText: buildCommentContentText(
         albumSource.title,
@@ -4451,6 +4555,9 @@ export default function LocalProductsPage() {
     if (!pendingShare || isShareExecuting) return;
 
     const request = pendingShare;
+    const shareImages = includeInternalShareImages
+      ? [...request.images, ...(request.internalImages ?? [])]
+      : request.images;
     const textValue =
       mode === "post"
         ? composeCopyText(
@@ -4493,7 +4600,7 @@ export default function LocalProductsPage() {
       }
 
       const files = await Promise.all(
-        request.images.map((image, index) =>
+        shareImages.map((image, index) =>
           dataUrlToShareFile(
             image.dataUrl,
             image.name || createSystemImageFilename(index, image.id),
@@ -4607,6 +4714,7 @@ export default function LocalProductsPage() {
       Toastify("Không thể chia sẻ hoặc copy nội dung", 400);
     } finally {
       setPendingShare(null);
+      setIncludeInternalShareImages(false);
       setShareDialogStep("share");
       setIsShareExecuting(false);
     }
@@ -4650,16 +4758,22 @@ export default function LocalProductsPage() {
   };
 
   const handleDownloadAlbumImages = (): void => {
-    if (!albumSource || albumSource.images.length === 0) {
+    const internalImages = albumSource?.internalImages ?? [];
+    const totalAlbumImages =
+      (albumSource?.images.length ?? 0) + internalImages.length;
+
+    if (!albumSource || totalAlbumImages === 0) {
       Toastify("Album chưa có ảnh để tải", 300);
       return;
     }
 
     requestDownload({
       title: "Tải toàn bộ album",
-      description: `Tải ${albumSource.images.length} ảnh trong album về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
-      mode: "multiple",
+      description:
+        "Tải toàn bộ ảnh trong album về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.",
+      mode: totalAlbumImages === 1 ? "single" : "multiple",
       images: albumSource.images,
+      internalImages,
       startIndex: 0,
       textToCopy: albumSource.description,
     });
@@ -4690,11 +4804,16 @@ export default function LocalProductsPage() {
   };
 
   const handleDownloadAllImages = (): void => {
-    const allImages = downloadableProducts.flatMap(
+    const allMainImages = downloadableProducts.flatMap(
       (product) => product.images,
     );
+    const allInternalImages = downloadableProducts.flatMap(
+      (product) => product.internalImages,
+    );
+    const totalDownloadImages =
+      allMainImages.length + allInternalImages.length;
 
-    if (allImages.length === 0) {
+    if (totalDownloadImages === 0) {
       Toastify("Chưa có ảnh của sản phẩm chưa DONE để tải", 300);
       return;
     }
@@ -4711,9 +4830,11 @@ export default function LocalProductsPage() {
 
     requestDownload({
       title: "Tải toàn bộ ảnh",
-      description: `Tải ${allImages.length} ảnh của tất cả sản phẩm chưa DONE về máy? Toàn bộ nội dung Post của các sản phẩm này sẽ được tự động copy trước khi tải.`,
+      description:
+        "Tải ảnh của tất cả sản phẩm chưa DONE về máy? Toàn bộ nội dung Post của các sản phẩm này sẽ được tự động copy trước khi tải.",
       mode: "multiple",
-      images: allImages,
+      images: allMainImages,
+      internalImages: allInternalImages,
       startIndex: 0,
       textToCopy: activeDescriptions,
     });
@@ -5532,6 +5653,94 @@ export default function LocalProductsPage() {
         </button>
       );
     });
+  };
+
+  const renderDraftImageCollection = (
+    imageField: ProductImageField,
+    label: string,
+  ) => {
+    const images = draft[imageField];
+
+    if (images.length === 0) return null;
+
+    return (
+      <div className="flex min-h-0 min-w-0 flex-col rounded-md border border-white/10 bg-slate-950/70 p-2.5">
+        <div
+          data-editor-toolbar="true"
+          className="mb-2 flex min-w-0 items-center justify-between gap-2"
+        >
+          <span className="flex min-w-0 items-center gap-2 whitespace-nowrap text-xs font-black text-white">
+            <FiImage aria-hidden="true" className={iconClassName} />
+            {images.length} {label}
+          </span>
+
+          <button
+            type="button"
+            className="flex shrink-0 items-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-bold text-slate-300 transition hover:bg-slate-700"
+            onClick={() => updateDraftField(imageField, [])}
+            title={`Xóa toàn bộ ${label}`}
+          >
+            <FiTrash2 aria-hidden="true" className={iconClassName} />
+          </button>
+        </div>
+
+        <div className="grid min-w-0 max-h-[260px] grid-cols-3 gap-1.5 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 sm:max-h-[320px] sm:grid-cols-4 md:grid-cols-5 xl:max-h-[calc(90dvh-190px)] xl:grid-cols-4 2xl:grid-cols-5">
+          {images.map((image, index) => {
+            const isDraggingImage = draggingDraftImageId === image.id;
+
+            return (
+              <div
+                key={image.id}
+                draggable
+                className={`group relative h-[88px] cursor-grab overflow-hidden rounded-md bg-slate-900 transition active:cursor-grabbing sm:h-[96px] xl:h-[108px] ${isDraggingImage ? "scale-95 opacity-60" : ""}`}
+                onDragStart={(event) => {
+                  event.dataTransfer.setData("text/plain", image.id);
+                  setDraggingDraftImageId(image.id);
+                }}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const sourceImageId =
+                    event.dataTransfer.getData("text/plain") ||
+                    draggingDraftImageId;
+
+                  reorderDraftImage(sourceImageId, image.id, imageField);
+                  setDraggingDraftImageId("");
+                }}
+                onDragEnd={() => setDraggingDraftImageId("")}
+              >
+                <img
+                  src={image.dataUrl}
+                  alt={image.name}
+                  width={1200}
+                  height={1200}
+                  className="h-full w-full object-contain"
+                />
+
+                <div className="absolute left-1 top-1 rounded-md bg-black/70 px-1.5 py-0.5 whitespace-nowrap text-[10px] font-black text-white">
+                  {index + 1}
+                </div>
+
+                <button
+                  type="button"
+                  data-image-control="true"
+                  title={`Xóa ${label} ${index + 1}`}
+                  aria-label={`Xóa ${label} ${index + 1}`}
+                  className="absolute right-1 top-1 z-20 flex h-6 w-6 items-center justify-center rounded-md border border-white/35 bg-rose-500 text-xs text-white opacity-100 shadow-[0_6px_16px_rgba(0,0,0,0.45)] transition hover:border-white/60 hover:bg-rose-400"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    removeDraftImage(image.id, imageField);
+                  }}
+                >
+                  <FiX aria-hidden="true" className={iconClassName} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   if (!isSettingsReady) {
@@ -6383,7 +6592,7 @@ export default function LocalProductsPage() {
                 title={settings.includeSocialTags ? "Tắt Tag khi copy" : "Bật Tag khi copy"}
                 aria-label={settings.includeSocialTags ? "Tắt Tag khi copy" : "Bật Tag khi copy"}
                 aria-pressed={settings.includeSocialTags}
-                className={`${headerActionButtonBaseClassName} ${settings.includeSocialTags
+                className={`${headerActionButtonBaseClassName} min-w-0 ${settings.includeSocialTags
                   ? headerActiveButtonClassName
                   : headerNeutralButtonClassName
                   }`}
@@ -6394,8 +6603,23 @@ export default function LocalProductsPage() {
                   )
                 }
               >
-                <FiHash aria-hidden="true" className={iconClassName} />
-                {settings.includeSocialTags ? "Bật Tag" : "Tắt Tag"}
+                <span
+                  aria-hidden="true"
+                  className={`relative h-3 w-[18px] flex-none overflow-hidden border transition-colors duration-200 ${settings.includeSocialTags
+                    ? "border-[#17130a]/45 bg-[#17130a]/20"
+                    : "border-white/20 bg-black/30"
+                    }`}
+                >
+                  <span
+                    className={`absolute top-[2px] h-1.5 w-1.5 transition-[left,background-color] duration-200 ${settings.includeSocialTags
+                      ? "left-[10px] bg-[#17130a]"
+                      : "left-[2px] bg-slate-400"
+                      }`}
+                  />
+                </span>
+                <span className="min-w-0 truncate">
+                  {settings.includeSocialTags ? "Bật Tag" : "Tắt Tag"}
+                </span>
               </button>
 
               <button
@@ -6744,6 +6968,7 @@ export default function LocalProductsPage() {
                             description: descriptionPreview,
                             priceText: product.priceText,
                             images: product.images,
+                            internalImages: product.internalImages,
                           });
                         }}
                       >
@@ -7649,11 +7874,12 @@ export default function LocalProductsPage() {
                               aria-hidden="true"
                               className={iconClassName}
                             />
+                            Ảnh chính
                           </div>
                           <div className="mt-1 break-words text-[11px] leading-5 text-slate-400">
                             {isProcessingImages
                               ? "Đang xử lý ảnh..."
-                              : "Chọn, kéo thả hoặc paste ảnh. Hỗ trợ nhiều ảnh, tự nén JPG."}
+                              : "Chọn, kéo thả hoặc paste ảnh sản phẩm. Hỗ trợ nhiều ảnh, tự nén JPG."}
                           </div>
                           <input
                             type="file"
@@ -7664,105 +7890,50 @@ export default function LocalProductsPage() {
                           />
                         </label>
 
-                        {draft.images.length > 0 ? (
-                          <div className="flex min-h-0 min-w-0 flex-col rounded-md border border-white/10 bg-slate-950/70 p-2.5">
-                            <div data-editor-toolbar="true" className="mb-2 flex min-w-0 items-center justify-between gap-2">
-                              <span className="flex min-w-0 items-center gap-2 whitespace-nowrap text-xs font-black text-white">
-                                <FiImage
-                                  aria-hidden="true"
-                                  className={iconClassName}
-                                />
-                                {draft.images.length} ảnh
-                              </span>
+                        {renderDraftImageCollection("images", "ảnh chính")}
 
-                              <button
-                                type="button"
-                                className="flex shrink-0 items-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-bold text-slate-300 transition hover:bg-slate-700"
-                                onClick={() => updateDraftField("images", [])}
-                              >
-                                <FiTrash2
-                                  aria-hidden="true"
-                                  className={iconClassName}
-                                />
-                              </button>
-                            </div>
-
-                            <div className="grid min-w-0 max-h-[260px] grid-cols-3 gap-1.5 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 sm:max-h-[320px] sm:grid-cols-4 md:grid-cols-5 xl:max-h-[calc(90dvh-190px)] xl:grid-cols-4 2xl:grid-cols-5">
-                              {draft.images.map((image, index) => {
-                                const isDraggingImage =
-                                  draggingDraftImageId === image.id;
-
-                                return (
-                                  <div
-                                    key={image.id}
-                                    draggable
-                                    className={`group relative h-[88px] cursor-grab overflow-hidden rounded-md bg-slate-900  transition active:cursor-grabbing sm:h-[96px] xl:h-[108px] ${isDraggingImage
-                                      ? "scale-95 opacity-60 "
-                                      : " "
-                                      }`}
-                                    onDragStart={(event) => {
-                                      event.dataTransfer.setData(
-                                        "text/plain",
-                                        image.id,
-                                      );
-                                      setDraggingDraftImageId(image.id);
-                                    }}
-                                    onDragOver={(event) =>
-                                      event.preventDefault()
-                                    }
-                                    onDrop={(event) => {
-                                      event.preventDefault();
-                                      const sourceImageId =
-                                        event.dataTransfer.getData(
-                                          "text/plain",
-                                        ) || draggingDraftImageId;
-
-                                      reorderDraftImage(
-                                        sourceImageId,
-                                        image.id,
-                                      );
-                                      setDraggingDraftImageId("");
-                                    }}
-                                    onDragEnd={() =>
-                                      setDraggingDraftImageId("")
-                                    }
-                                  > <img
-                                      src={image.dataUrl}
-                                      alt={image.name}
-                                      width={1200}
-                                      height={1200}
-                                      className="h-full w-full object-contain"
-                                    />
-
-                                    <div className="absolute left-1 top-1 rounded-md bg-black/70 px-1.5 py-0.5 whitespace-nowrap text-[10px] font-black text-white">
-                                      {index + 1}
-                                    </div>
-
-                                    <button
-                                      type="button"
-                                      data-image-control="true"
-                                      title={`Xóa ảnh ${index + 1}`}
-                                      aria-label={`Xóa ảnh ${index + 1}`}
-                                      className="absolute right-1 top-1 z-20 flex h-6 w-6 items-center justify-center rounded-md border border-white/35 bg-rose-500 text-xs text-white opacity-100 shadow-[0_6px_16px_rgba(0,0,0,0.45)] transition hover:border-white/60 hover:bg-rose-400"
-                                      onPointerDown={(event) =>
-                                        event.stopPropagation()
-                                      }
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        removeDraftImage(image.id);
-                                      }}
-                                    >
-                                      <FiX
-                                        aria-hidden="true"
-                                        className={iconClassName}
-                                      />
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                        <label
+                          tabIndex={0}
+                          className={`min-w-0 cursor-pointer rounded-md border border-dashed p-3 text-center transition ${isDragging
+                            ? "border-amber-300/80 bg-amber-300/10"
+                            : "border-amber-300/20 bg-amber-300/[0.04] hover:border-amber-300/50 hover:bg-amber-300/[0.08]"
+                            }`}
+                          onDrop={(event) =>
+                            void handleDrop(event, "internalImages")
+                          }
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          onPaste={(event) =>
+                            void handleInternalImagePaste(event)
+                          }
+                        >
+                          <div className="flex items-center justify-center gap-2 text-xs font-black text-amber-100">
+                            <FiUploadCloud
+                              aria-hidden="true"
+                              className={iconClassName}
+                            />
+                            Ảnh nội bộ
                           </div>
-                        ) : null}
+                          <div className="mt-1 break-words text-[11px] leading-5 text-slate-400">
+                            {isProcessingImages
+                              ? "Đang xử lý ảnh..."
+                              : "Ảnh model, dung lượng pin hoặc thông tin kiểm tra máy."}
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={(event) =>
+                              void handleInternalImageInput(event)
+                            }
+                          />
+                        </label>
+
+                        {renderDraftImageCollection(
+                          "internalImages",
+                          "ảnh nội bộ",
+                        )}
                       </section>
                     </div>
                   </div>
@@ -8274,6 +8445,8 @@ export default function LocalProductsPage() {
                                                 settings.commonDescription.trim(),
                                               priceText: assignedProduct.priceText,
                                               images: assignedProduct.images,
+                                              internalImages:
+                                                assignedProduct.internalImages,
                                             })
                                             : undefined
                                         }
@@ -8443,6 +8616,7 @@ export default function LocalProductsPage() {
                                         settings.commonDescription.trim(),
                                       priceText: product.priceText,
                                       images: product.images,
+                                      internalImages: product.internalImages,
                                     });
                                   }}
                                 >
@@ -8808,6 +8982,8 @@ export default function LocalProductsPage() {
                             description: selectedAssignedSlot.description,
                             priceText: selectedAssignedSlot.product.priceText,
                             images: selectedAssignedSlot.product.images,
+                            internalImages:
+                              selectedAssignedSlot.product.internalImages,
                           })
                         }
                       >
@@ -8842,6 +9018,8 @@ export default function LocalProductsPage() {
                                       selectedAssignedSlot.description,
                                     priceText: selectedAssignedSlot.product.priceText,
                                     images: selectedAssignedSlot.product.images,
+                                    internalImages:
+                                      selectedAssignedSlot.product.internalImages,
                                   })
                                 }
                               > <img
@@ -9419,7 +9597,7 @@ export default function LocalProductsPage() {
                 <p className="mt-1 text-[10px] leading-4 text-slate-400">
                   {shareDialogStep === "facebookGroup"
                     ? "Nội dung được copy vào clipboard, bảng chia sẻ chỉ gửi hình ảnh."
-                    : `${pendingShare.title} · ${pendingShare.images.length} ảnh`}
+                    : `${pendingShare.title} · ${pendingShare.images.length + (includeInternalShareImages ? (pendingShare.internalImages?.length ?? 0) : 0)} ảnh`}
                 </p>
               </div>
 
@@ -9429,6 +9607,7 @@ export default function LocalProductsPage() {
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-slate-200 transition hover:bg-slate-700 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
                 onClick={() => {
                   setPendingShare(null);
+                  setIncludeInternalShareImages(false);
                   setShareDialogStep("share");
                 }}
                 aria-label="Đóng chọn nội dung chia sẻ"
@@ -9436,6 +9615,38 @@ export default function LocalProductsPage() {
                 <FiX aria-hidden="true" className={iconClassName} />
               </button>
             </div>
+
+            {(pendingShare.internalImages?.length ?? 0) > 0 ? (
+              <button
+                type="button"
+                disabled={isShareExecuting}
+                aria-pressed={includeInternalShareImages}
+                className={`mt-2 flex w-full items-center justify-between gap-3 border p-2.5 text-left transition active:opacity-80 disabled:cursor-wait disabled:opacity-50 ${includeInternalShareImages
+                  ? "border-amber-200/60 bg-amber-300/15 text-amber-50"
+                  : "border-white/10 bg-slate-900/80 text-slate-200 hover:border-amber-300/30"
+                  }`}
+                onClick={() =>
+                  setIncludeInternalShareImages((current) => !current)
+                }
+              >
+                <span className="min-w-0">
+                  <span className="block text-xs font-black">
+                    Gửi ảnh nội bộ
+                  </span>
+                  <span className="mt-0.5 block text-[10px] leading-4 text-slate-400">
+                    Model, dung lượng pin và thông tin kiểm tra máy
+                  </span>
+                </span>
+                <span
+                  className={`shrink-0 px-2 py-1 text-[10px] font-black ${includeInternalShareImages
+                    ? "bg-amber-200 text-slate-950"
+                    : "bg-slate-800 text-slate-400"
+                    }`}
+                >
+                  {includeInternalShareImages ? "Gửi kèm" : "Không gửi"}
+                </span>
+              </button>
+            ) : null}
 
             {shareDialogStep === "facebookGroup" ? (
               <div className="mt-2 grid grid-cols-2 gap-2">
@@ -9508,22 +9719,66 @@ export default function LocalProductsPage() {
                   <p className="mt-1 text-xs leading-5 text-slate-400">
                     {pendingDownload.description}
                   </p>
+                  <p className="mt-1 text-[10px] font-black text-amber-100">
+                    {getDownloadImages(pendingDownload).length} ảnh sẽ được tải
+                  </p>
                 </div>
 
                 <button
                   type="button"
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-slate-200  transition hover:bg-slate-700 active:opacity-80"
-                  onClick={() => setPendingDownload(null)}
+                  onClick={() => {
+                    setPendingDownload(null);
+                    setSkipInternalDownloadImages(false);
+                  }}
                 >
                   <FiX aria-hidden="true" className={iconClassName} />
                 </button>
               </div>
 
+              {(pendingDownload.internalImages?.length ?? 0) > 0 ? (
+                <button
+                  type="button"
+                  aria-pressed={skipInternalDownloadImages}
+                  className={`mt-2 flex w-full items-center justify-between gap-3 border p-2.5 text-left transition active:opacity-80 ${skipInternalDownloadImages
+                    ? "border-rose-300/45 bg-rose-300/10 text-rose-50"
+                    : "border-amber-300/35 bg-amber-300/[0.07] text-amber-50"
+                    }`}
+                  onClick={() =>
+                    setSkipInternalDownloadImages((current) => !current)
+                  }
+                >
+                  <span className="min-w-0">
+                    <span className="block text-xs font-black">
+                      Bỏ qua ảnh nội bộ
+                    </span>
+                    <span className="mt-0.5 block text-[10px] leading-4 text-slate-400">
+                      Mặc định tải toàn bộ ảnh chính và ảnh nội bộ
+                    </span>
+                  </span>
+                  <span
+                    className={`relative h-5 w-9 shrink-0 border transition ${skipInternalDownloadImages
+                      ? "border-rose-200/70 bg-rose-300/40"
+                      : "border-amber-200/50 bg-slate-800"
+                      }`}
+                    aria-hidden="true"
+                  >
+                    <span
+                      className={`absolute top-0.5 h-3.5 w-3.5 bg-white transition-transform ${skipInternalDownloadImages
+                        ? "translate-x-[17px]"
+                        : "translate-x-0.5"
+                        }`}
+                    />
+                  </span>
+                </button>
+              ) : null}
+
               <div className="mt-2 grid grid-cols-1 gap-2">
                 {canUseDirectoryPicker() ? (
                   <button
                     type="button"
-                    className="rounded-md bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
+                    disabled={getDownloadImages(pendingDownload).length === 0}
+                    className="rounded-md bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={() => void executeDownloadToFolder()}
                   >
                     Chọn thư mục & lưu ảnh
@@ -9534,14 +9789,18 @@ export default function LocalProductsPage() {
                   <button
                     type="button"
                     className="rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-bold text-white transition hover:bg-slate-700"
-                    onClick={() => setPendingDownload(null)}
+                    onClick={() => {
+                      setPendingDownload(null);
+                      setSkipInternalDownloadImages(false);
+                    }}
                   >
                     Hủy
                   </button>
 
                   <button
                     type="button"
-                    className="rounded-md bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
+                    disabled={getDownloadImages(pendingDownload).length === 0}
+                    className="rounded-md bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={() => void executeDownloadRequest()}
                   >
                     Tải
