@@ -2573,6 +2573,25 @@ export default function LocalProductsPage() {
 
   // Thanh tab danh mục — giữ lại một tab phía trước tab đang chọn
   const categoryTabsRef = useRef<HTMLDivElement | null>(null);
+  const previousCategoryTabRef = useRef(activeCategoryTab);
+
+  useEffect(() => {
+    const previousCategoryKey = normalizeTextKey(
+      previousCategoryTabRef.current,
+    );
+    const activeCategoryKey = normalizeTextKey(activeCategoryTab);
+
+    if (previousCategoryKey === activeCategoryKey) return;
+    previousCategoryTabRef.current = activeCategoryTab;
+
+    const interactionWindow = getActiveInteractionWindow();
+    interactionWindow.requestAnimationFrame(() => {
+      interactionWindow.scrollTo({
+        top: 0,
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+      });
+    });
+  }, [activeCategoryTab, prefersReducedMotion]);
 
   useEffect(() => {
     const container = categoryTabsRef.current;
