@@ -356,15 +356,18 @@ const IMPORT_BACKUP_INPUT_ID = "local-products-backup-input";
 const LoadingOverlay = ({ text }: { text: string }) => {
   return (
     <div
-      className="fixed inset-0 z-[999998] flex h-dvh w-full items-center justify-center bg-[#05070a]/[0.85] backdrop-blur-xl"
+      className="fixed inset-0 z-[999998] flex h-dvh w-full items-center justify-center bg-[#03070d]/[0.9] backdrop-blur-xl"
       role="status"
       aria-live="polite"
       aria-busy="true"
     >
-      <div aria-hidden="true" className="relative h-12 w-12">
-        <div className="absolute inset-0 animate-spin border border-[#d8c99f]/70 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)]" />
-        <div className="absolute inset-[9px] animate-[spin_1.4s_linear_infinite_reverse] border border-white/35 [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)]" />
-        <div className="absolute inset-[19px] animate-pulse bg-[#eadfbe] [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)]" />
+      <div aria-hidden="true" className="relative h-24 w-24">
+        <div className="absolute inset-0 animate-[spin_2.4s_linear_infinite] border-2 border-[#e6cf8b]/80 border-r-transparent shadow-[0_0_30px_rgba(230,207,139,0.24)] [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)]" />
+        <div className="absolute inset-[10px] animate-[spin_1.8s_linear_infinite_reverse] border border-[#f3e5ba]/55 border-b-transparent [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)]" />
+        <div className="absolute inset-[24px] animate-[spin_1.2s_linear_infinite] border border-slate-300/40 border-l-transparent [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)]" />
+        <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#e6cf8b]/40 to-transparent" />
+        <div className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-gradient-to-r from-transparent via-[#f3e5ba]/35 to-transparent" />
+        <div className="absolute inset-[39px] animate-pulse bg-[#f3e5ba] shadow-[0_0_24px_rgba(230,207,139,0.7)] [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)]" />
       </div>
       <span className="sr-only">{text}</span>
     </div>
@@ -2604,6 +2607,40 @@ export default function LocalProductsPage() {
       behavior: prefersReducedMotion ? "auto" : "smooth",
     });
   }, [activeCategoryTab, prefersReducedMotion]);
+
+  useEffect(() => {
+    const container = categoryTabsRef.current;
+    if (!container) return;
+
+    const handleDesktopCategoryWheel = (event: WheelEvent) => {
+      const maximumScrollLeft = Math.max(
+        0,
+        container.scrollWidth - container.clientWidth,
+      );
+      if (maximumScrollLeft === 0) return;
+
+      const horizontalDelta =
+        Math.abs(event.deltaX) > Math.abs(event.deltaY)
+          ? event.deltaX
+          : event.deltaY;
+      if (horizontalDelta === 0) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      container.scrollLeft = Math.min(
+        maximumScrollLeft,
+        Math.max(0, container.scrollLeft + horizontalDelta),
+      );
+    };
+
+    container.addEventListener("wheel", handleDesktopCategoryWheel, {
+      passive: false,
+    });
+
+    return () => {
+      container.removeEventListener("wheel", handleDesktopCategoryWheel);
+    };
+  }, []);
 
   const handleProductsTouchStart = useCallback(
     (event: ReactTouchEvent<HTMLDivElement>) => {
@@ -5392,7 +5429,7 @@ export default function LocalProductsPage() {
 
   if (!isSettingsReady) {
     return (
-      <main className="min-h-dvh w-full bg-[#07090d] text-slate-100">
+      <main className="min-h-dvh w-full bg-[#050a11] text-slate-100">
         <ToastContainer style={{ zIndex: 1000000 }} />
         <LoadingOverlay text="Đang tải dữ liệu local, vui lòng chờ..." />
       </main>
@@ -5401,7 +5438,7 @@ export default function LocalProductsPage() {
 
   const localProductsWorkspace = (
     <main
-      className={`local-products-workspace min-h-dvh w-full overflow-x-hidden bg-[#07090d] text-slate-100 ${pictureInPictureWindow
+      className={`local-products-workspace min-h-dvh w-full overflow-x-hidden bg-[#050a11] text-slate-100 ${pictureInPictureWindow
         ? "pb-[50px]"
         : "pb-[100px] xl:pb-[50px]"
         }`}
@@ -5891,6 +5928,277 @@ export default function LocalProductsPage() {
           will-change: transform, opacity;
         }
 
+        /* Tactical inventory HUD theme. */
+        .local-products-workspace {
+          --hud-ink: #050a11;
+          --hud-panel: #0a1420;
+          --hud-surface: #101f2e;
+          --hud-cyan: #8ba9b2;
+          --hud-gold: #e6cf8b;
+          --hud-violet: #a99bf2;
+          --hud-green: #69d5a3;
+          color: #e6edf3;
+          background:
+            linear-gradient(rgba(230, 207, 139, 0.024) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(230, 207, 139, 0.024) 1px, transparent 1px),
+            linear-gradient(rgba(139, 169, 178, 0.011) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(139, 169, 178, 0.011) 1px, transparent 1px),
+            radial-gradient(circle at 14% -6%, rgba(230, 207, 139, 0.14), transparent 29%),
+            radial-gradient(circle at 92% 16%, rgba(169, 155, 242, 0.075), transparent 25%),
+            linear-gradient(145deg, #050a11 0%, #08111b 52%, #04080e 100%) !important;
+          background-attachment: fixed;
+          background-size: 48px 48px, 48px 48px, 12px 12px, 12px 12px, auto, auto, auto;
+        }
+
+        .local-products-workspace ::selection {
+          background: rgba(230, 207, 139, 0.88);
+          color: #17130a;
+        }
+
+        .local-products-workspace * {
+          scrollbar-color: rgba(230, 207, 139, 0.56) rgba(255, 255, 255, 0.025);
+        }
+
+        .local-products-workspace *::-webkit-scrollbar-thumb {
+          border-color: rgba(5, 10, 17, 0.88);
+          background: linear-gradient(180deg, rgba(230, 207, 139, 0.86), rgba(142, 116, 57, 0.72));
+        }
+
+        .local-products-workspace button[data-luxury-accent] {
+          text-shadow: 0 0 12px currentColor;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -2px 0 rgba(0, 0, 0, 0.3), 0 7px 18px rgba(0, 0, 0, 0.28) !important;
+        }
+
+        .local-products-workspace button[data-luxury-accent]::before {
+          height: 2px;
+          opacity: 0.78;
+          background: linear-gradient(90deg, transparent, currentColor, transparent);
+        }
+
+        .local-products-workspace button[data-luxury-accent]:hover {
+          border-color: rgba(245, 233, 199, 0.76) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 -2px 0 rgba(0, 0, 0, 0.28), 0 10px 24px rgba(0, 0, 0, 0.34), 0 0 17px rgba(230, 207, 139, 0.14) !important;
+        }
+
+        .local-products-workspace button[class~="bg-cyan-300"],
+        .local-products-workspace button[class~="bg-sky-300"],
+        .local-products-workspace button[class~="bg-amber-300"],
+        .local-products-workspace button[class~="bg-violet-200"] {
+          border-color: rgba(245, 233, 199, 0.82) !important;
+          background: linear-gradient(135deg, #f5e9c7 0%, #d6ba6b 58%, #b99a4e 100%) !important;
+          color: #17130a !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), inset 0 -2px 0 rgba(95, 68, 16, 0.32), 0 8px 22px rgba(154, 119, 42, 0.22) !important;
+        }
+
+        .local-products-workspace input:not([type="radio"]):not([type="checkbox"]):not([type="file"]),
+        .local-products-workspace textarea,
+        .local-products-workspace select {
+          border-color: rgba(230, 207, 139, 0.27) !important;
+          background:
+            linear-gradient(90deg, rgba(230, 207, 139, 0.035) 1px, transparent 1px),
+            linear-gradient(145deg, rgba(10, 20, 31, 0.99), rgba(15, 29, 43, 0.97)) !important;
+          background-size: 18px 18px, auto;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), inset 3px 0 0 rgba(230, 207, 139, 0.2), 0 8px 24px rgba(0, 0, 0, 0.18);
+        }
+
+        .local-products-workspace input:not([type="radio"]):not([type="checkbox"]):not([type="file"]):focus,
+        .local-products-workspace textarea:focus,
+        .local-products-workspace select:focus {
+          border-color: rgba(230, 207, 139, 0.72) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), inset 3px 0 0 rgba(230, 207, 139, 0.48), 0 0 0 2px rgba(230, 207, 139, 0.09), 0 14px 34px rgba(0, 0, 0, 0.24);
+        }
+
+        .local-products-workspace [class*="rounded-md"][class*="border"][class*="bg-slate-950"],
+        .local-products-workspace [class*="rounded-xl"][class*="border"][class*="bg-slate-950"],
+        .local-products-workspace [class*="rounded-md"][class*="border"][class*="bg-slate-900"],
+        .local-products-workspace [class*="rounded-md"][class*="border"][class*="bg-slate-800"] {
+          border-color: rgba(230, 207, 139, 0.19);
+          background: linear-gradient(145deg, rgba(14, 27, 41, 0.99), rgba(7, 15, 24, 0.995));
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 16px 38px rgba(0, 0, 0, 0.25);
+        }
+
+        .luxury-header {
+          clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 12px);
+          border-color: rgba(230, 207, 139, 0.27) !important;
+          background:
+            linear-gradient(rgba(230, 207, 139, 0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(230, 207, 139, 0.025) 1px, transparent 1px),
+            linear-gradient(180deg, rgba(12, 25, 38, 0.985), rgba(5, 11, 18, 0.98)) !important;
+          background-size: 28px 28px, 28px 28px, auto;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), inset 0 -2px 0 rgba(230, 207, 139, 0.12), 0 18px 52px rgba(0, 0, 0, 0.42) !important;
+        }
+
+        .luxury-header::after {
+          background: linear-gradient(105deg, transparent, rgba(230, 207, 139, 0.1), rgba(245, 233, 199, 0.05), transparent);
+          animation-duration: 10.5s;
+        }
+
+        .luxury-content-panel {
+          border-color: rgba(230, 207, 139, 0.2) !important;
+          background: linear-gradient(180deg, rgba(10, 21, 33, 0.94), rgba(5, 11, 18, 0.88)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), inset 0 -1px 0 rgba(0, 0, 0, 0.36), 0 28px 76px rgba(0, 0, 0, 0.32);
+        }
+
+        .luxury-search {
+          border-color: rgba(230, 207, 139, 0.34) !important;
+          background: linear-gradient(135deg, rgba(9, 19, 30, 0.99), rgba(18, 34, 49, 0.96)) !important;
+          box-shadow: inset 3px 0 0 rgba(230, 207, 139, 0.46), inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 13px 34px rgba(0, 0, 0, 0.24);
+        }
+
+        .luxury-product-card {
+          clip-path: polygon(12px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 5px 100%, 0 calc(100% - 5px), 0 12px);
+          border-color: rgba(230, 207, 139, 0.31) !important;
+          background:
+            linear-gradient(135deg, rgba(230, 207, 139, 0.065), transparent 28%),
+            linear-gradient(155deg, rgba(22, 39, 55, 0.995), rgba(8, 17, 27, 0.998)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), inset 3px 0 0 rgba(230, 207, 139, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.38), 0 19px 44px rgba(0, 0, 0, 0.38), 0 8px 18px rgba(0, 0, 0, 0.25);
+        }
+
+        .luxury-product-card::before {
+          right: 10px;
+          left: 10px;
+          height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(230, 207, 139, 0.88), rgba(245, 233, 199, 0.62), transparent);
+        }
+
+        .luxury-product-card::after {
+          background: linear-gradient(90deg, transparent, rgba(230, 207, 139, 0.13), transparent);
+          animation-duration: 11.5s;
+        }
+
+        .local-products-workspace .luxury-product-card[data-active="true"] {
+          border-color: rgba(245, 233, 199, 0.84) !important;
+          background:
+            linear-gradient(135deg, rgba(230, 207, 139, 0.12), transparent 34%),
+            linear-gradient(155deg, rgba(49, 43, 28, 0.995), rgba(12, 21, 29, 0.998)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13), inset 3px 0 0 rgba(230, 207, 139, 0.38), inset 0 -2px 0 rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(230, 207, 139, 0.17), 0 0 22px rgba(230, 207, 139, 0.13), 0 27px 60px rgba(0, 0, 0, 0.43);
+        }
+
+        .luxury-product-card:hover {
+          border-color: rgba(245, 233, 199, 0.64) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 3px 0 0 rgba(230, 207, 139, 0.22), inset 0 -2px 0 rgba(0, 0, 0, 0.34), 0 0 18px rgba(230, 207, 139, 0.1), 0 29px 64px rgba(0, 0, 0, 0.42);
+        }
+
+        .luxury-product-image {
+          background:
+            linear-gradient(rgba(230, 207, 139, 0.026) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(230, 207, 139, 0.026) 1px, transparent 1px),
+            radial-gradient(circle at 50% 38%, rgba(230, 207, 139, 0.11), transparent 47%),
+            linear-gradient(145deg, #101e2b, #060d16) !important;
+          background-size: 24px 24px, 24px 24px, auto, auto;
+        }
+
+        #mobile-category-menu button[data-category-bubble="true"] {
+          border-color: rgba(230, 207, 139, 0.37) !important;
+          background: linear-gradient(145deg, rgba(16, 34, 49, 0.98), rgba(6, 14, 23, 0.995)) !important;
+          color: #f1e5c2 !important;
+          box-shadow: inset 3px 0 0 rgba(230, 207, 139, 0.28), 0 16px 42px rgba(0, 0, 0, 0.48) !important;
+        }
+
+        #mobile-category-menu button[data-category-bubble="true"][data-active="true"] {
+          border-color: rgba(245, 233, 199, 0.86) !important;
+          background: linear-gradient(135deg, #f5e9c7, #d6ba6b) !important;
+          color: #17130a !important;
+          box-shadow: inset 3px 0 0 rgba(255, 248, 224, 0.58), 0 0 18px rgba(230, 207, 139, 0.22), 0 16px 42px rgba(0, 0, 0, 0.44) !important;
+        }
+
+        .local-products-workspace button[aria-controls="mobile-category-menu"] {
+          border-color: rgba(230, 207, 139, 0.5) !important;
+          background: linear-gradient(145deg, rgba(18, 39, 56, 0.99), rgba(7, 16, 26, 0.995)) !important;
+          color: #f1e5c2 !important;
+          box-shadow: inset 3px 0 0 rgba(230, 207, 139, 0.5), 0 14px 38px rgba(0, 0, 0, 0.48) !important;
+        }
+
+        .local-products-workspace button[aria-controls="mobile-category-menu"][aria-expanded="true"] {
+          background: linear-gradient(135deg, #f5e9c7, #d6ba6b) !important;
+          color: #17130a !important;
+        }
+
+        .luxury-category-bar {
+          overflow-y: hidden !important;
+          overscroll-behavior-x: contain;
+          overscroll-behavior-y: none;
+          scrollbar-width: none;
+          touch-action: pan-x;
+          white-space: nowrap;
+          border-color: rgba(230, 207, 139, 0.34) !important;
+          background: rgba(4, 10, 17, 0.97) !important;
+          box-shadow: inset 0 2px 0 rgba(230, 207, 139, 0.1), 0 -14px 38px rgba(0, 0, 0, 0.42);
+        }
+
+        .luxury-category-bar::-webkit-scrollbar {
+          width: 0;
+          height: 0;
+        }
+
+        .luxury-category-bar button {
+          flex: 0 0 auto;
+          min-width: max-content;
+          white-space: nowrap;
+          border-color: rgba(230, 207, 139, 0.16) !important;
+          background: rgba(10, 23, 35, 0.88) !important;
+          color: #c6d7df !important;
+        }
+
+        .luxury-category-bar button[aria-pressed="true"] {
+          background: linear-gradient(135deg, #f5e9c7, #d6ba6b) !important;
+          color: #17130a !important;
+          box-shadow: inset 0 -3px 0 rgba(255, 248, 224, 0.62) !important;
+        }
+
+        .luxury-modal-overlay {
+          background: rgba(2, 6, 11, 0.84) !important;
+          backdrop-filter: blur(15px) saturate(0.88);
+        }
+
+        .luxury-modal,
+        .luxury-dialog {
+          border-color: rgba(230, 207, 139, 0.32) !important;
+          background:
+            linear-gradient(rgba(230, 207, 139, 0.019) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(230, 207, 139, 0.019) 1px, transparent 1px),
+            linear-gradient(145deg, rgba(12, 25, 38, 0.998), rgba(4, 10, 17, 0.998)) !important;
+          background-size: 32px 32px, 32px 32px, auto;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), inset 3px 0 0 rgba(230, 207, 139, 0.14), 0 34px 90px rgba(0, 0, 0, 0.62);
+        }
+
+        .luxury-modal-titlebar {
+          border-color: rgba(230, 207, 139, 0.24) !important;
+          background: linear-gradient(90deg, rgba(230, 207, 139, 0.13), rgba(10, 22, 34, 0.98) 42%, rgba(4, 10, 17, 0.995)) !important;
+        }
+
+        .luxury-modal-titlebar::after {
+          background: linear-gradient(90deg, transparent, rgba(230, 207, 139, 0.74), rgba(245, 233, 199, 0.46), transparent);
+        }
+
+        .product-editor,
+        .product-editor section,
+        .product-editor label,
+        .product-editor div {
+          min-width: 0;
+        }
+
+        .product-editor input,
+        .product-editor textarea {
+          width: 100%;
+          max-width: 100%;
+        }
+
+        .product-editor [data-editor-toolbar="true"] {
+          flex-wrap: wrap;
+        }
+
+        .local-products-workspace .Toastify__toast {
+          border-color: rgba(230, 207, 139, 0.37);
+          background: linear-gradient(145deg, rgba(13, 28, 41, 0.99), rgba(4, 10, 17, 0.998));
+          color: #f5edda;
+          box-shadow: inset 3px 0 0 rgba(230, 207, 139, 0.44), 0 20px 52px rgba(0, 0, 0, 0.46);
+        }
+
+        .local-products-workspace .Toastify__progress-bar {
+          background: linear-gradient(90deg, #8f763d, #e6cf8b, #f5e9c7);
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .local-products-workspace *,
           .local-products-workspace *::before,
@@ -6167,6 +6475,7 @@ export default function LocalProductsPage() {
                         key={category}
                         type="button"
                         data-category-bubble="true"
+                        data-active={isActive}
                         initial={
                           prefersReducedMotion
                             ? { opacity: 0 }
@@ -6242,11 +6551,12 @@ export default function LocalProductsPage() {
 
           <div
             ref={categoryTabsRef}
-            className="luxury-category-bar fixed bottom-0 left-0 right-0 z-bar hidden overflow-x-auto border-t md:flex"
+            className="luxury-category-bar fixed bottom-0 left-0 right-0 z-bar hidden h-[36px] items-stretch overflow-x-auto overflow-y-hidden overscroll-x-contain overscroll-y-none whitespace-nowrap border-t md:flex"
           >
             <button
               type="button"
               data-category-tab="all"
+              aria-pressed={activeCategoryTab === "all"}
               className={`flex h-[35px] shrink-0 items-center justify-center border-r border-[#d8c99f]/10 px-5 text-xs font-black uppercase tracking-[0.08em] transition ${activeCategoryTab === "all"
                 ? "bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a]"
                 : "bg-black/20 text-slate-300 hover:bg-[#d8c99f]/10 hover:text-[#eadfbe]"
@@ -6261,6 +6571,10 @@ export default function LocalProductsPage() {
                 key={category}
                 type="button"
                 data-category-tab={normalizeTextKey(category)}
+                aria-pressed={
+                  normalizeTextKey(activeCategoryTab) ===
+                  normalizeTextKey(category)
+                }
                 className={`flex h-[35px] shrink-0 items-center justify-center border-r border-[#d8c99f]/10 px-5 text-xs font-black uppercase tracking-[0.08em] transition ${normalizeTextKey(activeCategoryTab) ===
                   normalizeTextKey(category)
                   ? "bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a]"
@@ -6664,9 +6978,9 @@ export default function LocalProductsPage() {
 
       {activeModal ? (
         <div className="luxury-modal-overlay fixed inset-0 z-modal flex h-dvh w-full items-center justify-center overflow-hidden p-2 xl:p-8">
-          <div className="luxury-modal h-[calc(100dvh-1rem)] w-full overflow-hidden border xl:h-[calc(100dvh-4rem)]">
-            <div className="luxury-modal-titlebar flex items-center justify-between gap-2 border-b p-2.5">
-              <div className="flex  items-center gap-2">
+          <div className="luxury-modal flex h-[calc(100dvh-1rem)] w-full min-w-0 flex-col overflow-hidden border xl:h-[calc(100dvh-4rem)]">
+            <div className="luxury-modal-titlebar flex min-w-0 shrink-0 items-center justify-between gap-3 border-b p-2.5">
+              <div className="flex min-w-0 items-center gap-2">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-[#d8c99f]/30 bg-[#d8c99f]/[0.07] text-[#eadfbe] [clip-path:polygon(7px_0,100%_0,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,0_100%,0_7px)]">
                   {activeModal === "product" ? (
                     <FiPlus aria-hidden="true" className={iconClassName} />
@@ -6700,7 +7014,7 @@ export default function LocalProductsPage() {
                   ) : null}
                 </div>
 
-                <div className="">
+                <div className="min-w-0">
                   <h2 className="truncate text-xs font-black text-white">
                     {activeModal === "product"
                       ? editingId
@@ -6734,7 +7048,7 @@ export default function LocalProductsPage() {
             </div>
 
             <div
-              className={`h-[calc(92dvh-66px)] bg-[radial-gradient(circle_at_50%_0,rgba(216,201,159,0.035),transparent_36%)] p-2 ${activeModal === "imageAlbum" || activeModal === "productList" ? "overflow-hidden" : "overflow-y-auto"}`}
+              className={`min-h-0 min-w-0 flex-1 overflow-x-hidden bg-[radial-gradient(circle_at_50%_0,rgba(216,201,159,0.035),transparent_36%)] p-2 ${activeModal === "imageAlbum" || activeModal === "productList" || activeModal === "product" ? "overflow-hidden" : "overflow-y-auto"}`}
             >
               {activeModal === "imageDownload" ? (
                 <section className="grid w-full grid-cols-1 gap-3 xl:grid-cols-2">
@@ -7103,13 +7417,13 @@ export default function LocalProductsPage() {
 
               {activeModal === "product" ? (
                 <form
-                  className="flex h-full min-h-0 flex-col overflow-hidden"
+                  className="product-editor flex h-full min-h-0 min-w-0 flex-col overflow-hidden"
                   onSubmit={(event) => void handleSubmit(event)}
                 >
-                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
-                    <div className="grid min-h-full grid-cols-1 gap-2 pb-24 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:pb-2">
-                      <section className="order-2 flex min-h-0 flex-col gap-2 xl:order-1">
-                        <label className="flex flex-col gap-1.5">
+                  <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pr-1">
+                    <div className="grid min-h-full min-w-0 grid-cols-1 items-start gap-3 pb-24 xl:grid-cols-[minmax(320px,0.92fr)_minmax(360px,1.08fr)] xl:pb-2">
+                      <section className="order-2 flex min-h-0 min-w-0 flex-col gap-3 xl:order-1">
+                        <label className="flex min-w-0 flex-col gap-1.5">
                           <span className="text-xs font-bold text-slate-300">
                             Tên sản phẩm
                           </span>
@@ -7118,13 +7432,13 @@ export default function LocalProductsPage() {
                             onChange={(event) =>
                               updateDraftField("name", event.target.value)
                             }
-                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
+                            className="w-full min-w-0 rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
                             placeholder="Dell Latitude 7440 i5 13th"
                           />
                         </label>
 
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                          <label className="flex flex-col gap-1.5">
+                        <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+                          <label className="flex min-w-0 flex-col gap-1.5">
                             <span className="text-xs font-bold text-slate-300">
                               Giá
                             </span>
@@ -7136,12 +7450,12 @@ export default function LocalProductsPage() {
                                   event.target.value,
                                 )
                               }
-                              className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
+                              className="w-full min-w-0 rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
                               placeholder="13tr8"
                             />
                           </label>
 
-                          <label className="flex flex-col gap-1.5">
+                          <label className="flex min-w-0 flex-col gap-1.5">
                             <span className="text-xs font-bold text-slate-300">
                               Danh mục
                             </span>
@@ -7151,7 +7465,7 @@ export default function LocalProductsPage() {
                               onChange={(event) =>
                                 updateDraftField("category", event.target.value)
                               }
-                              className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
+                              className="w-full min-w-0 rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
                               placeholder="Laptop Dell"
                             />
                             <datalist id="local-product-category-options">
@@ -7162,8 +7476,8 @@ export default function LocalProductsPage() {
                           </label>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          <label className="flex flex-col gap-1.5">
+                        <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+                          <label className="flex min-w-0 flex-col gap-1.5">
                             <span className="text-xs font-bold text-slate-300">
                               Pin
                             </span>
@@ -7173,12 +7487,12 @@ export default function LocalProductsPage() {
                               onChange={(event) =>
                                 updateDraftField("pin", event.target.value)
                               }
-                              className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-300/60"
+                              className="w-full min-w-0 rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-300/60"
                               placeholder="8x%, 9x%, New"
                             />
                           </label>
 
-                          <label className="flex flex-col gap-1.5">
+                          <label className="flex min-w-0 flex-col gap-1.5">
                             <span className="text-xs font-bold text-slate-300">
                               Trạng thái
                             </span>
@@ -7188,13 +7502,13 @@ export default function LocalProductsPage() {
                               onChange={(event) =>
                                 updateDraftField("status", event.target.value)
                               }
-                              className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-amber-300/60"
+                              className="w-full min-w-0 rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-amber-300/60"
                               placeholder="Nguyên zin"
                             />
                           </label>
                         </div>
 
-                        <label className="flex min-h-0 flex-col gap-1.5">
+                        <label className="flex min-h-0 min-w-0 flex-col gap-1.5">
                           <span className="text-xs font-bold text-slate-300">
                             Mô tả sản phẩm
                           </span>
@@ -7207,15 +7521,15 @@ export default function LocalProductsPage() {
                               )
                             }
                             rows={8}
-                            className="min-h-[220px] w-full resize-y rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60 sm:min-h-[260px] xl:min-h-[calc(90dvh-260px)] xl:resize-none"
+                            className="min-h-[220px] w-full min-w-0 resize-y rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60 sm:min-h-[260px] xl:min-h-[calc(90dvh-260px)] xl:resize-none"
                             placeholder="Để trống nếu muốn dùng mô tả chung..."
                           />
                         </label>
                       </section>
 
-                      <section className="order-1 flex min-h-0 flex-col gap-2 xl:order-2">
+                      <section className="order-1 flex min-h-0 min-w-0 flex-col gap-3 xl:order-2">
                         <label
-                          className={`cursor-pointer rounded-md border border-dashed p-2 text-center transition ${isDragging
+                          className={`min-w-0 cursor-pointer rounded-md border border-dashed p-3 text-center transition ${isDragging
                             ? "border-cyan-300/80 bg-cyan-300/10"
                             : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
                             }`}
@@ -7229,7 +7543,7 @@ export default function LocalProductsPage() {
                               className={iconClassName}
                             />
                           </div>
-                          <div className="mt-1 text-[11px] leading-4 text-slate-400">
+                          <div className="mt-1 break-words text-[11px] leading-5 text-slate-400">
                             {isProcessingImages
                               ? "Đang xử lý ảnh..."
                               : "Chọn, kéo thả hoặc paste ảnh. Hỗ trợ nhiều ảnh, tự nén JPG."}
@@ -7244,9 +7558,9 @@ export default function LocalProductsPage() {
                         </label>
 
                         {draft.images.length > 0 ? (
-                          <div className="flex min-h-0 flex-col rounded-md border border-white/10 bg-slate-950/70 p-2">
-                            <div className="mb-2 flex items-center justify-between gap-2">
-                              <span className="flex items-center gap-2 text-xs font-black text-white">
+                          <div className="flex min-h-0 min-w-0 flex-col rounded-md border border-white/10 bg-slate-950/70 p-2.5">
+                            <div data-editor-toolbar="true" className="mb-2 flex min-w-0 items-center justify-between gap-2">
+                              <span className="flex min-w-0 items-center gap-2 whitespace-nowrap text-xs font-black text-white">
                                 <FiImage
                                   aria-hidden="true"
                                   className={iconClassName}
@@ -7256,7 +7570,7 @@ export default function LocalProductsPage() {
 
                               <button
                                 type="button"
-                                className="flex items-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-bold text-slate-300 transition hover:bg-slate-700"
+                                className="flex shrink-0 items-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 text-xs font-bold text-slate-300 transition hover:bg-slate-700"
                                 onClick={() => updateDraftField("images", [])}
                               >
                                 <FiTrash2
@@ -7266,7 +7580,7 @@ export default function LocalProductsPage() {
                               </button>
                             </div>
 
-                            <div className="grid max-h-[260px] grid-cols-3 gap-1.5 overflow-y-auto overscroll-contain pr-1 sm:max-h-[320px] sm:grid-cols-4 md:grid-cols-5 xl:max-h-[calc(90dvh-190px)] xl:grid-cols-4 2xl:grid-cols-5">
+                            <div className="grid min-w-0 max-h-[260px] grid-cols-3 gap-1.5 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 sm:max-h-[320px] sm:grid-cols-4 md:grid-cols-5 xl:max-h-[calc(90dvh-190px)] xl:grid-cols-4 2xl:grid-cols-5">
                               {draft.images.map((image, index) => {
                                 const isDraggingImage =
                                   draggingDraftImageId === image.id;
@@ -7346,7 +7660,7 @@ export default function LocalProductsPage() {
                     </div>
                   </div>
 
-                  <div className="shrink-0 border-t border-white/10 bg-slate-950/95 p-2">
+                  <div className="min-w-0 shrink-0 border-t border-white/10 bg-slate-950/95 p-2">
                     <button
                       type="submit"
                       className="flex min-h-9 w-full items-center justify-center gap-2 rounded-md bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200 active:opacity-80"
@@ -9135,9 +9449,9 @@ export default function LocalProductsPage() {
 
   return (
     <>
-      <main className="flex min-h-dvh w-full items-center justify-center bg-[radial-gradient(circle_at_50%_0,rgba(216,201,159,0.12),transparent_32%),linear-gradient(145deg,#07090d,#0b0e14)] p-4 text-slate-100">
-        <section className="w-full max-w-md border border-[#d8c99f]/25 bg-[linear-gradient(145deg,rgba(16,20,27,0.98),rgba(6,8,12,0.99))] p-5 text-center shadow-[0_32px_90px_rgba(0,0,0,0.55)] [clip-path:polygon(12px_0,calc(100%_-_12px)_0,100%_12px,100%_calc(100%_-_12px),calc(100%_-_12px)_100%,12px_100%,0_calc(100%_-_12px),0_12px)]">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center border border-[#f1e5c2]/60 bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a] shadow-[0_12px_32px_rgba(190,164,99,0.22)] [clip-path:polygon(8px_0,100%_0,100%_calc(100%_-_8px),calc(100%_-_8px)_100%,0_100%,0_8px)]">
+      <main className="flex min-h-dvh w-full items-center justify-center bg-[radial-gradient(circle_at_50%_0,rgba(230,207,139,0.15),transparent_34%),linear-gradient(rgba(230,207,139,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(230,207,139,0.025)_1px,transparent_1px),linear-gradient(145deg,#050a11,#0a1520)] bg-[length:auto,32px_32px,32px_32px,auto] p-4 text-slate-100">
+        <section className="w-full max-w-md border border-[#e6cf8b]/35 bg-[linear-gradient(145deg,rgba(14,29,43,0.99),rgba(4,10,17,0.998))] p-5 text-center shadow-[inset_3px_0_0_rgba(230,207,139,0.16),0_32px_90px_rgba(0,0,0,0.6)] [clip-path:polygon(12px_0,calc(100%_-_5px)_0,100%_5px,100%_calc(100%_-_12px),calc(100%_-_12px)_100%,5px_100%,0_calc(100%_-_5px),0_12px)]">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center border border-[#f5e9c7]/75 bg-[linear-gradient(135deg,#f5e9c7,#d6ba6b)] text-[#17130a] shadow-[0_0_22px_rgba(230,207,139,0.24),0_12px_32px_rgba(0,0,0,0.28)] [clip-path:polygon(8px_0,100%_0,100%_calc(100%_-_8px),calc(100%_-_8px)_100%,0_100%,0_8px)]">
             <FiMonitor aria-hidden="true" className="h-5 w-5" />
           </div>
           <h1 className="mt-3 text-sm font-black text-white">
@@ -9149,14 +9463,14 @@ export default function LocalProductsPage() {
           <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <button
               type="button"
-              className="border border-[#f1e5c2]/75 bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] px-3 py-2 text-xs font-black text-[#17130a] transition hover:brightness-105 active:opacity-80 [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)]"
+              className="border border-[#f5e9c7]/80 bg-[linear-gradient(135deg,#f5e9c7,#d6ba6b)] px-3 py-2 text-xs font-black text-[#17130a] shadow-[0_8px_24px_rgba(230,207,139,0.18)] transition hover:brightness-105 active:opacity-80 [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)]"
               onClick={handleFocusPictureInPicture}
             >
               Hiện cửa sổ nổi
             </button>
             <button
               type="button"
-              className="border border-[#d8c99f]/20 bg-white/[0.025] px-3 py-2 text-xs font-black text-slate-200 transition hover:border-[#d8c99f]/40 hover:bg-[#d8c99f]/[0.06] hover:text-[#eadfbe] active:opacity-80 [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)]"
+              className="border border-[#e6cf8b]/30 bg-[#0b1824] px-3 py-2 text-xs font-black text-slate-200 transition hover:border-[#e6cf8b]/55 hover:bg-[#102536] hover:text-[#f1e5c2] active:opacity-80 [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)]"
               onClick={handleClosePictureInPicture}
             >
               Đóng và trở lại tab
