@@ -6695,7 +6695,7 @@ export default function LocalProductsPage() {
                     ? "Đóng cửa sổ nổi và trở lại tab"
                     : "Mở Local Product Manager dạng cửa sổ nổi"
                 }
-                className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName} hidden xl:flex`}
+                className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
                 onClick={() => {
                   if (pictureInPictureWindow) {
                     handleClosePictureInPicture();
