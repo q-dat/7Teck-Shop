@@ -6778,19 +6778,14 @@ export default function LocalProductsPage() {
   };
 
   const executeConfirmSecondary = async (): Promise<void> => {
-    if (
-      !pendingConfirm?.onSecondary ||
-      isConfirmExecuting
-    ) {
-      return;
-    }
+    const onSecondary = pendingConfirm?.onSecondary;
 
-    const request = pendingConfirm;
+    if (!pendingConfirm || !onSecondary || isConfirmExecuting) return;
 
     setIsConfirmExecuting(true);
 
     try {
-      await request.onSecondary();
+      await onSecondary();
       setPendingConfirm(null);
     } catch (error) {
       const message =
@@ -11666,46 +11661,46 @@ export default function LocalProductsPage() {
             </div>
 
             <button
-                type="button"
-                disabled={
-                  isShareExecuting ||
-                  (pendingShare.internalImages?.length ?? 0) === 0
-                }
-                aria-pressed={!includeInternalShareImages}
-                className={`mt-2 flex w-full items-center justify-between gap-3 border p-2.5 text-left transition active:opacity-80 disabled:cursor-wait disabled:opacity-50 ${!includeInternalShareImages
-                  ? "border-rose-300/45 bg-rose-300/10 text-rose-50"
-                  : "border-amber-300/35 bg-amber-300/[0.07] text-amber-50"
+              type="button"
+              disabled={
+                isShareExecuting ||
+                (pendingShare.internalImages?.length ?? 0) === 0
+              }
+              aria-pressed={!includeInternalShareImages}
+              className={`mt-2 flex w-full items-center justify-between gap-3 border p-2.5 text-left transition active:opacity-80 disabled:cursor-wait disabled:opacity-50 ${!includeInternalShareImages
+                ? "border-rose-300/45 bg-rose-300/10 text-rose-50"
+                : "border-amber-300/35 bg-amber-300/[0.07] text-amber-50"
+                }`}
+              onClick={() =>
+                setIncludeInternalShareImages((current) => !current)
+              }
+            >
+              <span className="min-w-0">
+                <span className="block text-xs font-black">
+                  Bỏ qua ảnh nội bộ
+                </span>
+                <span className="mt-0.5 block text-[10px] leading-4 text-slate-400">
+                  Mặc định tải toàn bộ ảnh chính và ảnh nội bộ
+                </span>
+                <span className="mt-0.5 block text-[9px] leading-4 text-slate-500">
+                  Chỉ áp dụng cho các nút chia sẻ và Share Sheet, không thay
+                  đổi tải ảnh Meta của Fanpage hoặc Group
+                </span>
+              </span>
+              <span
+                className={`relative h-5 w-9 shrink-0 border transition ${!includeInternalShareImages
+                  ? "border-rose-200/70 bg-rose-300/40"
+                  : "border-amber-200/50 bg-slate-800"
                   }`}
-                onClick={() =>
-                  setIncludeInternalShareImages((current) => !current)
-                }
+                aria-hidden="true"
               >
-                <span className="min-w-0">
-                  <span className="block text-xs font-black">
-                    Bỏ qua ảnh nội bộ
-                  </span>
-                  <span className="mt-0.5 block text-[10px] leading-4 text-slate-400">
-                    Mặc định tải toàn bộ ảnh chính và ảnh nội bộ
-                  </span>
-                  <span className="mt-0.5 block text-[9px] leading-4 text-slate-500">
-                    Chỉ áp dụng cho các nút chia sẻ và Share Sheet, không thay
-                    đổi tải ảnh Meta của Fanpage hoặc Group
-                  </span>
-                </span>
                 <span
-                  className={`relative h-5 w-9 shrink-0 border transition ${!includeInternalShareImages
-                    ? "border-rose-200/70 bg-rose-300/40"
-                    : "border-amber-200/50 bg-slate-800"
+                  className={`absolute top-0.5 h-3.5 w-3.5 bg-white transition-transform ${!includeInternalShareImages
+                    ? "translate-x-[17px]"
+                    : "translate-x-0.5"
                     }`}
-                  aria-hidden="true"
-                >
-                  <span
-                    className={`absolute top-0.5 h-3.5 w-3.5 bg-white transition-transform ${!includeInternalShareImages
-                      ? "translate-x-[17px]"
-                      : "translate-x-0.5"
-                      }`}
-                  />
-                </span>
+                />
+              </span>
             </button>
 
             <section className="mt-2 border border-[#d8c99f]/20 bg-slate-950/45 p-2">
