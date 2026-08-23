@@ -100,7 +100,6 @@ type FacebookDuplicatePostOption = {
   id: string;
   name: string;
   url: string;
-  facebookPageAssetId: string;
 };
 
 type GlobalSettings = {
@@ -118,7 +117,7 @@ type GlobalSettings = {
 };
 
 type ExportPayload = {
-  version: 12;
+  version: 13;
   settings: GlobalSettings;
   products: LocalProduct[];
   scheduleConfig: ScheduleConfig;
@@ -996,13 +995,6 @@ const normalizeMetaBusinessDuplicateUrl = (value: string): string => {
     const normalizedUrl = new URL(
       "https://business.facebook.com/latest/composer",
     );
-    const sourceAssetId = normalizeFacebookAssetId(
-      url.searchParams.get("asset_id") ?? "",
-    );
-
-    if (sourceAssetId) {
-      normalizedUrl.searchParams.set("asset_id", sourceAssetId);
-    }
 
     normalizedUrl.searchParams.set("business_content_id", businessContentId);
     normalizedUrl.searchParams.set("nav_ref", "internal_nav");
@@ -1028,9 +1020,22 @@ const createMetaBusinessDuplicateUrl = (
 
   if (!normalizedTemplateUrl || !normalizedAssetId) return "";
 
-  const url = new URL(normalizedTemplateUrl);
+  const template = new URL(normalizedTemplateUrl);
+  const businessContentId = normalizeFacebookAssetId(
+    template.searchParams.get("business_content_id") ?? "",
+  );
 
+  if (!businessContentId) return "";
+
+  const url = new URL("https://business.facebook.com/latest/composer");
   url.searchParams.set("asset_id", normalizedAssetId);
+  url.searchParams.set("business_content_id", businessContentId);
+  url.searchParams.set("nav_ref", "internal_nav");
+  url.searchParams.set(
+    "ref",
+    "biz_web_content_manager_duplicate_posts",
+  );
+  url.searchParams.set("context_ref", "POSTS");
 
   return url.toString();
 };
@@ -1043,23 +1048,12 @@ const getFacebookDuplicateContentId = (value: string): string => {
   return new URL(normalizedUrl).searchParams.get("business_content_id") ?? "";
 };
 
-const getFacebookDuplicateAssetId = (value: string): string => {
-  const normalizedUrl = normalizeMetaBusinessDuplicateUrl(value);
-
-  if (!normalizedUrl) return "";
-
-  return normalizeFacebookAssetId(
-    new URL(normalizedUrl).searchParams.get("asset_id") ?? "",
-  );
-};
-
 const normalizeFacebookDuplicatePostOptions = (
   value: unknown,
-  facebookPages: FacebookPageOption[],
 ): FacebookDuplicatePostOption[] => {
   if (!Array.isArray(value)) return [];
 
-  const usedPageContentIds = new Set<string>();
+  const usedBusinessContentIds = new Set<string>();
 
   return value.reduce<FacebookDuplicatePostOption[]>((options, item, index) => {
     if (typeof item !== "object" || item === null) return options;
@@ -1069,16 +1063,6 @@ const normalizeFacebookDuplicatePostOptions = (
       typeof record.url === "string" ? record.url : "",
     );
     const businessContentId = getFacebookDuplicateContentId(url);
-    const explicitFacebookPageAssetId = normalizeFacebookAssetId(
-      typeof record.facebookPageAssetId === "string"
-        ? record.facebookPageAssetId
-        : "",
-    );
-    const facebookPageAssetId =
-      explicitFacebookPageAssetId ||
-      getFacebookDuplicateAssetId(url) ||
-      (facebookPages.length === 1 ? (facebookPages[0]?.assetId ?? "") : "");
-    const pageContentKey = `${facebookPageAssetId}:${businessContentId}`;
     const rawId = typeof record.id === "string" ? record.id.trim() : "";
     const id = rawId || `facebook-duplicate-post-${index + 1}`;
     const name =
@@ -1089,14 +1073,13 @@ const normalizeFacebookDuplicatePostOptions = (
     if (
       !url ||
       !businessContentId ||
-      !facebookPageAssetId ||
-      usedPageContentIds.has(pageContentKey)
+      usedBusinessContentIds.has(businessContentId)
     ) {
       return options;
     }
 
-    usedPageContentIds.add(pageContentKey);
-    options.push({ id, name, url, facebookPageAssetId });
+    usedBusinessContentIds.add(businessContentId);
+    options.push({ id, name, url });
 
     return options;
   }, []);
@@ -1222,7 +1205,6 @@ const loadGlobalSettings = (): GlobalSettings => {
         : (facebookPages[0]?.id ?? "");
     const facebookDuplicatePosts = normalizeFacebookDuplicatePostOptions(
       record.facebookDuplicatePosts,
-      facebookPages,
     );
     const facebookGroups = normalizeFacebookGroupOptions(
       record.facebookGroups,
@@ -1788,7 +1770,6 @@ const normalizeGlobalSettings = (
       : (facebookPages[0]?.id ?? "");
   const facebookDuplicatePosts = normalizeFacebookDuplicatePostOptions(
     record.facebookDuplicatePosts,
-    facebookPages,
   );
   const facebookGroups = normalizeFacebookGroupOptions(record.facebookGroups);
   const selectedFacebookGroupIds = normalizeSelectedFacebookGroupIds(
@@ -2335,7 +2316,7 @@ const createExportPayload = (params: {
   postedRecords: PostedRecord[];
 }): ExportPayload => {
   return {
-    version: 12,
+    version: 13,
     settings: params.settings,
     products: params.products,
     scheduleConfig: params.scheduleConfig,
@@ -2895,16 +2876,7 @@ export default function LocalProductsPage() {
       ) ?? null,
     [settings.facebookPages, settings.selectedFacebookPageOptionId],
   );
-  const activeFacebookDuplicatePosts = useMemo(
-    () => {
-      if (!activeFacebookPage) return [];
-
-      return settings.facebookDuplicatePosts.filter(
-        (option) =>
-          option.facebookPageAssetId === activeFacebookPage.assetId,
-      );
-    }, [activeFacebookPage, settings.facebookDuplicatePosts],
-  );
+  const facebookDuplicatePostTemplates = settings.facebookDuplicatePosts;
   const selectedFacebookGroups = useMemo(
     () => {
       const selectedIds = new Set(settings.selectedFacebookGroupIds);
@@ -4077,11 +4049,6 @@ export default function LocalProductsPage() {
   };
 
   const addFacebookDuplicatePostOption = (): void => {
-    if (!activeFacebookPage) {
-      Toastify("Chưa chọn Fanpage", 300);
-      return;
-    }
-
     const url = normalizeMetaBusinessDuplicateUrl(facebookDuplicateUrlDraft);
 
     if (!url) {
@@ -4095,7 +4062,6 @@ export default function LocalProductsPage() {
     const businessContentId = getFacebookDuplicateContentId(url);
     const existingOption = settings.facebookDuplicatePosts.find(
       (option) =>
-        option.facebookPageAssetId === activeFacebookPage.assetId &&
         getFacebookDuplicateContentId(option.url) === businessContentId,
     );
 
@@ -4108,9 +4074,8 @@ export default function LocalProductsPage() {
       id: crypto.randomUUID(),
       name:
         facebookDuplicateNameDraft.trim() ||
-        `Bản sao ${activeFacebookDuplicatePosts.length + 1}`,
+        `Bản sao ${facebookDuplicatePostTemplates.length + 1}`,
       url,
-      facebookPageAssetId: activeFacebookPage.assetId,
     };
 
     setSettings((current) => ({
@@ -4148,11 +4113,6 @@ export default function LocalProductsPage() {
   ): string => {
     if (!activeFacebookPage) {
       Toastify("Chưa chọn Fanpage", 300);
-      return "";
-    }
-
-    if (option.facebookPageAssetId !== activeFacebookPage.assetId) {
-      Toastify("URL không thuộc Fanpage đang chọn", 300);
       return "";
     }
 
@@ -10348,7 +10308,7 @@ export default function LocalProductsPage() {
                           Fanpage đích
                         </h3>
                         <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                          Asset ID của Fanpage được chèn vào URL Composer và URL nhân bản.
+                          Fanpage đang chọn cung cấp Asset ID cho mọi mẫu bài viết dùng chung.
                         </p>
                       </div>
                       <span className="shrink-0 border border-[#d8c99f]/30 bg-[#d8c99f]/10 px-2 py-1 text-[9px] font-black text-[#eadfbe]">
@@ -10459,7 +10419,7 @@ export default function LocalProductsPage() {
                             Thêm mẫu bài viết
                           </h3>
                           <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                            Dán URL chuẩn từ chức năng nhân bản bài viết của Meta Business.
+                            URL được lưu thành mẫu dùng chung. Asset ID được lấy từ Fanpage đang chọn khi Copy hoặc Mở.
                           </p>
                         </div>
                         <span className="shrink-0 border border-amber-200/30 bg-amber-200/10 px-2 py-1 text-[9px] font-black text-amber-100">
@@ -10486,7 +10446,7 @@ export default function LocalProductsPage() {
 
                         <label className="grid min-w-0 gap-1">
                           <span className="text-[9px] font-black text-slate-300">
-                            URL nhân bản chuẩn
+                            URL mẫu từ Meta Business
                           </span>
                           <input
                             type="url"
@@ -10520,17 +10480,17 @@ export default function LocalProductsPage() {
                             URL nhân bản đã lưu
                           </h3>
                           <p className="mt-0.5 text-[9px] text-slate-500">
-                            Chỉ hiện URL thuộc Fanpage đang chọn.
+                            Mọi mẫu đều dùng được với Fanpage đang chọn.
                           </p>
                         </div>
                         <span className="shrink-0 border border-white/10 bg-white/[0.04] px-2 py-1 text-[9px] font-black text-slate-300">
-                          {activeFacebookDuplicatePosts.length} mẫu
+                          {facebookDuplicatePostTemplates.length} mẫu
                         </span>
                       </div>
 
-                      {activeFacebookDuplicatePosts.length > 0 ? (
+                      {facebookDuplicatePostTemplates.length > 0 ? (
                         <div className="mt-2 max-h-[52dvh] space-y-1.5 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
-                          {activeFacebookDuplicatePosts.map(
+                          {facebookDuplicatePostTemplates.map(
                             (option, index) => (
                               <div
                                 key={option.id}
@@ -10553,7 +10513,12 @@ export default function LocalProductsPage() {
                                     aria-label={`Tên URL nhân bản ${index + 1}`}
                                   />
                                   <p className="mt-1 truncate font-mono text-[8px] text-slate-400">
-                                    {option.url}
+                                    {activeFacebookPage
+                                      ? createMetaBusinessDuplicateUrl(
+                                        option.url,
+                                        activeFacebookPage.assetId,
+                                      )
+                                      : option.url}
                                   </p>
                                   <p className="mt-0.5 truncate font-mono text-[8px] text-slate-600">
                                     ID: {getFacebookDuplicateContentId(option.url)}
@@ -10603,7 +10568,7 @@ export default function LocalProductsPage() {
                         </div>
                       ) : (
                         <p className="mt-2 border border-dashed border-white/10 bg-black/20 p-4 text-center text-[10px] leading-5 text-slate-500">
-                          Fanpage đang chọn chưa có URL nhân bản. Thêm tên bài viết và URL có business_content_id để sử dụng lại.
+                          Chưa có mẫu nhân bản. Thêm tên bài viết và URL có business_content_id để dùng chung cho các Fanpage.
                         </p>
                       )}
                     </article>
