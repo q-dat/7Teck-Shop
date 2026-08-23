@@ -379,7 +379,7 @@ const productActionButtonBaseClassName =
   "group relative flex min-h-7 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border px-1.5 py-1 text-[9px] font-black tracking-[0.025em] [clip-path:polygon(6px_0,calc(100%_-_6px)_0,100%_6px,100%_calc(100%_-_6px),calc(100%_-_6px)_100%,6px_100%,0_calc(100%_-_6px),0_6px)] transition-[color,background-color,border-color,transform,box-shadow,filter] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8c99f]/[0.45] active:scale-[0.97] active:brightness-95";
 
 const headerActionButtonBaseClassName =
-  "group relative flex min-h-5 cursor-pointer items-center justify-start gap-1 overflow-hidden whitespace-nowrap border p-1.5 text-[10px] font-semibold [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)] transition-[color,background-color,border-color,transform,box-shadow,filter] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8c99f]/[0.45] active:scale-[0.97] active:brightness-95 xl:justify-center";
+  "group relative flex min-h-5 cursor-pointer items-center justify-start gap-1 overflow-hidden whitespace-nowrap border p-1.5 text-[10px] font-semibold [clip-path:polygon(7px_0,calc(100%_-_7px)_0,100%_7px,100%_calc(100%_-_7px),calc(100%_-_7px)_100%,7px_100%,0_calc(100%_-_7px),0_7px)] transition-[color,background-color,border-color,transform,box-shadow,filter] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8c99f]/[0.45] active:scale-[0.97] active:brightness-95 xl:min-w-0 xl:w-full xl:justify-center";
 
 const headerNeutralButtonClassName =
   "border-white/[0.07] bg-[linear-gradient(145deg,rgba(255,255,255,0.035),rgba(255,255,255,0.012))] text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] hover:-translate-y-px hover:border-[#d8c99f]/40 hover:bg-[#d8c99f]/[0.075] hover:text-[#f3e7c6] hover:shadow-[0_8px_20px_rgba(0,0,0,0.26)]";
@@ -7703,35 +7703,35 @@ export default function LocalProductsPage() {
             className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#d8c99f]/[0.55] to-transparent"
           />
 
-          <div className="relative grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-            <div className="grid min-w-0 grid-cols-4 divide-x divide-[#d8c99f]/10 overflow-hidden border border-[#d8c99f]/[0.15] bg-[linear-gradient(135deg,rgba(216,201,159,0.055),rgba(255,255,255,0.012))] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] xl:w-fit">
-              <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500">
-                <span className="font-bold tabular-nums text-[#d8c99f]">
+          <div className="relative grid grid-cols-1 gap-2 w-full xl:flex xl:flex-col xl:items-stretch xl:gap-1.5 xl:p-2">
+            <div className="grid min-w-0 grid-cols-4 divide-x divide-[#d8c99f]/10 overflow-hidden border border-[#d8c99f]/[0.15] bg-[linear-gradient(135deg,rgba(216,201,159,0.055),rgba(255,255,255,0.012))] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] xl:hidden">
+              <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500 xl:min-h-8 xl:justify-between xl:border-l xl:border-[#d8c99f]/20 xl:bg-black/20 xl:px-3 xl:py-2 xl:text-[8px] xl:font-bold xl:uppercase xl:tracking-[0.08em] xl:text-slate-400">
+                <span className="font-bold tabular-nums text-[#d8c99f] xl:text-xs xl:font-black">
                   {activeProductCount}
                 </span>
                 đang bán
               </span>
-              <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500">
-                <span className="font-bold tabular-nums text-[#d8c99f]">
+              <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500 xl:min-h-8 xl:justify-between xl:border-l xl:border-[#d8c99f]/20 xl:bg-black/20 xl:px-3 xl:py-2 xl:text-[8px] xl:font-bold xl:uppercase xl:tracking-[0.08em] xl:text-slate-400">
+                <span className="font-bold tabular-nums text-[#d8c99f] xl:text-xs xl:font-black">
                   {soldProductCount}
                 </span>
                 đã bán
               </span>
-              <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500">
-                <span className="font-bold tabular-nums text-[#d8c99f]">
+              <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500 xl:min-h-8 xl:justify-between xl:border-l xl:border-[#d8c99f]/20 xl:bg-black/20 xl:px-3 xl:py-2 xl:text-[8px] xl:font-bold xl:uppercase xl:tracking-[0.08em] xl:text-slate-400">
+                <span className="font-bold tabular-nums text-[#d8c99f] xl:text-xs xl:font-black">
                   {totalImages}
                 </span>
                 ảnh
               </span>
-              <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500">
-                <span className="font-bold tabular-nums text-[#d8c99f]">
+              <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500 xl:min-h-8 xl:justify-between xl:border-l xl:border-r xl:border-[#d8c99f]/20 xl:bg-black/20 xl:px-3 xl:py-2 xl:text-[8px] xl:font-bold xl:uppercase xl:tracking-[0.08em] xl:text-slate-400">
+                <span className="font-bold tabular-nums text-[#d8c99f] xl:text-xs xl:font-black">
                   {postedTodayCount}/{totalTodayTaskCount}
                 </span>
                 đã đăng
               </span>
             </div>
 
-            <div className="grid grid-cols-4 gap-1 border border-[#d8c99f]/10 bg-black/25 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] xl:min-w-[1300px] xl:grid-cols-[repeat(14,minmax(0,1fr))]">
+            <div className="grid grid-cols-4 gap-1 border border-[#d8c99f]/10 bg-black/25 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] xl:w-full xl:max-w-[1220px] xl:self-end xl:grid-cols-[repeat(14,minmax(0,1fr))] xl:border-[#d8c99f]/[0.16] xl:bg-[linear-gradient(90deg,rgba(255,255,255,0.015),rgba(216,201,159,0.045))] xl:p-1.5 xl:shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_12px_30px_rgba(0,0,0,0.2)]">
               <button
                 type="button"
                 data-luxury-accent="gold"
@@ -8084,6 +8084,33 @@ export default function LocalProductsPage() {
             >
               {isMobileCategoryMenuOpen ? "Đóng" : "Danh mục"}
             </motion.button>
+          </div>
+
+          <div className="fixed bottom-[36px] left-0 z-bar hidden h-[26px] w-fit items-stretch overflow-hidden border border-[#d8c99f]/25 bg-[linear-gradient(90deg,rgba(216,201,159,0.1),rgba(6,13,21,0.97))] shadow-[0_-8px_24px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:flex">
+            <span className="flex items-center gap-1 border-r border-[#d8c99f]/15 px-2 text-[7px] font-bold uppercase tracking-[0.03em] text-slate-400">
+              <span className="text-[9px] font-black tabular-nums text-[#d8c99f]">
+                {activeProductCount}
+              </span>
+              đang bán
+            </span>
+            <span className="flex items-center gap-1 border-r border-[#d8c99f]/15 px-2 text-[7px] font-bold uppercase tracking-[0.03em] text-slate-400">
+              <span className="text-[9px] font-black tabular-nums text-[#d8c99f]">
+                {soldProductCount}
+              </span>
+              đã bán
+            </span>
+            <span className="flex items-center gap-1 border-r border-[#d8c99f]/15 px-2 text-[7px] font-bold uppercase tracking-[0.03em] text-slate-400">
+              <span className="text-[9px] font-black tabular-nums text-[#d8c99f]">
+                {totalImages}
+              </span>
+              ảnh
+            </span>
+            <span className="flex items-center gap-1 px-2 text-[7px] font-bold uppercase tracking-[0.03em] text-slate-400">
+              <span className="text-[9px] font-black tabular-nums text-[#d8c99f]">
+                {postedTodayCount}/{totalTodayTaskCount}
+              </span>
+              đã đăng
+            </span>
           </div>
 
           <div
