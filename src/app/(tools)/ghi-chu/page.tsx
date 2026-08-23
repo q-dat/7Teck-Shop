@@ -148,9 +148,11 @@ type ConfirmRequest = {
   description: string;
   confirmLabel: string;
   cancelLabel?: string;
+  secondaryLabel?: string;
   tone?: ConfirmTone;
   onConfirm: () => void | Promise<void>;
   onCancel?: () => void;
+  onSecondary?: () => void | Promise<void>;
 };
 
 type BlobUploadRequest = {
@@ -210,6 +212,7 @@ type PostedRecord = {
 type ScheduleAssignmentMap = Record<string, string>;
 
 type AlbumSource = {
+  productId: string;
   title: string;
   description: string;
   priceText: string;
@@ -268,6 +271,7 @@ type ShareContentMode = "post" | "comment" | "imagesOnly";
 type ShareDialogStep = "share" | "facebookGroup";
 
 type ShareRequest = {
+  productId: string;
   title: string;
   images: ProductImage[];
   internalImages?: ProductImage[];
@@ -319,11 +323,48 @@ const SETTINGS_KEY = "local_product_global_settings";
 const POSTED_KEY = "local_product_posted_slots_v1";
 const SCHEDULE_CONFIG_KEY = "local_product_schedule_config_v1";
 const SCHEDULE_ASSIGNMENTS_KEY = "local_product_schedule_assignments_v1";
+const META_DOWNLOADED_PRODUCT_IDS_SESSION_KEY =
+  "local_product_meta_downloaded_product_ids_v1";
 const FACEBOOK_SEARCH_BASE_URL = "https://www.facebook.com/search/top";
 const FACEBOOK_RECENT_POSTS_FILTER =
   "eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0=";
 const DEFAULT_FACEBOOK_SEARCH_QUERY = "";
 const FACEBOOK_SEARCH_POPUP_COUNT = 4;
+
+const loadMetaDownloadedProductIds = (): Set<string> => {
+  if (typeof window === "undefined") return new Set<string>();
+
+  try {
+    const raw = window.sessionStorage.getItem(
+      META_DOWNLOADED_PRODUCT_IDS_SESSION_KEY,
+    );
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+
+    if (!Array.isArray(parsed)) return new Set<string>();
+
+    return new Set(
+      parsed.filter(
+        (value): value is string =>
+          typeof value === "string" && value.trim().length > 0,
+      ),
+    );
+  } catch {
+    return new Set<string>();
+  }
+};
+
+const saveMetaDownloadedProductIds = (productIds: Set<string>): void => {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.sessionStorage.setItem(
+      META_DOWNLOADED_PRODUCT_IDS_SESSION_KEY,
+      JSON.stringify(Array.from(productIds)),
+    );
+  } catch {
+    return;
+  }
+};
 
 const createFacebookRecentPostsSearchUrl = (query: string): string => {
   const searchUrl = new URL(FACEBOOK_SEARCH_BASE_URL);
@@ -2818,8 +2859,11 @@ export default function LocalProductsPage() {
   const [pendingDownload, setPendingDownload] =
     useState<DownloadRequest | null>(null);
   const [pendingShare, setPendingShare] = useState<ShareRequest | null>(null);
+  const [metaDownloadedProductIds, setMetaDownloadedProductIds] = useState<
+    Set<string>
+  >(() => new Set<string>());
   const [includeInternalShareImages, setIncludeInternalShareImages] =
-    useState<boolean>(false);
+    useState<boolean>(true);
   const [skipInternalDownloadImages, setSkipInternalDownloadImages] =
     useState<boolean>(false);
   const [shareDialogStep, setShareDialogStep] =
@@ -2864,6 +2908,10 @@ export default function LocalProductsPage() {
   );
   const [pictureInPictureWindow, setPictureInPictureWindow] =
     useState<Window | null>(null);
+
+  useEffect(() => {
+    setMetaDownloadedProductIds(loadMetaDownloadedProductIds());
+  }, []);
 
   const activeContactText = useMemo(
     () => getSelectedContactText(settings),
@@ -3717,6 +3765,14 @@ export default function LocalProductsPage() {
         return;
       }
 
+      if (pendingConfirm) {
+        if (!isConfirmExecuting) {
+          pendingConfirm.onCancel?.();
+          setPendingConfirm(null);
+        }
+        return;
+      }
+
       if (pendingShare) {
         if (!isShareExecuting) {
           if (shareDialogStep === "facebookGroup") {
@@ -3725,7 +3781,7 @@ export default function LocalProductsPage() {
           }
 
           setPendingShare(null);
-          setIncludeInternalShareImages(false);
+          setIncludeInternalShareImages(true);
           setFacebookGroupActiveIndex(0);
         }
         return;
@@ -3733,14 +3789,6 @@ export default function LocalProductsPage() {
 
       if (pendingBackup) {
         if (!isBackupSaving) setPendingBackup(null);
-        return;
-      }
-
-      if (pendingConfirm) {
-        if (!isConfirmExecuting) {
-          pendingConfirm.onCancel?.();
-          setPendingConfirm(null);
-        }
         return;
       }
 
@@ -4330,7 +4378,7 @@ export default function LocalProductsPage() {
     setPendingDownload(null);
     setSkipInternalDownloadImages(false);
     setPendingShare(null);
-    setIncludeInternalShareImages(false);
+    setIncludeInternalShareImages(true);
     setShareDialogStep("share");
     setFacebookPageNameDraft("");
     setFacebookPageAssetIdDraft("");
@@ -5364,9 +5412,10 @@ export default function LocalProductsPage() {
       product.description.trim() || settings.commonDescription.trim();
 
     setShareDialogStep("share");
-    setIncludeInternalShareImages(false);
+    setIncludeInternalShareImages(true);
     setFacebookGroupActiveIndex(0);
     setPendingShare({
+      productId: product.id,
       title: product.name,
       images: product.images,
       internalImages: product.internalImages,
@@ -5398,9 +5447,10 @@ export default function LocalProductsPage() {
     }
 
     setShareDialogStep("share");
-    setIncludeInternalShareImages(false);
+    setIncludeInternalShareImages(true);
     setFacebookGroupActiveIndex(0);
     setPendingShare({
+      productId: albumSource.productId,
       title: albumSource.title,
       images: selectedImages,
       internalImages: albumSource.internalImages ?? [],
@@ -5411,7 +5461,7 @@ export default function LocalProductsPage() {
         albumSource.priceText,
         "",
       ),
-      shareKey: "album-share-selected",
+      shareKey: `album-share-selected-${albumSource.productId}`,
       successMessage: "Đã mở bảng chia sẻ ảnh",
     });
   };
@@ -5433,9 +5483,138 @@ export default function LocalProductsPage() {
       );
   };
 
-  const handleOpenMetaBusinessComposer = async (
+  const queueMetaComposerImageDownloads = (images: ProductImage[]): void => {
+    const interactionWindow = getActiveInteractionWindow();
+
+    images.forEach((image, index) => {
+      interactionWindow.setTimeout(() => {
+        void downloadImageAsJpg(image, index).catch(() => undefined);
+      }, index * 180);
+    });
+  };
+
+  const markMetaProductImagesDownloaded = (productId: string): void => {
+    if (!productId) return;
+
+    const nextProductIds = loadMetaDownloadedProductIds();
+
+    nextProductIds.add(productId);
+    saveMetaDownloadedProductIds(nextProductIds);
+    setMetaDownloadedProductIds(nextProductIds);
+  };
+
+  const prepareMetaImageDownload = (
+    request: ShareRequest,
+    shouldDownload: boolean,
+  ): string => {
+    if (!shouldDownload) return "không tải lại ảnh";
+    if (request.images.length === 0) return "không có ảnh chính để tải";
+
+    queueMetaComposerImageDownloads(request.images);
+    markMetaProductImagesDownloaded(request.productId);
+
+    return `đang tải ${request.images.length} ảnh chính`;
+  };
+
+  const requestMetaImageDownloadDecision = (
+    request: ShareRequest,
+    onDecision: (shouldDownload: boolean) => void | Promise<void>,
+  ): void => {
+    const downloadedProductIds = loadMetaDownloadedProductIds();
+    const wasDownloaded =
+      metaDownloadedProductIds.has(request.productId) ||
+      downloadedProductIds.has(request.productId);
+
+    if (!wasDownloaded) {
+      void onDecision(true);
+      return;
+    }
+
+    requestConfirm({
+      title: "Ảnh đã được đánh dấu tải về",
+      description: `${request.title} đã tải ảnh chính trong phiên này. Có thể tiếp tục mà không tải hoặc tải lại ảnh.`,
+      cancelLabel: "Hủy",
+      confirmLabel: "Đồng ý, không tải lại",
+      secondaryLabel: "Vẫn tải lại ảnh",
+      tone: "warning",
+      onConfirm: () => onDecision(false),
+      onSecondary: () => onDecision(true),
+    });
+  };
+
+  const executeOpenMetaBusinessComposer = async (
+    request: ShareRequest,
+    page: FacebookPageOption,
     mode: Exclude<ShareContentMode, "imagesOnly">,
+    shouldDownload: boolean,
   ): Promise<void> => {
+    const composerUrl = createMetaBusinessComposerUrl(page.assetId);
+
+    if (!composerUrl) {
+      Toastify("Asset ID của Fanpage không hợp lệ", 400);
+      return;
+    }
+
+    const textValue = getShareRequestText(request, mode);
+    const copyPromise = textValue
+      ? copyText(textValue).then(
+        () => true,
+        () => false,
+      )
+      : Promise.resolve(false);
+
+    setIsShareExecuting(true);
+    const imageDownloadLabel = prepareMetaImageDownload(
+      request,
+      shouldDownload,
+    );
+
+    const composerWindow = openFacebookPopupWindow(
+      composerUrl,
+      `composer-${page.id}`,
+    );
+
+    if (!composerWindow) {
+      const copiedToClipboard = await copyPromise;
+
+      Toastify(
+        copiedToClipboard
+          ? `Đã copy nội dung, ${imageDownloadLabel}; trình duyệt đã chặn cửa sổ Meta Business`
+          : `${imageDownloadLabel}; trình duyệt đã chặn cửa sổ Meta Business`,
+        copiedToClipboard ? 300 : 400,
+      );
+      setIsShareExecuting(false);
+      return;
+    }
+
+    composerWindow.opener = null;
+    composerWindow.focus();
+
+    const copiedToClipboard = await copyPromise;
+    const contentLabel = mode === "post" ? "Post" : "Cmt";
+
+    if (copiedToClipboard) {
+      setCopiedKey(request.shareKey);
+      Toastify(
+        `Đã copy ${contentLabel}, ${imageDownloadLabel} và mở ${page.name}`,
+        200,
+      );
+    } else {
+      Toastify(
+        `${imageDownloadLabel} và đã mở ${page.name}, nhưng không thể tự động copy nội dung`,
+        300,
+      );
+    }
+
+    setPendingShare(null);
+    setIncludeInternalShareImages(true);
+    setShareDialogStep("share");
+    setIsShareExecuting(false);
+  };
+
+  const handleOpenMetaBusinessComposer = (
+    mode: Exclude<ShareContentMode, "imagesOnly">,
+  ): void => {
     if (!pendingShare || isShareExecuting) return;
 
     if (!activeFacebookPage) {
@@ -5443,82 +5622,39 @@ export default function LocalProductsPage() {
       return;
     }
 
-    const composerUrl = createMetaBusinessComposerUrl(
-      activeFacebookPage.assetId,
+    const request = pendingShare;
+    const page = activeFacebookPage;
+
+    requestMetaImageDownloadDecision(request, (shouldDownload) =>
+      executeOpenMetaBusinessComposer(
+        request,
+        page,
+        mode,
+        shouldDownload,
+      ),
     );
-
-    if (!composerUrl) {
-      Toastify("Asset ID của Fanpage không hợp lệ", 400);
-      return;
-    }
-
-    const textValue = getShareRequestText(pendingShare, mode);
-    const copyPromise = textValue
-      ? copyText(textValue).then(
-        () => true,
-        () => false,
-      )
-      : Promise.resolve(false);
-    const composerWindow = openFacebookPopupWindow(
-      composerUrl,
-      `composer-${activeFacebookPage.id}`,
-    );
-
-    if (!composerWindow) {
-      Toastify("Trình duyệt đã chặn cửa sổ Meta Business", 400);
-      return;
-    }
-
-    composerWindow.opener = null;
-    composerWindow.focus();
-    setIsShareExecuting(true);
-
-    const copiedToClipboard = await copyPromise;
-    const contentLabel = mode === "post" ? "Post" : "Cmt";
-
-    if (copiedToClipboard) {
-      setCopiedKey(pendingShare.shareKey);
-      Toastify(
-        `Đã copy ${contentLabel} và mở ${activeFacebookPage.name}`,
-        200,
-      );
-    } else {
-      Toastify(
-        `Đã mở ${activeFacebookPage.name} nhưng không thể tự động copy nội dung`,
-        300,
-      );
-    }
-
-    setPendingShare(null);
-    setIncludeInternalShareImages(false);
-    setShareDialogStep("share");
-    setIsShareExecuting(false);
   };
 
-  const handleOpenFacebookGroup = async (
+  const executeOpenFacebookGroup = async (
+    request: ShareRequest,
+    group: FacebookGroupOption,
     groupIndex: number,
     mode: Exclude<ShareContentMode, "imagesOnly">,
+    shouldDownload: boolean,
   ): Promise<void> => {
-    if (!pendingShare || isShareExecuting) return;
-
-    if (selectedFacebookGroups.length === 0) {
-      Toastify("Chưa chọn Group Facebook", 300);
-      return;
-    }
-
-    const group = selectedFacebookGroups[groupIndex];
-
-    if (!group) return;
-
-    setFacebookGroupActiveIndex(groupIndex);
-
-    const textValue = getShareRequestText(pendingShare, mode);
+    const textValue = getShareRequestText(request, mode);
     const copyPromise = textValue
       ? copyText(textValue).then(
         () => true,
         () => false,
       )
       : Promise.resolve(false);
+
+    setIsShareExecuting(true);
+    const imageDownloadLabel = prepareMetaImageDownload(
+      request,
+      shouldDownload,
+    );
     const groupWindow = openFacebookPopupWindow(group.url, group.id);
 
     if (!groupWindow) {
@@ -5526,35 +5662,62 @@ export default function LocalProductsPage() {
 
       Toastify(
         copiedToClipboard
-          ? "Trình duyệt đã chặn popup Group, nội dung vẫn được copy"
-          : "Trình duyệt đã chặn popup Group",
+          ? `Đã copy nội dung, ${imageDownloadLabel}; trình duyệt đã chặn popup Group`
+          : `${imageDownloadLabel}; trình duyệt đã chặn popup Group`,
         copiedToClipboard ? 300 : 400,
       );
+      setIsShareExecuting(false);
       return;
     }
 
     groupWindow.opener = null;
     groupWindow.focus();
-    setIsShareExecuting(true);
 
     const copiedToClipboard = await copyPromise;
     const contentLabel = mode === "post" ? "Post" : "Cmt";
     const groupLabel = group.name.trim() || `Group ${groupIndex + 1}`;
 
     if (copiedToClipboard) {
-      setCopiedKey(pendingShare.shareKey);
+      setCopiedKey(request.shareKey);
       Toastify(
-        `Đã copy ${contentLabel} và mở ${groupLabel}`,
+        `Đã copy ${contentLabel}, ${imageDownloadLabel} và mở ${groupLabel}`,
         200,
       );
     } else {
       Toastify(
-        `Đã mở ${groupLabel} nhưng không thể tự động copy nội dung`,
+        `${imageDownloadLabel} và đã mở ${groupLabel}, nhưng không thể tự động copy nội dung`,
         300,
       );
     }
 
     setIsShareExecuting(false);
+  };
+
+  const handleOpenFacebookGroup = (
+    groupIndex: number,
+    mode: Exclude<ShareContentMode, "imagesOnly">,
+  ): void => {
+    if (!pendingShare || isShareExecuting) return;
+
+    const group = selectedFacebookGroups[groupIndex];
+
+    if (!group) {
+      Toastify("Chưa chọn Group Facebook", 300);
+      return;
+    }
+
+    const request = pendingShare;
+
+    setFacebookGroupActiveIndex(groupIndex);
+    requestMetaImageDownloadDecision(request, (shouldDownload) =>
+      executeOpenFacebookGroup(
+        request,
+        group,
+        groupIndex,
+        mode,
+        shouldDownload,
+      ),
+    );
   };
 
   const getShareRequestImages = (request: ShareRequest): ProductImage[] => {
@@ -5832,7 +5995,7 @@ export default function LocalProductsPage() {
       Toastify("Không thể chia sẻ hoặc copy nội dung", 400);
     } finally {
       setPendingShare(null);
-      setIncludeInternalShareImages(false);
+      setIncludeInternalShareImages(true);
       setShareDialogStep("share");
       setFacebookGroupActiveIndex(0);
       setIsShareExecuting(false);
@@ -6604,6 +6767,30 @@ export default function LocalProductsPage() {
 
     try {
       await request.onConfirm();
+      setPendingConfirm(null);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Không thể thực hiện thao tác";
+      Toastify(message, 400);
+    } finally {
+      setIsConfirmExecuting(false);
+    }
+  };
+
+  const executeConfirmSecondary = async (): Promise<void> => {
+    if (
+      !pendingConfirm?.onSecondary ||
+      isConfirmExecuting
+    ) {
+      return;
+    }
+
+    const request = pendingConfirm;
+
+    setIsConfirmExecuting(true);
+
+    try {
+      await request.onSecondary();
       setPendingConfirm(null);
     } catch (error) {
       const message =
@@ -8130,6 +8317,8 @@ export default function LocalProductsPage() {
                   const productDone = product.isDone;
                   const pinText = product.pin.trim();
                   const statusText = product.status.trim();
+                  const metaImagesDownloaded =
+                    metaDownloadedProductIds.has(product.id);
 
                   return (
                     <article
@@ -8157,6 +8346,7 @@ export default function LocalProductsPage() {
                         onClick={(event) => {
                           event.stopPropagation();
                           openImageAlbum({
+                            productId: product.id,
                             title: product.name,
                             description: descriptionPreview,
                             priceText: product.priceText,
@@ -8185,6 +8375,15 @@ export default function LocalProductsPage() {
                           <FiImage aria-hidden="true" className={iconClassName} />
                           {product.images.length}
                         </div>
+
+                        {metaImagesDownloaded ? (
+                          <span
+                            title="Ảnh đã được đánh dấu tải về trong phiên này"
+                            className="absolute left-2 top-9 z-10 border border-emerald-200/35 bg-emerald-300/15 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.08em] text-emerald-100 backdrop-blur-md [clip-path:polygon(5px_0,100%_0,100%_calc(100%_-_5px),calc(100%_-_5px)_100%,0_100%,0_5px)]"
+                          >
+                            Ảnh đã tải
+                          </span>
+                        ) : null}
 
                         <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
                           {pinText ? (
@@ -9644,6 +9843,7 @@ export default function LocalProductsPage() {
                                         onClick={() =>
                                           assignedProduct
                                             ? openImageAlbum({
+                                              productId: assignedProduct.id,
                                               title: assignedProduct.name,
                                               description:
                                                 assignedProduct.description.trim() ||
@@ -9815,6 +10015,7 @@ export default function LocalProductsPage() {
                                   onClick={(event) => {
                                     event.stopPropagation();
                                     openImageAlbum({
+                                      productId: product.id,
                                       title: product.name,
                                       description:
                                         product.description.trim() ||
@@ -10708,6 +10909,7 @@ export default function LocalProductsPage() {
                         className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-md bg-slate-900"
                         onClick={() =>
                           openImageAlbum({
+                            productId: selectedAssignedSlot.product.id,
                             title: selectedAssignedSlot.product.name,
                             description: selectedAssignedSlot.description,
                             priceText: selectedAssignedSlot.product.priceText,
@@ -10743,6 +10945,7 @@ export default function LocalProductsPage() {
                                 className="aspect-square overflow-hidden rounded-md bg-slate-900   transition "
                                 onClick={() =>
                                   openImageAlbum({
+                                    productId: selectedAssignedSlot.product.id,
                                     title: selectedAssignedSlot.product.name,
                                     description:
                                       selectedAssignedSlot.description,
@@ -11182,7 +11385,7 @@ export default function LocalProductsPage() {
       ) : null}
 
       {pendingConfirm ? (
-        <div className="luxury-modal-overlay fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center p-2">
+        <div className="luxury-modal-overlay fixed inset-0 z-[1000001] flex h-dvh w-full items-center justify-center p-2">
           <div className="luxury-dialog w-full max-w-md border p-3">
             <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2">
               <div className="">
@@ -11203,7 +11406,12 @@ export default function LocalProductsPage() {
               </button>
             </div>
 
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div
+              className={`mt-2 grid gap-2 ${pendingConfirm.onSecondary
+                ? "grid-cols-1 xl:grid-cols-3"
+                : "grid-cols-2"
+                }`}
+            >
               <button
                 type="button"
                 disabled={isConfirmExecuting}
@@ -11228,6 +11436,19 @@ export default function LocalProductsPage() {
                   ? "Đang xử lý..."
                   : pendingConfirm.confirmLabel}
               </button>
+
+              {pendingConfirm.onSecondary && pendingConfirm.secondaryLabel ? (
+                <button
+                  type="button"
+                  disabled={isConfirmExecuting}
+                  className="rounded-md border border-amber-200/50 bg-amber-300/15 p-2 text-xs font-black text-amber-50 transition hover:bg-amber-300/25 disabled:cursor-wait disabled:opacity-60"
+                  onClick={() => void executeConfirmSecondary()}
+                >
+                  {isConfirmExecuting
+                    ? "Đang xử lý..."
+                    : pendingConfirm.secondaryLabel}
+                </button>
+              ) : null}
             </div>
           </div>
         </div>
@@ -11434,7 +11655,7 @@ export default function LocalProductsPage() {
                 className="flex h-9 w-9 shrink-0 items-center justify-center border border-[#d8c99f]/25 bg-[#d8c99f]/[0.06] text-[#eadfbe] transition hover:border-[#d8c99f]/50 hover:bg-[#d8c99f]/10 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
                 onClick={() => {
                   setPendingShare(null);
-                  setIncludeInternalShareImages(false);
+                  setIncludeInternalShareImages(true);
                   setShareDialogStep("share");
                   setFacebookGroupActiveIndex(0);
                 }}
@@ -11444,14 +11665,16 @@ export default function LocalProductsPage() {
               </button>
             </div>
 
-            {(pendingShare.internalImages?.length ?? 0) > 0 ? (
-              <button
+            <button
                 type="button"
-                disabled={isShareExecuting}
-                aria-pressed={includeInternalShareImages}
-                className={`mt-2 flex w-full items-center justify-between gap-3 border p-2.5 text-left transition active:opacity-80 disabled:cursor-wait disabled:opacity-50 ${includeInternalShareImages
-                  ? "border-amber-200/60 bg-amber-300/15 text-amber-50"
-                  : "border-white/10 bg-slate-900/80 text-slate-200 hover:border-amber-300/30"
+                disabled={
+                  isShareExecuting ||
+                  (pendingShare.internalImages?.length ?? 0) === 0
+                }
+                aria-pressed={!includeInternalShareImages}
+                className={`mt-2 flex w-full items-center justify-between gap-3 border p-2.5 text-left transition active:opacity-80 disabled:cursor-wait disabled:opacity-50 ${!includeInternalShareImages
+                  ? "border-rose-300/45 bg-rose-300/10 text-rose-50"
+                  : "border-amber-300/35 bg-amber-300/[0.07] text-amber-50"
                   }`}
                 onClick={() =>
                   setIncludeInternalShareImages((current) => !current)
@@ -11459,22 +11682,89 @@ export default function LocalProductsPage() {
               >
                 <span className="min-w-0">
                   <span className="block text-xs font-black">
-                    Gửi ảnh nội bộ
+                    Bỏ qua ảnh nội bộ
                   </span>
                   <span className="mt-0.5 block text-[10px] leading-4 text-slate-400">
-                    Model, dung lượng pin và thông tin kiểm tra máy
+                    Mặc định tải toàn bộ ảnh chính và ảnh nội bộ
+                  </span>
+                  <span className="mt-0.5 block text-[9px] leading-4 text-slate-500">
+                    Chỉ áp dụng cho các nút chia sẻ và Share Sheet, không thay
+                    đổi tải ảnh Meta của Fanpage hoặc Group
                   </span>
                 </span>
                 <span
-                  className={`shrink-0 px-2 py-1 text-[10px] font-black ${includeInternalShareImages
-                    ? "bg-amber-200 text-slate-950"
-                    : "bg-slate-800 text-slate-400"
+                  className={`relative h-5 w-9 shrink-0 border transition ${!includeInternalShareImages
+                    ? "border-rose-200/70 bg-rose-300/40"
+                    : "border-amber-200/50 bg-slate-800"
                     }`}
+                  aria-hidden="true"
                 >
-                  {includeInternalShareImages ? "Gửi kèm" : "Không gửi"}
+                  <span
+                    className={`absolute top-0.5 h-3.5 w-3.5 bg-white transition-transform ${!includeInternalShareImages
+                      ? "translate-x-[17px]"
+                      : "translate-x-0.5"
+                      }`}
+                  />
                 </span>
-              </button>
-            ) : null}
+            </button>
+
+            <section className="mt-2 border border-[#d8c99f]/20 bg-slate-950/45 p-2">
+              {shareDialogStep === "facebookGroup" ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    disabled={isShareExecuting}
+                    className="min-h-11 border border-cyan-300/40 bg-cyan-300/10 p-3 text-xs font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                    onClick={() => void executeShareRequest("post", true)}
+                  >
+                    Copy Post
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isShareExecuting}
+                    className="min-h-11 border border-amber-300/40 bg-amber-300/10 p-3 text-xs font-black text-amber-100 transition hover:bg-amber-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                    onClick={() => void executeShareRequest("comment", true)}
+                  >
+                    Copy Cmt
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+                  <button
+                    type="button"
+                    disabled={isShareExecuting}
+                    className="min-h-11 border border-cyan-300/40 bg-cyan-300/10 p-3 text-xs font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                    onClick={() => void executeShareRequest("post")}
+                  >
+                    Post
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isShareExecuting}
+                    className="min-h-11 border border-amber-300/40 bg-amber-300/10 p-3 text-xs font-black text-amber-100 transition hover:bg-amber-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                    onClick={() => void executeShareRequest("comment")}
+                  >
+                    Cmt
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isShareExecuting}
+                    className="min-h-11 border border-white/15 bg-slate-800/80 p-3 text-xs font-black text-white transition hover:border-white/25 hover:bg-slate-700 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                    onClick={() => void executeShareRequest("imagesOnly")}
+                  >
+                    Chỉ hình ảnh
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isShareExecuting}
+                    className="min-h-11 border border-violet-300/30 bg-violet-300/10 p-3 text-[9px] font-black text-violet-100 transition hover:bg-violet-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
+                    onClick={() => setShareDialogStep("facebookGroup")}
+                  >
+                    Gruop FB(Dành cho iPhone)
+                  </button>
+                </div>
+              )}
+            </section>
 
             {shareDialogStep === "share" ? (
               <div className="mt-2 grid min-w-0 grid-cols-1 gap-2 xl:grid-cols-2">
@@ -11487,7 +11777,8 @@ export default function LocalProductsPage() {
                             Fanpage Facebook
                           </p>
                           <p className="mt-0.5 text-[9px] text-slate-500">
-                            Copy nội dung và mở Meta Business Composer
+                            Copy nội dung, tải ảnh chính và mở Meta Business
+                            Composer
                           </p>
                         </div>
                         <span className="border border-[#d8c99f]/25 bg-[#d8c99f]/10 px-2 py-1 text-[9px] font-black text-[#eadfbe]">
@@ -11542,7 +11833,7 @@ export default function LocalProductsPage() {
                         </button>
                       </div>
                       <p className="mt-auto pt-3 text-[9px] leading-4 text-slate-400">
-                        Desktop: copy nội dung và mở đúng Fanpage. Mobile: các nút chia sẻ bên dưới nhanh hơn vì gửi ảnh qua Share Sheet.
+                        Meta Post/Cmt luôn tự tải ảnh chính và bỏ qua ảnh nội bộ. Mobile có thể dùng các nút chia sẻ bên dưới để gửi ảnh qua Share Sheet.
                       </p>
                     </>
                   ) : (
@@ -11552,7 +11843,7 @@ export default function LocalProductsPage() {
                       className="w-full border border-dashed border-[#d8c99f]/30 bg-black/20 px-3 py-2 text-[10px] font-black text-[#eadfbe] transition hover:bg-[#d8c99f]/[0.08] disabled:opacity-40"
                       onClick={() => {
                         setPendingShare(null);
-                        setIncludeInternalShareImages(false);
+                        setIncludeInternalShareImages(true);
                         openModal("facebookPages");
                       }}
                     >
@@ -11570,7 +11861,7 @@ export default function LocalProductsPage() {
                             Danh sách Group Facebook
                           </p>
                           <p className="mt-0.5 text-[9px] leading-4 text-slate-500">
-                            Chọn Group hoặc mở trực tiếp bằng Post/Cmt
+                            Meta Post/Cmt copy nội dung, tải ảnh chính và mở Group
                           </p>
                         </div>
                         <span className="shrink-0 border border-violet-200/35 bg-violet-200/10 px-2 py-1 text-[9px] font-black text-violet-100">
@@ -11626,8 +11917,8 @@ export default function LocalProductsPage() {
                               <button
                                 type="button"
                                 disabled={isShareExecuting}
-                                title={`Mở ${group.name} và copy Post`}
-                                aria-label={`Mở ${group.name} và copy Post`}
+                                title={`Mở ${group.name}, copy Post và tải ảnh chính`}
+                                aria-label={`Mở ${group.name}, copy Post và tải ảnh chính`}
                                 className="min-w-14 border border-cyan-300/30 bg-cyan-300/[0.08] px-2 py-1.5 text-[9px] font-black text-cyan-100 transition hover:border-cyan-200/55 hover:bg-cyan-300/15 active:opacity-80 disabled:cursor-wait disabled:opacity-40"
                                 onClick={() =>
                                   void handleOpenFacebookGroup(
@@ -11636,14 +11927,14 @@ export default function LocalProductsPage() {
                                   )
                                 }
                               >
-                                Mở Post
+                                Meta Post
                               </button>
 
                               <button
                                 type="button"
                                 disabled={isShareExecuting}
-                                title={`Mở ${group.name} và copy Cmt`}
-                                aria-label={`Mở ${group.name} và copy Cmt`}
+                                title={`Mở ${group.name}, copy Cmt và tải ảnh chính`}
+                                aria-label={`Mở ${group.name}, copy Cmt và tải ảnh chính`}
                                 className="min-w-14 border border-amber-300/30 bg-amber-300/[0.08] px-2 py-1.5 text-[9px] font-black text-amber-100 transition hover:border-amber-200/55 hover:bg-amber-300/15 active:opacity-80 disabled:cursor-wait disabled:opacity-40"
                                 onClick={() =>
                                   void handleOpenFacebookGroup(
@@ -11652,7 +11943,7 @@ export default function LocalProductsPage() {
                                   )
                                 }
                               >
-                                Mở Cmt
+                                Meta Cmt
                               </button>
                             </article>
                           );
@@ -11705,7 +11996,7 @@ export default function LocalProductsPage() {
                           </div>
 
                           <p className="mt-2 text-[8px] leading-4 text-slate-500">
-                            Popup mở đúng Group và copy nội dung. Share Sheet gửi ảnh; PC không hỗ trợ sẽ tự tải ảnh xuống.
+                            Meta Post/Cmt luôn tải ảnh chính và bỏ qua ảnh nội bộ. Share Sheet sử dụng trạng thái ở công tắc phía trên.
                           </p>
                         </div>
                       ) : null}
@@ -11717,7 +12008,7 @@ export default function LocalProductsPage() {
                       className="w-full border border-dashed border-violet-300/30 bg-black/20 px-3 py-2 text-[10px] font-black text-violet-100 transition hover:bg-violet-300/[0.08] disabled:opacity-40"
                       onClick={() => {
                         setPendingShare(null);
-                        setIncludeInternalShareImages(false);
+                        setIncludeInternalShareImages(true);
                         openModal("facebookPages");
                       }}
                     >
@@ -11727,62 +12018,6 @@ export default function LocalProductsPage() {
                 </section>
               </div>
             ) : null}
-
-            {shareDialogStep === "facebookGroup" ? (
-              <div className="mt-2 grid grid-cols-2 gap-2 border-t border-[#d8c99f]/15 pt-2">
-                <button
-                  type="button"
-                  disabled={isShareExecuting}
-                  className="min-h-11 border border-cyan-300/40 bg-cyan-300/10 p-3 text-xs font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
-                  onClick={() => void executeShareRequest("post", true)}
-                >
-                  Copy Post
-                </button>
-                <button
-                  type="button"
-                  disabled={isShareExecuting}
-                  className="min-h-11 border border-amber-300/40 bg-amber-300/10 p-3 text-xs font-black text-amber-100 transition hover:bg-amber-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
-                  onClick={() => void executeShareRequest("comment", true)}
-                >
-                  Copy Cmt
-                </button>
-              </div>
-            ) : (
-              <div className="mt-2 grid grid-cols-2 gap-2 border-t border-[#d8c99f]/15 pt-2 xl:grid-cols-4">
-                <button
-                  type="button"
-                  disabled={isShareExecuting}
-                  className="min-h-11 border border-cyan-300/40 bg-cyan-300/10 p-3 text-xs font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
-                  onClick={() => void executeShareRequest("post")}
-                >
-                  Post
-                </button>
-                <button
-                  type="button"
-                  disabled={isShareExecuting}
-                  className="min-h-11 border border-amber-300/40 bg-amber-300/10 p-3 text-xs font-black text-amber-100 transition hover:bg-amber-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
-                  onClick={() => void executeShareRequest("comment")}
-                >
-                  Cmt
-                </button>
-                <button
-                  type="button"
-                  disabled={isShareExecuting}
-                  className="min-h-11 border border-white/15 bg-slate-800/80 p-3 text-xs font-black text-white transition hover:border-white/25 hover:bg-slate-700 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
-                  onClick={() => void executeShareRequest("imagesOnly")}
-                >
-                  Chỉ hình ảnh
-                </button>
-                <button
-                  type="button"
-                  disabled={isShareExecuting}
-                  className="min-h-11 border border-violet-300/30 bg-violet-300/10 p-3 text-[9px] font-black text-violet-100 transition hover:bg-violet-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-50"
-                  onClick={() => setShareDialogStep("facebookGroup")}
-                >
-                  Gruop FB(Dành cho iPhone)
-                </button>
-              </div>
-            )}
           </div>
         </div>
       ) : null}
