@@ -7491,6 +7491,26 @@ export default function LocalProductsPage() {
           display: none !important;
         }
 
+        .product-list-dialog {
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+          overflow-x: hidden;
+          contain: paint;
+        }
+
+        .product-list-dialog button:not([data-description-line="true"]):not([data-category-bubble="true"]):not([data-image-surface="true"]):not([data-image-control="true"]) {
+          overflow: hidden;
+          contain: paint;
+        }
+
+        .product-list-scroll {
+          min-width: 0;
+          max-width: 100%;
+          overscroll-behavior-x: contain;
+          scrollbar-gutter: stable;
+        }
+
         .luxury-modal-titlebar {
           position: relative;
           border-color: rgba(216, 201, 159, 0.14) !important;
@@ -8891,8 +8911,8 @@ export default function LocalProductsPage() {
               ) : null}
 
               {activeModal === "productList" ? (
-                <section className="flex h-full flex-col gap-2">
-                  <div className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-center">
+                <section className="product-list-dialog flex h-full w-full min-w-0 max-w-full flex-col gap-2 overflow-x-hidden">
+                  <div className="grid min-w-0 grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-center">
                     <div className="">
                       <h3 className="text-xs font-black text-white">
                         Bảng sản phẩm
@@ -8929,7 +8949,7 @@ export default function LocalProductsPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_110px_110px_90px]">
+                  <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_110px_110px_90px]">
                     <label className="flex items-center gap-2 rounded-md border border-slate-600 bg-slate-950/70 px-2 py-1.5 text-slate-400 transition focus-within:border-slate-300 focus-within:bg-slate-950">
                       <FiSearch
                         aria-hidden="true"
@@ -8980,7 +9000,7 @@ export default function LocalProductsPage() {
                     </button>
                   </div>
 
-                  <div className="min-h-0 flex-1 overflow-auto rounded-md border border-white/10 bg-slate-950">
+                  <div className="product-list-scroll min-h-0 min-w-0 max-w-full flex-1 overflow-auto rounded-md border border-white/10 bg-slate-950">
                     {groupedProductsByCategory.length > 0 ? (
                       <div className="min-w-[860px]">
                         <div className="sticky top-0 z-10 grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-white/10 bg-slate-900 text-[10px] font-black uppercase tracking-wide text-slate-400">
