@@ -93,12 +93,14 @@ type FacebookPageOption = {
 type FacebookGroupOption = {
   id: string;
   name: string;
+  category: string;
   url: string;
 };
 
 type FacebookDuplicatePostOption = {
   id: string;
   name: string;
+  category: string;
   url: string;
 };
 
@@ -108,7 +110,6 @@ type GlobalSettings = {
   contactOptions: ContactOption[];
   selectedContactId: string;
   facebookPages: FacebookPageOption[];
-  selectedFacebookPageOptionId: string;
   facebookDuplicatePosts: FacebookDuplicatePostOption[];
   facebookGroups: FacebookGroupOption[];
   selectedFacebookGroupIds: string[];
@@ -117,7 +118,7 @@ type GlobalSettings = {
 };
 
 type ExportPayload = {
-  version: 13;
+  version: 15;
   settings: GlobalSettings;
   products: LocalProduct[];
   scheduleConfig: ScheduleConfig;
@@ -392,7 +393,6 @@ const defaultSettings: GlobalSettings = {
   contactOptions: [],
   selectedContactId: "",
   facebookPages: [],
-  selectedFacebookPageOptionId: "",
   facebookDuplicatePosts: [],
   facebookGroups: [],
   selectedFacebookGroupIds: [],
@@ -410,7 +410,6 @@ const defaultScheduleConfig: ScheduleConfig = {
   taskNames: ["Task 1"],
   selectedCategories: [],
 };
-
 
 const iconClassName =
   "h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:scale-110";
@@ -432,6 +431,15 @@ const headerActiveButtonClassName =
 
 const albumActionButtonBaseClassName =
   "group flex min-h-8 shrink-0 items-center justify-center gap-1 overflow-hidden border px-1.5 py-1 text-[9px] font-black tracking-[0.025em] transition-[color,background-color,border-color,transform,box-shadow,filter] duration-200 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40";
+
+const scheduleFieldClassName =
+  "rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60";
+
+const secondaryActionButtonClassName =
+  "flex items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-slate-700";
+
+const compactLuxuryDialogClassName =
+  "luxury-dialog w-full max-w-md border p-3";
 
 const getActiveInteractionWindow = (): Window => {
   if (typeof window === "undefined") {
@@ -654,12 +662,6 @@ const getTodayString = (): string => {
   return new Date().toISOString().slice(0, 10);
 };
 
-const getCurrentTimeString = (): string => {
-  const now = new Date();
-
-  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-};
-
 const normalizeTextKey = (value: string): string => {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 };
@@ -718,22 +720,6 @@ const createPostedKey = (
   taskIndex = 0,
 ): string => {
   return createScheduleAssignmentKey(date, slotIndex, taskIndex);
-};
-
-const createLegacyPostedProductKey = (
-  date: string,
-  productId: string,
-  taskIndex = 0,
-): string => {
-  return `${date}::task${taskIndex + 1}::${productId}`;
-};
-
-const createLegacyPostedKey = (date: string, productId: string): string => {
-  return `${date}::${productId}`;
-};
-
-const createSlotPostedKey = (slot: ScheduleSlot, taskIndex = 0): string => {
-  return createLegacyPostedProductKey(slot.date, slot.productId, taskIndex);
 };
 
 const openDatabase = (): Promise<IDBDatabase> => {
@@ -1001,16 +987,83 @@ const normalizeFacebookPageOptions = (
   }, []);
 };
 
-const createMetaBusinessComposerUrl = (assetId: string): string => {
+const createMetaBusinessPageUrl = (
+  pathname: string,
+  assetId: string,
+  createSearchParams: (
+    normalizedAssetId: string,
+  ) => ReadonlyArray<readonly [string, string]>,
+): string => {
   const normalizedAssetId = normalizeFacebookAssetId(assetId);
 
   if (!normalizedAssetId) return "";
 
-  const url = new URL("https://business.facebook.com/latest/composer");
-  url.searchParams.set("asset_id", normalizedAssetId);
+  const url = new URL(pathname, "https://business.facebook.com");
+
+  createSearchParams(normalizedAssetId).forEach(([key, value]) => {
+    url.searchParams.set(key, value);
+  });
 
   return url.toString();
 };
+
+const createMetaBusinessComposerUrl = (assetId: string): string => {
+  return createMetaBusinessPageUrl(
+    "/latest/composer",
+    assetId,
+    (normalizedAssetId) => [["asset_id", normalizedAssetId]],
+  );
+};
+
+const createMetaBusinessStoryComposerUrl = (assetId: string): string => {
+  return createMetaBusinessPageUrl(
+    "/latest/story_composer/",
+    assetId,
+    (normalizedAssetId) => [
+      ["ref", "biz_web_content_manager_published_posts"],
+      ["asset_id", normalizedAssetId],
+      ["context_ref", "POSTS"],
+    ],
+  );
+};
+
+const FACEBOOK_PAGE_URL_TOOLS = [
+  {
+    id: "post",
+    title: "Tạo bài viết",
+    description: "Mở Meta Business Composer để tạo bài viết mới.",
+    shortLabel: "Bài viết",
+    copyLabel: "Copy tạo bài",
+    openLabel: "Mở tạo bài",
+    copyMessage: "Đã copy URL tạo bài viết",
+    popupNamePrefix: "composer",
+    containerClassName: "border-cyan-300/20 bg-cyan-300/[0.055]",
+    badgeClassName: "border-cyan-200/30 bg-cyan-300/10 text-cyan-100",
+    copyButtonClassName:
+      "border-cyan-300/35 bg-cyan-300/10 text-cyan-100 hover:bg-cyan-300/20",
+    openButtonClassName:
+      "border-[#d8c99f]/35 bg-[#d8c99f]/10 text-[#eadfbe] hover:bg-[#d8c99f]/20",
+    createUrl: createMetaBusinessComposerUrl,
+  },
+  {
+    id: "story",
+    title: "Tạo tin",
+    description: "Mở trình tạo Story của Fanpage đang chọn.",
+    shortLabel: "Story",
+    copyLabel: "Copy tạo tin",
+    openLabel: "Mở tạo tin",
+    copyMessage: "Đã copy URL tạo tin",
+    popupNamePrefix: "story-composer",
+    containerClassName: "border-violet-300/20 bg-violet-300/[0.055]",
+    badgeClassName:
+      "border-violet-200/30 bg-violet-300/10 text-violet-100",
+    copyButtonClassName:
+      "border-violet-300/35 bg-violet-300/10 text-violet-100 hover:bg-violet-300/20",
+    openButtonClassName:
+      "border-amber-300/35 bg-amber-300/10 text-amber-100 hover:bg-amber-300/20",
+    createUrl: createMetaBusinessStoryComposerUrl,
+  },
+] as const;
 
 const normalizeMetaBusinessDuplicateUrl = (value: string): string => {
   const trimmedValue = value.trim();
@@ -1110,6 +1163,10 @@ const normalizeFacebookDuplicatePostOptions = (
       typeof record.name === "string" && record.name.trim()
         ? record.name.trim()
         : `Bản sao ${index + 1}`;
+    const category =
+      typeof record.category === "string" && record.category.trim()
+        ? normalizeCategoryName(record.category)
+        : "Chưa phân loại";
 
     if (
       !url ||
@@ -1120,7 +1177,7 @@ const normalizeFacebookDuplicatePostOptions = (
     }
 
     usedBusinessContentIds.add(businessContentId);
-    options.push({ id, name, url });
+    options.push({ id, name, category, url });
 
     return options;
   }, []);
@@ -1170,11 +1227,15 @@ const normalizeFacebookGroupOptions = (
       typeof record.name === "string" && record.name.trim()
         ? record.name.trim()
         : `Group ${index + 1}`;
+    const category =
+      typeof record.category === "string"
+        ? normalizeCategoryName(record.category) || "Chưa phân loại"
+        : "Chưa phân loại";
 
     if (!url || usedUrls.has(url)) return options;
 
     usedUrls.add(url);
-    options.push({ id, name, url });
+    options.push({ id, name, category, url });
 
     return options;
   }, []);
@@ -1237,13 +1298,6 @@ const loadGlobalSettings = (): GlobalSettings => {
         ? record.selectedContactId
         : "";
     const facebookPages = normalizeFacebookPageOptions(record.facebookPages);
-    const selectedFacebookPageOptionId =
-      typeof record.selectedFacebookPageOptionId === "string" &&
-        facebookPages.some(
-          (option) => option.id === record.selectedFacebookPageOptionId,
-        )
-        ? record.selectedFacebookPageOptionId
-        : (facebookPages[0]?.id ?? "");
     const facebookDuplicatePosts = normalizeFacebookDuplicatePostOptions(
       record.facebookDuplicatePosts,
     );
@@ -1265,7 +1319,6 @@ const loadGlobalSettings = (): GlobalSettings => {
       contactOptions,
       selectedContactId,
       facebookPages,
-      selectedFacebookPageOptionId,
       facebookDuplicatePosts,
       facebookGroups,
       selectedFacebookGroupIds,
@@ -1484,30 +1537,6 @@ const getProductDoneSortValue = (
   if (!product.isDone) return 0;
 
   return pendingDoneProductIds.has(product.id) ? 0 : 1;
-};
-
-const sortProductsByDoneThenUpdated = (
-  items: LocalProduct[],
-  pendingDoneProductIds: Set<string> = new Set<string>(),
-): LocalProduct[] => {
-  return [...items].sort((firstProduct, secondProduct) => {
-    const doneDiff =
-      getProductDoneSortValue(firstProduct, pendingDoneProductIds) -
-      getProductDoneSortValue(secondProduct, pendingDoneProductIds);
-
-    if (doneDiff !== 0) return doneDiff;
-
-    const updatedDiff =
-      new Date(secondProduct.updatedAt).getTime() -
-      new Date(firstProduct.updatedAt).getTime();
-
-    if (updatedDiff !== 0) return updatedDiff;
-
-    return normalizeTextKey(firstProduct.name).localeCompare(
-      normalizeTextKey(secondProduct.name),
-      "vi",
-    );
-  });
 };
 
 const sortProductsByDoneThenPrice = (
@@ -1802,13 +1831,6 @@ const normalizeGlobalSettings = (
       ? record.selectedContactId
       : "";
   const facebookPages = normalizeFacebookPageOptions(record.facebookPages);
-  const selectedFacebookPageOptionId =
-    typeof record.selectedFacebookPageOptionId === "string" &&
-      facebookPages.some(
-        (option) => option.id === record.selectedFacebookPageOptionId,
-      )
-      ? record.selectedFacebookPageOptionId
-      : (facebookPages[0]?.id ?? "");
   const facebookDuplicatePosts = normalizeFacebookDuplicatePostOptions(
     record.facebookDuplicatePosts,
   );
@@ -1827,7 +1849,6 @@ const normalizeGlobalSettings = (
     contactOptions,
     selectedContactId,
     facebookPages,
-    selectedFacebookPageOptionId,
     facebookDuplicatePosts,
     facebookGroups,
     selectedFacebookGroupIds,
@@ -2357,7 +2378,7 @@ const createExportPayload = (params: {
   postedRecords: PostedRecord[];
 }): ExportPayload => {
   return {
-    version: 13,
+    version: 15,
     settings: params.settings,
     products: params.products,
     scheduleConfig: params.scheduleConfig,
@@ -2814,15 +2835,27 @@ export default function LocalProductsPage() {
   const [draft, setDraft] = useState<ProductDraft>(emptyDraft);
   const [settings, setSettings] = useState<GlobalSettings>(defaultSettings);
   const [contactDraft, setContactDraft] = useState<string>("");
+  const [editingContactOptionId, setEditingContactOptionId] =
+    useState<string>("");
   const [facebookPageNameDraft, setFacebookPageNameDraft] =
     useState<string>("");
   const [facebookPageAssetIdDraft, setFacebookPageAssetIdDraft] =
     useState<string>("");
+  const [editingFacebookPageOptionId, setEditingFacebookPageOptionId] =
+    useState<string>("");
+  const [selectedFacebookPageId, setSelectedFacebookPageId] =
+    useState<string>("");
   const [facebookDuplicateNameDraft, setFacebookDuplicateNameDraft] =
+    useState<string>("");
+  const [facebookDuplicateCategoryDraft, setFacebookDuplicateCategoryDraft] =
     useState<string>("");
   const [facebookDuplicateUrlDraft, setFacebookDuplicateUrlDraft] =
     useState<string>("");
+  const [editingFacebookDuplicatePostId, setEditingFacebookDuplicatePostId] =
+    useState<string>("");
   const [facebookGroupNameDraft, setFacebookGroupNameDraft] =
+    useState<string>("");
+  const [facebookGroupCategoryDraft, setFacebookGroupCategoryDraft] =
     useState<string>("");
   const [facebookGroupUrlDraft, setFacebookGroupUrlDraft] =
     useState<string>("");
@@ -2920,11 +2953,35 @@ export default function LocalProductsPage() {
   const activeFacebookPage = useMemo(
     () =>
       settings.facebookPages.find(
-        (option) => option.id === settings.selectedFacebookPageOptionId,
+        (option) => option.id === selectedFacebookPageId,
       ) ?? null,
-    [settings.facebookPages, settings.selectedFacebookPageOptionId],
+    [selectedFacebookPageId, settings.facebookPages],
   );
   const facebookDuplicatePostTemplates = settings.facebookDuplicatePosts;
+  const facebookDuplicatePostGroups = useMemo(() => {
+    const groupedOptions = new Map<
+      string,
+      { category: string; options: FacebookDuplicatePostOption[] }
+    >();
+
+    facebookDuplicatePostTemplates.forEach((option) => {
+      const category = normalizeCategoryName(option.category) || "Chưa phân loại";
+      const categoryKey = normalizeTextKey(category);
+      const currentGroup = groupedOptions.get(categoryKey);
+
+      if (currentGroup) {
+        currentGroup.options.push(option);
+        return;
+      }
+
+      groupedOptions.set(categoryKey, {
+        category,
+        options: [option],
+      });
+    });
+
+    return Array.from(groupedOptions.values());
+  }, [facebookDuplicatePostTemplates]);
   const selectedFacebookGroups = useMemo(
     () => {
       const selectedIds = new Set(settings.selectedFacebookGroupIds);
@@ -2942,7 +2999,6 @@ export default function LocalProductsPage() {
       : null;
 
   const today = useMemo(() => nowTick.toISOString().slice(0, 10), [nowTick]);
-  const currentTime = useMemo(() => getCurrentTimeString(), [nowTick]);
 
   const handleOpenPictureInPicture = useCallback(async (): Promise<void> => {
     const browserWindow = window as WindowWithDocumentPictureInPicture;
@@ -3478,10 +3534,6 @@ export default function LocalProductsPage() {
     scheduleConfig.startTime,
   ]);
 
-  const todaySlots = useMemo(() => {
-    return scheduleResult.slots.filter((slot) => slot.date === today);
-  }, [scheduleResult.slots, today]);
-
   const postedIds = useMemo(() => {
     return new Set(postedRecords.map((record) => record.slotId));
   }, [postedRecords]);
@@ -3570,10 +3622,6 @@ export default function LocalProductsPage() {
   const remainingTodayCount = useMemo(() => {
     return Math.max(totalTodayTaskCount - postedTodayCount, 0);
   }, [postedTodayCount, totalTodayTaskCount]);
-
-  const todayScheduledProductIds = useMemo(() => {
-    return new Set(todaySlots.map((slot) => slot.productId));
-  }, [todaySlots]);
 
   const loadProducts = async (): Promise<void> => {
     const list = await getAllProductsFromDb();
@@ -3846,7 +3894,6 @@ export default function LocalProductsPage() {
     settings.contactOptions,
     settings.selectedContactId,
     settings.facebookPages,
-    settings.selectedFacebookPageOptionId,
     settings.facebookDuplicatePosts,
     settings.facebookGroups,
     settings.selectedFacebookGroupIds,
@@ -3857,6 +3904,18 @@ export default function LocalProductsPage() {
   useEffect(() => {
     setFacebookGroupActiveIndex(0);
   }, [settings.selectedFacebookGroupIds]);
+
+  useEffect(() => {
+    if (!selectedFacebookPageId) return;
+
+    const pageStillExists = settings.facebookPages.some(
+      (option) => option.id === selectedFacebookPageId,
+    );
+
+    if (!pageStillExists) {
+      setSelectedFacebookPageId("");
+    }
+  }, [selectedFacebookPageId, settings.facebookPages]);
 
   useEffect(() => {
     if (activeCategoryTab === "all") return;
@@ -3956,7 +4015,17 @@ export default function LocalProductsPage() {
     }));
   };
 
-  const addContactOption = (): void => {
+  const resetContactEditor = (): void => {
+    setContactDraft("");
+    setEditingContactOptionId("");
+  };
+
+  const startEditingContactOption = (option: ContactOption): void => {
+    setEditingContactOptionId(option.id);
+    setContactDraft(option.text);
+  };
+
+  const saveContactOption = (): void => {
     const text = contactDraft.trim();
 
     if (!text) {
@@ -3964,18 +4033,29 @@ export default function LocalProductsPage() {
       return;
     }
 
+    const duplicatedOption = settings.contactOptions.find(
+      (option) =>
+        option.id !== editingContactOptionId && option.text.trim() === text,
+    );
+
+    if (duplicatedOption) {
+      Toastify("Nội dung liên hệ này đã có trong danh sách", 300);
+      return;
+    }
+
+    if (editingContactOptionId) {
+      setSettings((current) => ({
+        ...current,
+        contactOptions: current.contactOptions.map((option) =>
+          option.id === editingContactOptionId ? { ...option, text } : option,
+        ),
+      }));
+      resetContactEditor();
+      Toastify("Đã cập nhật liên hệ", 200);
+      return;
+    }
+
     setSettings((current) => {
-      const existingOption = current.contactOptions.find(
-        (option) => option.text.trim() === text,
-      );
-
-      if (existingOption) {
-        return {
-          ...current,
-          selectedContactId: existingOption.id,
-        };
-      }
-
       const option: ContactOption = {
         id: crypto.randomUUID(),
         text,
@@ -3988,16 +4068,8 @@ export default function LocalProductsPage() {
       };
     });
 
-    setContactDraft("");
-  };
-
-  const updateContactOptionText = (id: string, text: string): void => {
-    setSettings((current) => ({
-      ...current,
-      contactOptions: current.contactOptions.map((option) =>
-        option.id === id ? { ...option, text } : option,
-      ),
-    }));
+    resetContactEditor();
+    Toastify("Đã thêm liên hệ", 200);
   };
 
   const selectContactOption = (id: string): void => {
@@ -4008,24 +4080,55 @@ export default function LocalProductsPage() {
   };
 
   const removeContactOption = (id: string): void => {
-    setSettings((current) => {
-      const contactOptions = current.contactOptions.filter(
-        (option) => option.id !== id,
-      );
-      const selectedContactId =
-        current.selectedContactId === id
-          ? (contactOptions[0]?.id ?? "")
-          : current.selectedContactId;
+    const option = settings.contactOptions.find((item) => item.id === id);
+    if (!option) return;
 
-      return {
-        ...current,
-        contactOptions,
-        selectedContactId,
-      };
+    requestConfirm({
+      title: "Xóa nội dung liên hệ?",
+      description: "Nội dung liên hệ đã chọn sẽ bị xóa khỏi local và file backup tiếp theo.",
+      confirmLabel: "Xóa liên hệ",
+      tone: "danger",
+      onConfirm: () => {
+        setSettings((current) => {
+          const contactOptions = current.contactOptions.filter(
+            (item) => item.id !== id,
+          );
+          const selectedContactId =
+            current.selectedContactId === id
+              ? (contactOptions[0]?.id ?? "")
+              : current.selectedContactId;
+
+          return {
+            ...current,
+            contactOptions,
+            selectedContactId,
+          };
+        });
+
+        if (editingContactOptionId === id) {
+          resetContactEditor();
+        }
+
+        Toastify("Đã xóa liên hệ", 200);
+      },
     });
   };
 
-  const addFacebookPageOption = (): void => {
+  const resetFacebookPageEditor = (): void => {
+    setFacebookPageNameDraft("");
+    setFacebookPageAssetIdDraft("");
+    setEditingFacebookPageOptionId("");
+  };
+
+  const startEditingFacebookPageOption = (
+    option: FacebookPageOption,
+  ): void => {
+    setEditingFacebookPageOptionId(option.id);
+    setFacebookPageNameDraft(option.name);
+    setFacebookPageAssetIdDraft(option.assetId);
+  };
+
+  const saveFacebookPageOption = (): void => {
     const assetId = normalizeFacebookAssetId(facebookPageAssetIdDraft);
     const name = facebookPageNameDraft.trim() || `Fanpage ${assetId}`;
 
@@ -4035,12 +4138,27 @@ export default function LocalProductsPage() {
     }
 
     const existingOption = settings.facebookPages.find(
-      (option) => option.assetId === assetId,
+      (option) =>
+        option.id !== editingFacebookPageOptionId &&
+        option.assetId === assetId,
     );
 
     if (existingOption) {
-      selectFacebookPageOption(existingOption.id);
       Toastify("Asset ID này đã có trong danh sách", 300);
+      return;
+    }
+
+    if (editingFacebookPageOptionId) {
+      setSettings((current) => ({
+        ...current,
+        facebookPages: current.facebookPages.map((option) =>
+          option.id === editingFacebookPageOptionId
+            ? { ...option, name, assetId }
+            : option,
+        ),
+      }));
+      resetFacebookPageEditor();
+      Toastify("Đã cập nhật Fanpage", 200);
       return;
     }
 
@@ -4054,49 +4172,60 @@ export default function LocalProductsPage() {
       return {
         ...current,
         facebookPages: [...current.facebookPages, option],
-        selectedFacebookPageOptionId: option.id,
       };
     });
 
-    setFacebookPageNameDraft("");
-    setFacebookPageAssetIdDraft("");
-  };
-
-  const updateFacebookPageOptionName = (id: string, name: string): void => {
-    setSettings((current) => ({
-      ...current,
-      facebookPages: current.facebookPages.map((option) =>
-        option.id === id ? { ...option, name } : option,
-      ),
-    }));
-  };
-
-  const selectFacebookPageOption = (id: string): void => {
-    setSettings((current) => ({
-      ...current,
-      selectedFacebookPageOptionId: id,
-    }));
+    resetFacebookPageEditor();
+    Toastify("Đã thêm Fanpage", 200);
   };
 
   const removeFacebookPageOption = (id: string): void => {
-    setSettings((current) => {
-      const facebookPages = current.facebookPages.filter(
-        (option) => option.id !== id,
-      );
-      const selectedFacebookPageOptionId =
-        current.selectedFacebookPageOptionId === id
-          ? (facebookPages[0]?.id ?? "")
-          : current.selectedFacebookPageOptionId;
+    const option = settings.facebookPages.find((item) => item.id === id);
+    if (!option) return;
 
-      return {
-        ...current,
-        facebookPages,
-        selectedFacebookPageOptionId,
-      };
+    requestConfirm({
+      title: "Xóa Fanpage?",
+      description: `${option.name} và Asset ID ${option.assetId} sẽ bị xóa khỏi danh sách.`,
+      confirmLabel: "Xóa Fanpage",
+      tone: "danger",
+      onConfirm: () => {
+        setSettings((current) => ({
+          ...current,
+          facebookPages: current.facebookPages.filter(
+            (item) => item.id !== id,
+          ),
+        }));
+
+        if (editingFacebookPageOptionId === id) {
+          resetFacebookPageEditor();
+        }
+
+        if (selectedFacebookPageId === id) {
+          setSelectedFacebookPageId("");
+        }
+
+        Toastify("Đã xóa Fanpage", 200);
+      },
     });
   };
 
-  const addFacebookDuplicatePostOption = (): void => {
+  const resetFacebookDuplicatePostEditor = (): void => {
+    setFacebookDuplicateNameDraft("");
+    setFacebookDuplicateCategoryDraft("");
+    setFacebookDuplicateUrlDraft("");
+    setEditingFacebookDuplicatePostId("");
+  };
+
+  const startEditingFacebookDuplicatePostOption = (
+    option: FacebookDuplicatePostOption,
+  ): void => {
+    setEditingFacebookDuplicatePostId(option.id);
+    setFacebookDuplicateNameDraft(option.name);
+    setFacebookDuplicateCategoryDraft(option.category);
+    setFacebookDuplicateUrlDraft(option.url);
+  };
+
+  const saveFacebookDuplicatePostOption = (): void => {
     const url = normalizeMetaBusinessDuplicateUrl(facebookDuplicateUrlDraft);
 
     if (!url) {
@@ -4110,6 +4239,7 @@ export default function LocalProductsPage() {
     const businessContentId = getFacebookDuplicateContentId(url);
     const existingOption = settings.facebookDuplicatePosts.find(
       (option) =>
+        option.id !== editingFacebookDuplicatePostId &&
         getFacebookDuplicateContentId(option.url) === businessContentId,
     );
 
@@ -4118,11 +4248,31 @@ export default function LocalProductsPage() {
       return;
     }
 
+    const name =
+      facebookDuplicateNameDraft.trim() ||
+      `Bản sao ${facebookDuplicatePostTemplates.length + 1}`;
+    const category =
+      normalizeCategoryName(facebookDuplicateCategoryDraft) ||
+      "Chưa phân loại";
+
+    if (editingFacebookDuplicatePostId) {
+      setSettings((current) => ({
+        ...current,
+        facebookDuplicatePosts: current.facebookDuplicatePosts.map((option) =>
+          option.id === editingFacebookDuplicatePostId
+            ? { ...option, name, category, url }
+            : option,
+        ),
+      }));
+      resetFacebookDuplicatePostEditor();
+      Toastify("Đã cập nhật mẫu nhân bản", 200);
+      return;
+    }
+
     const option: FacebookDuplicatePostOption = {
       id: crypto.randomUUID(),
-      name:
-        facebookDuplicateNameDraft.trim() ||
-        `Bản sao ${facebookDuplicatePostTemplates.length + 1}`,
+      name,
+      category,
       url,
     };
 
@@ -4130,30 +4280,36 @@ export default function LocalProductsPage() {
       ...current,
       facebookDuplicatePosts: [...current.facebookDuplicatePosts, option],
     }));
-    setFacebookDuplicateNameDraft("");
-    setFacebookDuplicateUrlDraft("");
+    resetFacebookDuplicatePostEditor();
     Toastify("Đã lưu mẫu nhân bản", 200);
   };
 
-  const updateFacebookDuplicatePostOptionName = (
-    id: string,
-    name: string,
-  ): void => {
-    setSettings((current) => ({
-      ...current,
-      facebookDuplicatePosts: current.facebookDuplicatePosts.map((option) =>
-        option.id === id ? { ...option, name } : option,
-      ),
-    }));
-  };
-
   const removeFacebookDuplicatePostOption = (id: string): void => {
-    setSettings((current) => ({
-      ...current,
-      facebookDuplicatePosts: current.facebookDuplicatePosts.filter(
-        (option) => option.id !== id,
-      ),
-    }));
+    const option = settings.facebookDuplicatePosts.find(
+      (item) => item.id === id,
+    );
+    if (!option) return;
+
+    requestConfirm({
+      title: "Xóa mẫu nhân bản?",
+      description: `${option.name} trong danh mục ${option.category} sẽ bị xóa khỏi danh sách.`,
+      confirmLabel: "Xóa mẫu",
+      tone: "danger",
+      onConfirm: () => {
+        setSettings((current) => ({
+          ...current,
+          facebookDuplicatePosts: current.facebookDuplicatePosts.filter(
+            (item) => item.id !== id,
+          ),
+        }));
+
+        if (editingFacebookDuplicatePostId === id) {
+          resetFacebookDuplicatePostEditor();
+        }
+
+        Toastify("Đã xóa mẫu nhân bản", 200);
+      },
+    });
   };
 
   const createSelectedFacebookDuplicateUrl = (
@@ -4258,6 +4414,9 @@ export default function LocalProductsPage() {
       name:
         facebookGroupNameDraft.trim() ||
         `Group ${settings.facebookGroups.length + 1}`,
+      category:
+        normalizeCategoryName(facebookGroupCategoryDraft) ||
+        "Chưa phân loại",
       url,
     };
 
@@ -4271,6 +4430,7 @@ export default function LocalProductsPage() {
     }));
 
     setFacebookGroupNameDraft("");
+    setFacebookGroupCategoryDraft("");
     setFacebookGroupUrlDraft("");
   };
 
@@ -4279,6 +4439,18 @@ export default function LocalProductsPage() {
       ...current,
       facebookGroups: current.facebookGroups.map((group) =>
         group.id === id ? { ...group, name } : group,
+      ),
+    }));
+  };
+
+  const updateFacebookGroupOptionCategory = (
+    id: string,
+    category: string,
+  ): void => {
+    setSettings((current) => ({
+      ...current,
+      facebookGroups: current.facebookGroups.map((group) =>
+        group.id === id ? { ...group, category } : group,
       ),
     }));
   };
@@ -4348,16 +4520,20 @@ export default function LocalProductsPage() {
         setImageDownloadCategory("all");
       }
 
+      if (closingModal === "contact") {
+        resetContactEditor();
+      }
+
       if (closingModal === "facebookPages") {
-        setFacebookPageNameDraft("");
-        setFacebookPageAssetIdDraft("");
+        resetFacebookPageEditor();
         setFacebookGroupNameDraft("");
+        setFacebookGroupCategoryDraft("");
         setFacebookGroupUrlDraft("");
       }
 
       if (closingModal === "facebookDuplicatePosts") {
-        setFacebookDuplicateNameDraft("");
-        setFacebookDuplicateUrlDraft("");
+        resetFacebookDuplicatePostEditor();
+        setSelectedFacebookPageId("");
       }
 
       return current.slice(0, -1);
@@ -4380,19 +4556,14 @@ export default function LocalProductsPage() {
     setPendingShare(null);
     setIncludeInternalShareImages(true);
     setShareDialogStep("share");
-    setFacebookPageNameDraft("");
-    setFacebookPageAssetIdDraft("");
-    setFacebookDuplicateNameDraft("");
-    setFacebookDuplicateUrlDraft("");
+    resetContactEditor();
+    resetFacebookPageEditor();
+    resetFacebookDuplicatePostEditor();
+    setSelectedFacebookPageId("");
     setFacebookGroupNameDraft("");
+    setFacebookGroupCategoryDraft("");
     setFacebookGroupUrlDraft("");
     setFacebookGroupActiveIndex(0);
-  };
-
-  const closeAllProductModals = (): void => {
-    setModalStack((current) =>
-      current.filter((modalName) => modalName !== "product"),
-    );
   };
 
   const openProductModalForCreate = (): void => {
@@ -5613,17 +5784,12 @@ export default function LocalProductsPage() {
   };
 
   const handleOpenMetaBusinessComposer = (
+    page: FacebookPageOption,
     mode: Exclude<ShareContentMode, "imagesOnly">,
   ): void => {
     if (!pendingShare || isShareExecuting) return;
 
-    if (!activeFacebookPage) {
-      Toastify("Chưa chọn Fanpage", 300);
-      return;
-    }
-
     const request = pendingShare;
-    const page = activeFacebookPage;
 
     requestMetaImageDownloadDecision(request, (shouldDownload) =>
       executeOpenMetaBusinessComposer(
@@ -7080,13 +7246,6 @@ export default function LocalProductsPage() {
 
       <style>{`
         .local-products-workspace {
-          --luxury-ink: #07090d;
-          --luxury-panel: #0b0e14;
-          --luxury-panel-raised: #11151d;
-          --luxury-gold: #d8c99f;
-          --luxury-gold-bright: #f1e5c2;
-          --luxury-line: rgba(216, 201, 159, 0.2);
-          --luxury-line-soft: rgba(255, 255, 255, 0.075);
           color-scheme: dark;
           background:
             linear-gradient(rgba(216, 201, 159, 0.011) 1px, transparent 1px),
@@ -7578,13 +7737,6 @@ export default function LocalProductsPage() {
 
         /* Tactical inventory HUD theme. */
         .local-products-workspace {
-          --hud-ink: #050a11;
-          --hud-panel: #0a1420;
-          --hud-surface: #101f2e;
-          --hud-cyan: #8ba9b2;
-          --hud-gold: #e6cf8b;
-          --hud-violet: #a99bf2;
-          --hud-green: #69d5a3;
           color: #e6edf3;
           background:
             linear-gradient(rgba(230, 207, 139, 0.024) 1px, transparent 1px),
@@ -8056,13 +8208,13 @@ export default function LocalProductsPage() {
               <button
                 type="button"
                 data-luxury-accent="amber"
-                title="Tạo URL nhân bản bài viết theo Fanpage"
-                aria-label="Tạo URL nhân bản bài viết theo Fanpage"
+                title="Mở công cụ đăng bài, tạo tin và nhân bản Fanpage"
+                aria-label="Mở công cụ Fanpage"
                 className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName}`}
                 onClick={() => openModal("facebookDuplicatePosts")}
               >
-                <FiCopy aria-hidden="true" className={iconClassName} />
-                Nhân bản
+                <FiShare2 aria-hidden="true" className={iconClassName} />
+                Fanpage
               </button>
 
               <button
@@ -8346,8 +8498,8 @@ export default function LocalProductsPage() {
                           ? "border-[#e8d9ae]/70 bg-[#15140f]"
                           : "border-[#d8c99f]/[0.15] bg-[#0b0e14]"
                         }`}
+                      onClickCapture={() => setSelectedProductId(product.id)}
                       onClick={() => {
-                        setSelectedProductId(product.id);
                         handleEdit(product);
                       }}
                     >
@@ -8743,7 +8895,7 @@ export default function LocalProductsPage() {
                     <FiShare2 aria-hidden="true" className={iconClassName} />
                   ) : null}
                   {activeModal === "facebookDuplicatePosts" ? (
-                    <FiCopy aria-hidden="true" className={iconClassName} />
+                    <FiShare2 aria-hidden="true" className={iconClassName} />
                   ) : null}
                   {activeModal === "importExport" ? (
                     <FiArchive aria-hidden="true" className={iconClassName} />
@@ -8777,7 +8929,7 @@ export default function LocalProductsPage() {
                       ? "Fanpage và Group"
                       : null}
                     {activeModal === "facebookDuplicatePosts"
-                      ? "Nhân bản bài viết Fanpage"
+                      ? "Công cụ Fanpage"
                       : null}
                     {activeModal === "importExport"
                       ? "Import / Export Data"
@@ -9486,7 +9638,7 @@ export default function LocalProductsPage() {
                                 event.target.value,
                               )
                             }
-                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                            className={scheduleFieldClassName}
                           />
                         </label>
 
@@ -9500,7 +9652,7 @@ export default function LocalProductsPage() {
                             onChange={(event) =>
                               updateScheduleField("dateTo", event.target.value)
                             }
-                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                            className={scheduleFieldClassName}
                           />
                         </label>
 
@@ -9517,7 +9669,7 @@ export default function LocalProductsPage() {
                                 event.target.value,
                               )
                             }
-                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                            className={scheduleFieldClassName}
                           />
                         </label>
 
@@ -9531,7 +9683,7 @@ export default function LocalProductsPage() {
                             onChange={(event) =>
                               updateScheduleField("endTime", event.target.value)
                             }
-                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                            className={scheduleFieldClassName}
                           />
                         </label>
 
@@ -9547,7 +9699,7 @@ export default function LocalProductsPage() {
                                 Number(event.target.value),
                               )
                             }
-                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                            className={scheduleFieldClassName}
                           >
                             {[1, 2, 3, 4, 5, 6].map((hour) => (
                               <option key={hour} value={hour}>
@@ -9576,7 +9728,7 @@ export default function LocalProductsPage() {
                                 ),
                               }));
                             }}
-                            className="rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition focus:border-cyan-300/60"
+                            className={scheduleFieldClassName}
                           >
                             {[1, 2, 3, 4, 5, 6, 7, 8].map((count) => (
                               <option key={count} value={count}>
@@ -9997,7 +10149,6 @@ export default function LocalProductsPage() {
                           const scheduleLabels = getTodayProductScheduleLabels(
                             product.id,
                           );
-                          const usedToday = scheduleLabels.length > 0;
                           const doneToday = todayPostedProductIds.has(
                             product.id,
                           );
@@ -10186,7 +10337,9 @@ export default function LocalProductsPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <h3 className="text-xs font-black text-white">
-                          Thêm nội dung liên hệ
+                          {editingContactOptionId
+                            ? "Sửa nội dung liên hệ"
+                            : "Thêm nội dung liên hệ"}
                         </h3>
                         <p className="mt-1 text-[10px] leading-4 text-emerald-100/80">
                           Liên hệ được chọn sẽ cách nội dung Post hoặc Cmt một dòng trống và được lưu trong file backup JSON.
@@ -10204,14 +10357,32 @@ export default function LocalProductsPage() {
                         className="min-h-24 w-full resize-y rounded-md border border-emerald-300/20 bg-slate-950/70 p-2 text-xs leading-5 text-white outline-none transition placeholder:text-slate-600 focus:border-emerald-300/50"
                         placeholder="Nhập nội dung liên hệ..."
                       />
-                      <button
-                        type="button"
-                        className="flex items-center justify-center gap-2 rounded-md bg-emerald-300 px-3 py-2 text-xs font-black text-slate-950 transition hover:bg-emerald-200 active:opacity-80 xl:self-stretch"
-                        onClick={addContactOption}
-                      >
-                        <FiPlus aria-hidden="true" className={iconClassName} />
-                        Thêm liên hệ
-                      </button>
+                      <div className="grid grid-cols-1 gap-2 xl:self-stretch">
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-2 rounded-md bg-emerald-300 px-3 py-2 text-xs font-black text-slate-950 transition hover:bg-emerald-200 active:opacity-80"
+                          onClick={saveContactOption}
+                        >
+                          {editingContactOptionId ? (
+                            <FiCheck aria-hidden="true" className={iconClassName} />
+                          ) : (
+                            <FiPlus aria-hidden="true" className={iconClassName} />
+                          )}
+                          {editingContactOptionId
+                            ? "Lưu liên hệ"
+                            : "Thêm liên hệ"}
+                        </button>
+
+                        {editingContactOptionId ? (
+                          <button
+                            type="button"
+                            className="flex items-center justify-center gap-2 rounded-md border border-white/15 bg-slate-800 px-3 py-2 text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80"
+                            onClick={resetContactEditor}
+                          >
+                            Hủy sửa
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                   </article>
 
@@ -10220,33 +10391,43 @@ export default function LocalProductsPage() {
                       settings.contactOptions.map((option, index) => (
                         <div
                           key={option.id}
-                          className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2 rounded-md border p-2 ${settings.selectedContactId === option.id
+                          className={`grid grid-cols-[minmax(0,1fr)_auto_auto] items-stretch gap-2 rounded-md border p-2 ${settings.selectedContactId === option.id
                             ? "border-emerald-300/60 bg-emerald-300/15"
                             : "border-white/10 bg-slate-900/70"
                             }`}
                         >
-                          <input
-                            type="radio"
-                            name="selected-contact-option"
-                            checked={settings.selectedContactId === option.id}
-                            onChange={() => selectContactOption(option.id)}
-                            className="mt-2 h-4 w-4 accent-emerald-300"
-                            aria-label={`Chọn liên hệ ${index + 1}`}
-                          />
-                          <textarea
-                            value={option.text}
-                            onChange={(event) =>
-                              updateContactOptionText(
-                                option.id,
-                                event.target.value,
-                              )
-                            }
-                            className="min-h-20 w-full resize-y rounded-md border border-white/10 bg-slate-900/80 p-2 text-xs leading-5 text-white outline-none transition focus:border-emerald-300/40"
-                            aria-label={`Nội dung liên hệ ${index + 1}`}
-                          />
                           <button
                             type="button"
-                            className="flex h-8 w-8 items-center justify-center rounded-md border border-rose-300/30 bg-rose-300/10 text-rose-100 transition hover:bg-rose-300/20 active:opacity-80"
+                            aria-pressed={settings.selectedContactId === option.id}
+                            className="flex min-w-0 items-start gap-2 p-2 text-left"
+                            onClick={() => selectContactOption(option.id)}
+                            aria-label={`Chọn liên hệ ${index + 1}`}
+                          >
+                            <span
+                              aria-hidden="true"
+                              className={`mt-1 h-3 w-3 shrink-0 rounded-full border ${settings.selectedContactId === option.id
+                                ? "border-emerald-200 bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.45)]"
+                                : "border-slate-500 bg-slate-950"
+                                }`}
+                            />
+                            <span className="min-w-0 whitespace-pre-wrap text-xs leading-5 text-slate-100 [overflow-wrap:anywhere]">
+                              {option.text}
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="flex h-8 w-8 items-center justify-center self-start rounded-md border border-amber-300/30 bg-amber-300/10 text-amber-100 transition hover:bg-amber-300/20 active:opacity-80"
+                            onClick={() => startEditingContactOption(option)}
+                            title="Sửa liên hệ"
+                            aria-label={`Sửa liên hệ ${index + 1}`}
+                          >
+                            <FiEdit3 aria-hidden="true" className={iconClassName} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className="flex h-8 w-8 items-center justify-center self-start rounded-md border border-rose-300/30 bg-rose-300/10 text-rose-100 transition hover:bg-rose-300/20 active:opacity-80"
                             onClick={() => removeContactOption(option.id)}
                             title="Xóa liên hệ"
                             aria-label={`Xóa liên hệ ${index + 1}`}
@@ -10273,7 +10454,9 @@ export default function LocalProductsPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <h3 className="text-xs font-black text-white">
-                          Thêm Fanpage
+                          {editingFacebookPageOptionId
+                            ? "Sửa Fanpage"
+                            : "Thêm Fanpage"}
                         </h3>
                         <p className="mt-1 text-[10px] leading-4 text-[#eadfbe]/80">
                           Chỉ lưu tên và Asset ID trong local và file backup. Không lưu tài khoản, mật khẩu hoặc Access Token.
@@ -10320,14 +10503,32 @@ export default function LocalProductsPage() {
                         />
                       </label>
 
-                      <button
-                        type="button"
-                        className="flex items-center justify-center gap-2 border border-[#f0e3c0]/80 bg-[linear-gradient(135deg,#f2e8cd,#c9b47c)] px-3 py-2 text-xs font-black text-[#17130a] transition hover:brightness-105 active:opacity-80"
-                        onClick={addFacebookPageOption}
-                      >
-                        <FiPlus aria-hidden="true" className={iconClassName} />
-                        Thêm Fanpage
-                      </button>
+                      <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+                        <button
+                          type="button"
+                          className="flex items-center justify-center gap-2 border border-[#f0e3c0]/80 bg-[linear-gradient(135deg,#f2e8cd,#c9b47c)] px-3 py-2 text-xs font-black text-[#17130a] transition hover:brightness-105 active:opacity-80"
+                          onClick={saveFacebookPageOption}
+                        >
+                          {editingFacebookPageOptionId ? (
+                            <FiCheck aria-hidden="true" className={iconClassName} />
+                          ) : (
+                            <FiPlus aria-hidden="true" className={iconClassName} />
+                          )}
+                          {editingFacebookPageOptionId
+                            ? "Lưu Fanpage"
+                            : "Thêm Fanpage"}
+                        </button>
+
+                        {editingFacebookPageOptionId ? (
+                          <button
+                            type="button"
+                            className="flex items-center justify-center gap-2 border border-white/15 bg-slate-800 px-3 py-2 text-xs font-black text-white transition hover:bg-slate-700 active:opacity-80"
+                            onClick={resetFacebookPageEditor}
+                          >
+                            Hủy sửa
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                   </article>
 
@@ -10336,40 +10537,26 @@ export default function LocalProductsPage() {
                       settings.facebookPages.map((option, index) => (
                         <div
                           key={option.id}
-                          className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border p-2 ${settings.selectedFacebookPageOptionId === option.id
-                            ? "border-[#d8c99f]/60 bg-[#d8c99f]/[0.1]"
-                            : "border-white/10 bg-slate-900/70"
-                            }`}
+                          className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 border border-white/10 bg-slate-900/70 p-2"
                         >
-                          <input
-                            type="radio"
-                            name="selected-facebook-page-option"
-                            checked={
-                              settings.selectedFacebookPageOptionId === option.id
-                            }
-                            onChange={() => selectFacebookPageOption(option.id)}
-                            className="h-4 w-4 accent-[#d8c99f]"
-                            aria-label={`Chọn Fanpage ${index + 1}`}
-                          />
-
                           <div className="min-w-0">
-                            <input
-                              type="text"
-                              value={option.name}
-                              onChange={(event) =>
-                                updateFacebookPageOptionName(
-                                  option.id,
-                                  event.target.value,
-                                )
-                              }
-                              onKeyDown={(event) => event.stopPropagation()}
-                              className="w-full min-w-0 bg-transparent text-xs font-black text-white outline-none"
-                              aria-label={`Tên Fanpage ${index + 1}`}
-                            />
+                            <p className="truncate text-xs font-black text-white">
+                              {option.name}
+                            </p>
                             <p className="mt-1 truncate font-mono text-[9px] text-slate-400">
                               Asset ID: {option.assetId}
                             </p>
                           </div>
+
+                          <button
+                            type="button"
+                            className="flex h-8 w-8 items-center justify-center border border-amber-300/30 bg-amber-300/10 text-amber-100 transition hover:bg-amber-300/20 active:opacity-80"
+                            onClick={() => startEditingFacebookPageOption(option)}
+                            title="Sửa Fanpage"
+                            aria-label={`Sửa Fanpage ${index + 1}`}
+                          >
+                            <FiEdit3 aria-hidden="true" className={iconClassName} />
+                          </button>
 
                           <button
                             type="button"
@@ -10387,7 +10574,7 @@ export default function LocalProductsPage() {
                       ))
                     ) : (
                       <p className="border border-dashed border-white/10 bg-slate-950/40 p-4 text-center text-[10px] leading-5 text-slate-400">
-                        Chưa có Fanpage. Có thể thêm nhiều Asset ID và chọn một Trang mặc định khi mở Composer.
+                        Chưa có Fanpage. Có thể thêm nhiều Asset ID và chọn trực tiếp bằng nút khi mở Composer.
                       </p>
                     )}
                   </article>
@@ -10421,6 +10608,22 @@ export default function LocalProductsPage() {
                           onKeyDown={(event) => event.stopPropagation()}
                           className="w-full border border-white/10 bg-slate-950/80 px-2 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/50"
                           placeholder="Ví dụ: Group iPhone"
+                        />
+                      </label>
+
+                      <label className="grid gap-1">
+                        <span className="text-[10px] font-black text-slate-300">
+                          Danh mục Group
+                        </span>
+                        <input
+                          type="text"
+                          value={facebookGroupCategoryDraft}
+                          onChange={(event) =>
+                            setFacebookGroupCategoryDraft(event.target.value)
+                          }
+                          onKeyDown={(event) => event.stopPropagation()}
+                          className="w-full border border-white/10 bg-slate-950/80 px-2 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-violet-300/50"
+                          placeholder="Ví dụ: Laptop"
                         />
                       </label>
 
@@ -10487,6 +10690,28 @@ export default function LocalProductsPage() {
                               className="w-full min-w-0 bg-transparent text-xs font-black text-white outline-none"
                               aria-label={`Tên Group ${index + 1}`}
                             />
+                            <input
+                              type="text"
+                              value={group.category}
+                              onChange={(event) =>
+                                updateFacebookGroupOptionCategory(
+                                  group.id,
+                                  event.target.value,
+                                )
+                              }
+                              onBlur={(event) => {
+                                updateFacebookGroupOptionCategory(
+                                  group.id,
+                                  normalizeCategoryName(
+                                    event.currentTarget.value,
+                                  ) || "Chưa phân loại",
+                                );
+                              }}
+                              onKeyDown={(event) => event.stopPropagation()}
+                              className="mt-1 w-full min-w-0 border-t border-violet-300/15 bg-transparent pt-1 text-[9px] font-bold text-violet-200 outline-none placeholder:text-slate-600"
+                              placeholder="Danh mục Group"
+                              aria-label={`Danh mục Group ${index + 1}`}
+                            />
                             <p className="mt-1 truncate text-[9px] text-slate-400">
                               {group.url}
                             </p>
@@ -10516,52 +10741,59 @@ export default function LocalProductsPage() {
               ) : null}
 
               {activeModal === "facebookDuplicatePosts" ? (
-                <section className="grid w-full grid-cols-1 gap-2 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-                  <article className="self-start border border-[#d8c99f]/25 bg-[#d8c99f]/[0.055] p-3">
+                <section className="grid w-full min-w-0 grid-cols-1 gap-2 overflow-x-hidden xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+                  <article className="min-w-0 max-w-full self-start overflow-x-hidden border border-[#d8c99f]/25 bg-[#d8c99f]/[0.055] p-3">
                     <div className="flex items-start justify-between gap-2 border-b border-[#d8c99f]/15 pb-2">
                       <div className="min-w-0">
                         <h3 className="text-xs font-black text-white">
-                          Fanpage đích
+                          Chọn Fanpage
                         </h3>
                         <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                          Fanpage đang chọn cung cấp Asset ID cho mọi mẫu bài viết dùng chung.
+                          Asset ID của Fanpage được dùng chung cho các công cụ bên dưới.
                         </p>
                       </div>
                       <span className="shrink-0 border border-[#d8c99f]/30 bg-[#d8c99f]/10 px-2 py-1 text-[9px] font-black text-[#eadfbe]">
-                        Page
+                        Khu vực 1
                       </span>
                     </div>
 
                     {settings.facebookPages.length > 0 ? (
-                      <div className="mt-3 grid gap-2">
-                        <label className="grid gap-1">
+                      <div className="mt-3 grid min-w-0 max-w-full gap-2 overflow-x-hidden">
+                        <div className="grid min-w-0 max-w-full gap-1 overflow-x-hidden">
                           <span className="text-[10px] font-black text-slate-300">
                             Chọn Fanpage
                           </span>
-                          <select
-                            value={settings.selectedFacebookPageOptionId}
-                            onChange={(event) =>
-                              selectFacebookPageOption(event.target.value)
-                            }
-                            className="min-h-10 w-full border border-[#d8c99f]/25 bg-[#080c12] px-2 py-2 text-xs font-black text-white outline-none [color-scheme:dark] focus:border-[#d8c99f]/60"
-                          >
+                          <div className="grid max-h-40 min-w-0 max-w-full grid-cols-1 gap-1.5 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable] xl:grid-cols-2">
                             {settings.facebookPages.map((option) => (
-                              <option
+                              <button
+                                type="button"
                                 key={option.id}
-                                value={option.id}
-                                className="bg-[#080c12] text-white"
+                                aria-pressed={selectedFacebookPageId === option.id}
+                                className={`max-w-full min-w-0 overflow-hidden border px-2 py-2 text-left transition ${selectedFacebookPageId === option.id
+                                  ? "border-[#d8c99f]/70 bg-[#d8c99f]/15 text-[#f4e8c7]"
+                                  : "border-white/10 bg-slate-950/70 text-slate-300 hover:border-[#d8c99f]/35 hover:bg-[#d8c99f]/[0.06]"
+                                  }`}
+                                onClick={() => setSelectedFacebookPageId(option.id)}
                               >
-                                {option.name} · {option.assetId}
-                              </option>
+                                <span className="block truncate text-[10px] font-black">
+                                  {option.name}
+                                </span>
+                                <span className="mt-0.5 block truncate font-mono text-[8px] text-slate-500">
+                                  {option.assetId}
+                                </span>
+                              </button>
                             ))}
-                          </select>
-                        </label>
+                          </div>
+                        </div>
 
                         {activeFacebookPage ? (
-                          <div className="border border-white/10 bg-slate-950/70 p-2.5">
+                          <div className="min-w-0 max-w-full overflow-hidden border border-[#d8c99f]/20 bg-slate-950/70 p-2.5">
                             <div className="flex min-w-0 items-center justify-between gap-2">
                               <div className="min-w-0">
-                                <p className="truncate text-[10px] font-black text-[#eadfbe]">
+                                <p className="text-[8px] font-black uppercase tracking-[0.1em] text-slate-500">
+                                  Fanpage đang chọn
+                                </p>
+                                <p className="mt-1 truncate text-[10px] font-black text-[#eadfbe]">
                                   {activeFacebookPage.name}
                                 </p>
                                 <p className="mt-0.5 truncate font-mono text-[8px] text-slate-500">
@@ -10573,45 +10805,70 @@ export default function LocalProductsPage() {
                               </span>
                             </div>
 
-                            <textarea
-                              readOnly
-                              rows={3}
-                              value={createMetaBusinessComposerUrl(
-                                activeFacebookPage.assetId,
-                              )}
-                              className="mt-2 w-full resize-none border border-white/10 bg-black/30 p-2 font-mono text-[9px] leading-4 text-slate-300 outline-none"
-                              aria-label="URL Composer của Fanpage"
-                            />
+                            <div className="mt-2 grid min-w-0 grid-cols-1 gap-2">
+                              {FACEBOOK_PAGE_URL_TOOLS.map((tool) => {
+                                const toolUrl = tool.createUrl(
+                                  activeFacebookPage.assetId,
+                                );
 
-                            <div className="mt-2 grid grid-cols-2 gap-2">
-                              <button
-                                type="button"
-                                className="min-h-9 border border-cyan-300/35 bg-cyan-300/10 px-2 py-2 text-[9px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80"
-                                onClick={() =>
-                                  void copyFacebookUrl(
-                                    createMetaBusinessComposerUrl(
-                                      activeFacebookPage.assetId,
-                                    ),
-                                    "Đã copy URL Composer",
-                                  )
-                                }
-                              >
-                                Copy Composer
-                              </button>
-                              <button
-                                type="button"
-                                className="min-h-9 border border-[#d8c99f]/35 bg-[#d8c99f]/10 px-2 py-2 text-[9px] font-black text-[#eadfbe] transition hover:bg-[#d8c99f]/20 active:opacity-80"
-                                onClick={() =>
-                                  openFacebookUrl(
-                                    createMetaBusinessComposerUrl(
-                                      activeFacebookPage.assetId,
-                                    ),
-                                    `composer-${activeFacebookPage.id}`,
-                                  )
-                                }
-                              >
-                                Mở Composer
-                              </button>
+                                return (
+                                  <section
+                                    key={tool.id}
+                                    className={`min-w-0 max-w-full overflow-hidden border p-2 ${tool.containerClassName}`}
+                                  >
+                                    <div className="flex min-w-0 items-start justify-between gap-2">
+                                      <div className="min-w-0">
+                                        <h4 className="text-[10px] font-black text-white">
+                                          {tool.title}
+                                        </h4>
+                                        <p className="mt-0.5 text-[9px] leading-4 text-slate-400">
+                                          {tool.description}
+                                        </p>
+                                      </div>
+                                      <span
+                                        className={`shrink-0 border px-1.5 py-0.5 text-[8px] font-black ${tool.badgeClassName}`}
+                                      >
+                                        {tool.shortLabel}
+                                      </span>
+                                    </div>
+
+                                    <textarea
+                                      readOnly
+                                      rows={3}
+                                      value={toolUrl}
+                                      className="mt-2 block w-full min-w-0 max-w-full resize-none overflow-x-hidden border border-white/10 bg-black/30 p-2 font-mono text-[8px] leading-4 text-slate-300 outline-none"
+                                      aria-label={`URL ${tool.title} của Fanpage`}
+                                    />
+
+                                    <div className="mt-2 grid min-w-0 grid-cols-2 gap-1.5 overflow-hidden">
+                                      <button
+                                        type="button"
+                                        className={`min-h-9 min-w-0 overflow-hidden whitespace-nowrap border px-2 py-2 text-[9px] font-black transition active:opacity-80 ${tool.copyButtonClassName}`}
+                                        onClick={() =>
+                                          void copyFacebookUrl(
+                                            toolUrl,
+                                            tool.copyMessage,
+                                          )
+                                        }
+                                      >
+                                        {tool.copyLabel}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className={`min-h-9 min-w-0 overflow-hidden whitespace-nowrap border px-2 py-2 text-[9px] font-black transition active:opacity-80 ${tool.openButtonClassName}`}
+                                        onClick={() =>
+                                          openFacebookUrl(
+                                            toolUrl,
+                                            `${tool.popupNamePrefix}-${activeFacebookPage.id}`,
+                                          )
+                                        }
+                                      >
+                                        {tool.openLabel}
+                                      </button>
+                                    </div>
+                                  </section>
+                                );
+                              })}
                             </div>
                           </div>
                         ) : null}
@@ -10632,18 +10889,38 @@ export default function LocalProductsPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <h3 className="text-xs font-black text-white">
-                            Thêm mẫu bài viết
+                            {editingFacebookDuplicatePostId
+                              ? "Sửa mẫu nhân bản"
+                              : "Nhân bản bài viết"}
                           </h3>
                           <p className="mt-1 text-[10px] leading-4 text-slate-400">
                             URL được lưu thành mẫu dùng chung. Asset ID được lấy từ Fanpage đang chọn khi Copy hoặc Mở.
                           </p>
                         </div>
                         <span className="shrink-0 border border-amber-200/30 bg-amber-200/10 px-2 py-1 text-[9px] font-black text-amber-100">
-                          URL
+                          Khu vực 2
                         </span>
                       </div>
 
-                      <div className="mt-3 grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)_auto]">
+                      <div className="mt-3 grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,0.45fr)_minmax(0,0.7fr)_minmax(0,1.35fr)_auto]">
+                        <label className="grid min-w-0 gap-1">
+                          <span className="text-[9px] font-black text-slate-300">
+                            Danh mục
+                          </span>
+                          <input
+                            type="text"
+                            value={facebookDuplicateCategoryDraft}
+                            onChange={(event) =>
+                              setFacebookDuplicateCategoryDraft(
+                                event.target.value,
+                              )
+                            }
+                            onKeyDown={(event) => event.stopPropagation()}
+                            className="min-h-10 w-full min-w-0 border border-white/10 bg-slate-950 px-2 py-2 text-[10px] font-bold text-white outline-none placeholder:text-slate-600 focus:border-amber-300/45"
+                            placeholder="Laptop"
+                          />
+                        </label>
+
                         <label className="grid min-w-0 gap-1">
                           <span className="text-[9px] font-black text-slate-300">
                             Tên bài viết
@@ -10676,16 +10953,34 @@ export default function LocalProductsPage() {
                           />
                         </label>
 
-                        <button
-                          type="button"
-                          className="min-h-10 self-end border border-amber-200/55 bg-amber-200/15 px-3 py-2 text-[10px] font-black text-amber-50 transition hover:bg-amber-200/25 active:opacity-80"
-                          onClick={addFacebookDuplicatePostOption}
-                        >
-                          <span className="flex items-center justify-center gap-1.5">
-                            <FiPlus aria-hidden="true" className={iconClassName} />
-                            Lưu mẫu
-                          </span>
-                        </button>
+                        <div className="grid gap-1 self-end">
+                          <button
+                            type="button"
+                            className="min-h-10 border border-amber-200/55 bg-amber-200/15 px-3 py-2 text-[10px] font-black text-amber-50 transition hover:bg-amber-200/25 active:opacity-80"
+                            onClick={saveFacebookDuplicatePostOption}
+                          >
+                            <span className="flex items-center justify-center gap-1.5">
+                              {editingFacebookDuplicatePostId ? (
+                                <FiCheck aria-hidden="true" className={iconClassName} />
+                              ) : (
+                                <FiPlus aria-hidden="true" className={iconClassName} />
+                              )}
+                              {editingFacebookDuplicatePostId
+                                ? "Lưu sửa"
+                                : "Lưu mẫu"}
+                            </span>
+                          </button>
+
+                          {editingFacebookDuplicatePostId ? (
+                            <button
+                              type="button"
+                              className="min-h-9 border border-white/15 bg-slate-800 px-3 py-2 text-[9px] font-black text-white transition hover:bg-slate-700 active:opacity-80"
+                              onClick={resetFacebookDuplicatePostEditor}
+                            >
+                              Hủy sửa
+                            </button>
+                          ) : null}
+                        </div>
                       </div>
                     </article>
 
@@ -10699,88 +10994,114 @@ export default function LocalProductsPage() {
                             Mọi mẫu đều dùng được với Fanpage đang chọn.
                           </p>
                         </div>
-                        <span className="shrink-0 border border-white/10 bg-white/[0.04] px-2 py-1 text-[9px] font-black text-slate-300">
-                          {facebookDuplicatePostTemplates.length} mẫu
-                        </span>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <span className="border border-[#d8c99f]/20 bg-[#d8c99f]/10 px-1.5 py-1 text-[8px] font-black text-[#eadfbe]">
+                            Khu vực 3
+                          </span>
+                          <span className="border border-white/10 bg-white/[0.04] px-2 py-1 text-[9px] font-black text-slate-300">
+                            {facebookDuplicatePostTemplates.length} mẫu
+                          </span>
+                        </div>
                       </div>
 
                       {facebookDuplicatePostTemplates.length > 0 ? (
-                        <div className="mt-2 max-h-[52dvh] space-y-1.5 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
-                          {facebookDuplicatePostTemplates.map(
-                            (option, index) => (
-                              <div
-                                key={option.id}
-                                className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1.5 border border-white/10 bg-slate-900/65 p-2 transition hover:border-amber-300/30 hover:bg-amber-300/[0.05]"
-                              >
-                                <div className="min-w-0">
-                                  <input
-                                    type="text"
-                                    value={option.name}
-                                    onChange={(event) =>
-                                      updateFacebookDuplicatePostOptionName(
-                                        option.id,
-                                        event.target.value,
-                                      )
-                                    }
-                                    onKeyDown={(event) =>
-                                      event.stopPropagation()
-                                    }
-                                    className="w-full min-w-0 bg-transparent text-[10px] font-black text-white outline-none"
-                                    aria-label={`Tên URL nhân bản ${index + 1}`}
-                                  />
-                                  <p className="mt-1 truncate font-mono text-[8px] text-slate-400">
-                                    {activeFacebookPage
-                                      ? createMetaBusinessDuplicateUrl(
-                                        option.url,
-                                        activeFacebookPage.assetId,
-                                      )
-                                      : option.url}
-                                  </p>
-                                  <p className="mt-0.5 truncate font-mono text-[8px] text-slate-600">
-                                    ID: {getFacebookDuplicateContentId(option.url)}
-                                  </p>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-1">
-                                  <button
-                                    type="button"
-                                    disabled={!activeFacebookPage}
-                                    className="min-h-8 border border-cyan-300/35 bg-cyan-300/10 px-2 py-1.5 text-[9px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
-                                    onClick={() =>
-                                      void copyFacebookDuplicateUrl(option)
-                                    }
-                                  >
-                                    Copy
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={!activeFacebookPage}
-                                    className="min-h-8 border border-amber-300/35 bg-amber-300/10 px-2 py-1.5 text-[9px] font-black text-amber-100 transition hover:bg-amber-300/20 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
-                                    onClick={() =>
-                                      openFacebookDuplicateUrl(option)
-                                    }
-                                  >
-                                    Mở
-                                  </button>
-                                </div>
-
-                                <button
-                                  type="button"
-                                  className="flex h-8 w-8 items-center justify-center border border-rose-300/30 bg-rose-300/10 text-rose-100 transition hover:bg-rose-300/20 active:opacity-80"
-                                  onClick={() =>
-                                    removeFacebookDuplicatePostOption(option.id)
-                                  }
-                                  title="Xóa URL nhân bản"
-                                  aria-label={`Xóa URL nhân bản ${index + 1}`}
-                                >
-                                  <FiTrash2
-                                    aria-hidden="true"
-                                    className={iconClassName}
-                                  />
-                                </button>
+                        <div className="mt-2 max-h-[52dvh] space-y-2 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
+                          {facebookDuplicatePostGroups.map((group) => (
+                            <section
+                              key={normalizeTextKey(group.category)}
+                              className="border border-[#d8c99f]/15 bg-black/15 p-1.5"
+                            >
+                              <div className="flex items-center justify-between gap-2 border-b border-[#d8c99f]/15 px-1 pb-1.5">
+                                <p className="truncate text-[10px] font-black text-[#eadfbe]">
+                                  {group.category}
+                                </p>
+                                <span className="shrink-0 border border-[#d8c99f]/20 bg-[#d8c99f]/10 px-1.5 py-0.5 text-[8px] font-black text-[#eadfbe]">
+                                  {group.options.length}
+                                </span>
                               </div>
-                            ),
-                          )}
+
+                              <div className="mt-1.5 space-y-1.5">
+                                {group.options.map((option) => (
+                                  <div
+                                    key={option.id}
+                                    className="grid min-w-0 grid-cols-1 gap-1.5 border border-white/10 bg-slate-900/65 p-2 transition hover:border-amber-300/30 hover:bg-amber-300/[0.05] xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center"
+                                  >
+                                    <div className="min-w-0">
+                                      <p className="truncate text-[10px] font-black text-white">
+                                        {option.name}
+                                      </p>
+                                      <p className="mt-1 truncate font-mono text-[8px] text-slate-400">
+                                        {activeFacebookPage
+                                          ? createMetaBusinessDuplicateUrl(
+                                            option.url,
+                                            activeFacebookPage.assetId,
+                                          )
+                                          : option.url}
+                                      </p>
+                                      <p className="mt-0.5 truncate font-mono text-[8px] text-slate-600">
+                                        ID: {getFacebookDuplicateContentId(option.url)}
+                                      </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-4 gap-1">
+                                      <button
+                                        type="button"
+                                        disabled={!activeFacebookPage}
+                                        className="min-h-8 border border-cyan-300/35 bg-cyan-300/10 px-2 py-1.5 text-[9px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                                        onClick={() =>
+                                          void copyFacebookDuplicateUrl(option)
+                                        }
+                                      >
+                                        Copy
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={!activeFacebookPage}
+                                        className="min-h-8 border border-amber-300/35 bg-amber-300/10 px-2 py-1.5 text-[9px] font-black text-amber-100 transition hover:bg-amber-300/20 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                                        onClick={() =>
+                                          openFacebookDuplicateUrl(option)
+                                        }
+                                      >
+                                        Mở
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="flex min-h-8 items-center justify-center border border-violet-300/30 bg-violet-300/10 text-violet-100 transition hover:bg-violet-300/20 active:opacity-80"
+                                        onClick={() =>
+                                          startEditingFacebookDuplicatePostOption(
+                                            option,
+                                          )
+                                        }
+                                        title="Sửa URL nhân bản"
+                                        aria-label={`Sửa ${option.name}`}
+                                      >
+                                        <FiEdit3
+                                          aria-hidden="true"
+                                          className={iconClassName}
+                                        />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="flex min-h-8 items-center justify-center border border-rose-300/30 bg-rose-300/10 text-rose-100 transition hover:bg-rose-300/20 active:opacity-80"
+                                        onClick={() =>
+                                          removeFacebookDuplicatePostOption(
+                                            option.id,
+                                          )
+                                        }
+                                        title="Xóa URL nhân bản"
+                                        aria-label={`Xóa ${option.name}`}
+                                      >
+                                        <FiTrash2
+                                          aria-hidden="true"
+                                          className={iconClassName}
+                                        />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </section>
+                          ))}
                         </div>
                       ) : (
                         <p className="mt-2 border border-dashed border-white/10 bg-black/20 p-4 text-center text-[10px] leading-5 text-slate-500">
@@ -11005,7 +11326,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-slate-700"
+                          className={secondaryActionButtonClassName}
                           onClick={() =>
                             handleDownloadProductImages(
                               selectedAssignedSlot.product,
@@ -11046,7 +11367,7 @@ export default function LocalProductsPage() {
                       <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-slate-700"
+                          className={secondaryActionButtonClassName}
                           onClick={() =>
                             void handleCopyField(
                               `slot-name-${selectedAssignedSlot.key}`,
@@ -11063,7 +11384,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-slate-700"
+                          className={secondaryActionButtonClassName}
                           onClick={() =>
                             void handleCopyField(
                               `slot-post-${selectedAssignedSlot.key}`,
@@ -11097,7 +11418,7 @@ export default function LocalProductsPage() {
 
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 rounded-md border border-white/10 bg-slate-800 p-2 whitespace-nowrap text-xs font-bold text-white transition hover:bg-slate-700"
+                          className={secondaryActionButtonClassName}
                           onClick={() =>
                             handleEdit(selectedAssignedSlot.product)
                           }
@@ -11337,7 +11658,7 @@ export default function LocalProductsPage() {
       {pendingBlobUpload ? (
         <div className="luxury-modal-overlay fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center p-2">
           <form
-            className="luxury-dialog w-full max-w-md border p-3"
+            className={compactLuxuryDialogClassName}
             onSubmit={(event) => {
               event.preventDefault();
               void executeBlobUploadConfirm();
@@ -11401,7 +11722,7 @@ export default function LocalProductsPage() {
 
       {pendingConfirm ? (
         <div className="luxury-modal-overlay fixed inset-0 z-[1000001] flex h-dvh w-full items-center justify-center p-2">
-          <div className="luxury-dialog w-full max-w-md border p-3">
+          <div className={compactLuxuryDialogClassName}>
             <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2">
               <div className="">
                 <h3 className="text-xs font-black text-white">
@@ -11470,7 +11791,7 @@ export default function LocalProductsPage() {
       ) : null}
       {pendingBackup ? (
         <div className="luxury-modal-overlay fixed inset-0 z-[999999] flex h-dvh w-full items-center justify-center p-2">
-          <div className="luxury-dialog w-full max-w-md border p-3">
+          <div className={compactLuxuryDialogClassName}>
             <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
               <div className="">
                 <h3 className="text-sm font-black text-white">
@@ -11523,7 +11844,7 @@ export default function LocalProductsPage() {
 
       {pendingRemoveTaskIndex !== null ? (
         <div className="luxury-modal-overlay fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center p-2">
-          <div className="luxury-dialog w-full max-w-md border p-3">
+          <div className={compactLuxuryDialogClassName}>
             <h3 className="text-xs font-black text-white">Xoá task đã chọn?</h3>
             <p className="mt-2 text-xs leading-5 text-slate-400">
               Thao tác này chỉ xoá{" "}
@@ -11800,52 +12121,50 @@ export default function LocalProductsPage() {
                           Page
                         </span>
                       </div>
-                      <div className="grid grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_auto_auto]">
-                        <label className="grid min-w-0 gap-1">
-                          <span className="text-[9px] font-black text-[#eadfbe]">
-                            Composer Fanpage
-                          </span>
-                          <select
-                            value={settings.selectedFacebookPageOptionId}
-                            disabled={isShareExecuting}
-                            onChange={(event) =>
-                              selectFacebookPageOption(event.target.value)
-                            }
-                            className="min-h-10 min-w-0 border border-[#d8c99f]/25 bg-[#080c12] px-2 py-2 text-[10px] font-black text-white outline-none [color-scheme:dark] focus:border-[#d8c99f]/60 disabled:opacity-50"
+                      <div className="max-h-52 space-y-1.5 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
+                        {settings.facebookPages.map((option) => (
+                          <article
+                            key={option.id}
+                            className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-stretch gap-1.5 border border-white/10 bg-slate-950/55 p-1.5"
                           >
-                            {settings.facebookPages.map((option) => (
-                              <option
-                                key={option.id}
-                                value={option.id}
-                                className="bg-[#080c12] text-white"
-                              >
-                                {option.name} · {option.assetId}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                            <div className="min-w-0 px-1.5 py-1">
+                              <p className="truncate text-[10px] font-black text-[#eadfbe]">
+                                {option.name}
+                              </p>
+                              <p className="mt-0.5 truncate font-mono text-[8px] text-slate-500">
+                                {option.assetId}
+                              </p>
+                            </div>
 
-                        <button
-                          type="button"
-                          disabled={isShareExecuting || !activeFacebookPage}
-                          className="min-h-10 self-end border border-cyan-300/35 bg-cyan-300/10 px-3 py-2 text-[10px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
-                          onClick={() =>
-                            void handleOpenMetaBusinessComposer("post")
-                          }
-                        >
-                          Meta Post
-                        </button>
+                            <button
+                              type="button"
+                              disabled={isShareExecuting}
+                              className="min-w-16 border border-cyan-300/35 bg-cyan-300/10 px-2 py-2 text-[9px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-40"
+                              onClick={() =>
+                                void handleOpenMetaBusinessComposer(
+                                  option,
+                                  "post",
+                                )
+                              }
+                            >
+                              Meta Post
+                            </button>
 
-                        <button
-                          type="button"
-                          disabled={isShareExecuting || !activeFacebookPage}
-                          className="min-h-10 self-end border border-amber-300/35 bg-amber-300/10 px-3 py-2 text-[10px] font-black text-amber-100 transition hover:bg-amber-300/20 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
-                          onClick={() =>
-                            void handleOpenMetaBusinessComposer("comment")
-                          }
-                        >
-                          Meta Cmt
-                        </button>
+                            <button
+                              type="button"
+                              disabled={isShareExecuting}
+                              className="min-w-16 border border-amber-300/35 bg-amber-300/10 px-2 py-2 text-[9px] font-black text-amber-100 transition hover:bg-amber-300/20 active:opacity-80 disabled:cursor-wait disabled:opacity-40"
+                              onClick={() =>
+                                void handleOpenMetaBusinessComposer(
+                                  option,
+                                  "comment",
+                                )
+                              }
+                            >
+                              Meta Cmt
+                            </button>
+                          </article>
+                        ))}
                       </div>
                       <p className="mt-auto pt-3 text-[9px] leading-4 text-slate-400">
                         Meta Post/Cmt luôn tự tải ảnh chính và bỏ qua ảnh nội bộ. Mobile có thể dùng các nút chia sẻ bên dưới để gửi ảnh qua Share Sheet.
@@ -11915,6 +12234,10 @@ export default function LocalProductsPage() {
                                     }`}
                                 />
                                 <span className="min-w-0 flex-1">
+                                  <span className="mb-0.5 block truncate text-[8px] font-black uppercase tracking-[0.08em] text-violet-200/75">
+                                    {normalizeCategoryName(group.category) ||
+                                      "Chưa phân loại"}
+                                  </span>
                                   <span className={`block truncate text-[10px] font-black ${isActiveGroup ? "text-[#f4e8c7]" : "text-slate-200"}`}>
                                     {group.name}
                                   </span>
@@ -11974,6 +12297,11 @@ export default function LocalProductsPage() {
                               </p>
                               <p className="mt-1 truncate text-[10px] font-black text-[#f4e8c7]">
                                 {activeFacebookGroup.name}
+                              </p>
+                              <p className="mt-0.5 truncate text-[8px] font-bold uppercase tracking-[0.08em] text-violet-200/70">
+                                {normalizeCategoryName(
+                                  activeFacebookGroup.category,
+                                ) || "Chưa phân loại"}
                               </p>
                             </div>
                             <span className="shrink-0 bg-[#d8c99f] px-2 py-1 text-[8px] font-black text-[#17130a]">
@@ -12040,7 +12368,7 @@ export default function LocalProductsPage() {
       {pendingDownload ? (
         <div className="luxury-modal-overlay fixed inset-0 z-modal-top flex h-dvh w-full items-center justify-center p-2">
           <div className="flex h-[90dvh] w-full items-center justify-center bg-transparent p-2">
-            <div className="luxury-dialog w-full max-w-md border p-3">
+            <div className={compactLuxuryDialogClassName}>
               <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
                 <div className="">
                   <h2 className="truncate text-xs font-black text-white">
