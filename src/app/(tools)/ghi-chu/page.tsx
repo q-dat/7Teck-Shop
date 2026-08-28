@@ -79,6 +79,11 @@ type ProductDraft = {
 
 type ProductImageField = "images" | "internalImages";
 
+const DRAFT_IMAGE_ID_DATA_TYPE =
+  "application/x-local-product-draft-image-id";
+const DRAFT_IMAGE_FIELD_DATA_TYPE =
+  "application/x-local-product-draft-image-field";
+
 type ContactOption = {
   id: string;
   text: string;
@@ -104,6 +109,8 @@ type FacebookDuplicatePostOption = {
   url: string;
 };
 
+type AutoCopyShareMode = "post" | "comment";
+
 type GlobalSettings = {
   commonDescription: string;
   globalNote: string;
@@ -114,11 +121,12 @@ type GlobalSettings = {
   facebookGroups: FacebookGroupOption[];
   selectedFacebookGroupIds: string[];
   includeSocialTags: boolean;
+  autoCopyShareMode: AutoCopyShareMode;
   updatedAt: string;
 };
 
 type ExportPayload = {
-  version: 15;
+  version: 16;
   settings: GlobalSettings;
   products: LocalProduct[];
   scheduleConfig: ScheduleConfig;
@@ -227,6 +235,7 @@ type ModalName =
   | "schedule"
   | "globalNote"
   | "globalDescription"
+  | "shareCopyOption"
   | "contact"
   | "facebookPages"
   | "facebookDuplicatePosts"
@@ -241,6 +250,8 @@ type CategoryTab = "all" | string;
 type DownloadMode = "single" | "multiple";
 
 type DownloadRequest = {
+  productIds?: string[];
+  productIdsWhenSkippingInternal?: string[];
   title: string;
   description: string;
   mode: DownloadMode;
@@ -324,7 +335,7 @@ const SETTINGS_KEY = "local_product_global_settings";
 const POSTED_KEY = "local_product_posted_slots_v1";
 const SCHEDULE_CONFIG_KEY = "local_product_schedule_config_v1";
 const SCHEDULE_ASSIGNMENTS_KEY = "local_product_schedule_assignments_v1";
-const META_DOWNLOADED_PRODUCT_IDS_SESSION_KEY =
+const DOWNLOADED_PRODUCT_IDS_SESSION_KEY =
   "local_product_meta_downloaded_product_ids_v1";
 const FACEBOOK_SEARCH_BASE_URL = "https://www.facebook.com/search/top";
 const FACEBOOK_RECENT_POSTS_FILTER =
@@ -332,12 +343,12 @@ const FACEBOOK_RECENT_POSTS_FILTER =
 const DEFAULT_FACEBOOK_SEARCH_QUERY = "";
 const FACEBOOK_SEARCH_POPUP_COUNT = 4;
 
-const loadMetaDownloadedProductIds = (): Set<string> => {
+const loadDownloadedProductIds = (): Set<string> => {
   if (typeof window === "undefined") return new Set<string>();
 
   try {
     const raw = window.sessionStorage.getItem(
-      META_DOWNLOADED_PRODUCT_IDS_SESSION_KEY,
+      DOWNLOADED_PRODUCT_IDS_SESSION_KEY,
     );
     const parsed: unknown = raw ? JSON.parse(raw) : [];
 
@@ -354,12 +365,12 @@ const loadMetaDownloadedProductIds = (): Set<string> => {
   }
 };
 
-const saveMetaDownloadedProductIds = (productIds: Set<string>): void => {
+const saveDownloadedProductIds = (productIds: Set<string>): void => {
   if (typeof window === "undefined") return;
 
   try {
     window.sessionStorage.setItem(
-      META_DOWNLOADED_PRODUCT_IDS_SESSION_KEY,
+      DOWNLOADED_PRODUCT_IDS_SESSION_KEY,
       JSON.stringify(Array.from(productIds)),
     );
   } catch {
@@ -397,6 +408,7 @@ const defaultSettings: GlobalSettings = {
   facebookGroups: [],
   selectedFacebookGroupIds: [],
   includeSocialTags: false,
+  autoCopyShareMode: "post",
   updatedAt: "",
 };
 
@@ -1310,6 +1322,8 @@ const loadGlobalSettings = (): GlobalSettings => {
         typeof record.includeSocialTags === "boolean"
           ? record.includeSocialTags
           : false,
+      autoCopyShareMode:
+        record.autoCopyShareMode === "comment" ? "comment" : "post",
       updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : "",
     };
   } catch {
@@ -1840,6 +1854,8 @@ const normalizeGlobalSettings = (
       typeof record.includeSocialTags === "boolean"
         ? record.includeSocialTags
         : false,
+    autoCopyShareMode:
+      record.autoCopyShareMode === "comment" ? "comment" : "post",
     updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : "",
   };
 };
@@ -2362,7 +2378,7 @@ const createExportPayload = (params: {
   postedRecords: PostedRecord[];
 }): ExportPayload => {
   return {
-    version: 15,
+    version: 16,
     settings: params.settings,
     products: params.products,
     scheduleConfig: params.scheduleConfig,
@@ -2870,13 +2886,16 @@ export default function LocalProductsPage() {
     useState<number>(0);
   const [draggingProductId, setDraggingProductId] = useState<string>("");
   const [draggingDraftImageId, setDraggingDraftImageId] = useState<string>("");
+  const [draggingDraftImageField, setDraggingDraftImageField] = useState<
+    ProductImageField | ""
+  >("");
   const [pendingRemoveTaskIndex, setPendingRemoveTaskIndex] = useState<
     number | null
   >(null);
   const [pendingDownload, setPendingDownload] =
     useState<DownloadRequest | null>(null);
   const [pendingShare, setPendingShare] = useState<ShareRequest | null>(null);
-  const [metaDownloadedProductIds, setMetaDownloadedProductIds] = useState<
+  const [downloadedProductIds, setDownloadedProductIds] = useState<
     Set<string>
   >(() => new Set<string>());
   const [includeInternalShareImages, setIncludeInternalShareImages] =
@@ -2900,7 +2919,9 @@ export default function LocalProductsPage() {
   const [blobUploadPassword, setBlobUploadPassword] = useState<string>("");
   const [scheduleAssignments, setScheduleAssignments] =
     useState<ScheduleAssignmentMap>(() => loadScheduleAssignments());
-  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [dragOverImageField, setDragOverImageField] = useState<
+    ProductImageField | ""
+  >("");
   const [isProcessingImages, setIsProcessingImages] = useState<boolean>(false);
   const [isSettingsReady, setIsSettingsReady] = useState<boolean>(false);
   const [pageLoadingText, setPageLoadingText] = useState<string>("");
@@ -2927,7 +2948,7 @@ export default function LocalProductsPage() {
     useState<Window | null>(null);
 
   useEffect(() => {
-    setMetaDownloadedProductIds(loadMetaDownloadedProductIds());
+    setDownloadedProductIds(loadDownloadedProductIds());
   }, []);
 
   const activeContactText = useMemo(
@@ -3905,6 +3926,7 @@ export default function LocalProductsPage() {
     settings.facebookGroups,
     settings.selectedFacebookGroupIds,
     settings.includeSocialTags,
+    settings.autoCopyShareMode,
     isSettingsReady,
   ]);
 
@@ -4634,25 +4656,117 @@ export default function LocalProductsPage() {
     await appendImagesToDraft(imageFiles, "internalImages");
   };
 
+  const moveDraftImageBetweenFields = (
+    sourceImageId: string,
+    sourceImageField: ProductImageField,
+    targetImageField: ProductImageField,
+    targetImageId?: string,
+  ): void => {
+    if (sourceImageField === targetImageField) return;
+
+    setDraft((current) => {
+      const sourceIndex = current[sourceImageField].findIndex(
+        (image) => image.id === sourceImageId,
+      );
+
+      if (sourceIndex < 0) return current;
+
+      const nextSourceImages = [...current[sourceImageField]];
+      const [movedImage] = nextSourceImages.splice(sourceIndex, 1);
+
+      if (!movedImage) return current;
+
+      const nextTargetImages = [...current[targetImageField]];
+      const targetIndex = targetImageId
+        ? nextTargetImages.findIndex((image) => image.id === targetImageId)
+        : -1;
+      const insertIndex =
+        targetIndex >= 0 ? targetIndex : nextTargetImages.length;
+
+      nextTargetImages.splice(insertIndex, 0, movedImage);
+
+      return {
+        ...current,
+        [sourceImageField]: renameDraftImagesByField(
+          nextSourceImages,
+          sourceImageField,
+        ),
+        [targetImageField]: renameDraftImagesByField(
+          nextTargetImages,
+          targetImageField,
+        ),
+      };
+    });
+  };
+
+  const resetDraftImageDrag = (): void => {
+    setDraggingDraftImageId("");
+    setDraggingDraftImageField("");
+    setDragOverImageField("");
+  };
+
   const handleDrop = async (
-    event: DragEvent<HTMLLabelElement>,
+    event: DragEvent<HTMLElement>,
     imageField: ProductImageField = "images",
+    targetImageId?: string,
   ): Promise<void> => {
     event.preventDefault();
-    setIsDragging(false);
+    event.stopPropagation();
+
+    const sourceImageId =
+      event.dataTransfer.getData(DRAFT_IMAGE_ID_DATA_TYPE) ||
+      draggingDraftImageId;
+    const rawSourceImageField =
+      event.dataTransfer.getData(DRAFT_IMAGE_FIELD_DATA_TYPE) ||
+      draggingDraftImageField;
+    const sourceImageField: ProductImageField | "" =
+      rawSourceImageField === "images" ||
+        rawSourceImageField === "internalImages"
+        ? rawSourceImageField
+        : "";
+
+    if (sourceImageId && sourceImageField) {
+      if (sourceImageField === imageField) {
+        if (targetImageId) {
+          reorderDraftImage(sourceImageId, targetImageId, imageField);
+        }
+      } else {
+        moveDraftImageBetweenFields(
+          sourceImageId,
+          sourceImageField,
+          imageField,
+          targetImageId,
+        );
+        Toastify(
+          imageField === "images"
+            ? "Đã chuyển ảnh nội bộ lên ảnh chính"
+            : "Đã chuyển ảnh chính xuống ảnh nội bộ",
+          200,
+        );
+      }
+
+      resetDraftImageDrag();
+      return;
+    }
+
+    setDragOverImageField("");
 
     const files = Array.from(event.dataTransfer.files) as File[];
 
     await appendImagesToDraft(files, imageField);
   };
 
-  const handleDragOver = (event: DragEvent<HTMLLabelElement>): void => {
+  const handleDragOver = (
+    event: DragEvent<HTMLElement>,
+    imageField: ProductImageField = "images",
+  ): void => {
     event.preventDefault();
-    setIsDragging(true);
+    event.dataTransfer.dropEffect = draggingDraftImageId ? "move" : "copy";
+    setDragOverImageField(imageField);
   };
 
   const handleDragLeave = (): void => {
-    setIsDragging(false);
+    setDragOverImageField("");
   };
 
   const removeDraftImage = (
@@ -5416,6 +5530,20 @@ export default function LocalProductsPage() {
     });
   };
 
+  const markProductImagesDownloaded = (productIds: string[]): void => {
+    const validProductIds = productIds.filter(
+      (productId) => productId.trim().length > 0,
+    );
+
+    if (validProductIds.length === 0) return;
+
+    const nextProductIds = loadDownloadedProductIds();
+
+    validProductIds.forEach((productId) => nextProductIds.add(productId));
+    saveDownloadedProductIds(nextProductIds);
+    setDownloadedProductIds(nextProductIds);
+  };
+
   const requestDownload = (request: DownloadRequest): void => {
     setSkipInternalDownloadImages(false);
     setPendingDownload(request);
@@ -5425,6 +5553,14 @@ export default function LocalProductsPage() {
     if (skipInternalDownloadImages) return request.images;
 
     return [...request.images, ...(request.internalImages ?? [])];
+  };
+
+  const getDownloadedProductIds = (request: DownloadRequest): string[] => {
+    if (skipInternalDownloadImages) {
+      return request.productIdsWhenSkippingInternal ?? request.productIds ?? [];
+    }
+
+    return request.productIds ?? [];
   };
 
   const copyDownloadTextIfNeeded = async (
@@ -5476,6 +5612,7 @@ export default function LocalProductsPage() {
       }, index * 180);
     });
 
+    markProductImagesDownloaded(getDownloadedProductIds(request));
     Toastify(`Đang tải ${images.length} ảnh JPG`, 200);
     setPendingDownload(null);
     setSkipInternalDownloadImages(false);
@@ -5495,6 +5632,7 @@ export default function LocalProductsPage() {
     try {
       await copyDownloadTextIfNeeded(request);
       await saveImagesToChosenFolder({ ...request, images });
+      markProductImagesDownloaded(getDownloadedProductIds(request));
       Toastify(`Đã lưu ${images.length} ảnh vào thư mục đã chọn`, 200);
       setPendingDownload(null);
       setSkipInternalDownloadImages(false);
@@ -5519,6 +5657,7 @@ export default function LocalProductsPage() {
       product.description.trim() || settings.commonDescription.trim();
 
     requestDownload({
+      productIds: [product.id],
       title: "Tải ảnh sản phẩm",
       description:
         "Tải ảnh của sản phẩm này về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.",
@@ -5567,9 +5706,37 @@ export default function LocalProductsPage() {
     });
   };
 
+  const copyShareContentOnOpen = (
+    shareKey: string,
+    title: string,
+    description: string,
+    priceText: string,
+  ): void => {
+    const shouldCopyComment = settings.autoCopyShareMode === "comment";
+    const content = shouldCopyComment
+      ? buildCommentContentText(
+        title,
+        description,
+        priceText,
+        activeContactText,
+      )
+      : composeCopyText(
+        description,
+        activeContactText,
+        settings.includeSocialTags,
+      );
+
+    void handleCopyField(
+      shareKey,
+      shouldCopyComment ? "cmt" : "post",
+      content,
+    );
+  };
+
   const handleShareProduct = (product: LocalProduct): void => {
     const descriptionText =
       product.description.trim() || settings.commonDescription.trim();
+    const shareKey = `share-product-${product.id}`;
 
     setShareDialogStep("share");
     setIncludeInternalShareImages(true);
@@ -5586,9 +5753,16 @@ export default function LocalProductsPage() {
         product.priceText,
         "",
       ),
-      shareKey: `share-product-${product.id}`,
+      shareKey,
       successMessage: "Đã mở bảng chia sẻ sản phẩm",
     });
+
+    copyShareContentOnOpen(
+      shareKey,
+      product.name,
+      descriptionText,
+      product.priceText,
+    );
   };
 
   const handleShareSelectedAlbumImages = (): void => {
@@ -5609,6 +5783,8 @@ export default function LocalProductsPage() {
       return;
     }
 
+    const shareKey = `album-share-selected-${albumSource.productId}`;
+
     setShareDialogStep("share");
     setIncludeInternalShareImages(true);
     setFacebookGroupActiveIndex(0);
@@ -5624,9 +5800,16 @@ export default function LocalProductsPage() {
         albumSource.priceText,
         "",
       ),
-      shareKey: `album-share-selected-${albumSource.productId}`,
+      shareKey,
       successMessage: "Đã mở bảng chia sẻ ảnh",
     });
+
+    copyShareContentOnOpen(
+      shareKey,
+      albumSource.title,
+      albumSource.description,
+      albumSource.priceText,
+    );
   };
 
   const getShareRequestText = (
@@ -5656,16 +5839,6 @@ export default function LocalProductsPage() {
     });
   };
 
-  const markMetaProductImagesDownloaded = (productId: string): void => {
-    if (!productId) return;
-
-    const nextProductIds = loadMetaDownloadedProductIds();
-
-    nextProductIds.add(productId);
-    saveMetaDownloadedProductIds(nextProductIds);
-    setMetaDownloadedProductIds(nextProductIds);
-  };
-
   const prepareMetaImageDownload = (
     request: ShareRequest,
     shouldDownload: boolean,
@@ -5674,7 +5847,7 @@ export default function LocalProductsPage() {
     if (request.images.length === 0) return "không có ảnh chính để tải";
 
     queueMetaComposerImageDownloads(request.images);
-    markMetaProductImagesDownloaded(request.productId);
+    markProductImagesDownloaded([request.productId]);
 
     return `đang tải ${request.images.length} ảnh chính`;
   };
@@ -5683,10 +5856,10 @@ export default function LocalProductsPage() {
     request: ShareRequest,
     onDecision: (shouldDownload: boolean) => void | Promise<void>,
   ): void => {
-    const downloadedProductIds = loadMetaDownloadedProductIds();
+    const storedDownloadedProductIds = loadDownloadedProductIds();
     const wasDownloaded =
-      metaDownloadedProductIds.has(request.productId) ||
-      downloadedProductIds.has(request.productId);
+      downloadedProductIds.has(request.productId) ||
+      storedDownloadedProductIds.has(request.productId);
 
     if (!wasDownloaded) {
       void onDecision(true);
@@ -6181,6 +6354,7 @@ export default function LocalProductsPage() {
     }
 
     requestDownload({
+      productIds: [albumSource.productId],
       title: "Tải ảnh đã chọn",
       description: `Tải ${selectedImageCount} ảnh đã chọn về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
       mode: selectedImageCount === 1 ? "single" : "multiple",
@@ -6214,6 +6388,7 @@ export default function LocalProductsPage() {
     }
 
     requestDownload({
+      productIds: [albumSource.productId],
       title: "Tải toàn bộ album",
       description:
         "Tải toàn bộ ảnh trong album về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.",
@@ -6241,6 +6416,7 @@ export default function LocalProductsPage() {
         : `danh mục ${imageDownloadCategory}`;
 
     requestDownload({
+      productIds: representativeImageProducts.map((product) => product.id),
       title: "Tải ảnh đại diện",
       description: `Tải ${representativeImages.length} ảnh đại diện, là ảnh đầu tiên có index 0 của mỗi sản phẩm thuộc ${categoryLabel}, về máy?`,
       mode: representativeImages.length === 1 ? "single" : "multiple",
@@ -6275,6 +6451,15 @@ export default function LocalProductsPage() {
       .join("\n\n---\n\n");
 
     requestDownload({
+      productIds: downloadableProducts
+        .filter(
+          (product) =>
+            product.images.length + product.internalImages.length > 0,
+        )
+        .map((product) => product.id),
+      productIdsWhenSkippingInternal: downloadableProducts
+        .filter((product) => product.images.length > 0)
+        .map((product) => product.id),
       title: "Tải toàn bộ ảnh",
       description:
         "Tải ảnh của tất cả sản phẩm chưa DONE về máy? Toàn bộ nội dung Post của các sản phẩm này sẽ được tự động copy trước khi tải.",
@@ -7129,7 +7314,17 @@ export default function LocalProductsPage() {
     if (images.length === 0) return null;
 
     return (
-      <div className="flex min-h-0 min-w-0 flex-col rounded-md border border-white/10 bg-slate-950/70 p-2.5">
+      <div
+        className={`flex min-h-0 min-w-0 flex-col rounded-md border bg-slate-950/70 p-2.5 transition ${dragOverImageField === imageField
+          ? imageField === "internalImages"
+            ? "border-amber-300/70 bg-amber-300/[0.08]"
+            : "border-cyan-300/70 bg-cyan-300/[0.08]"
+          : "border-white/10"
+          }`}
+        onDragOver={(event) => handleDragOver(event, imageField)}
+        onDragLeave={handleDragLeave}
+        onDrop={(event) => void handleDrop(event, imageField)}
+      >
         <div
           data-editor-toolbar="true"
           className="mb-2 flex min-w-0 items-center justify-between gap-2"
@@ -7151,7 +7346,9 @@ export default function LocalProductsPage() {
 
         <div className="grid min-w-0 max-h-[260px] grid-cols-3 gap-1.5 overflow-x-hidden overflow-y-auto overscroll-contain pr-1 sm:max-h-[320px] sm:grid-cols-4 md:grid-cols-5 xl:max-h-[calc(90dvh-190px)] xl:grid-cols-4 2xl:grid-cols-5">
           {images.map((image, index) => {
-            const isDraggingImage = draggingDraftImageId === image.id;
+            const isDraggingImage =
+              draggingDraftImageId === image.id &&
+              draggingDraftImageField === imageField;
 
             return (
               <div
@@ -7160,19 +7357,23 @@ export default function LocalProductsPage() {
                 className={`group relative h-[88px] cursor-grab overflow-hidden rounded-md bg-slate-900 transition active:cursor-grabbing sm:h-[96px] xl:h-[108px] ${isDraggingImage ? "scale-95 opacity-60" : ""}`}
                 onDragStart={(event) => {
                   event.dataTransfer.setData("text/plain", image.id);
+                  event.dataTransfer.setData(
+                    DRAFT_IMAGE_ID_DATA_TYPE,
+                    image.id,
+                  );
+                  event.dataTransfer.setData(
+                    DRAFT_IMAGE_FIELD_DATA_TYPE,
+                    imageField,
+                  );
+                  event.dataTransfer.effectAllowed = "move";
                   setDraggingDraftImageId(image.id);
+                  setDraggingDraftImageField(imageField);
                 }}
-                onDragOver={(event) => event.preventDefault()}
+                onDragOver={(event) => handleDragOver(event, imageField)}
                 onDrop={(event) => {
-                  event.preventDefault();
-                  const sourceImageId =
-                    event.dataTransfer.getData("text/plain") ||
-                    draggingDraftImageId;
-
-                  reorderDraftImage(sourceImageId, image.id, imageField);
-                  setDraggingDraftImageId("");
+                  void handleDrop(event, imageField, image.id);
                 }}
-                onDragEnd={() => setDraggingDraftImageId("")}
+                onDragEnd={resetDraftImageDrag}
               >
                 <img
                   src={image.dataUrl}
@@ -8043,7 +8244,7 @@ export default function LocalProductsPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-4 gap-1 border border-[#d8c99f]/10 bg-black/25 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] xl:w-full xl:max-w-[1220px] xl:self-end xl:grid-cols-[repeat(14,minmax(0,1fr))] xl:border-[#d8c99f]/[0.16] xl:bg-[linear-gradient(90deg,rgba(255,255,255,0.015),rgba(216,201,159,0.045))] xl:p-1.5 xl:shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_12px_30px_rgba(0,0,0,0.2)]">
+            <div className="grid grid-cols-4 gap-1 border border-[#d8c99f]/10 bg-black/25 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] xl:w-full xl:max-w-[1220px] xl:self-end xl:grid-cols-[repeat(15,minmax(0,1fr))] xl:border-[#d8c99f]/[0.16] xl:bg-[linear-gradient(90deg,rgba(255,255,255,0.015),rgba(216,201,159,0.045))] xl:p-1.5 xl:shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_12px_30px_rgba(0,0,0,0.2)]">
               <button
                 type="button"
                 data-luxury-accent="gold"
@@ -8101,6 +8302,22 @@ export default function LocalProductsPage() {
                 </span>
                 <span className="min-w-0 truncate">
                   {settings.includeSocialTags ? "Bật Tag" : "Tắt Tag"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                data-luxury-accent={
+                  settings.autoCopyShareMode === "post" ? "sapphire" : "amber"
+                }
+                title={`Mở tùy chọn Share · hiện đang tự copy ${settings.autoCopyShareMode === "post" ? "Post" : "Cmt"}`}
+                aria-label={`Mở tùy chọn tự copy khi chia sẻ, hiện đang chọn ${settings.autoCopyShareMode === "post" ? "Post" : "Cmt"}`}
+                className={`${headerActionButtonBaseClassName} ${headerActiveButtonClassName}`}
+                onClick={() => openModal("shareCopyOption")}
+              >
+                <FiShare2 aria-hidden="true" className={iconClassName} />
+                <span className="min-w-0 truncate">
+                  Copy {settings.autoCopyShareMode === "post" ? "Post" : "Cmt"}
                 </span>
               </button>
 
@@ -8482,8 +8699,8 @@ export default function LocalProductsPage() {
                   const productDone = product.isDone;
                   const pinText = product.pin.trim();
                   const statusText = product.status.trim();
-                  const metaImagesDownloaded =
-                    metaDownloadedProductIds.has(product.id);
+                  const imagesDownloaded =
+                    downloadedProductIds.has(product.id);
 
                   return (
                     <article
@@ -8541,7 +8758,7 @@ export default function LocalProductsPage() {
                           {product.images.length}
                         </div>
 
-                        {metaImagesDownloaded ? (
+                        {imagesDownloaded ? (
                           <span
                             title="Ảnh đã được đánh dấu tải về trong phiên này"
                             className="absolute left-2 top-9 z-10 border border-emerald-200/35 bg-emerald-300/15 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.08em] text-emerald-100 backdrop-blur-md [clip-path:polygon(5px_0,100%_0,100%_calc(100%_-_5px),calc(100%_-_5px)_100%,0_100%,0_5px)]"
@@ -8886,6 +9103,9 @@ export default function LocalProductsPage() {
                   {activeModal === "globalDescription" ? (
                     <FiFileText aria-hidden="true" className={iconClassName} />
                   ) : null}
+                  {activeModal === "shareCopyOption" ? (
+                    <FiShare2 aria-hidden="true" className={iconClassName} />
+                  ) : null}
                   {activeModal === "contact" ? (
                     <FiPhone aria-hidden="true" className={iconClassName} />
                   ) : null}
@@ -8922,6 +9142,9 @@ export default function LocalProductsPage() {
                     {activeModal === "schedule" ? "Cấu hình lịch đăng" : null}
                     {activeModal === "globalNote" ? "Ghi chú" : null}
                     {activeModal === "globalDescription" ? "Mô tả chung" : null}
+                    {activeModal === "shareCopyOption"
+                      ? "Tùy chọn tự copy khi chia sẻ"
+                      : null}
                     {activeModal === "contact" ? "Liên hệ khi copy" : null}
                     {activeModal === "facebookPages"
                       ? "Fanpage và Group"
@@ -9430,12 +9653,12 @@ export default function LocalProductsPage() {
 
                       <section className="order-1 flex min-h-0 min-w-0 flex-col gap-3 xl:order-2">
                         <label
-                          className={`min-w-0 cursor-pointer rounded-md border border-dashed p-3 text-center transition ${isDragging
+                          className={`min-w-0 cursor-pointer rounded-md border border-dashed p-3 text-center transition ${dragOverImageField === "images"
                             ? "border-cyan-300/80 bg-cyan-300/10"
                             : "border-white/15 bg-slate-950/70 hover:border-cyan-300/50 hover:bg-cyan-300/5"
                             }`}
                           onDrop={(event) => void handleDrop(event)}
-                          onDragOver={handleDragOver}
+                          onDragOver={(event) => handleDragOver(event)}
                           onDragLeave={handleDragLeave}
                         >
                           <div className="flex items-center justify-center gap-2 text-xs font-black text-white">
@@ -9448,7 +9671,7 @@ export default function LocalProductsPage() {
                           <div className="mt-1 break-words text-[11px] leading-5 text-slate-400">
                             {isProcessingImages
                               ? "Đang xử lý ảnh..."
-                              : "Chọn, kéo thả hoặc paste ảnh sản phẩm. Hỗ trợ nhiều ảnh, tự nén JPG."}
+                              : "Chọn, kéo thả hoặc paste ảnh sản phẩm. Có thể kéo ảnh nội bộ lên đây để chuyển."}
                           </div>
                           <input
                             type="file"
@@ -9463,14 +9686,16 @@ export default function LocalProductsPage() {
 
                         <label
                           tabIndex={0}
-                          className={`min-w-0 cursor-pointer rounded-md border border-dashed p-3 text-center transition ${isDragging
+                          className={`min-w-0 cursor-pointer rounded-md border border-dashed p-3 text-center transition ${dragOverImageField === "internalImages"
                             ? "border-amber-300/80 bg-amber-300/10"
                             : "border-amber-300/20 bg-amber-300/[0.04] hover:border-amber-300/50 hover:bg-amber-300/[0.08]"
                             }`}
                           onDrop={(event) =>
                             void handleDrop(event, "internalImages")
                           }
-                          onDragOver={handleDragOver}
+                          onDragOver={(event) =>
+                            handleDragOver(event, "internalImages")
+                          }
                           onDragLeave={handleDragLeave}
                           onPaste={(event) =>
                             void handleInternalImagePaste(event)
@@ -9486,7 +9711,7 @@ export default function LocalProductsPage() {
                           <div className="mt-1 break-words text-[11px] leading-5 text-slate-400">
                             {isProcessingImages
                               ? "Đang xử lý ảnh..."
-                              : "Ảnh model, dung lượng pin hoặc thông tin kiểm tra máy."}
+                              : "Ảnh model, dung lượng pin hoặc thông tin kiểm tra máy. Có thể kéo ảnh chính xuống đây để chuyển."}
                           </div>
                           <input
                             type="file"
@@ -10326,6 +10551,126 @@ export default function LocalProductsPage() {
                       placeholder="Nhập mô tả chung..."
                     />
                   </div>
+                </section>
+              ) : null}
+
+              {activeModal === "shareCopyOption" ? (
+                <section className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-3">
+                  <article className="rounded-md border border-white/10 bg-slate-950/70 p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-black text-white">
+                          Nội dung được copy khi mở Chia sẻ
+                        </h3>
+                        <p className="mt-1 text-xs leading-5 text-slate-400">
+                          Chọn một chế độ bên dưới. Thay đổi được lưu ngay và
+                          mục đang dùng luôn có dấu chọn rõ ràng.
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-md px-2.5 py-1 text-[10px] font-black ${settings.autoCopyShareMode === "post"
+                          ? "bg-cyan-300 text-slate-950"
+                          : "bg-amber-300 text-slate-950"
+                          }`}
+                      >
+                        Hiện tại: {settings.autoCopyShareMode === "post" ? "Post" : "Cmt"}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2">
+                      <button
+                        type="button"
+                        aria-pressed={settings.autoCopyShareMode === "post"}
+                        className={`group flex min-h-40 flex-col items-stretch rounded-md border p-3 text-left transition ${settings.autoCopyShareMode === "post"
+                          ? "border-cyan-300/70 bg-cyan-300/15 shadow-[0_0_0_1px_rgba(103,232,249,0.15)]"
+                          : "border-white/10 bg-slate-900/70 hover:border-cyan-300/35 hover:bg-cyan-300/[0.07]"
+                          }`}
+                        onClick={() =>
+                          updateSettingField("autoCopyShareMode", "post")
+                        }
+                      >
+                        <span className="flex items-center justify-between gap-3">
+                          <span
+                            className={`flex h-10 w-10 items-center justify-center rounded-md border ${settings.autoCopyShareMode === "post"
+                              ? "border-cyan-300/50 bg-cyan-300/20 text-cyan-100"
+                              : "border-white/10 bg-slate-950 text-slate-400"
+                              }`}
+                          >
+                            <FiFileText aria-hidden="true" className="h-4 w-4" />
+                          </span>
+                          <span
+                            className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-black ${settings.autoCopyShareMode === "post"
+                              ? "bg-cyan-300 text-slate-950"
+                              : "border border-white/10 bg-slate-950 text-slate-500"
+                              }`}
+                          >
+                            {settings.autoCopyShareMode === "post" ? (
+                              <FiCheck aria-hidden="true" className="h-3 w-3" />
+                            ) : null}
+                            {settings.autoCopyShareMode === "post"
+                              ? "ĐANG CHỌN"
+                              : "BẤM ĐỂ CHỌN"}
+                          </span>
+                        </span>
+                        <span className="mt-3 text-sm font-black text-white">
+                          Tự copy Post
+                        </span>
+                        <span className="mt-1 text-xs leading-5 text-slate-400">
+                          Copy nội dung bài đăng, kèm Liên hệ đang chọn và áp
+                          dụng trạng thái Bật/Tắt Tag trên header.
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        aria-pressed={settings.autoCopyShareMode === "comment"}
+                        className={`group flex min-h-40 flex-col items-stretch rounded-md border p-3 text-left transition ${settings.autoCopyShareMode === "comment"
+                          ? "border-amber-300/70 bg-amber-300/15 shadow-[0_0_0_1px_rgba(252,211,77,0.15)]"
+                          : "border-white/10 bg-slate-900/70 hover:border-amber-300/35 hover:bg-amber-300/[0.07]"
+                          }`}
+                        onClick={() =>
+                          updateSettingField("autoCopyShareMode", "comment")
+                        }
+                      >
+                        <span className="flex items-center justify-between gap-3">
+                          <span
+                            className={`flex h-10 w-10 items-center justify-center rounded-md border ${settings.autoCopyShareMode === "comment"
+                              ? "border-amber-300/50 bg-amber-300/20 text-amber-100"
+                              : "border-white/10 bg-slate-950 text-slate-400"
+                              }`}
+                          >
+                            <FiClipboard aria-hidden="true" className="h-4 w-4" />
+                          </span>
+                          <span
+                            className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-black ${settings.autoCopyShareMode === "comment"
+                              ? "bg-amber-300 text-slate-950"
+                              : "border border-white/10 bg-slate-950 text-slate-500"
+                              }`}
+                          >
+                            {settings.autoCopyShareMode === "comment" ? (
+                              <FiCheck aria-hidden="true" className="h-3 w-3" />
+                            ) : null}
+                            {settings.autoCopyShareMode === "comment"
+                              ? "ĐANG CHỌN"
+                              : "BẤM ĐỂ CHỌN"}
+                          </span>
+                        </span>
+                        <span className="mt-3 text-sm font-black text-white">
+                          Tự copy Cmt
+                        </span>
+                        <span className="mt-1 text-xs leading-5 text-slate-400">
+                          Copy nội dung bình luận, kèm Liên hệ đang chọn và luôn
+                          bỏ qua Tag.
+                        </span>
+                      </button>
+                    </div>
+                  </article>
+
+                  <p className="rounded-md border border-cyan-300/20 bg-cyan-300/[0.07] p-3 text-xs leading-5 text-cyan-100/80">
+                    Tùy chọn này chỉ quyết định nội dung tự copy ngay khi bấm
+                    Chia sẻ. Các nút Post và Cmt bên trong modal Chia sẻ vẫn
+                    hoạt động độc lập.
+                  </p>
                 </section>
               ) : null}
 
