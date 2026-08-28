@@ -3530,15 +3530,30 @@ export default function LocalProductsPage() {
     return new Set(postedRecords.map((record) => record.slotId));
   }, [postedRecords]);
 
+  const albumImages = useMemo<ProductImage[]>(() => {
+    if (!albumSource) return [];
+
+    return [
+      ...albumSource.images,
+      ...(albumSource.internalImages ?? []),
+    ];
+  }, [albumSource]);
+
+  const albumInternalImageIds = useMemo<Set<string>>(() => {
+    return new Set(
+      (albumSource?.internalImages ?? []).map((image) => image.id),
+    );
+  }, [albumSource]);
+
   const selectedAlbumImage = useMemo(() => {
-    if (!albumSource || albumSource.images.length === 0) return null;
+    if (albumImages.length === 0) return null;
 
     return (
-      albumSource.images.find((image) => image.id === selectedAlbumImageId) ??
-      albumSource.images[0] ??
+      albumImages.find((image) => image.id === selectedAlbumImageId) ??
+      albumImages[0] ??
       null
     );
-  }, [albumSource, selectedAlbumImageId]);
+  }, [albumImages, selectedAlbumImageId]);
 
   const activeScheduleProducts = useMemo(() => {
     return products.filter((product) => !product.isDone);
@@ -5516,12 +5531,17 @@ export default function LocalProductsPage() {
   };
 
   const openImageAlbum = (source: AlbumSource): void => {
-    if (source.images.length === 0) {
+    const allImages = [
+      ...source.images,
+      ...(source.internalImages ?? []),
+    ];
+
+    if (allImages.length === 0) {
       Toastify("Chưa có ảnh để xem", 300);
       return;
     }
 
-    const firstImageId = source.images[0]?.id ?? "";
+    const firstImageId = allImages[0]?.id ?? "";
 
     setAlbumSource(source);
     setSelectedAlbumImageId(firstImageId);
@@ -5580,8 +5600,11 @@ export default function LocalProductsPage() {
     const selectedImages = albumSource.images.filter((image) =>
       selectedAlbumImageIds.has(image.id),
     );
+    const selectedInternalImages = (albumSource.internalImages ?? []).filter(
+      (image) => selectedAlbumImageIds.has(image.id),
+    );
 
-    if (selectedImages.length === 0) {
+    if (selectedImages.length + selectedInternalImages.length === 0) {
       Toastify("Chưa chọn ảnh để chia sẻ", 300);
       return;
     }
@@ -5593,7 +5616,7 @@ export default function LocalProductsPage() {
       productId: albumSource.productId,
       title: albumSource.title,
       images: selectedImages,
-      internalImages: albumSource.internalImages ?? [],
+      internalImages: selectedInternalImages,
       postText: albumSource.description,
       commentText: buildCommentContentText(
         albumSource.title,
@@ -6146,17 +6169,23 @@ export default function LocalProductsPage() {
     const selectedImages = albumSource.images.filter((image) =>
       selectedAlbumImageIds.has(image.id),
     );
+    const selectedInternalImages = (albumSource.internalImages ?? []).filter(
+      (image) => selectedAlbumImageIds.has(image.id),
+    );
+    const selectedImageCount =
+      selectedImages.length + selectedInternalImages.length;
 
-    if (selectedImages.length === 0) {
+    if (selectedImageCount === 0) {
       Toastify("Chưa chọn ảnh để tải", 300);
       return;
     }
 
     requestDownload({
       title: "Tải ảnh đã chọn",
-      description: `Tải ${selectedImages.length} ảnh đã chọn về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
-      mode: selectedImages.length === 1 ? "single" : "multiple",
+      description: `Tải ${selectedImageCount} ảnh đã chọn về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
+      mode: selectedImageCount === 1 ? "single" : "multiple",
       images: selectedImages,
+      internalImages: selectedInternalImages,
       startIndex: 0,
       textToCopy: albumSource.description,
     });
@@ -6166,7 +6195,7 @@ export default function LocalProductsPage() {
     if (!albumSource) return;
 
     setSelectedAlbumImageIds(
-      new Set<string>(albumSource.images.map((image) => image.id)),
+      new Set<string>(albumImages.map((image) => image.id)),
     );
   };
 
@@ -10360,7 +10389,7 @@ export default function LocalProductsPage() {
                       settings.contactOptions.map((option, index) => (
                         <div
                           key={option.id}
-                          className={`grid grid-cols-[minmax(0,1fr)_auto_auto] items-stretch gap-2 rounded-md border p-2 ${settings.selectedContactId === option.id
+                          className={`grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-stretch gap-2 rounded-md border p-2 ${settings.selectedContactId === option.id
                             ? "border-emerald-300/60 bg-emerald-300/15"
                             : "border-white/10 bg-slate-900/70"
                             }`}
@@ -10382,6 +10411,22 @@ export default function LocalProductsPage() {
                             <span className="min-w-0 whitespace-pre-wrap text-xs leading-5 text-slate-100 [overflow-wrap:anywhere]">
                               {option.text}
                             </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="flex h-8 w-8 items-center justify-center self-start rounded-md border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80"
+                            onClick={() =>
+                              void handleCopyField(
+                                `contact-option-${option.id}`,
+                                `liên hệ ${index + 1}`,
+                                option.text,
+                              )
+                            }
+                            title="Copy liên hệ"
+                            aria-label={`Copy liên hệ ${index + 1}`}
+                          >
+                            {renderCopyIcon(`contact-option-${option.id}`)}
                           </button>
 
                           <button
@@ -11436,13 +11481,13 @@ export default function LocalProductsPage() {
                           {albumSource.title}
                         </h3>
                         <p className="truncate whitespace-nowrap text-[10px] text-slate-400">
-                          {albumSource.images.length} ảnh trong album · đang xem{" "}
+                          {albumImages.length} ảnh trong album · đang xem{" "}
                           {selectedAlbumImage
-                            ? albumSource.images.findIndex(
+                            ? albumImages.findIndex(
                               (image) => image.id === selectedAlbumImage.id,
                             ) + 1
                             : 0}
-                          /{albumSource.images.length} · đã chọn{" "}
+                          /{albumImages.length} · đã chọn{" "}
                           {selectedAlbumImageIds.size}
                         </p>
                       </div>
@@ -11580,15 +11625,16 @@ export default function LocalProductsPage() {
                       </h3>
                       <span className="text-[10px] font-bold text-slate-400">
                         {selectedAlbumImage
-                          ? `${albumSource.images.findIndex((image) => image.id === selectedAlbumImage.id) + 1}/${albumSource.images.length}`
-                          : `0/${albumSource.images.length}`}
+                          ? `${albumImages.findIndex((image) => image.id === selectedAlbumImage.id) + 1}/${albumImages.length}`
+                          : `0/${albumImages.length}`}
                       </span>
                     </div>
 
                     <div className="grid min-h-0 flex-1 auto-rows-max grid-cols-3 content-start gap-2 overflow-y-auto overscroll-contain pr-1 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-2">
-                      {albumSource.images.map((image, index) => {
+                      {albumImages.map((image, index) => {
                         const active = image.id === selectedAlbumImage?.id;
                         const checked = selectedAlbumImageIds.has(image.id);
+                        const internal = albumInternalImageIds.has(image.id);
 
                         return (
                           <button
@@ -11601,7 +11647,7 @@ export default function LocalProductsPage() {
                                 : " "
                               }`}
                             onClick={() => toggleSelectedAlbumImage(image.id)}
-                            title={`Ảnh ${index + 1}`}
+                            title={`${internal ? "Ảnh nội bộ" : "Ảnh chính"} ${index + 1}`}
                           >
                             <img
                               src={image.dataUrl}
@@ -11618,6 +11664,12 @@ export default function LocalProductsPage() {
                             >
                               {index + 1}
                             </span>
+
+                            {internal ? (
+                              <span className="absolute bottom-1 left-1 rounded-md bg-violet-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950">
+                                Nội bộ
+                              </span>
+                            ) : null}
 
                             {checked ? (
                               <span className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-md bg-emerald-300 text-slate-950  ">
