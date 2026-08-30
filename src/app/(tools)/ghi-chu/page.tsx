@@ -3214,12 +3214,12 @@ export default function LocalProductsPage() {
       const configWithAnchor = storedConfig.anchorAt
         ? storedConfig
         : {
-          ...storedConfig,
-          anchorAt: createNextNotificationAnchor(
-            new Date(),
-            storedConfig.minuteOffset,
-          ).toISOString(),
-        };
+            ...storedConfig,
+            anchorAt: createNextNotificationAnchor(
+              new Date(),
+              storedConfig.minuteOffset,
+            ).toISOString(),
+          };
 
       setHourlyNotificationConfig(configWithAnchor);
       setHourlyNotificationDraft(configWithAnchor);
@@ -3381,9 +3381,9 @@ export default function LocalProductsPage() {
         dailyLimit: clampInteger(hourlyNotificationDraft.dailyLimit, 0, 24),
         anchorAt: enabled
           ? createNextNotificationAnchor(
-            new Date(),
-            hourlyNotificationDraft.minuteOffset,
-          ).toISOString()
+              new Date(),
+              hourlyNotificationDraft.minuteOffset,
+            ).toISOString()
           : hourlyNotificationConfig.anchorAt,
       };
 
@@ -9123,18 +9123,20 @@ export default function LocalProductsPage() {
                 data-luxury-accent="emerald"
                 title={
                   hourlyNotificationConfig.enabled
-                    ? `Thông báo đang bật${nextHourlyNotificationAt
-                      ? ` · kế tiếp ${formatLocalDateTime(nextHourlyNotificationAt)}`
-                      : ""
-                    }`
+                    ? `Thông báo đang bật${
+                        nextHourlyNotificationAt
+                          ? ` · kế tiếp ${formatLocalDateTime(nextHourlyNotificationAt)}`
+                          : ""
+                      }`
                     : "Cấu hình thông báo theo thời gian"
                 }
                 aria-label="Cấu hình thông báo theo thời gian"
                 aria-pressed={hourlyNotificationConfig.enabled}
-                className={`${headerActionButtonBaseClassName} ${hourlyNotificationConfig.enabled
-                  ? headerActiveButtonClassName
-                  : headerNeutralButtonClassName
-                  }`}
+                className={`${headerActionButtonBaseClassName} ${
+                  hourlyNotificationConfig.enabled
+                    ? headerActiveButtonClassName
+                    : headerNeutralButtonClassName
+                }`}
                 onClick={() => {
                   setHourlyNotificationDraft(hourlyNotificationConfig);
                   openModal("hourlyNotification");
@@ -9982,7 +9984,7 @@ export default function LocalProductsPage() {
                       ? "Công cụ Fanpage"
                       : null}
                     {activeModal === "importExport"
-                      ? "Import / Export Data"
+                      ? "Quản lý dữ liệu"
                       : null}
                     {activeModal === "slotDetail" ? "Chi tiết bài đăng" : null}
                     {activeModal === "imageAlbum" ? "Album ảnh" : null}
@@ -11410,10 +11412,11 @@ export default function LocalProductsPage() {
                         </p>
                       </div>
                       <span
-                        className={`shrink-0 rounded-md px-2.5 py-1 text-[10px] font-black ${hourlyNotificationConfig.enabled
-                          ? "bg-emerald-300 text-slate-950"
-                          : "border border-white/10 bg-slate-950 text-slate-400"
-                          }`}
+                        className={`shrink-0 rounded-md px-2.5 py-1 text-[10px] font-black ${
+                          hourlyNotificationConfig.enabled
+                            ? "bg-emerald-300 text-slate-950"
+                            : "border border-white/10 bg-slate-950 text-slate-400"
+                        }`}
                       >
                         {hourlyNotificationConfig.enabled ? "ĐANG BẬT" : "ĐANG TẮT"}
                       </span>
@@ -12609,71 +12612,37 @@ export default function LocalProductsPage() {
               ) : null}
 
               {activeModal === "importExport" ? (
-                <section className="grid w-full grid-cols-1 gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                  <article className="rounded-md border border-cyan-300/20 bg-cyan-300/10 p-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="">
-                        <h3 className="text-xs font-black text-white">
-                          Backup dữ liệu tổng
-                        </h3>
-                        <p className="mt-1 text-xs leading-5 text-cyan-100/90">
-                          Bao gồm sản phẩm, ảnh, mô tả chung, ghi chú, cấu hình
-                          lịch, Fanpage, Group, sản phẩm đã xếp trong lịch và trạng thái DONE.
-                        </p>
+                <section className="flex w-full flex-col gap-3">
+                  <article className="relative overflow-hidden rounded-md border border-amber-200/45 bg-[linear-gradient(135deg,rgba(251,191,36,0.2),rgba(245,158,11,0.08)_55%,rgba(15,23,42,0.9))] p-3 shadow-[0_18px_50px_rgba(245,158,11,0.1)] xl:p-4">
+                    <div className="absolute inset-y-0 left-0 w-1 bg-amber-300" />
+
+                    <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-amber-200/35 bg-amber-200/15 text-amber-100">
+                          <FiUploadCloud
+                            aria-hidden="true"
+                            className="h-5 w-5"
+                          />
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-sm font-black text-white">
+                              Import dữ liệu
+                            </h3>
+                            <span className="rounded-md border border-amber-200/35 bg-amber-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-slate-950">
+                              Thao tác chính
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[11px] font-medium text-amber-50/75">
+                            Khôi phục từ tệp JSON hoặc JSON.GZ
+                          </p>
+                        </div>
                       </div>
-                      <span className="rounded-md bg-slate-200 px-2 py-1 text-[10px] font-black text-slate-950">
-                        An toàn
-                      </span>
-                    </div>
-
-                    <div className="mt-2 grid grid-cols-1 gap-2">
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-center gap-2 rounded-md bg-cyan-300 p-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200"
-                        onClick={handleExportJson}
-                        title="Export JSON"
-                      >
-                        <FiDownload
-                          aria-hidden="true"
-                          className={iconClassName}
-                        />
-                        <span>Export JSON</span>
-                      </button>
 
                       <button
                         type="button"
-                        className="flex w-full items-center justify-center gap-2 rounded-md border border-cyan-300/30 bg-cyan-300/10 p-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-300/20"
-                        onClick={() => void handleExportJsonGzip()}
-                        title="Export JSON.GZ"
-                      >
-                        <FiArchive
-                          aria-hidden="true"
-                          className={iconClassName}
-                        />
-                        <span>Export JSON.GZ</span>
-                      </button>
-                    </div>
-                  </article>
-
-                  <article className="rounded-md border border-amber-300/20 bg-amber-300/10 p-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="">
-                        <h3 className="text-xs font-black text-white">
-                          Khôi phục dữ liệu
-                        </h3>
-                        <p className="mt-1 text-xs leading-5 text-amber-100/90">
-                          Import file sẽ thay thế toàn bộ dữ liệu hiện tại trong trình duyệt.
-                        </p>
-                      </div>
-                      <span className="rounded-md bg-amber-300 px-2 py-1 text-[10px] font-black text-slate-950">
-                        Cẩn thận
-                      </span>
-                    </div>
-
-                    <div className="mt-2 grid grid-cols-1 gap-2">
-                      <button
-                        type="button"
-                        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-amber-300/40 bg-amber-300/15 p-2 text-xs font-black text-amber-50 transition hover:bg-amber-300/25 active:opacity-80"
+                        className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-amber-100/60 bg-amber-300 px-4 py-2 text-xs font-black text-slate-950 shadow-[0_10px_30px_rgba(245,158,11,0.2)] transition hover:bg-amber-200 active:scale-[0.99] xl:w-auto xl:min-w-[260px]"
                         title="Import JSON hoặc JSON.GZ"
                         onClick={handleBeginBackupRestore}
                       >
@@ -12684,13 +12653,77 @@ export default function LocalProductsPage() {
                         <span>
                           {isBackupRestoreReady
                             ? "Chọn tệp backup mới"
-                            : "Chọn file backup"}
+                            : "Import file backup"}
                         </span>
                       </button>
+                    </div>
+                  </article>
+
+                  <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)_minmax(0,0.85fr)]">
+                    <article className="flex min-w-0 flex-col rounded-md border border-cyan-300/20 bg-cyan-300/[0.07] p-3">
+                      <div className="flex items-center gap-2">
+                        <FiDownload
+                          aria-hidden="true"
+                          className="h-4 w-4 shrink-0 text-cyan-200"
+                        />
+                        <div className="min-w-0">
+                          <h3 className="text-xs font-black text-white">
+                            Xuất bản sao
+                          </h3>
+                          <p className="mt-0.5 text-[10px] text-slate-400">
+                            Tải dữ liệu về thiết bị
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2 xl:mt-auto xl:pt-3">
+                        <button
+                          type="button"
+                          className="flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-cyan-300 px-3 py-2 text-[11px] font-black text-slate-950 transition hover:bg-cyan-200 active:opacity-80"
+                          onClick={handleExportJson}
+                          title="Export JSON"
+                        >
+                          <FiDownload
+                            aria-hidden="true"
+                            className={iconClassName}
+                          />
+                          <span>JSON</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-cyan-300/35 bg-cyan-300/10 px-3 py-2 text-[11px] font-black text-cyan-100 transition hover:bg-cyan-300/20 active:opacity-80"
+                          onClick={() => void handleExportJsonGzip()}
+                          title="Export JSON.GZ"
+                        >
+                          <FiArchive
+                            aria-hidden="true"
+                            className={iconClassName}
+                          />
+                          <span>JSON.GZ</span>
+                        </button>
+                      </div>
+                    </article>
+
+                    <article className="flex min-w-0 flex-col rounded-md border border-emerald-300/20 bg-emerald-300/[0.06] p-3">
+                      <div className="flex items-center gap-2">
+                        <FiUploadCloud
+                          aria-hidden="true"
+                          className="h-4 w-4 shrink-0 text-emerald-200"
+                        />
+                        <div className="min-w-0">
+                          <h3 className="text-xs font-black text-white">
+                            Lưu lên Blob
+                          </h3>
+                          <p className="mt-0.5 text-[10px] text-slate-400">
+                            Đồng bộ bản nén lên máy chủ
+                          </p>
+                        </div>
+                      </div>
 
                       <button
                         type="button"
-                        className="flex w-full items-center justify-center gap-2 rounded-md border border-emerald-300/30 bg-emerald-300/10 p-2 text-xs font-black text-slate-100 transition hover:bg-slate-700"
+                        className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-emerald-300/35 bg-emerald-300/10 px-3 py-2 text-[11px] font-black text-emerald-100 transition hover:bg-emerald-300/20 active:opacity-80 xl:mt-auto"
                         onClick={() => void handleUploadJsonGzipToBlob()}
                         title="Upload JSON.GZ lên Blob"
                       >
@@ -12700,23 +12733,27 @@ export default function LocalProductsPage() {
                         />
                         <span>Upload Blob</span>
                       </button>
-                    </div>
-                  </article>
+                    </article>
 
-                  <article className="rounded-md border border-rose-300/20 bg-rose-300/[0.06] p-2 xl:col-span-2">
-                    <div className="grid grid-cols-1 items-center gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                      <div>
-                        <h3 className="text-xs font-black text-white">
-                          Xóa dữ liệu local
-                        </h3>
-                        <p className="mt-1 text-xs leading-5 text-rose-100/75">
-                          Xóa toàn bộ sản phẩm, ảnh và dữ liệu ứng dụng đang lưu trong trình duyệt.
-                        </p>
+                    <article className="flex min-w-0 flex-col rounded-md border border-rose-300/20 bg-rose-300/[0.05] p-3">
+                      <div className="flex items-center gap-2">
+                        <FiTrash2
+                          aria-hidden="true"
+                          className="h-4 w-4 shrink-0 text-rose-200"
+                        />
+                        <div className="min-w-0">
+                          <h3 className="text-xs font-black text-white">
+                            Xóa dữ liệu local
+                          </h3>
+                          <p className="mt-0.5 text-[10px] text-slate-400">
+                            Dọn toàn bộ dữ liệu trên thiết bị
+                          </p>
+                        </div>
                       </div>
 
                       <button
                         type="button"
-                        className="flex w-full items-center justify-center gap-2 rounded-md border border-rose-300/40 bg-rose-300/10 p-2 text-xs font-black text-rose-100 transition hover:bg-rose-300/20 active:opacity-80"
+                        className="mt-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-rose-300/40 bg-rose-300/10 px-3 py-2 text-[11px] font-black text-rose-100 transition hover:bg-rose-300/20 active:opacity-80 xl:mt-auto"
                         onClick={handleClearAllLocalData}
                         title="Xóa toàn bộ dữ liệu local"
                       >
@@ -12726,8 +12763,8 @@ export default function LocalProductsPage() {
                         />
                         <span>Xóa toàn bộ dữ liệu</span>
                       </button>
-                    </div>
-                  </article>
+                    </article>
+                  </div>
                 </section>
               ) : null}
 
