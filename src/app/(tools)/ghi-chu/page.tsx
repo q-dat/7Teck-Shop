@@ -17,6 +17,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   FiArchive,
   FiBattery,
+  FiBell,
   FiCalendar,
   FiCheck,
   FiCheckCircle,
@@ -110,6 +111,11 @@ type FacebookDuplicatePostOption = {
 };
 
 type AutoCopyShareMode = "post" | "comment";
+
+type AutoCopyContentSource = {
+  postText: string;
+  commentText: string;
+};
 
 type GlobalSettings = {
   commonDescription: string;
@@ -233,6 +239,7 @@ type ModalName =
   | "product"
   | "productList"
   | "schedule"
+  | "hourlyNotification"
   | "globalNote"
   | "globalDescription"
   | "shareCopyOption"
@@ -258,7 +265,7 @@ type DownloadRequest = {
   images: ProductImage[];
   internalImages?: ProductImage[];
   startIndex: number;
-  textToCopy?: string;
+  copyContent?: AutoCopyContentSource;
 };
 
 type SelectedDescriptionCopy = {
@@ -525,6 +532,182 @@ const openFacebookPopupWindow = (
 const IMPORT_BACKUP_INPUT_ID = "local-products-backup-input";
 const RESTORE_BACKUP_AFTER_RELOAD_KEY =
   "local-products-restore-backup-after-reload";
+type HourlyNotificationConfig = {
+  enabled: boolean;
+  minuteOffset: number;
+  intervalHours: number;
+  dailyLimit: number;
+  anchorAt: string;
+};
+
+const HOURLY_NOTIFICATION_ENABLED_KEY =
+  "local-products-hourly-notification-enabled-v1";
+const HOURLY_NOTIFICATION_CONFIG_KEY =
+  "local-products-hourly-notification-config-v2";
+const HOURLY_NOTIFICATION_LAST_SLOT_KEY =
+  "local-products-hourly-notification-last-slot-v2";
+const HOURLY_NOTIFICATION_MAX_LATE_MS = 90_000;
+
+const defaultHourlyNotificationConfig: HourlyNotificationConfig = {
+  enabled: false,
+  minuteOffset: 0,
+  intervalHours: 1,
+  dailyLimit: 0,
+  anchorAt: "",
+};
+
+const clampInteger = (value: number, minimum: number, maximum: number): number => {
+  if (!Number.isFinite(value)) return minimum;
+  return Math.min(maximum, Math.max(minimum, Math.round(value)));
+};
+
+const normalizeHourlyNotificationConfig = (
+  value: unknown,
+): HourlyNotificationConfig => {
+  if (typeof value !== "object" || value === null) {
+    return defaultHourlyNotificationConfig;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  return {
+    enabled: record.enabled === true,
+    minuteOffset:
+      typeof record.minuteOffset === "number"
+        ? clampInteger(record.minuteOffset, 0, 59)
+        : 0,
+    intervalHours:
+      typeof record.intervalHours === "number"
+        ? clampInteger(record.intervalHours, 1, 24)
+        : 1,
+    dailyLimit:
+      typeof record.dailyLimit === "number"
+        ? clampInteger(record.dailyLimit, 0, 24)
+        : 0,
+    anchorAt: typeof record.anchorAt === "string" ? record.anchorAt : "",
+  };
+};
+
+const loadHourlyNotificationConfig = (): HourlyNotificationConfig => {
+  if (typeof window === "undefined") return defaultHourlyNotificationConfig;
+
+  const rawConfig = window.localStorage.getItem(HOURLY_NOTIFICATION_CONFIG_KEY);
+
+  if (rawConfig) {
+    try {
+      return normalizeHourlyNotificationConfig(JSON.parse(rawConfig) as unknown);
+    } catch {
+      return defaultHourlyNotificationConfig;
+    }
+  }
+
+  const legacyEnabled =
+    window.localStorage.getItem(HOURLY_NOTIFICATION_ENABLED_KEY) === "1";
+
+  return {
+    ...defaultHourlyNotificationConfig,
+    enabled: legacyEnabled,
+  };
+};
+
+const saveHourlyNotificationConfig = (
+  config: HourlyNotificationConfig,
+): void => {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(
+    HOURLY_NOTIFICATION_CONFIG_KEY,
+    JSON.stringify(config),
+  );
+  window.localStorage.setItem(
+    HOURLY_NOTIFICATION_ENABLED_KEY,
+    config.enabled ? "1" : "0",
+  );
+};
+
+const formatLocalClockTime = (date: Date): string => {
+  return `${String(date.getHours()).padStart(2, "0")}:${String(
+    date.getMinutes(),
+  ).padStart(2, "0")}`;
+};
+
+const formatLocalDateTime = (date: Date): string => {
+  return `${String(date.getDate()).padStart(2, "0")}/${String(
+    date.getMonth() + 1,
+  ).padStart(2, "0")} ${formatLocalClockTime(date)}`;
+};
+
+const createScheduledNotificationKey = (date: Date): string => {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+    String(date.getHours()).padStart(2, "0"),
+    String(date.getMinutes()).padStart(2, "0"),
+  ].join("-");
+};
+
+const createNextNotificationAnchor = (
+  now: Date,
+  minuteOffset: number,
+): Date => {
+  const next = new Date(now);
+  next.setSeconds(0, 0);
+  next.setMinutes(clampInteger(minuteOffset, 0, 59));
+
+  if (next.getTime() <= now.getTime()) {
+    next.setHours(next.getHours() + 1);
+  }
+
+  return next;
+};
+
+const getNextScheduledNotification = (
+  now: Date,
+  config: HourlyNotificationConfig,
+): Date | null => {
+  const anchorMs = new Date(config.anchorAt).getTime();
+
+  if (!Number.isFinite(anchorMs)) return null;
+
+  const intervalMs =
+    clampInteger(config.intervalHours, 1, 24) * 60 * 60 * 1000;
+  const nowMs = now.getTime();
+  let occurrenceIndex = Math.max(
+    0,
+    Math.ceil((nowMs - anchorMs) / intervalMs),
+  );
+
+  for (let attempts = 0; attempts < 24 * 31; attempts += 1) {
+    const candidateMs = anchorMs + occurrenceIndex * intervalMs;
+    const candidate = new Date(candidateMs);
+
+    if (candidateMs > nowMs) {
+      if (config.dailyLimit <= 0) return candidate;
+
+      const dayStartMs = new Date(
+        candidate.getFullYear(),
+        candidate.getMonth(),
+        candidate.getDate(),
+        0,
+        0,
+        0,
+        0,
+      ).getTime();
+      const firstIndexInDay = Math.max(
+        0,
+        Math.ceil((dayStartMs - anchorMs) / intervalMs),
+      );
+      const ordinalInDay = occurrenceIndex - firstIndexInDay + 1;
+
+      if (ordinalInDay <= config.dailyLimit) return candidate;
+    }
+
+    occurrenceIndex += 1;
+  }
+
+  return null;
+};
 
 const LoadingOverlay = ({ text }: { text: string }) => {
   return (
@@ -2946,10 +3129,414 @@ export default function LocalProductsPage() {
   );
   const [pictureInPictureWindow, setPictureInPictureWindow] =
     useState<Window | null>(null);
+  const [hourlyNotificationConfig, setHourlyNotificationConfig] =
+    useState<HourlyNotificationConfig>(() => loadHourlyNotificationConfig());
+  const [hourlyNotificationDraft, setHourlyNotificationDraft] =
+    useState<HourlyNotificationConfig>(() => loadHourlyNotificationConfig());
+  const hourlyNotificationTimeoutRef = useRef<number | null>(null);
+  const hourlyAudioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     setDownloadedProductIds(loadDownloadedProductIds());
+
+    const storedConfig = loadHourlyNotificationConfig();
+
+    if (!storedConfig.enabled) return;
+
+    if (
+      typeof Notification !== "undefined" &&
+      Notification.permission === "granted"
+    ) {
+      const configWithAnchor = storedConfig.anchorAt
+        ? storedConfig
+        : {
+            ...storedConfig,
+            anchorAt: createNextNotificationAnchor(
+              new Date(),
+              storedConfig.minuteOffset,
+            ).toISOString(),
+          };
+
+      setHourlyNotificationConfig(configWithAnchor);
+      setHourlyNotificationDraft(configWithAnchor);
+      saveHourlyNotificationConfig(configWithAnchor);
+      return;
+    }
+
+    const disabledConfig = { ...storedConfig, enabled: false };
+    setHourlyNotificationConfig(disabledConfig);
+    setHourlyNotificationDraft(disabledConfig);
+    saveHourlyNotificationConfig(disabledConfig);
   }, []);
+
+  const prepareHourlyNotificationSound = useCallback(async (): Promise<void> => {
+    if (typeof window === "undefined" || typeof AudioContext === "undefined") {
+      return;
+    }
+
+    const audioContext =
+      hourlyAudioContextRef.current ??
+      new AudioContext({ latencyHint: "interactive" });
+
+    hourlyAudioContextRef.current = audioContext;
+
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
+  }, []);
+
+  const playHourlyNotificationSound = useCallback(async (): Promise<void> => {
+    try {
+      await prepareHourlyNotificationSound();
+
+      const audioContext = hourlyAudioContextRef.current;
+      if (!audioContext || audioContext.state !== "running") return;
+
+      const startAt = audioContext.currentTime;
+      const gain = audioContext.createGain();
+      const firstTone = audioContext.createOscillator();
+      const secondTone = audioContext.createOscillator();
+
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.exponentialRampToValueAtTime(0.12, startAt + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.72);
+      gain.connect(audioContext.destination);
+
+      firstTone.type = "sine";
+      firstTone.frequency.setValueAtTime(880, startAt);
+      firstTone.connect(gain);
+      firstTone.start(startAt);
+      firstTone.stop(startAt + 0.24);
+
+      secondTone.type = "sine";
+      secondTone.frequency.setValueAtTime(1174.66, startAt + 0.3);
+      secondTone.connect(gain);
+      secondTone.start(startAt + 0.3);
+      secondTone.stop(startAt + 0.72);
+    } catch {
+      return;
+    }
+  }, [prepareHourlyNotificationSound]);
+
+  const showBrowserSystemNotification = useCallback(
+    async (title: string, body: string, tag: string): Promise<boolean> => {
+      if (
+        typeof window === "undefined" ||
+        typeof Notification === "undefined" ||
+        Notification.permission !== "granted"
+      ) {
+        return false;
+      }
+
+      const options: NotificationOptions = {
+        body,
+        tag,
+        requireInteraction: true,
+        silent: false,
+      };
+
+      if ("serviceWorker" in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.getRegistration();
+
+          if (registration) {
+            await registration.showNotification(title, options);
+            return true;
+          }
+        } catch {
+          // Chuyển sang Notification API của trang hiện tại.
+        }
+      }
+
+      try {
+        const notification = new Notification(title, options);
+
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
+
+  const showHourlyNotification = useCallback(
+    (scheduledAt: Date): void => {
+      if (
+        typeof window === "undefined" ||
+        typeof Notification === "undefined" ||
+        Notification.permission !== "granted"
+      ) {
+        return;
+      }
+
+      const currentTime = new Date();
+      const latenessMs = currentTime.getTime() - scheduledAt.getTime();
+
+      if (latenessMs < -1_000 || latenessMs > HOURLY_NOTIFICATION_MAX_LATE_MS) {
+        return;
+      }
+
+      const notificationKey = createScheduledNotificationKey(scheduledAt);
+      const previousNotificationKey = window.localStorage.getItem(
+        HOURLY_NOTIFICATION_LAST_SLOT_KEY,
+      );
+
+      if (previousNotificationKey === notificationKey) return;
+
+      window.localStorage.setItem(
+        HOURLY_NOTIFICATION_LAST_SLOT_KEY,
+        notificationKey,
+      );
+
+      const clockTime = formatLocalClockTime(currentTime);
+
+      void showBrowserSystemNotification(
+        `Bây giờ là ${clockTime}`,
+        `Mốc nhắc ${formatLocalClockTime(scheduledAt)} · Local Product Manager`,
+        `local-products-hourly-${notificationKey}`,
+      ).then((wasShown) => {
+        if (wasShown) {
+          void playHourlyNotificationSound();
+        }
+      });
+    },
+    [playHourlyNotificationSound, showBrowserSystemNotification],
+  );
+
+  const applyHourlyNotificationConfig = useCallback(
+    (enabled: boolean): HourlyNotificationConfig => {
+      const nextConfig: HourlyNotificationConfig = {
+        enabled,
+        minuteOffset: clampInteger(hourlyNotificationDraft.minuteOffset, 0, 59),
+        intervalHours: clampInteger(hourlyNotificationDraft.intervalHours, 1, 24),
+        dailyLimit: clampInteger(hourlyNotificationDraft.dailyLimit, 0, 24),
+        anchorAt: enabled
+          ? createNextNotificationAnchor(
+              new Date(),
+              hourlyNotificationDraft.minuteOffset,
+            ).toISOString()
+          : hourlyNotificationConfig.anchorAt,
+      };
+
+      setHourlyNotificationConfig(nextConfig);
+      setHourlyNotificationDraft(nextConfig);
+      saveHourlyNotificationConfig(nextConfig);
+      return nextConfig;
+    },
+    [hourlyNotificationConfig.anchorAt, hourlyNotificationDraft],
+  );
+
+  const handleSaveHourlyNotificationConfig = useCallback((): void => {
+    const nextConfig = applyHourlyNotificationConfig(
+      hourlyNotificationConfig.enabled,
+    );
+
+    Toastify(
+      nextConfig.enabled
+        ? "Đã lưu lịch và tính lại mốc kế tiếp theo thời gian hiện tại"
+        : "Đã lưu cấu hình thông báo",
+      200,
+    );
+  }, [applyHourlyNotificationConfig, hourlyNotificationConfig.enabled]);
+
+  const handleEnableHourlyNotification = useCallback(async (): Promise<void> => {
+    if (typeof Notification === "undefined") {
+      Toastify("Trình duyệt không hỗ trợ thông báo hệ thống", 400);
+      return;
+    }
+
+    const permission =
+      Notification.permission === "default"
+        ? await Notification.requestPermission()
+        : Notification.permission;
+
+    if (permission !== "granted") {
+      applyHourlyNotificationConfig(false);
+      Toastify(
+        permission === "denied"
+          ? "Chrome đang chặn quyền thông báo cho trang này"
+          : "Chưa cấp quyền thông báo cho trang này",
+        400,
+      );
+      return;
+    }
+
+    await prepareHourlyNotificationSound();
+    const enabledConfig = applyHourlyNotificationConfig(true);
+    const nextAt = getNextScheduledNotification(new Date(), enabledConfig);
+
+    Toastify(
+      nextAt
+        ? `Đã bật · mốc kế tiếp ${formatLocalDateTime(nextAt)}`
+        : "Đã bật thông báo",
+      200,
+    );
+  }, [applyHourlyNotificationConfig, prepareHourlyNotificationSound]);
+
+  const handleTestHourlyNotification = useCallback(async (): Promise<void> => {
+    if (typeof Notification === "undefined") {
+      Toastify("Trình duyệt không hỗ trợ thông báo hệ thống", 400);
+      return;
+    }
+
+    const permission =
+      Notification.permission === "default"
+        ? await Notification.requestPermission()
+        : Notification.permission;
+
+    if (permission !== "granted") {
+      Toastify(
+        permission === "denied"
+          ? "Chrome đang chặn quyền thông báo cho trang này"
+          : "Chưa cấp quyền thông báo cho trang này",
+        400,
+      );
+      return;
+    }
+
+    await prepareHourlyNotificationSound();
+
+    const currentTime = new Date();
+    const wasShown = await showBrowserSystemNotification(
+      `Thông báo thử · ${formatLocalClockTime(currentTime)}`,
+      "Thông báo sẽ nổi khi đang ở tab hoặc ứng dụng khác nếu trang vẫn còn chạy.",
+      `local-products-hourly-test-${currentTime.getTime()}`,
+    );
+
+    if (!wasShown) {
+      Toastify("Không thể hiển thị thông báo hệ thống", 400);
+      return;
+    }
+
+    await playHourlyNotificationSound();
+    Toastify("Đã gửi thông báo thử và phát âm báo", 200);
+  }, [
+    playHourlyNotificationSound,
+    prepareHourlyNotificationSound,
+    showBrowserSystemNotification,
+  ]);
+
+  const handleDisableHourlyNotification = useCallback((): void => {
+    if (hourlyNotificationTimeoutRef.current !== null) {
+      window.clearTimeout(hourlyNotificationTimeoutRef.current);
+      hourlyNotificationTimeoutRef.current = null;
+    }
+
+    applyHourlyNotificationConfig(false);
+    Toastify("Đã tắt thông báo thời gian", 200);
+  }, [applyHourlyNotificationConfig]);
+
+  useEffect(() => {
+    if (!hourlyNotificationConfig.enabled) return;
+
+    if (
+      typeof Notification === "undefined" ||
+      Notification.permission !== "granted"
+    ) {
+      const disabledConfig = {
+        ...hourlyNotificationConfig,
+        enabled: false,
+      };
+      setHourlyNotificationConfig(disabledConfig);
+      setHourlyNotificationDraft(disabledConfig);
+      saveHourlyNotificationConfig(disabledConfig);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const scheduleNextNotification = (): void => {
+      if (isCancelled) return;
+
+      const now = new Date();
+      const nextAt = getNextScheduledNotification(now, hourlyNotificationConfig);
+
+      if (!nextAt) return;
+
+      const delay = Math.max(50, nextAt.getTime() - now.getTime());
+
+      hourlyNotificationTimeoutRef.current = window.setTimeout(() => {
+        if (isCancelled) return;
+
+        showHourlyNotification(nextAt);
+        scheduleNextNotification();
+      }, delay);
+    };
+
+    const rescheduleFromRealtime = (): void => {
+      if (hourlyNotificationTimeoutRef.current !== null) {
+        window.clearTimeout(hourlyNotificationTimeoutRef.current);
+        hourlyNotificationTimeoutRef.current = null;
+      }
+
+      scheduleNextNotification();
+    };
+
+    const handleVisibilityChange = (): void => {
+      if (document.visibilityState === "visible") {
+        rescheduleFromRealtime();
+      }
+    };
+
+    scheduleNextNotification();
+    window.addEventListener("focus", rescheduleFromRealtime);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      isCancelled = true;
+      window.removeEventListener("focus", rescheduleFromRealtime);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+
+      if (hourlyNotificationTimeoutRef.current !== null) {
+        window.clearTimeout(hourlyNotificationTimeoutRef.current);
+        hourlyNotificationTimeoutRef.current = null;
+      }
+    };
+  }, [hourlyNotificationConfig, showHourlyNotification]);
+
+  useEffect(() => {
+    if (!hourlyNotificationConfig.enabled) return;
+
+    const unlockSound = (): void => {
+      window.removeEventListener("pointerdown", unlockSound, true);
+      window.removeEventListener("keydown", unlockSound, true);
+      void prepareHourlyNotificationSound();
+    };
+
+    window.addEventListener("pointerdown", unlockSound, {
+      capture: true,
+      once: true,
+    });
+    window.addEventListener("keydown", unlockSound, {
+      capture: true,
+      once: true,
+    });
+
+    return () => {
+      window.removeEventListener("pointerdown", unlockSound, true);
+      window.removeEventListener("keydown", unlockSound, true);
+    };
+  }, [hourlyNotificationConfig.enabled, prepareHourlyNotificationSound]);
+
+  useEffect(() => {
+    return () => {
+      const audioContext = hourlyAudioContextRef.current;
+
+      if (audioContext && audioContext.state !== "closed") {
+        void audioContext.close();
+      }
+    };
+  }, []);
+
+  const nextHourlyNotificationAt = useMemo(() => {
+    if (!hourlyNotificationConfig.enabled) return null;
+    return getNextScheduledNotification(nowTick, hourlyNotificationConfig);
+  }, [hourlyNotificationConfig, nowTick]);
 
   const activeContactText = useMemo(
     () => getSelectedContactText(settings),
@@ -5563,17 +6150,37 @@ export default function LocalProductsPage() {
     return request.productIds ?? [];
   };
 
+  const getConfiguredAutoCopyContent = (
+    source: AutoCopyContentSource,
+  ): { label: "Post" | "Cmt"; text: string } => {
+    if (settings.autoCopyShareMode === "comment") {
+      return {
+        label: "Cmt",
+        text: composeCopyText(
+          source.commentText,
+          activeContactText,
+          false,
+        ),
+      };
+    }
+
+    return {
+      label: "Post",
+      text: composeCopyText(
+        source.postText,
+        activeContactText,
+        settings.includeSocialTags,
+      ),
+    };
+  };
+
   const copyDownloadTextIfNeeded = async (
     request: DownloadRequest,
   ): Promise<void> => {
-    if (request.textToCopy === undefined) return;
+    if (!request.copyContent) return;
 
-    const sourceText = request.textToCopy.trim();
-
-    const textToCopy = composeCopyText(
-      sourceText,
-      activeContactText,
-      settings.includeSocialTags,
+    const { label, text: textToCopy } = getConfiguredAutoCopyContent(
+      request.copyContent,
     );
 
     if (!textToCopy) return;
@@ -5581,7 +6188,7 @@ export default function LocalProductsPage() {
     try {
       await copyText(textToCopy);
       setCopiedKey("download-description");
-      Toastify("Đã tự động copy nội dung Post", 200);
+      Toastify(`Đã tự động copy nội dung ${label}`, 200);
 
       window.setTimeout(() => {
         setCopiedKey((current) =>
@@ -5589,7 +6196,7 @@ export default function LocalProductsPage() {
         );
       }, 1200);
     } catch {
-      Toastify("Không thể tự động copy nội dung Post", 300);
+      Toastify(`Không thể tự động copy nội dung ${label}`, 300);
     }
   };
 
@@ -5655,17 +6262,26 @@ export default function LocalProductsPage() {
 
     const postText =
       product.description.trim() || settings.commonDescription.trim();
+    const autoCopyLabel =
+      settings.autoCopyShareMode === "comment" ? "Cmt" : "Post";
 
     requestDownload({
       productIds: [product.id],
       title: "Tải ảnh sản phẩm",
-      description:
-        "Tải ảnh của sản phẩm này về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.",
+      description: `Tải ảnh của sản phẩm này về máy? Nội dung ${autoCopyLabel} đã chọn sẽ được tự động copy trước khi tải.`,
       mode: "multiple",
       images: product.images,
       internalImages: product.internalImages,
       startIndex: 0,
-      textToCopy: postText,
+      copyContent: {
+        postText,
+        commentText: buildCommentContentText(
+          product.name,
+          postText,
+          product.priceText,
+          "",
+        ),
+      },
     });
   };
 
@@ -5712,24 +6328,20 @@ export default function LocalProductsPage() {
     description: string,
     priceText: string,
   ): void => {
-    const shouldCopyComment = settings.autoCopyShareMode === "comment";
-    const content = shouldCopyComment
-      ? buildCommentContentText(
+    const { label, text } = getConfiguredAutoCopyContent({
+      postText: description,
+      commentText: buildCommentContentText(
         title,
         description,
         priceText,
-        activeContactText,
-      )
-      : composeCopyText(
-        description,
-        activeContactText,
-        settings.includeSocialTags,
-      );
+        "",
+      ),
+    });
 
     void handleCopyField(
       shareKey,
-      shouldCopyComment ? "cmt" : "post",
-      content,
+      label.toLowerCase(),
+      text,
     );
   };
 
@@ -6356,12 +6968,20 @@ export default function LocalProductsPage() {
     requestDownload({
       productIds: [albumSource.productId],
       title: "Tải ảnh đã chọn",
-      description: `Tải ${selectedImageCount} ảnh đã chọn về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.`,
+      description: `Tải ${selectedImageCount} ảnh đã chọn về máy? Nội dung ${settings.autoCopyShareMode === "comment" ? "Cmt" : "Post"} đã chọn sẽ được tự động copy trước khi tải.`,
       mode: selectedImageCount === 1 ? "single" : "multiple",
       images: selectedImages,
       internalImages: selectedInternalImages,
       startIndex: 0,
-      textToCopy: albumSource.description,
+      copyContent: {
+        postText: albumSource.description,
+        commentText: buildCommentContentText(
+          albumSource.title,
+          albumSource.description,
+          albumSource.priceText,
+          "",
+        ),
+      },
     });
   };
 
@@ -6390,13 +7010,20 @@ export default function LocalProductsPage() {
     requestDownload({
       productIds: [albumSource.productId],
       title: "Tải toàn bộ album",
-      description:
-        "Tải toàn bộ ảnh trong album về máy? Toàn bộ Post sẽ được tự động copy trước khi tải.",
+      description: `Tải toàn bộ ảnh trong album về máy? Nội dung ${settings.autoCopyShareMode === "comment" ? "Cmt" : "Post"} đã chọn sẽ được tự động copy trước khi tải.`,
       mode: totalAlbumImages === 1 ? "single" : "multiple",
       images: albumSource.images,
       internalImages,
       startIndex: 0,
-      textToCopy: albumSource.description,
+      copyContent: {
+        postText: albumSource.description,
+        commentText: buildCommentContentText(
+          albumSource.title,
+          albumSource.description,
+          albumSource.priceText,
+          "",
+        ),
+      },
     });
   };
 
@@ -6449,6 +7076,20 @@ export default function LocalProductsPage() {
       })
       .filter(Boolean)
       .join("\n\n---\n\n");
+    const activeComments = downloadableProducts
+      .map((product) => {
+        const description =
+          product.description.trim() || settings.commonDescription.trim();
+
+        return buildCommentContentText(
+          product.name,
+          description,
+          product.priceText,
+          "",
+        );
+      })
+      .filter(Boolean)
+      .join("\n\n---\n\n");
 
     requestDownload({
       productIds: downloadableProducts
@@ -6461,13 +7102,15 @@ export default function LocalProductsPage() {
         .filter((product) => product.images.length > 0)
         .map((product) => product.id),
       title: "Tải toàn bộ ảnh",
-      description:
-        "Tải ảnh của tất cả sản phẩm chưa DONE về máy? Toàn bộ nội dung Post của các sản phẩm này sẽ được tự động copy trước khi tải.",
+      description: `Tải ảnh của tất cả sản phẩm chưa DONE về máy? Toàn bộ nội dung ${settings.autoCopyShareMode === "comment" ? "Cmt" : "Post"} của các sản phẩm này sẽ được tự động copy trước khi tải.`,
       mode: "multiple",
       images: allMainImages,
       internalImages: allInternalImages,
       startIndex: 0,
-      textToCopy: activeDescriptions,
+      copyContent: {
+        postText: activeDescriptions,
+        commentText: activeComments,
+      },
     });
   };
 
@@ -8007,6 +8650,32 @@ export default function LocalProductsPage() {
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), inset 3px 0 0 rgba(230, 207, 139, 0.48), 0 0 0 2px rgba(230, 207, 139, 0.09), 0 14px 34px rgba(0, 0, 0, 0.24);
         }
 
+        .local-products-workspace select {
+          color-scheme: dark !important;
+          color: #f8fafc !important;
+          -webkit-text-fill-color: #f8fafc;
+        }
+
+        .local-products-workspace select option,
+        .local-products-workspace select optgroup {
+          color-scheme: dark !important;
+          forced-color-adjust: none;
+          background-color: #0a1420 !important;
+          color: #f8fafc !important;
+          -webkit-text-fill-color: #f8fafc;
+        }
+
+        .local-products-workspace select option:checked {
+          background-color: #1d4ed8 !important;
+          color: #ffffff !important;
+          -webkit-text-fill-color: #ffffff;
+        }
+
+        .local-products-workspace select option:disabled {
+          color: #94a3b8 !important;
+          -webkit-text-fill-color: #94a3b8;
+        }
+
         .local-products-workspace [class*="rounded-md"][class*="border"][class*="bg-slate-950"],
         .local-products-workspace [class*="rounded-xl"][class*="border"][class*="bg-slate-950"],
         .local-products-workspace [class*="rounded-md"][class*="border"][class*="bg-slate-900"],
@@ -8244,7 +8913,7 @@ export default function LocalProductsPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-4 gap-1 border border-[#d8c99f]/10 bg-black/25 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] xl:w-full xl:max-w-[1220px] xl:self-end xl:grid-cols-[repeat(15,minmax(0,1fr))] xl:border-[#d8c99f]/[0.16] xl:bg-[linear-gradient(90deg,rgba(255,255,255,0.015),rgba(216,201,159,0.045))] xl:p-1.5 xl:shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_12px_30px_rgba(0,0,0,0.2)]">
+            <div className="grid grid-cols-4 gap-1 border border-[#d8c99f]/10 bg-black/25 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] xl:w-full xl:max-w-[1220px] xl:self-end xl:grid-cols-[repeat(16,minmax(0,1fr))] xl:border-[#d8c99f]/[0.16] xl:bg-[linear-gradient(90deg,rgba(255,255,255,0.015),rgba(216,201,159,0.045))] xl:p-1.5 xl:shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_12px_30px_rgba(0,0,0,0.2)]">
               <button
                 type="button"
                 data-luxury-accent="gold"
@@ -8310,8 +8979,8 @@ export default function LocalProductsPage() {
                 data-luxury-accent={
                   settings.autoCopyShareMode === "post" ? "sapphire" : "amber"
                 }
-                title={`Mở tùy chọn Share · hiện đang tự copy ${settings.autoCopyShareMode === "post" ? "Post" : "Cmt"}`}
-                aria-label={`Mở tùy chọn tự copy khi chia sẻ, hiện đang chọn ${settings.autoCopyShareMode === "post" ? "Post" : "Cmt"}`}
+                title={`Tùy chọn copy cho Chia sẻ và Tải ảnh · hiện đang chọn ${settings.autoCopyShareMode === "post" ? "Post" : "Cmt"}`}
+                aria-label={`Mở tùy chọn copy cho Chia sẻ và Tải ảnh, hiện đang chọn ${settings.autoCopyShareMode === "post" ? "Post" : "Cmt"}`}
                 className={`${headerActionButtonBaseClassName} ${headerActiveButtonClassName}`}
                 onClick={() => openModal("shareCopyOption")}
               >
@@ -8343,6 +9012,34 @@ export default function LocalProductsPage() {
               >
                 <FiCalendar aria-hidden="true" className={iconClassName} />
                 Lịch
+              </button>
+
+              <button
+                type="button"
+                data-luxury-accent="emerald"
+                title={
+                  hourlyNotificationConfig.enabled
+                    ? `Thông báo đang bật${
+                        nextHourlyNotificationAt
+                          ? ` · kế tiếp ${formatLocalDateTime(nextHourlyNotificationAt)}`
+                          : ""
+                      }`
+                    : "Cấu hình thông báo theo thời gian"
+                }
+                aria-label="Cấu hình thông báo theo thời gian"
+                aria-pressed={hourlyNotificationConfig.enabled}
+                className={`${headerActionButtonBaseClassName} ${
+                  hourlyNotificationConfig.enabled
+                    ? headerActiveButtonClassName
+                    : headerNeutralButtonClassName
+                }`}
+                onClick={() => {
+                  setHourlyNotificationDraft(hourlyNotificationConfig);
+                  openModal("hourlyNotification");
+                }}
+              >
+                <FiBell aria-hidden="true" className={iconClassName} />
+                {hourlyNotificationConfig.enabled ? "Giờ: Bật" : "Giờ: Tắt"}
               </button>
 
               <button
@@ -9097,6 +9794,9 @@ export default function LocalProductsPage() {
                   {activeModal === "schedule" ? (
                     <FiCalendar aria-hidden="true" className={iconClassName} />
                   ) : null}
+                  {activeModal === "hourlyNotification" ? (
+                    <FiBell aria-hidden="true" className={iconClassName} />
+                  ) : null}
                   {activeModal === "globalNote" ? (
                     <FiClipboard aria-hidden="true" className={iconClassName} />
                   ) : null}
@@ -9140,10 +9840,11 @@ export default function LocalProductsPage() {
                       ? "Bảng sản phẩm"
                       : null}
                     {activeModal === "schedule" ? "Cấu hình lịch đăng" : null}
+                    {activeModal === "hourlyNotification" ? "Thông báo thời gian" : null}
                     {activeModal === "globalNote" ? "Ghi chú" : null}
                     {activeModal === "globalDescription" ? "Mô tả chung" : null}
                     {activeModal === "shareCopyOption"
-                      ? "Tùy chọn tự copy khi chia sẻ"
+                      ? "Tùy chọn tự copy"
                       : null}
                     {activeModal === "contact" ? "Liên hệ khi copy" : null}
                     {activeModal === "facebookPages"
@@ -10471,6 +11172,203 @@ export default function LocalProductsPage() {
                 </section>
               ) : null}
 
+              {activeModal === "hourlyNotification" ? (
+                <section className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-3">
+                  <article className="rounded-md border border-emerald-300/20 bg-emerald-300/[0.06] p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-black text-white">
+                          Lịch nhắc theo thời gian thực
+                        </h3>
+                        <p className="mt-1 text-xs leading-5 text-slate-400">
+                          Mốc đã qua sẽ bị bỏ qua, không phát thông báo bù. Khi
+                          tab quay lại hoạt động, lịch được tính tiếp từ giờ thực tế.
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-md px-2.5 py-1 text-[10px] font-black ${
+                          hourlyNotificationConfig.enabled
+                            ? "bg-emerald-300 text-slate-950"
+                            : "border border-white/10 bg-slate-950 text-slate-400"
+                        }`}
+                      >
+                        {hourlyNotificationConfig.enabled ? "ĐANG BẬT" : "ĐANG TẮT"}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-3">
+                      <label className="grid gap-1.5">
+                        <span className="text-[10px] font-black uppercase tracking-wide text-slate-400">
+                          Phút trong giờ
+                        </span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min={0}
+                          max={59}
+                          step={1}
+                          value={hourlyNotificationDraft.minuteOffset}
+                          onChange={(event) =>
+                            setHourlyNotificationDraft((current) => ({
+                              ...current,
+                              minuteOffset: clampInteger(
+                                event.target.valueAsNumber,
+                                0,
+                                59,
+                              ),
+                            }))
+                          }
+                          onFocus={(event) => event.currentTarget.select()}
+                          onWheel={(event) => event.currentTarget.blur()}
+                          className={scheduleFieldClassName}
+                          aria-label="Nhập phút trong giờ từ 0 đến 59"
+                        />
+                        <span className="text-[10px] leading-4 text-slate-500">
+                          Nhập 0–59. 0 = đúng đầu giờ, 10 = HH:10.
+                        </span>
+                      </label>
+
+                      <label className="grid gap-1.5">
+                        <span className="text-[10px] font-black uppercase tracking-wide text-slate-400">
+                          Lặp lại mỗi
+                        </span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min={1}
+                          max={24}
+                          step={1}
+                          value={hourlyNotificationDraft.intervalHours}
+                          onChange={(event) =>
+                            setHourlyNotificationDraft((current) => ({
+                              ...current,
+                              intervalHours: clampInteger(
+                                event.target.valueAsNumber,
+                                1,
+                                24,
+                              ),
+                            }))
+                          }
+                          onFocus={(event) => event.currentTarget.select()}
+                          onWheel={(event) => event.currentTarget.blur()}
+                          className={scheduleFieldClassName}
+                          aria-label="Nhập khoảng lặp từ 1 đến 24 giờ"
+                        />
+                        <span className="text-[10px] leading-4 text-slate-500">
+                          Nhập 1–24 giờ. Ví dụ 5 = lặp lại mỗi 5 giờ.
+                        </span>
+                      </label>
+
+                      <label className="grid gap-1.5">
+                        <span className="text-[10px] font-black uppercase tracking-wide text-slate-400">
+                          Tối đa mỗi ngày
+                        </span>
+                        <select
+                          value={hourlyNotificationDraft.dailyLimit}
+                          onChange={(event) =>
+                            setHourlyNotificationDraft((current) => ({
+                              ...current,
+                              dailyLimit: clampInteger(
+                                Number(event.target.value),
+                                0,
+                                24,
+                              ),
+                            }))
+                          }
+                          className={scheduleFieldClassName}
+                        >
+                          <option value={0}>Không giới hạn</option>
+                          <option value={1}>1 lần / ngày</option>
+                          <option value={2}>2 lần / ngày</option>
+                          <option value={3}>3 lần / ngày</option>
+                          <option value={4}>4 lần / ngày</option>
+                          <option value={6}>6 lần / ngày</option>
+                          <option value={8}>8 lần / ngày</option>
+                          <option value={12}>12 lần / ngày</option>
+                          <option value={24}>24 lần / ngày</option>
+                        </select>
+                        <span className="text-[10px] leading-4 text-slate-500">
+                          Giới hạn theo ngày dương lịch trên máy.
+                        </span>
+                      </label>
+                    </div>
+                  </article>
+
+                  <article className="grid grid-cols-1 gap-3 rounded-md border border-white/10 bg-slate-950/70 p-3 xl:grid-cols-2">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+                        Cấu hình
+                      </p>
+                      <p className="mt-1 text-sm font-black text-white">
+                        HH:{String(hourlyNotificationDraft.minuteOffset).padStart(2, "0")}
+                        {" · "}mỗi {hourlyNotificationDraft.intervalHours} giờ
+                        {hourlyNotificationDraft.dailyLimit > 0
+                          ? ` · tối đa ${hourlyNotificationDraft.dailyLimit} lần/ngày`
+                          : " · không giới hạn/ngày"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+                        Mốc kế tiếp đang chạy
+                      </p>
+                      <p className="mt-1 text-sm font-black text-emerald-100">
+                        {hourlyNotificationConfig.enabled && nextHourlyNotificationAt
+                          ? formatLocalDateTime(nextHourlyNotificationAt)
+                          : "Chưa bật"}
+                      </p>
+                    </div>
+                  </article>
+
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      className={secondaryActionButtonClassName}
+                      onClick={() => void handleTestHourlyNotification()}
+                    >
+                      <FiBell aria-hidden="true" className={iconClassName} />
+                      Thử thông báo và âm thanh
+                    </button>
+
+                    <button
+                      type="button"
+                      className={secondaryActionButtonClassName}
+                      onClick={handleSaveHourlyNotificationConfig}
+                    >
+                      Lưu cấu hình
+                    </button>
+
+                    {hourlyNotificationConfig.enabled ? (
+                      <button
+                        type="button"
+                        className="flex items-center justify-center gap-2 rounded-md border border-rose-300/30 bg-rose-300/10 px-3 py-2 text-xs font-black text-rose-100 transition hover:bg-rose-300/20"
+                        onClick={handleDisableHourlyNotification}
+                      >
+                        <FiBell aria-hidden="true" className={iconClassName} />
+                        Tắt thông báo
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="flex items-center justify-center gap-2 rounded-md border border-emerald-200/50 bg-emerald-300 px-3 py-2 text-xs font-black text-slate-950 transition hover:bg-emerald-200"
+                        onClick={() => void handleEnableHourlyNotification()}
+                      >
+                        <FiBell aria-hidden="true" className={iconClassName} />
+                        Lưu và bật
+                      </button>
+                    )}
+                  </div>
+
+                  <p className="rounded-md border border-amber-300/20 bg-amber-300/[0.06] p-3 text-xs leading-5 text-amber-100/80">
+                    Thông báo hệ thống vẫn nổi khi đang ở tab hoặc ứng dụng
+                    khác, miễn Chrome và trang này còn chạy. Âm thanh phụ thuộc
+                    quyền phát âm thanh và cài đặt thông báo của Chrome/Windows.
+                    Nếu máy ngủ, đóng hẳn trình duyệt hoặc callback trễ quá 90
+                    giây, mốc đó sẽ bị bỏ qua và hệ thống chờ mốc kế tiếp.
+                  </p>
+                </section>
+              ) : null}
+
               {activeModal === "globalNote" ? (
                 <section className="flex h-full min-h-0 flex-col overflow-hidden">
                   <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 p-2">
@@ -10560,11 +11458,11 @@ export default function LocalProductsPage() {
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="min-w-0">
                         <h3 className="text-sm font-black text-white">
-                          Nội dung được copy khi mở Chia sẻ
+                          Nội dung được copy khi Chia sẻ hoặc Tải ảnh
                         </h3>
                         <p className="mt-1 text-xs leading-5 text-slate-400">
                           Chọn một chế độ bên dưới. Thay đổi được lưu ngay và
-                          mục đang dùng luôn có dấu chọn rõ ràng.
+                          áp dụng chung cho hai nút Chia sẻ và Tải ảnh sản phẩm.
                         </p>
                       </div>
                       <span
@@ -10667,9 +11565,9 @@ export default function LocalProductsPage() {
                   </article>
 
                   <p className="rounded-md border border-cyan-300/20 bg-cyan-300/[0.07] p-3 text-xs leading-5 text-cyan-100/80">
-                    Tùy chọn này chỉ quyết định nội dung tự copy ngay khi bấm
-                    Chia sẻ. Các nút Post và Cmt bên trong modal Chia sẻ vẫn
-                    hoạt động độc lập.
+                    Khi chọn Post hoặc Cmt, nút Chia sẻ và mọi lượt tải ảnh có
+                    nội dung sản phẩm sẽ tự copy đúng chế độ đó. Các nút Post
+                    và Cmt bên trong modal Chia sẻ vẫn hoạt động độc lập.
                   </p>
                 </section>
               ) : null}
