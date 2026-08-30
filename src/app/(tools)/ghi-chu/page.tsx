@@ -3150,12 +3150,12 @@ export default function LocalProductsPage() {
       const configWithAnchor = storedConfig.anchorAt
         ? storedConfig
         : {
-            ...storedConfig,
-            anchorAt: createNextNotificationAnchor(
-              new Date(),
-              storedConfig.minuteOffset,
-            ).toISOString(),
-          };
+          ...storedConfig,
+          anchorAt: createNextNotificationAnchor(
+            new Date(),
+            storedConfig.minuteOffset,
+          ).toISOString(),
+        };
 
       setHourlyNotificationConfig(configWithAnchor);
       setHourlyNotificationDraft(configWithAnchor);
@@ -3317,9 +3317,9 @@ export default function LocalProductsPage() {
         dailyLimit: clampInteger(hourlyNotificationDraft.dailyLimit, 0, 24),
         anchorAt: enabled
           ? createNextNotificationAnchor(
-              new Date(),
-              hourlyNotificationDraft.minuteOffset,
-            ).toISOString()
+            new Date(),
+            hourlyNotificationDraft.minuteOffset,
+          ).toISOString()
           : hourlyNotificationConfig.anchorAt,
       };
 
@@ -6129,6 +6129,20 @@ export default function LocalProductsPage() {
     validProductIds.forEach((productId) => nextProductIds.add(productId));
     saveDownloadedProductIds(nextProductIds);
     setDownloadedProductIds(nextProductIds);
+  };
+
+  const clearDownloadedProductSession = (): void => {
+    if (typeof window === "undefined") return;
+
+    try {
+      window.sessionStorage.removeItem(
+        DOWNLOADED_PRODUCT_IDS_SESSION_KEY,
+      );
+      setDownloadedProductIds(new Set<string>());
+      Toastify("Đã xóa trạng thái ảnh đã tải trong phiên hiện tại", 200);
+    } catch {
+      Toastify("Không thể xóa trạng thái ảnh đã tải", 400);
+    }
   };
 
   const requestDownload = (request: DownloadRequest): void => {
@@ -9019,20 +9033,18 @@ export default function LocalProductsPage() {
                 data-luxury-accent="emerald"
                 title={
                   hourlyNotificationConfig.enabled
-                    ? `Thông báo đang bật${
-                        nextHourlyNotificationAt
-                          ? ` · kế tiếp ${formatLocalDateTime(nextHourlyNotificationAt)}`
-                          : ""
-                      }`
+                    ? `Thông báo đang bật${nextHourlyNotificationAt
+                      ? ` · kế tiếp ${formatLocalDateTime(nextHourlyNotificationAt)}`
+                      : ""
+                    }`
                     : "Cấu hình thông báo theo thời gian"
                 }
                 aria-label="Cấu hình thông báo theo thời gian"
                 aria-pressed={hourlyNotificationConfig.enabled}
-                className={`${headerActionButtonBaseClassName} ${
-                  hourlyNotificationConfig.enabled
+                className={`${headerActionButtonBaseClassName} ${hourlyNotificationConfig.enabled
                     ? headerActiveButtonClassName
                     : headerNeutralButtonClassName
-                }`}
+                  }`}
                 onClick={() => {
                   setHourlyNotificationDraft(hourlyNotificationConfig);
                   openModal("hourlyNotification");
@@ -9979,6 +9991,29 @@ export default function LocalProductsPage() {
                         className={iconClassName}
                       />
                       Tải ảnh đại diện
+                    </button>
+                  </article>
+
+                  <article className="flex flex-col gap-3 rounded-md border border-rose-300/20 bg-rose-300/[0.055] p-3 xl:col-span-2 xl:flex-row xl:items-center xl:justify-between">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-black text-white">
+                        Trạng thái ảnh đã tải trong phiên
+                      </h3>
+                      <p className="mt-1 text-xs leading-5 text-slate-400">
+                        Hiện có {downloadedProductIds.size} sản phẩm được đánh
+                        dấu đã tải. Xóa trạng thái không ảnh hưởng ảnh hoặc dữ
+                        liệu sản phẩm.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={downloadedProductIds.size === 0}
+                      className="flex shrink-0 items-center justify-center gap-2 rounded-md border border-rose-300/30 bg-rose-300/10 px-3 py-2 text-xs font-black text-rose-100 transition hover:bg-rose-300/20 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                      onClick={clearDownloadedProductSession}
+                    >
+                      <FiTrash2 aria-hidden="true" className={iconClassName} />
+                      Xóa trạng thái phiên
                     </button>
                   </article>
                 </section>
@@ -11186,11 +11221,10 @@ export default function LocalProductsPage() {
                         </p>
                       </div>
                       <span
-                        className={`shrink-0 rounded-md px-2.5 py-1 text-[10px] font-black ${
-                          hourlyNotificationConfig.enabled
+                        className={`shrink-0 rounded-md px-2.5 py-1 text-[10px] font-black ${hourlyNotificationConfig.enabled
                             ? "bg-emerald-300 text-slate-950"
                             : "border border-white/10 bg-slate-950 text-slate-400"
-                        }`}
+                          }`}
                       >
                         {hourlyNotificationConfig.enabled ? "ĐANG BẬT" : "ĐANG TẮT"}
                       </span>
