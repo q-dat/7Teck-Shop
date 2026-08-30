@@ -7,6 +7,7 @@ import {
   useState,
   type ChangeEvent,
   type ClipboardEvent,
+  type CSSProperties,
   type DragEvent,
   type FormEvent,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -117,10 +118,18 @@ type FacebookDuplicatePostOption = {
 };
 
 type AutoCopyShareMode = "post" | "comment";
+type CategoryDropPosition = "before" | "after";
 
 type AutoCopyContentSource = {
   postText: string;
   commentText: string;
+};
+
+type CategoryColorMap = Record<string, string>;
+
+type CategoryColorStyle = CSSProperties & {
+  "--category-color": string;
+  "--category-contrast": string;
 };
 
 type GlobalSettings = {
@@ -132,13 +141,15 @@ type GlobalSettings = {
   facebookDuplicatePosts: FacebookDuplicatePostOption[];
   facebookGroups: FacebookGroupOption[];
   selectedFacebookGroupIds: string[];
+  categoryColors: CategoryColorMap;
+  categoryOrder: string[];
   includeSocialTags: boolean;
   autoCopyShareMode: AutoCopyShareMode;
   updatedAt: string;
 };
 
 type ExportPayload = {
-  version: 17;
+  version: 19;
   settings: GlobalSettings;
   products: LocalProduct[];
   scheduleConfig: ScheduleConfig;
@@ -424,6 +435,8 @@ const defaultSettings: GlobalSettings = {
   facebookDuplicatePosts: [],
   facebookGroups: [],
   selectedFacebookGroupIds: [],
+  categoryColors: {},
+  categoryOrder: [],
   includeSocialTags: false,
   autoCopyShareMode: "post",
   updatedAt: "",
@@ -469,6 +482,9 @@ const secondaryActionButtonClassName =
 
 const compactLuxuryDialogClassName =
   "luxury-dialog w-full max-w-md border p-3";
+
+const fullCardItemNameClassName =
+  "min-w-0 whitespace-pre-wrap break-words [overflow-wrap:anywhere]";
 
 const getActiveInteractionWindow = (): Window => {
   if (typeof window === "undefined") {
@@ -873,6 +889,81 @@ const normalizeTextKey = (value: string): string => {
 
 const normalizeCategoryName = (value: string): string => {
   return value.trim().replace(/\s+/g, " ");
+};
+
+const normalizeCategoryOrder = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+
+  const categoriesByKey = new Map<string, string>();
+
+  value.forEach((item) => {
+    if (typeof item !== "string") return;
+
+    const category = normalizeCategoryName(item);
+    const categoryKey = normalizeTextKey(category);
+
+    if (!category || categoriesByKey.has(categoryKey)) return;
+    categoriesByKey.set(categoryKey, category);
+  });
+
+  return Array.from(categoriesByKey.values());
+};
+
+const DEFAULT_CATEGORY_COLOR = "#d8c99f";
+const CATEGORY_COLOR_PATTERN = /^#[\da-f]{6}$/iu;
+
+const normalizeCategoryColors = (value: unknown): CategoryColorMap => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return {};
+  }
+
+  const result: CategoryColorMap = {};
+
+  Object.entries(value as Record<string, unknown>).forEach(
+    ([category, color]) => {
+      const categoryKey = normalizeTextKey(category);
+
+      if (
+        categoryKey &&
+        typeof color === "string" &&
+        CATEGORY_COLOR_PATTERN.test(color)
+      ) {
+        result[categoryKey] = color.toLowerCase();
+      }
+    },
+  );
+
+  return result;
+};
+
+const getCategoryColor = (
+  category: string,
+  categoryColors: CategoryColorMap,
+): string => {
+  return (
+    categoryColors[normalizeTextKey(category)] ?? DEFAULT_CATEGORY_COLOR
+  );
+};
+
+const getCategoryContrastColor = (color: string): string => {
+  const red = Number.parseInt(color.slice(1, 3), 16);
+  const green = Number.parseInt(color.slice(3, 5), 16);
+  const blue = Number.parseInt(color.slice(5, 7), 16);
+  const luminance = (red * 299 + green * 587 + blue * 114) / 1000;
+
+  return luminance >= 150 ? "#111827" : "#ffffff";
+};
+
+const createCategoryColorStyle = (
+  category: string,
+  categoryColors: CategoryColorMap,
+): CategoryColorStyle => {
+  const color = getCategoryColor(category, categoryColors);
+
+  return {
+    "--category-color": color,
+    "--category-contrast": getCategoryContrastColor(color),
+  };
 };
 
 type FacebookGroupCategoryGroup = {
@@ -1497,6 +1588,8 @@ const loadGlobalSettings = (): GlobalSettings => {
       record.selectedFacebookGroupIds,
       facebookGroups,
     );
+    const categoryColors = normalizeCategoryColors(record.categoryColors);
+    const categoryOrder = normalizeCategoryOrder(record.categoryOrder);
 
     return {
       commonDescription:
@@ -1511,6 +1604,8 @@ const loadGlobalSettings = (): GlobalSettings => {
       facebookDuplicatePosts,
       facebookGroups,
       selectedFacebookGroupIds,
+      categoryColors,
+      categoryOrder,
       includeSocialTags:
         typeof record.includeSocialTags === "boolean"
           ? record.includeSocialTags
@@ -1764,8 +1859,25 @@ const sortProductsByDoneThenPrice = (
 const sortProductsByCategoryThenDoneThenPrice = (
   items: LocalProduct[],
   pendingDoneProductIds: Set<string> = new Set<string>(),
+  categoryOrder: string[] = [],
 ): LocalProduct[] => {
+  const categoryIndexes = new Map(
+    categoryOrder.map((category, index) => [normalizeTextKey(category), index]),
+  );
+
   return [...items].sort((firstProduct, secondProduct) => {
+    const firstCategoryKey = normalizeTextKey(
+      firstProduct.category || "Chưa phân loại",
+    );
+    const secondCategoryKey = normalizeTextKey(
+      secondProduct.category || "Chưa phân loại",
+    );
+    const orderDiff =
+      (categoryIndexes.get(firstCategoryKey) ?? Number.MAX_SAFE_INTEGER) -
+      (categoryIndexes.get(secondCategoryKey) ?? Number.MAX_SAFE_INTEGER);
+
+    if (orderDiff !== 0) return orderDiff;
+
     const categoryDiff = normalizeTextKey(
       firstProduct.category || "Chưa phân loại",
     ).localeCompare(
@@ -1842,6 +1954,27 @@ const createGroupedProducts = (
         "vi",
       ),
     );
+};
+
+const orderGroupsByCategories = <Group extends { category: string }>(
+  groups: Group[],
+  categories: string[],
+): Group[] => {
+  const categoryIndexes = new Map(
+    categories.map((category, index) => [normalizeTextKey(category), index]),
+  );
+
+  return [...groups].sort((firstGroup, secondGroup) => {
+    const firstCategoryKey = normalizeTextKey(firstGroup.category);
+    const secondCategoryKey = normalizeTextKey(secondGroup.category);
+    const orderDiff =
+      (categoryIndexes.get(firstCategoryKey) ?? Number.MAX_SAFE_INTEGER) -
+      (categoryIndexes.get(secondCategoryKey) ?? Number.MAX_SAFE_INTEGER);
+
+    if (orderDiff !== 0) return orderDiff;
+
+    return firstCategoryKey.localeCompare(secondCategoryKey, "vi");
+  });
 };
 
 const buildCopyableProductListText = (
@@ -2046,6 +2179,8 @@ const normalizeGlobalSettings = (
     record.selectedFacebookGroupIds,
     facebookGroups,
   );
+  const categoryColors = normalizeCategoryColors(record.categoryColors);
+  const categoryOrder = normalizeCategoryOrder(record.categoryOrder);
 
   return {
     commonDescription:
@@ -2059,6 +2194,8 @@ const normalizeGlobalSettings = (
     facebookDuplicatePosts,
     facebookGroups,
     selectedFacebookGroupIds,
+    categoryColors,
+    categoryOrder,
     includeSocialTags:
       typeof record.includeSocialTags === "boolean"
         ? record.includeSocialTags
@@ -2625,7 +2762,7 @@ const createExportPayload = (params: {
   postedRecords: PostedRecord[];
 }): ExportPayload => {
   return {
-    version: 17,
+    version: 19,
     settings: params.settings,
     products: params.products,
     scheduleConfig: params.scheduleConfig,
@@ -3117,6 +3254,12 @@ export default function LocalProductsPage() {
   const [query, setQuery] = useState<string>("");
   const [activeCategoryTab, setActiveCategoryTab] =
     useState<CategoryTab>("all");
+  const [draggingCategoryKey, setDraggingCategoryKey] =
+    useState<string>("");
+  const [categoryDropTarget, setCategoryDropTarget] = useState<{
+    key: string;
+    position: CategoryDropPosition;
+  } | null>(null);
   const [isMobileCategoryMenuOpen, setIsMobileCategoryMenuOpen] =
     useState<boolean>(false);
   const prefersReducedMotion = useReducedMotion();
@@ -3214,12 +3357,12 @@ export default function LocalProductsPage() {
       const configWithAnchor = storedConfig.anchorAt
         ? storedConfig
         : {
-            ...storedConfig,
-            anchorAt: createNextNotificationAnchor(
-              new Date(),
-              storedConfig.minuteOffset,
-            ).toISOString(),
-          };
+          ...storedConfig,
+          anchorAt: createNextNotificationAnchor(
+            new Date(),
+            storedConfig.minuteOffset,
+          ).toISOString(),
+        };
 
       setHourlyNotificationConfig(configWithAnchor);
       setHourlyNotificationDraft(configWithAnchor);
@@ -3381,9 +3524,9 @@ export default function LocalProductsPage() {
         dailyLimit: clampInteger(hourlyNotificationDraft.dailyLimit, 0, 24),
         anchorAt: enabled
           ? createNextNotificationAnchor(
-              new Date(),
-              hourlyNotificationDraft.minuteOffset,
-            ).toISOString()
+            new Date(),
+            hourlyNotificationDraft.minuteOffset,
+          ).toISOString()
           : hourlyNotificationConfig.anchorAt,
       };
 
@@ -3874,7 +4017,7 @@ export default function LocalProductsPage() {
     };
   }, []);
 
-  const categories = useMemo(() => {
+  const discoveredCategories = useMemo(() => {
     const categoryMap = new Map<string, string>();
 
     products.forEach((product) => {
@@ -3888,11 +4031,67 @@ export default function LocalProductsPage() {
     return Array.from(categoryMap.values());
   }, [products]);
 
+  const categories = useMemo(() => {
+    const categoryMap = new Map(
+      discoveredCategories.map((category) => [
+        normalizeTextKey(category),
+        category,
+      ]),
+    );
+    const orderedCategories = settings.categoryOrder
+      .map((category) => categoryMap.get(normalizeTextKey(category)))
+      .filter((category): category is string => Boolean(category));
+    const orderedCategoryKeys = new Set(
+      orderedCategories.map((category) => normalizeTextKey(category)),
+    );
+
+    discoveredCategories.forEach((category) => {
+      if (!orderedCategoryKeys.has(normalizeTextKey(category))) {
+        orderedCategories.push(category);
+      }
+    });
+
+    return orderedCategories;
+  }, [discoveredCategories, settings.categoryOrder]);
+
+  const draggingCategory = useMemo(() => {
+    return (
+      categories.find(
+        (category) => normalizeTextKey(category) === draggingCategoryKey,
+      ) ?? ""
+    );
+  }, [categories, draggingCategoryKey]);
+
   // Danh sách tab theo thứ tự: "all" + các danh mục
   const orderedCategoryTabs = useMemo<CategoryTab[]>(
     () => ["all", ...categories],
     [categories],
   );
+
+  useEffect(() => {
+    if (discoveredCategories.length === 0) return;
+
+    setSettings((current) => {
+      const currentKeys = current.categoryOrder.map((category) =>
+        normalizeTextKey(category),
+      );
+      const nextKeys = categories.map((category) =>
+        normalizeTextKey(category),
+      );
+      const orderUnchanged =
+        currentKeys.length === nextKeys.length &&
+        currentKeys.every((categoryKey, index) =>
+          categoryKey === nextKeys[index]
+        );
+
+      if (orderUnchanged) return current;
+
+      return {
+        ...current,
+        categoryOrder: categories,
+      };
+    });
+  }, [categories, discoveredCategories.length]);
 
   // Chuyển sang danh mục kế tiếp / trước đó (dùng cho vuốt ngang)
   const goToAdjacentCategory = useCallback(
@@ -4008,6 +4207,196 @@ export default function LocalProductsPage() {
     };
   }, []);
 
+  const resetCategoryDrag = useCallback((): void => {
+    setDraggingCategoryKey("");
+    setCategoryDropTarget(null);
+  }, []);
+
+  const commitCategoryOrder = useCallback(
+    (
+      sourceKey: string,
+      targetKey?: string,
+      position: CategoryDropPosition = "after",
+    ): void => {
+      const sourceCategory = categories.find(
+        (category) => normalizeTextKey(category) === sourceKey,
+      );
+
+      if (!sourceCategory) return;
+
+      const nextCategories = categories.filter(
+        (category) => normalizeTextKey(category) !== sourceKey,
+      );
+      const targetIndex = targetKey
+        ? nextCategories.findIndex(
+          (category) => normalizeTextKey(category) === targetKey,
+        )
+        : -1;
+      const insertionIndex =
+        targetIndex < 0
+          ? nextCategories.length
+          : targetIndex + (position === "after" ? 1 : 0);
+
+      nextCategories.splice(insertionIndex, 0, sourceCategory);
+
+      const orderUnchanged = nextCategories.every(
+        (category, index) =>
+          normalizeTextKey(category) === normalizeTextKey(categories[index] ?? ""),
+      );
+
+      if (orderUnchanged) return;
+
+      setSettings((current) => ({
+        ...current,
+        categoryOrder: nextCategories,
+      }));
+      Toastify("Đã lưu thứ tự danh mục", 200);
+    },
+    [categories],
+  );
+
+  const handleCategoryDragStart = (
+    event: DragEvent<HTMLButtonElement>,
+    category: string,
+  ): void => {
+    const categoryKey = normalizeTextKey(category);
+    const categoryColor = getCategoryColor(
+      category,
+      settings.categoryColors,
+    );
+    const targetDocument = event.currentTarget.ownerDocument;
+    const dragPreview = event.currentTarget.cloneNode(true) as HTMLElement;
+    const targetRect = event.currentTarget.getBoundingClientRect();
+
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", categoryKey);
+
+    dragPreview.removeAttribute("id");
+    dragPreview.style.position = "fixed";
+    dragPreview.style.top = "-1000px";
+    dragPreview.style.left = "-1000px";
+    dragPreview.style.width = `${targetRect.width}px`;
+    dragPreview.style.height = `${targetRect.height}px`;
+    dragPreview.style.opacity = "0.96";
+    dragPreview.style.transform = "rotate(-2deg) scale(1.04)";
+    dragPreview.style.border = `1px solid ${categoryColor}`;
+    dragPreview.style.background = `linear-gradient(135deg, color-mix(in srgb, ${categoryColor} 82%, white 18%), color-mix(in srgb, ${categoryColor} 68%, black 32%))`;
+    dragPreview.style.color = getCategoryContrastColor(categoryColor);
+    dragPreview.style.boxShadow = `0 18px 46px color-mix(in srgb, ${categoryColor} 28%, transparent)`;
+    dragPreview.style.clipPath =
+      "polygon(8px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 4px 100%, 0 calc(100% - 4px), 0 8px)";
+    dragPreview.style.pointerEvents = "none";
+    dragPreview.style.zIndex = "100000";
+    targetDocument.body.appendChild(dragPreview);
+    event.dataTransfer.setDragImage(
+      dragPreview,
+      targetRect.width / 2,
+      targetRect.height / 2,
+    );
+    targetDocument.defaultView?.requestAnimationFrame(() => {
+      dragPreview.remove();
+    });
+
+    setDraggingCategoryKey(categoryKey);
+    setCategoryDropTarget(null);
+  };
+
+  const handleCategoryDragOver = (
+    event: DragEvent<HTMLButtonElement>,
+    category: string,
+  ): void => {
+    if (!draggingCategoryKey) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = "move";
+
+    const targetKey = normalizeTextKey(category);
+
+    if (targetKey === draggingCategoryKey) {
+      setCategoryDropTarget(null);
+      return;
+    }
+
+    const targetRect = event.currentTarget.getBoundingClientRect();
+    const position: CategoryDropPosition =
+      event.clientX < targetRect.left + targetRect.width / 2
+        ? "before"
+        : "after";
+
+    setCategoryDropTarget((current) =>
+      current?.key === targetKey && current.position === position
+        ? current
+        : { key: targetKey, position },
+    );
+
+    const container = categoryTabsRef.current;
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const edgeSize = 64;
+
+    if (event.clientX < containerRect.left + edgeSize) {
+      container.scrollLeft = Math.max(0, container.scrollLeft - 18);
+    } else if (event.clientX > containerRect.right - edgeSize) {
+      container.scrollLeft = Math.min(
+        container.scrollWidth - container.clientWidth,
+        container.scrollLeft + 18,
+      );
+    }
+  };
+
+  const handleCategoryDrop = (
+    event: DragEvent<HTMLButtonElement>,
+    category: string,
+  ): void => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const targetKey = normalizeTextKey(category);
+
+    if (targetKey === draggingCategoryKey) {
+      resetCategoryDrag();
+      return;
+    }
+
+    const targetRect = event.currentTarget.getBoundingClientRect();
+    const fallbackPosition: CategoryDropPosition =
+      event.clientX < targetRect.left + targetRect.width / 2
+        ? "before"
+        : "after";
+    const position =
+      categoryDropTarget?.key === targetKey
+        ? categoryDropTarget.position
+        : fallbackPosition;
+
+    commitCategoryOrder(draggingCategoryKey, targetKey, position);
+    resetCategoryDrag();
+  };
+
+  const handleCategoryBarDragOver = (
+    event: DragEvent<HTMLDivElement>,
+  ): void => {
+    if (!draggingCategoryKey) return;
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+
+    if (event.target === event.currentTarget) {
+      setCategoryDropTarget(null);
+    }
+  };
+
+  const handleCategoryBarDrop = (
+    event: DragEvent<HTMLDivElement>,
+  ): void => {
+    if (!draggingCategoryKey) return;
+
+    event.preventDefault();
+    commitCategoryOrder(draggingCategoryKey);
+    resetCategoryDrag();
+  };
+
   const handleProductsTouchStart = useCallback(
     (event: ReactTouchEvent<HTMLDivElement>) => {
       const touch = event.touches[0];
@@ -4062,19 +4451,26 @@ export default function LocalProductsPage() {
     return sortProductsByCategoryThenDoneThenPrice(
       matchedProducts,
       pendingDoneProductIds,
+      categories,
     );
-  }, [activeCategoryTab, pendingDoneProductIds, products, query]);
+  }, [activeCategoryTab, categories, pendingDoneProductIds, products, query]);
 
   const groupedProductsByCategory = useMemo(() => {
-    return createGroupedProducts(filteredProducts, pendingDoneProductIds);
-  }, [filteredProducts, pendingDoneProductIds]);
+    return orderGroupsByCategories(
+      createGroupedProducts(filteredProducts, pendingDoneProductIds),
+      categories,
+    );
+  }, [categories, filteredProducts, pendingDoneProductIds]);
 
   const copyableProductGroups = useMemo(() => {
-    return createGroupedProducts(
-      filteredProducts.filter((product) => !product.isDone),
-      pendingDoneProductIds,
+    return orderGroupsByCategories(
+      createGroupedProducts(
+        filteredProducts.filter((product) => !product.isDone),
+        pendingDoneProductIds,
+      ),
+      categories,
     );
-  }, [filteredProducts, pendingDoneProductIds]);
+  }, [categories, filteredProducts, pendingDoneProductIds]);
 
   const copyableProductCount = useMemo(() => {
     return copyableProductGroups.reduce(
@@ -4105,6 +4501,12 @@ export default function LocalProductsPage() {
 
   const representativeImageCategoryOptions = useMemo(() => {
     const categoryMap = new Map<string, { name: string; count: number }>();
+    const categoryIndexes = new Map(
+      categories.map((category, index) => [
+        normalizeTextKey(category),
+        index,
+      ]),
+    );
 
     downloadableProducts.forEach((product) => {
       if (!product.images[0]) return;
@@ -4120,13 +4522,16 @@ export default function LocalProductsPage() {
       });
     });
 
-    return Array.from(categoryMap.values()).sort((first, second) =>
-      normalizeTextKey(first.name).localeCompare(
-        normalizeTextKey(second.name),
-        "vi",
-      ),
-    );
-  }, [downloadableProducts]);
+    return Array.from(categoryMap.values()).sort((first, second) => {
+      const firstKey = normalizeTextKey(first.name);
+      const secondKey = normalizeTextKey(second.name);
+      const orderDiff =
+        (categoryIndexes.get(firstKey) ?? Number.MAX_SAFE_INTEGER) -
+        (categoryIndexes.get(secondKey) ?? Number.MAX_SAFE_INTEGER);
+
+      return orderDiff || firstKey.localeCompare(secondKey, "vi");
+    });
+  }, [categories, downloadableProducts]);
 
   const totalRepresentativeImages = useMemo(() => {
     return representativeImageCategoryOptions.reduce(
@@ -4576,6 +4981,8 @@ export default function LocalProductsPage() {
     settings.facebookDuplicatePosts,
     settings.facebookGroups,
     settings.selectedFacebookGroupIds,
+    settings.categoryColors,
+    settings.categoryOrder,
     settings.includeSocialTags,
     settings.autoCopyShareMode,
     isSettingsReady,
@@ -4693,6 +5100,38 @@ export default function LocalProductsPage() {
       ...current,
       [key]: value,
     }));
+  };
+
+  const updateDraftCategoryColor = (color: string): void => {
+    const categoryKey = normalizeTextKey(draft.category);
+
+    if (!categoryKey || !CATEGORY_COLOR_PATTERN.test(color)) return;
+
+    setSettings((current) => ({
+      ...current,
+      categoryColors: {
+        ...current.categoryColors,
+        [categoryKey]: color.toLowerCase(),
+      },
+    }));
+  };
+
+  const resetDraftCategoryColor = (): void => {
+    const categoryKey = normalizeTextKey(draft.category);
+
+    if (!categoryKey) return;
+
+    setSettings((current) => {
+      if (!(categoryKey in current.categoryColors)) return current;
+
+      const nextCategoryColors = { ...current.categoryColors };
+      delete nextCategoryColors[categoryKey];
+
+      return {
+        ...current,
+        categoryColors: nextCategoryColors,
+      };
+    });
   };
 
   const resetContactEditor = (): void => {
@@ -8918,6 +9357,153 @@ export default function LocalProductsPage() {
           box-shadow: inset 0 -3px 0 rgba(255, 248, 224, 0.62) !important;
         }
 
+        .local-products-workspace .luxury-product-card[data-content-type="realEstate"] {
+          border-color: rgba(253, 230, 138, 0.62) !important;
+          background:
+            linear-gradient(135deg, rgba(255, 251, 235, 0.18), transparent 36%),
+            linear-gradient(155deg, rgba(82, 82, 64, 0.995), rgba(30, 43, 49, 0.998)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 3px 0 0 rgba(253, 230, 138, 0.42), inset 0 -2px 0 rgba(0, 0, 0, 0.28), 0 0 24px rgba(251, 191, 36, 0.12), 0 22px 48px rgba(0, 0, 0, 0.38) !important;
+        }
+
+        .local-products-workspace .luxury-product-card[data-content-type="realEstate"][data-active="true"] {
+          border-color: rgba(254, 240, 138, 0.9) !important;
+          background:
+            linear-gradient(135deg, rgba(255, 251, 235, 0.25), transparent 38%),
+            linear-gradient(155deg, rgba(105, 91, 55, 0.998), rgba(34, 47, 52, 0.998)) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 3px 0 0 rgba(254, 240, 138, 0.72), inset 0 -2px 0 rgba(0, 0, 0, 0.26), 0 0 0 1px rgba(253, 230, 138, 0.2), 0 0 32px rgba(251, 191, 36, 0.2), 0 28px 58px rgba(0, 0, 0, 0.42) !important;
+        }
+
+        .local-products-workspace .luxury-product-card[data-content-type="realEstate"]:hover {
+          border-color: rgba(254, 240, 138, 0.82) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 3px 0 0 rgba(254, 240, 138, 0.58), inset 0 -2px 0 rgba(0, 0, 0, 0.27), 0 0 30px rgba(251, 191, 36, 0.18), 0 30px 64px rgba(0, 0, 0, 0.42) !important;
+        }
+
+        .local-products-workspace .luxury-product-card[data-content-type="realEstate"] .luxury-product-image {
+          background:
+            linear-gradient(rgba(253, 230, 138, 0.035) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(253, 230, 138, 0.035) 1px, transparent 1px),
+            radial-gradient(circle at 50% 38%, rgba(253, 230, 138, 0.18), transparent 48%),
+            linear-gradient(145deg, #2d3a3c, #131f24) !important;
+          background-size: 24px 24px, 24px 24px, auto, auto;
+        }
+
+        .luxury-product-card[data-category-colored="true"]::before {
+          background: linear-gradient(90deg, transparent, var(--category-color), color-mix(in srgb, var(--category-color) 72%, white), transparent) !important;
+        }
+
+        .category-color-label {
+          border-color: color-mix(in srgb, var(--category-color) 45%, transparent) !important;
+          background: color-mix(in srgb, var(--category-color) 14%, transparent) !important;
+          color: color-mix(in srgb, var(--category-color) 76%, white) !important;
+          box-shadow: inset 2px 0 0 color-mix(in srgb, var(--category-color) 75%, transparent);
+        }
+
+        .category-list-group-header {
+          border-color: color-mix(in srgb, var(--category-color) 32%, transparent) !important;
+          background: linear-gradient(90deg, color-mix(in srgb, var(--category-color) 14%, #0f172a), rgba(15, 23, 42, 0.82)) !important;
+          color: color-mix(in srgb, var(--category-color) 76%, white) !important;
+          box-shadow: inset 3px 0 0 color-mix(in srgb, var(--category-color) 68%, transparent);
+        }
+
+        .category-list-name {
+          color: color-mix(in srgb, var(--category-color) 68%, white) !important;
+          box-shadow: inset 2px 0 0 color-mix(in srgb, var(--category-color) 48%, transparent);
+        }
+
+        #mobile-category-menu button[data-category-bubble="true"][data-category-colored="true"] {
+          border-color: color-mix(in srgb, var(--category-color) 42%, transparent) !important;
+          background: linear-gradient(145deg, color-mix(in srgb, var(--category-color) 16%, #102231), rgba(6, 14, 23, 0.995)) !important;
+          color: color-mix(in srgb, var(--category-color) 72%, white) !important;
+          box-shadow: inset 3px 0 0 color-mix(in srgb, var(--category-color) 58%, transparent), 0 16px 42px rgba(0, 0, 0, 0.48) !important;
+        }
+
+        #mobile-category-menu button[data-category-bubble="true"][data-category-colored="true"][data-active="true"] {
+          border-color: color-mix(in srgb, var(--category-color) 82%, white) !important;
+          background: linear-gradient(135deg, color-mix(in srgb, var(--category-color) 82%, white 18%), color-mix(in srgb, var(--category-color) 68%, black 32%)) !important;
+          color: var(--category-contrast) !important;
+          box-shadow: inset 3px 0 0 color-mix(in srgb, var(--category-color) 55%, white), 0 0 20px color-mix(in srgb, var(--category-color) 24%, transparent), 0 16px 42px rgba(0, 0, 0, 0.44) !important;
+        }
+
+        #mobile-category-menu button[data-category-colored="true"] [data-category-tail="true"] {
+          border-color: color-mix(in srgb, var(--category-color) 55%, transparent) !important;
+          background: color-mix(in srgb, var(--category-color) 30%, #090c11) !important;
+        }
+
+        #mobile-category-menu button[data-category-colored="true"][data-active="true"] [data-category-tail="true"] {
+          background: color-mix(in srgb, var(--category-color) 76%, black 24%) !important;
+        }
+
+        .luxury-category-bar button[data-category-colored="true"] {
+          border-color: color-mix(in srgb, var(--category-color) 32%, transparent) !important;
+          background: linear-gradient(145deg, color-mix(in srgb, var(--category-color) 12%, #0a1723), rgba(10, 23, 35, 0.9)) !important;
+          color: color-mix(in srgb, var(--category-color) 72%, white) !important;
+          box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--category-color) 38%, transparent) !important;
+        }
+
+        .luxury-category-bar button[data-category-colored="true"][aria-pressed="true"] {
+          background: linear-gradient(135deg, color-mix(in srgb, var(--category-color) 82%, white 18%), color-mix(in srgb, var(--category-color) 68%, black 32%)) !important;
+          color: var(--category-contrast) !important;
+          box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--category-color) 55%, white), 0 0 18px color-mix(in srgb, var(--category-color) 22%, transparent) !important;
+        }
+
+        .luxury-category-bar[data-category-dragging="true"] {
+          border-color: rgba(253, 230, 138, 0.72) !important;
+          background: linear-gradient(90deg, rgba(18, 30, 42, 0.99), rgba(52, 44, 22, 0.98), rgba(18, 30, 42, 0.99)) !important;
+          box-shadow: inset 0 2px 0 rgba(253, 230, 138, 0.35), 0 -8px 30px rgba(251, 191, 36, 0.18), 0 -18px 48px rgba(0, 0, 0, 0.45) !important;
+          animation: categoryTaskbarPulse 1.6s ease-in-out infinite;
+        }
+
+        .luxury-category-bar button[data-category-dragging="true"] {
+          opacity: 0.28;
+          filter: saturate(0.55);
+          transform: scale(0.94);
+        }
+
+        .luxury-category-bar button[data-category-drop-target] {
+          z-index: 2;
+          filter: brightness(1.14);
+        }
+
+        .category-drop-marker {
+          background: color-mix(in srgb, var(--category-color) 78%, white);
+          box-shadow: 0 0 12px color-mix(in srgb, var(--category-color) 75%, transparent), 0 0 24px color-mix(in srgb, var(--category-color) 38%, transparent);
+          animation: categoryDropMarkerPulse 0.72s ease-in-out infinite alternate;
+        }
+
+        .category-drag-hud {
+          border-color: color-mix(in srgb, var(--category-color) 48%, transparent);
+          background: linear-gradient(145deg, color-mix(in srgb, var(--category-color) 16%, #111827), rgba(5, 10, 17, 0.94));
+          box-shadow: inset 3px 0 0 color-mix(in srgb, var(--category-color) 68%, transparent), 0 18px 50px rgba(0, 0, 0, 0.5), 0 0 26px color-mix(in srgb, var(--category-color) 16%, transparent);
+          clip-path: polygon(9px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 9px), calc(100% - 9px) 100%, 5px 100%, 0 calc(100% - 5px), 0 9px);
+        }
+
+        .category-drag-hud-block {
+          border-color: color-mix(in srgb, var(--category-color) 58%, transparent);
+          background: linear-gradient(135deg, color-mix(in srgb, var(--category-color) 82%, white 18%), color-mix(in srgb, var(--category-color) 68%, black 32%));
+          color: var(--category-contrast);
+          box-shadow: 0 0 14px color-mix(in srgb, var(--category-color) 22%, transparent);
+        }
+
+        @keyframes categoryTaskbarPulse {
+          0%, 100% {
+            filter: brightness(1);
+          }
+          50% {
+            filter: brightness(1.08);
+          }
+        }
+
+        @keyframes categoryDropMarkerPulse {
+          from {
+            opacity: 0.72;
+            transform: scaleY(0.78);
+          }
+          to {
+            opacity: 1;
+            transform: scaleY(1);
+          }
+        }
+
         .luxury-modal-overlay {
           background: rgba(2, 6, 11, 0.84) !important;
           backdrop-filter: blur(15px) saturate(0.88);
@@ -9123,20 +9709,18 @@ export default function LocalProductsPage() {
                 data-luxury-accent="emerald"
                 title={
                   hourlyNotificationConfig.enabled
-                    ? `Thông báo đang bật${
-                        nextHourlyNotificationAt
-                          ? ` · kế tiếp ${formatLocalDateTime(nextHourlyNotificationAt)}`
-                          : ""
-                      }`
+                    ? `Thông báo đang bật${nextHourlyNotificationAt
+                      ? ` · kế tiếp ${formatLocalDateTime(nextHourlyNotificationAt)}`
+                      : ""
+                    }`
                     : "Cấu hình thông báo theo thời gian"
                 }
                 aria-label="Cấu hình thông báo theo thời gian"
                 aria-pressed={hourlyNotificationConfig.enabled}
-                className={`${headerActionButtonBaseClassName} ${
-                  hourlyNotificationConfig.enabled
+                className={`${headerActionButtonBaseClassName} ${hourlyNotificationConfig.enabled
                     ? headerActiveButtonClassName
                     : headerNeutralButtonClassName
-                }`}
+                  }`}
                 onClick={() => {
                   setHourlyNotificationDraft(hourlyNotificationConfig);
                   openModal("hourlyNotification");
@@ -9355,7 +9939,18 @@ export default function LocalProductsPage() {
                         key={category}
                         type="button"
                         data-category-bubble="true"
+                        data-category-colored={
+                          category === "all" ? undefined : "true"
+                        }
                         data-active={isActive}
+                        style={
+                          category === "all"
+                            ? undefined
+                            : createCategoryColorStyle(
+                              category,
+                              settings.categoryColors,
+                            )
+                        }
                         initial={
                           prefersReducedMotion
                             ? { opacity: 0 }
@@ -9400,6 +9995,7 @@ export default function LocalProductsPage() {
                         </span>
                         <span
                           aria-hidden="true"
+                          data-category-tail="true"
                           className={`absolute -bottom-1 right-4 h-2.5 w-2.5 rotate-45 border-b border-r ${isActive
                             ? "border-[#f1e5c2]/70 bg-[#cdbb88]"
                             : "border-[#d8c99f]/[0.18] bg-[#090c11]"
@@ -9428,6 +10024,29 @@ export default function LocalProductsPage() {
               {isMobileCategoryMenuOpen ? "Đóng" : "Danh mục"}
             </motion.button>
           </div>
+
+          <AnimatePresence initial={false}>
+            {draggingCategory ? (
+              <motion.div
+                initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                transition={{ duration: prefersReducedMotion ? 0.1 : 0.2 }}
+                style={createCategoryColorStyle(
+                  draggingCategory,
+                  settings.categoryColors,
+                )}
+                className="category-drag-hud pointer-events-none fixed bottom-[48px] left-1/2 z-[1002] hidden -translate-x-1/2 items-center gap-2 border px-3 py-2 backdrop-blur-xl md:flex"
+              >
+                <span className="category-drag-hud-block border px-2 py-1 text-[10px] font-black uppercase tracking-[0.08em]">
+                  {draggingCategory}
+                </span>
+                <span className="whitespace-nowrap text-[10px] font-bold text-slate-200">
+                  Thả vào taskbar để sắp xếp
+                </span>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
 
           <div className="fixed bottom-[36px] left-0 z-bar hidden h-[26px] w-fit items-stretch overflow-hidden border border-[#d8c99f]/25 bg-[linear-gradient(90deg,rgba(216,201,159,0.1),rgba(6,13,21,0.97))] shadow-[0_-8px_24px_rgba(0,0,0,0.28)] backdrop-blur-xl xl:flex">
             <span className="flex items-center gap-1 border-r border-[#d8c99f]/15 px-2 text-[7px] font-bold uppercase tracking-[0.03em] text-slate-400">
@@ -9458,7 +10077,10 @@ export default function LocalProductsPage() {
 
           <div
             ref={categoryTabsRef}
+            data-category-dragging={draggingCategoryKey ? "true" : undefined}
             className="luxury-category-bar fixed bottom-0 left-0 right-0 z-bar hidden h-[36px] items-stretch overflow-x-auto overflow-y-hidden overscroll-x-contain overscroll-y-none whitespace-nowrap border-t md:flex"
+            onDragOver={handleCategoryBarDragOver}
+            onDrop={handleCategoryBarDrop}
           >
             <button
               type="button"
@@ -9473,25 +10095,59 @@ export default function LocalProductsPage() {
               Tất cả
             </button>
 
-            {categories.map((category) => (
-              <button
-                key={category}
-                type="button"
-                data-category-tab={normalizeTextKey(category)}
-                aria-pressed={
-                  normalizeTextKey(activeCategoryTab) ===
-                  normalizeTextKey(category)
-                }
-                className={`flex h-[35px] shrink-0 items-center justify-center border-r border-[#d8c99f]/10 px-5 text-xs font-black uppercase tracking-[0.08em] transition ${normalizeTextKey(activeCategoryTab) ===
-                  normalizeTextKey(category)
-                  ? "bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a]"
-                  : "bg-black/20 text-slate-200 hover:bg-[#d8c99f]/10 hover:text-[#eadfbe]"
-                  }`}
-                onClick={() => setActiveCategoryTab(category)}
-              >
-                {category}
-              </button>
-            ))}
+            {categories.map((category) => {
+              const categoryKey = normalizeTextKey(category);
+              const isDragging = draggingCategoryKey === categoryKey;
+              const dropPosition =
+                categoryDropTarget?.key === categoryKey
+                  ? categoryDropTarget.position
+                  : null;
+
+              return (
+                <button
+                  key={category}
+                  type="button"
+                  draggable
+                  data-category-tab={categoryKey}
+                  data-category-colored="true"
+                  data-category-dragging={isDragging ? "true" : undefined}
+                  data-category-drop-target={dropPosition ?? undefined}
+                  style={createCategoryColorStyle(
+                    category,
+                    settings.categoryColors,
+                  )}
+                  aria-pressed={
+                    normalizeTextKey(activeCategoryTab) === categoryKey
+                  }
+                  aria-label={`${category}. Kéo để thay đổi thứ tự danh mục`}
+                  title="Giữ và kéo để sắp xếp danh mục"
+                  className={`relative flex h-[35px] shrink-0 cursor-grab select-none items-center justify-center border-r border-[#d8c99f]/10 px-5 text-xs font-black uppercase tracking-[0.08em] transition active:cursor-grabbing ${normalizeTextKey(activeCategoryTab) === categoryKey
+                    ? "bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a]"
+                    : "bg-black/20 text-slate-200 hover:bg-[#d8c99f]/10 hover:text-[#eadfbe]"
+                    }`}
+                  onDragStart={(event) =>
+                    handleCategoryDragStart(event, category)
+                  }
+                  onDragOver={(event) =>
+                    handleCategoryDragOver(event, category)
+                  }
+                  onDrop={(event) => handleCategoryDrop(event, category)}
+                  onDragEnd={resetCategoryDrag}
+                  onClick={() => setActiveCategoryTab(category)}
+                >
+                  {dropPosition ? (
+                    <span
+                      aria-hidden="true"
+                      className={`category-drop-marker absolute bottom-1 top-1 w-1 ${dropPosition === "before"
+                        ? "-left-0.5"
+                        : "-right-0.5"
+                        }`}
+                    />
+                  ) : null}
+                  <span className="relative z-[1]">{category}</span>
+                </button>
+              );
+            })}
           </div>
 
           <div
@@ -9521,7 +10177,17 @@ export default function LocalProductsPage() {
                       key={`${activeCategoryTab}-${product.id}`}
                       data-active={active}
                       data-done={productDone}
-                      style={{ animationDelay: `${Math.min(index * 34, 340)}ms` }}
+                      data-content-type={product.contentType}
+                      data-category-colored={
+                        product.category ? "true" : undefined
+                      }
+                      style={{
+                        ...createCategoryColorStyle(
+                          product.category,
+                          settings.categoryColors,
+                        ),
+                        animationDelay: `${Math.min(index * 34, 340)}ms`,
+                      }}
                       className={`luxury-product-card product-wave-card group min-w-0 overflow-hidden border transition duration-300 hover:-translate-y-1 ${productDone ? "opacity-65" : ""
                         } ${active
                           ? "border-[#e8d9ae]/70 bg-[#15140f]"
@@ -9630,14 +10296,14 @@ export default function LocalProductsPage() {
                                 </span>
                               ) : null}
                               {product.category ? (
-                                <span className="min-w-0 truncate text-[10px] font-black uppercase tracking-[0.2em] text-[#cdbf98]">
+                                <span className="category-color-label min-w-0 truncate border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.12em]">
                                   {product.category}
                                 </span>
                               ) : null}
                             </div>
                           ) : null}
 
-                          <h3 className="line-clamp-2 min-h-9 text-[12px] font-black leading-[18px] text-white">
+                          <h3 className={`${fullCardItemNameClassName} text-[12px] font-black leading-[18px] text-white`}>
                             {product.name}
                           </h3>
                           <div className="mt-1 truncate text-xs font-black text-[#f1e5c2]">
@@ -10236,8 +10902,14 @@ export default function LocalProductsPage() {
                             group.products.length - groupSoldCount;
 
                           return (
-                            <div key={group.category}>
-                              <div className="grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b border-[#d8c99f]/20 bg-[#d8c99f]/[0.065] text-xs font-black text-[#eadfbe]">
+                            <div
+                              key={group.category}
+                              style={createCategoryColorStyle(
+                                group.category,
+                                settings.categoryColors,
+                              )}
+                            >
+                              <div className="category-list-group-header grid grid-cols-[170px_minmax(360px,1fr)_120px_90px_140px] border-b text-xs font-black">
                                 <div className="border-r border-[#d8c99f]/20 px-2 py-2">
                                   {group.category}
                                 </div>
@@ -10275,7 +10947,7 @@ export default function LocalProductsPage() {
                                       setSelectedProductId(product.id)
                                     }
                                   >
-                                    <div className="flex items-center border-r border-white/10 px-2 py-2 text-[11px] font-bold text-slate-500">
+                                    <div className="category-list-name flex items-center border-r border-white/10 px-2 py-2 text-[11px] font-bold">
                                       {group.category}
                                     </div>
 
@@ -10299,7 +10971,7 @@ export default function LocalProductsPage() {
                                           </span>
                                         ) : null}
 
-                                        <p className="line-clamp-1 text-xs font-black leading-5 text-white xl:text-sm xl:leading-6">
+                                        <p className={`${fullCardItemNameClassName} text-xs font-black leading-5 text-white xl:text-sm xl:leading-6`}>
                                           {product.name}
                                         </p>
                                       </div>
@@ -10463,25 +11135,80 @@ export default function LocalProductsPage() {
                             />
                           </label>
 
-                          <label className="flex min-w-0 flex-col gap-1.5">
-                            <span className="text-xs font-bold text-slate-300">
-                              Danh mục
-                            </span>
-                            <input
-                              value={draft.category}
-                              list="local-product-category-options"
-                              onChange={(event) =>
-                                updateDraftField("category", event.target.value)
-                              }
-                              className="w-full min-w-0 rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
-                              placeholder="Laptop Dell"
-                            />
+                          <div className="flex min-w-0 flex-col gap-1.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-bold text-slate-300">
+                                Danh mục
+                              </span>
+                              <span className="text-[9px] font-bold uppercase tracking-[0.06em] text-slate-500">
+                                Màu nhận diện
+                              </span>
+                            </div>
+
+                            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_42px_66px] gap-1.5">
+                              <input
+                                value={draft.category}
+                                list="local-product-category-options"
+                                onChange={(event) =>
+                                  updateDraftField(
+                                    "category",
+                                    event.target.value,
+                                  )
+                                }
+                                className="w-full min-w-0 rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
+                                placeholder="Laptop Dell"
+                              />
+
+                              <label
+                                title={
+                                  draft.category.trim()
+                                    ? `Chọn màu cho ${normalizeCategoryName(draft.category)}`
+                                    : "Nhập danh mục trước khi chọn màu"
+                                }
+                                className={`flex min-h-9 items-center justify-center overflow-hidden rounded-md border border-white/15 bg-slate-950 p-1 transition ${draft.category.trim()
+                                  ? "cursor-pointer hover:border-white/35"
+                                  : "cursor-not-allowed opacity-40"
+                                  }`}
+                              >
+                                <input
+                                  type="color"
+                                  aria-label="Chọn màu danh mục"
+                                  disabled={!draft.category.trim()}
+                                  value={getCategoryColor(
+                                    draft.category,
+                                    settings.categoryColors,
+                                  )}
+                                  onChange={(event) =>
+                                    updateDraftCategoryColor(
+                                      event.target.value,
+                                    )
+                                  }
+                                  className="h-7 w-full cursor-pointer border-0 bg-transparent p-0 disabled:cursor-not-allowed"
+                                />
+                              </label>
+
+                              <button
+                                type="button"
+                                disabled={
+                                  !draft.category.trim() ||
+                                  !(
+                                    normalizeTextKey(draft.category) in
+                                    settings.categoryColors
+                                  )
+                                }
+                                className="min-h-9 rounded-md border border-white/10 bg-slate-900 px-1 text-[9px] font-black text-slate-400 transition hover:border-white/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-35"
+                                onClick={resetDraftCategoryColor}
+                              >
+                                Mặc định
+                              </button>
+                            </div>
+
                             <datalist id="local-product-category-options">
                               {categories.map((category) => (
                                 <option key={category} value={category} />
                               ))}
                             </datalist>
-                          </label>
+                          </div>
                         </div>
 
                         <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
@@ -11183,7 +11910,7 @@ export default function LocalProductsPage() {
                                       </button>
 
                                       <div className=" flex-1">
-                                        <h4 className="line-clamp-2 text-[11px] font-black leading-4 text-white">
+                                        <h4 className={`${fullCardItemNameClassName} text-[11px] font-black leading-4 text-white`}>
                                           {assignedProduct?.name ??
                                             "Kéo sản phẩm vào đây hoặc chọn từ danh sách"}
                                         </h4>
@@ -11353,7 +12080,7 @@ export default function LocalProductsPage() {
                                 </button>
 
                                 <div className=" flex-1">
-                                  <h4 className="line-clamp-2 text-[11px] font-black leading-4 text-white">
+                                  <h4 className={`${fullCardItemNameClassName} text-[11px] font-black leading-4 text-white`}>
                                     {product.name}
                                   </h4>
                                   <p className="mt-0.5 truncate text-[10px] font-black text-cyan-200">
@@ -11412,11 +12139,10 @@ export default function LocalProductsPage() {
                         </p>
                       </div>
                       <span
-                        className={`shrink-0 rounded-md px-2.5 py-1 text-[10px] font-black ${
-                          hourlyNotificationConfig.enabled
+                        className={`shrink-0 rounded-md px-2.5 py-1 text-[10px] font-black ${hourlyNotificationConfig.enabled
                             ? "bg-emerald-300 text-slate-950"
                             : "border border-white/10 bg-slate-950 text-slate-400"
-                        }`}
+                          }`}
                       >
                         {hourlyNotificationConfig.enabled ? "ĐANG BẬT" : "ĐANG TẮT"}
                       </span>
@@ -12890,7 +13616,7 @@ export default function LocalProductsPage() {
                             {selectedAssignedSlot.taskName} · Bài{" "}
                             {selectedAssignedSlot.slotIndex + 1}
                           </div>
-                          <h3 className="mt-2 text-sm font-black text-white">
+                          <h3 className={`${fullCardItemNameClassName} mt-2 text-sm font-black text-white`}>
                             {selectedAssignedSlot.product.name}
                           </h3>
                           <p className="mt-1 text-xs text-slate-400">
@@ -12988,7 +13714,7 @@ export default function LocalProductsPage() {
                   <article className="flex min-h-0  flex-col overflow-hidden rounded-md border border-white/10 bg-slate-900 p-2 ">
                     <div className="mb-2 grid  grid-cols-1 gap-2 rounded-md border border-white/10 bg-slate-900 p-2   xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
                       <div className=" rounded-md bg-black/20 px-2 py-1">
-                        <h3 className="truncate whitespace-nowrap text-xs font-black text-white">
+                        <h3 className={`${fullCardItemNameClassName} text-xs font-black text-white`}>
                           {albumSource.title}
                         </h3>
                         <p className="truncate whitespace-nowrap text-[10px] text-slate-400">
@@ -13939,7 +14665,7 @@ export default function LocalProductsPage() {
             <div className={compactLuxuryDialogClassName}>
               <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
                 <div className="">
-                  <h2 className="truncate text-xs font-black text-white">
+                  <h2 className={`${fullCardItemNameClassName} text-xs font-black text-white`}>
                     {pendingDownload.title}
                   </h2>
                   <p className="mt-1 text-xs leading-5 text-slate-400">
