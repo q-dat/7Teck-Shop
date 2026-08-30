@@ -50,6 +50,8 @@ type ProductImage = {
   createdAt: string;
 };
 
+type ProductContentType = "technology" | "realEstate";
+
 type LocalProduct = {
   id: string;
   name: string;
@@ -59,6 +61,8 @@ type LocalProduct = {
   price: number;
   priceText: string;
   category: string;
+  contentType: ProductContentType;
+  realEstateComment: string;
   images: ProductImage[];
   internalImages: ProductImage[];
   isDone: boolean;
@@ -74,6 +78,8 @@ type ProductDraft = {
   status: string;
   priceText: string;
   category: string;
+  contentType: ProductContentType;
+  realEstateComment: string;
   images: ProductImage[];
   internalImages: ProductImage[];
 };
@@ -132,7 +138,7 @@ type GlobalSettings = {
 };
 
 type ExportPayload = {
-  version: 16;
+  version: 17;
   settings: GlobalSettings;
   products: LocalProduct[];
   scheduleConfig: ScheduleConfig;
@@ -231,6 +237,8 @@ type AlbumSource = {
   title: string;
   description: string;
   priceText: string;
+  contentType: ProductContentType;
+  realEstateComment: string;
   images: ProductImage[];
   internalImages?: ProductImage[];
 };
@@ -401,6 +409,8 @@ const emptyDraft: ProductDraft = {
   status: "",
   priceText: "",
   category: "",
+  contentType: "technology",
+  realEstateComment: "",
   images: [],
   internalImages: [],
 };
@@ -1681,7 +1691,10 @@ const saveScheduleAssignments = (assignments: ScheduleAssignmentMap): void => {
   localStorage.setItem(SCHEDULE_ASSIGNMENTS_KEY, JSON.stringify(assignments));
 };
 
-const parsePriceNumber = (priceText: string): number => {
+const parsePriceNumber = (
+  priceText: string,
+  contentType: ProductContentType = "technology",
+): number => {
   const normalized = priceText
     .toLowerCase()
     .replace(/\s/g, "")
@@ -1698,6 +1711,11 @@ const parsePriceNumber = (priceText: string): number => {
 
   if (normalized.includes("tỷ")) {
     const value = Number(normalized.replace("tỷ", ""));
+    return Number.isFinite(value) ? Math.round(value * 1_000_000_000) : 0;
+  }
+
+  if (contentType === "realEstate" && normalized.endsWith("đ")) {
+    const value = Number(normalized.slice(0, -1));
     return Number.isFinite(value) ? Math.round(value * 1_000_000_000) : 0;
   }
 
@@ -1959,6 +1977,12 @@ const normalizeProduct = (value: unknown): LocalProduct | null => {
   const pin = typeof record.pin === "string" ? record.pin : "";
   const status = typeof record.status === "string" ? record.status : "";
   const category = typeof record.category === "string" ? record.category : "";
+  const contentType: ProductContentType =
+    record.contentType === "realEstate" ? "realEstate" : "technology";
+  const realEstateComment =
+    typeof record.realEstateComment === "string"
+      ? record.realEstateComment
+      : "";
   const isDone =
     typeof record.isDone === "boolean"
       ? record.isDone
@@ -1973,9 +1997,11 @@ const normalizeProduct = (value: unknown): LocalProduct | null => {
     price:
       typeof record.price === "number"
         ? record.price
-        : parsePriceNumber(priceText),
+        : parsePriceNumber(priceText, contentType),
     priceText,
     category,
+    contentType,
+    realEstateComment,
     images: normalizeImages(record.images),
     internalImages: normalizeImages(record.internalImages),
     isDone,
@@ -2249,6 +2275,14 @@ const buildPostText = (
 ): string => {
   const description = product.description.trim() || commonDescription.trim();
 
+  if (product.contentType === "realEstate") {
+    return composeCopyText(
+      description,
+      contactText,
+      includeSocialTags,
+    );
+  }
+
   const lines = [
     product.name,
     product.priceText ? `Giá: ${product.priceText}` : "",
@@ -2282,13 +2316,43 @@ const normalizeCommentPrice = (priceText: string): string => {
     : `${normalizedPrice}tr`;
 };
 
+const normalizeRealEstateCommentPrice = (priceText: string): string => {
+  return priceText
+    .trim()
+    .replace(/^(?:💰|📌)?\s*giá(?:\s*bán)?\s*:\s*/iu, "")
+    .trim();
+};
+
 const buildCommentContentText = (
   title: string,
   description: string,
   priceText: string,
   contactText: string,
+  contentType: ProductContentType = "technology",
+  realEstateComment = "",
 ): string => {
   const cleanTitle = title.trim();
+
+  if (contentType === "realEstate") {
+    const realEstatePrice = normalizeRealEstateCommentPrice(priceText);
+    const heading = [
+      cleanTitle,
+      realEstatePrice ? `GIÁ ${realEstatePrice}` : "",
+    ]
+      .filter(Boolean)
+      .join(" - ");
+    const content = [heading, realEstateComment.trim()]
+      .filter(Boolean)
+      .join("\n\n");
+
+    return composeCopyText(
+      content,
+      contactText,
+      false,
+      realEstateComment,
+    );
+  }
+
   const commentPrice = normalizeCommentPrice(priceText);
   const plusLines = description
     .split(/\r?\n/u)
@@ -2561,7 +2625,7 @@ const createExportPayload = (params: {
   postedRecords: PostedRecord[];
 }): ExportPayload => {
   return {
-    version: 16,
+    version: 17,
     settings: params.settings,
     products: params.products,
     scheduleConfig: params.scheduleConfig,
@@ -3988,7 +4052,7 @@ export default function LocalProductsPage() {
         activeCategoryTab === "all" ||
         productCategoryKey === activeCategoryKey;
       const content = normalizeTextKey(
-        `${product.name} ${product.description} ${product.priceText} ${product.category}`,
+        `${product.name} ${product.description} ${product.realEstateComment} ${product.priceText} ${product.category}`,
       );
       const matchesKeyword = !keyword || content.includes(keyword);
 
@@ -4188,7 +4252,7 @@ export default function LocalProductsPage() {
 
     return activeScheduleProducts.filter((product) => {
       const content = normalizeTextKey(
-        `${product.name} ${product.description} ${product.priceText} ${product.category}`,
+        `${product.name} ${product.description} ${product.realEstateComment} ${product.priceText} ${product.category}`,
       );
 
       return !keyword || content.includes(keyword);
@@ -5418,6 +5482,8 @@ export default function LocalProductsPage() {
     const status = draft.status.trim();
     const priceText = draft.priceText.trim();
     const category = draft.category.trim();
+    const contentType = draft.contentType;
+    const realEstateComment = draft.realEstateComment.trim();
 
     if (!rawName) {
       Toastify("Vui lòng nhập tên sản phẩm", 400);
@@ -5436,9 +5502,11 @@ export default function LocalProductsPage() {
       description,
       pin,
       status,
-      price: parsePriceNumber(priceText),
+      price: parsePriceNumber(priceText, contentType),
       priceText,
       category,
+      contentType,
+      realEstateComment,
       images: draft.images,
       internalImages: draft.internalImages,
       isDone: currentProduct?.isDone ?? false,
@@ -5472,6 +5540,8 @@ export default function LocalProductsPage() {
       status: product.status,
       priceText: product.priceText,
       category: product.category,
+      contentType: product.contentType,
+      realEstateComment: product.realEstateComment,
       images: product.images,
       internalImages: product.internalImages,
     });
@@ -6294,6 +6364,8 @@ export default function LocalProductsPage() {
           postText,
           product.priceText,
           "",
+          product.contentType,
+          product.realEstateComment,
         ),
       },
     });
@@ -6341,6 +6413,8 @@ export default function LocalProductsPage() {
     title: string,
     description: string,
     priceText: string,
+    contentType: ProductContentType,
+    realEstateComment: string,
   ): void => {
     const { label, text } = getConfiguredAutoCopyContent({
       postText: description,
@@ -6349,6 +6423,8 @@ export default function LocalProductsPage() {
         description,
         priceText,
         "",
+        contentType,
+        realEstateComment,
       ),
     });
 
@@ -6378,6 +6454,8 @@ export default function LocalProductsPage() {
         descriptionText,
         product.priceText,
         "",
+        product.contentType,
+        product.realEstateComment,
       ),
       shareKey,
       successMessage: "Đã mở bảng chia sẻ sản phẩm",
@@ -6388,6 +6466,8 @@ export default function LocalProductsPage() {
       product.name,
       descriptionText,
       product.priceText,
+      product.contentType,
+      product.realEstateComment,
     );
   };
 
@@ -6425,6 +6505,8 @@ export default function LocalProductsPage() {
         albumSource.description,
         albumSource.priceText,
         "",
+        albumSource.contentType,
+        albumSource.realEstateComment,
       ),
       shareKey,
       successMessage: "Đã mở bảng chia sẻ ảnh",
@@ -6435,6 +6517,8 @@ export default function LocalProductsPage() {
       albumSource.title,
       albumSource.description,
       albumSource.priceText,
+      albumSource.contentType,
+      albumSource.realEstateComment,
     );
   };
 
@@ -6994,6 +7078,8 @@ export default function LocalProductsPage() {
           albumSource.description,
           albumSource.priceText,
           "",
+          albumSource.contentType,
+          albumSource.realEstateComment,
         ),
       },
     });
@@ -7036,6 +7122,8 @@ export default function LocalProductsPage() {
           albumSource.description,
           albumSource.priceText,
           "",
+          albumSource.contentType,
+          albumSource.realEstateComment,
         ),
       },
     });
@@ -7100,6 +7188,8 @@ export default function LocalProductsPage() {
           description,
           product.priceText,
           "",
+          product.contentType,
+          product.realEstateComment,
         );
       })
       .filter(Boolean)
@@ -8927,7 +9017,7 @@ export default function LocalProductsPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-4 gap-1 border border-[#d8c99f]/10 bg-black/25 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] xl:w-full xl:max-w-[1220px] xl:self-end xl:grid-cols-[repeat(16,minmax(0,1fr))] xl:border-[#d8c99f]/[0.16] xl:bg-[linear-gradient(90deg,rgba(255,255,255,0.015),rgba(216,201,159,0.045))] xl:p-1.5 xl:shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_12px_30px_rgba(0,0,0,0.2)]">
+            <div className="grid grid-cols-4 gap-1 border border-[#d8c99f]/10 bg-black/25 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] xl:w-full xl:max-w-[1320px] xl:self-end xl:grid-cols-[repeat(17,minmax(0,1fr))] xl:border-[#d8c99f]/[0.16] xl:bg-[linear-gradient(90deg,rgba(255,255,255,0.015),rgba(216,201,159,0.045))] xl:p-1.5 xl:shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_12px_30px_rgba(0,0,0,0.2)]">
               <button
                 type="button"
                 data-luxury-accent="gold"
@@ -9042,8 +9132,8 @@ export default function LocalProductsPage() {
                 aria-label="Cấu hình thông báo theo thời gian"
                 aria-pressed={hourlyNotificationConfig.enabled}
                 className={`${headerActionButtonBaseClassName} ${hourlyNotificationConfig.enabled
-                    ? headerActiveButtonClassName
-                    : headerNeutralButtonClassName
+                  ? headerActiveButtonClassName
+                  : headerNeutralButtonClassName
                   }`}
                 onClick={() => {
                   setHourlyNotificationDraft(hourlyNotificationConfig);
@@ -9088,6 +9178,19 @@ export default function LocalProductsPage() {
               >
                 <FiDownload aria-hidden="true" className={iconClassName} />
                 Ảnh
+              </button>
+
+              <button
+                type="button"
+                data-luxury-accent="rose"
+                title={`Xóa ${downloadedProductIds.size} trạng thái ảnh đã tải trong phiên hiện tại`}
+                aria-label="Xóa trạng thái ảnh đã tải trong sessionStorage"
+                disabled={downloadedProductIds.size === 0}
+                className={`${headerActionButtonBaseClassName} ${headerNeutralButtonClassName} disabled:cursor-not-allowed disabled:opacity-40`}
+                onClick={clearDownloadedProductSession}
+              >
+                <FiTrash2 aria-hidden="true" className={iconClassName} />
+                Xóa phiên
               </button>
 
               <button
@@ -9441,6 +9544,8 @@ export default function LocalProductsPage() {
                             title: product.name,
                             description: descriptionPreview,
                             priceText: product.priceText,
+                            contentType: product.contentType,
+                            realEstateComment: product.realEstateComment,
                             images: product.images,
                             internalImages: product.internalImages,
                           });
@@ -9515,9 +9620,18 @@ export default function LocalProductsPage() {
 
                       <div className="flex min-w-0 flex-col gap-2 p-2">
                         <div className="">
-                          {product.category ? (
-                            <div className="truncate text-[10px] font-black uppercase tracking-[0.2em] text-[#cdbf98]">
-                              {product.category}
+                          {product.contentType === "realEstate" || product.category ? (
+                            <div className="mb-1 flex min-w-0 items-center gap-1.5">
+                              {product.contentType === "realEstate" ? (
+                                <span className="shrink-0 border border-amber-300/40 bg-amber-300/15 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.08em] text-amber-100">
+                                  BĐS
+                                </span>
+                              ) : null}
+                              {product.category ? (
+                                <span className="min-w-0 truncate text-[10px] font-black uppercase tracking-[0.2em] text-[#cdbf98]">
+                                  {product.category}
+                                </span>
+                              ) : null}
                             </div>
                           ) : null}
 
@@ -9696,6 +9810,8 @@ export default function LocalProductsPage() {
                                   descriptionPreview,
                                   product.priceText,
                                   activeContactText,
+                                  product.contentType,
+                                  product.realEstateComment,
                                 ),
                               );
                             }}
@@ -9994,28 +10110,6 @@ export default function LocalProductsPage() {
                     </button>
                   </article>
 
-                  <article className="flex flex-col gap-3 rounded-md border border-rose-300/20 bg-rose-300/[0.055] p-3 xl:col-span-2 xl:flex-row xl:items-center xl:justify-between">
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-black text-white">
-                        Trạng thái ảnh đã tải trong phiên
-                      </h3>
-                      <p className="mt-1 text-xs leading-5 text-slate-400">
-                        Hiện có {downloadedProductIds.size} sản phẩm được đánh
-                        dấu đã tải. Xóa trạng thái không ảnh hưởng ảnh hoặc dữ
-                        liệu sản phẩm.
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={downloadedProductIds.size === 0}
-                      className="flex shrink-0 items-center justify-center gap-2 rounded-md border border-rose-300/30 bg-rose-300/10 px-3 py-2 text-xs font-black text-rose-100 transition hover:bg-rose-300/20 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
-                      onClick={clearDownloadedProductSession}
-                    >
-                      <FiTrash2 aria-hidden="true" className={iconClassName} />
-                      Xóa trạng thái phiên
-                    </button>
-                  </article>
                 </section>
               ) : null}
 
@@ -10192,6 +10286,11 @@ export default function LocalProductsPage() {
                                       }}
                                     >
                                       <div className="flex  items-center gap-2">
+                                        {product.contentType === "realEstate" ? (
+                                          <span className="shrink-0 rounded-md border border-amber-300/40 bg-amber-300/15 px-1.5 py-0.5 text-[9px] font-black text-amber-100">
+                                            BĐS
+                                          </span>
+                                        ) : null}
                                         {product.isDone ? (
                                           <span className="shrink-0 rounded-md bg-emerald-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950">
                                             Đã bán
@@ -10283,9 +10382,48 @@ export default function LocalProductsPage() {
                   <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain pr-1">
                     <div className="grid min-h-full min-w-0 grid-cols-1 items-start gap-3 pb-24 xl:grid-cols-[minmax(320px,0.92fr)_minmax(360px,1.08fr)] xl:pb-2">
                       <section className="order-2 flex min-h-0 min-w-0 flex-col gap-3 xl:order-1">
+                        <div className="grid min-w-0 gap-1.5 rounded-md border border-white/10 bg-slate-950/70 p-2">
+                          <span className="text-xs font-bold text-slate-300">
+                            Mác dữ liệu
+                          </span>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              aria-pressed={draft.contentType === "technology"}
+                              className={`flex items-center justify-center rounded-md border px-3 py-2 text-xs font-black transition ${draft.contentType === "technology"
+                                ? "border-cyan-300/60 bg-cyan-300/15 text-cyan-100"
+                                : "border-white/10 bg-slate-900 text-slate-400 hover:border-white/25 hover:text-white"
+                                }`}
+                              onClick={() =>
+                                updateDraftField("contentType", "technology")
+                              }
+                            >
+                              Công nghệ
+                            </button>
+                            <button
+                              type="button"
+                              aria-pressed={draft.contentType === "realEstate"}
+                              className={`flex items-center justify-center rounded-md border px-3 py-2 text-xs font-black transition ${draft.contentType === "realEstate"
+                                ? "border-amber-300/60 bg-amber-300/15 text-amber-100"
+                                : "border-white/10 bg-slate-900 text-slate-400 hover:border-white/25 hover:text-white"
+                                }`}
+                              onClick={() =>
+                                updateDraftField("contentType", "realEstate")
+                              }
+                            >
+                              Bất động sản
+                            </button>
+                          </div>
+                          <span className="text-[10px] leading-4 text-slate-500">
+                            Chỉ dữ liệu Bất động sản mới hiện mác BĐS và dùng CMT riêng.
+                          </span>
+                        </div>
+
                         <label className="flex min-w-0 flex-col gap-1.5">
                           <span className="text-xs font-bold text-slate-300">
-                            Tên sản phẩm
+                            {draft.contentType === "realEstate"
+                              ? "Tên BĐS dùng cho tiêu đề CMT"
+                              : "Tên sản phẩm"}
                           </span>
                           <input
                             value={draft.name}
@@ -10293,7 +10431,11 @@ export default function LocalProductsPage() {
                               updateDraftField("name", event.target.value)
                             }
                             className="w-full min-w-0 rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
-                            placeholder="Dell Latitude 7440 i5 13th"
+                            placeholder={
+                              draft.contentType === "realEstate"
+                                ? "PHÚ NHUẬN - 28.1M2 - CÔ BẮC P1 - CÁCH Ô TÔ 1 CĂN"
+                                : "Dell Latitude 7440 i5 13th"
+                            }
                           />
                         </label>
 
@@ -10311,7 +10453,11 @@ export default function LocalProductsPage() {
                                 )
                               }
                               className="w-full min-w-0 rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60"
-                              placeholder="13tr8"
+                              placeholder={
+                                draft.contentType === "realEstate"
+                                  ? "4.6 Đ hoặc 4.6 Tỷ"
+                                  : "13tr8"
+                              }
                             />
                           </label>
 
@@ -10370,7 +10516,9 @@ export default function LocalProductsPage() {
 
                         <label className="flex min-h-0 min-w-0 flex-col gap-1.5">
                           <span className="text-xs font-bold text-slate-300">
-                            Mô tả sản phẩm
+                            {draft.contentType === "realEstate"
+                              ? "Post bất động sản"
+                              : "Mô tả sản phẩm"}
                           </span>
                           <textarea
                             value={draft.description}
@@ -10381,10 +10529,40 @@ export default function LocalProductsPage() {
                               )
                             }
                             rows={8}
-                            className="min-h-[220px] w-full min-w-0 resize-y rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60 sm:min-h-[260px] xl:min-h-[calc(90dvh-260px)] xl:resize-none"
-                            placeholder="Để trống nếu muốn dùng mô tả chung..."
+                            className={`min-h-[220px] w-full min-w-0 resize-y rounded-md border border-white/10 bg-slate-950/80 p-2 text-xs leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-300/60 sm:min-h-[260px] ${draft.contentType === "realEstate"
+                              ? "xl:min-h-[260px]"
+                              : "xl:min-h-[calc(90dvh-260px)] xl:resize-none"
+                              }`}
+                            placeholder={
+                              draft.contentType === "realEstate"
+                                ? "Nhập toàn bộ nội dung Post BĐS..."
+                                : "Để trống nếu muốn dùng mô tả chung..."
+                            }
                           />
                         </label>
+
+                        {draft.contentType === "realEstate" ? (
+                          <label className="flex min-h-0 min-w-0 flex-col gap-1.5">
+                            <span className="text-xs font-bold text-amber-100">
+                              CMT riêng cho bất động sản
+                            </span>
+                            <textarea
+                              value={draft.realEstateComment}
+                              onChange={(event) =>
+                                updateDraftField(
+                                  "realEstateComment",
+                                  event.target.value,
+                                )
+                              }
+                              rows={7}
+                              className="min-h-[210px] w-full min-w-0 resize-y rounded-md border border-amber-300/25 bg-slate-950/80 p-2 text-xs leading-6 text-white outline-none transition placeholder:text-slate-600 focus:border-amber-300/60"
+                              placeholder={"✅ Vị trí: ...\n✅ Diện tích: ...\n✅ Hiện trạng: ...\n✅ Ưu điểm: ..."}
+                            />
+                            <span className="text-[10px] leading-4 text-slate-500">
+                              Khi copy Cmt, hệ thống tự ghép Tên - GIÁ theo giá nhập nguyên bản rồi thêm nội dung này và Liên hệ đang chọn.
+                            </span>
+                          </label>
+                        ) : null}
                       </section>
 
                       <section className="order-1 flex min-h-0 min-w-0 flex-col gap-3 xl:order-2">
@@ -10975,6 +11153,9 @@ export default function LocalProductsPage() {
                                                 assignedProduct.description.trim() ||
                                                 settings.commonDescription.trim(),
                                               priceText: assignedProduct.priceText,
+                                              contentType: assignedProduct.contentType,
+                                              realEstateComment:
+                                                assignedProduct.realEstateComment,
                                               images: assignedProduct.images,
                                               internalImages:
                                                 assignedProduct.internalImages,
@@ -11146,6 +11327,9 @@ export default function LocalProductsPage() {
                                         product.description.trim() ||
                                         settings.commonDescription.trim(),
                                       priceText: product.priceText,
+                                      contentType: product.contentType,
+                                      realEstateComment:
+                                        product.realEstateComment,
                                       images: product.images,
                                       internalImages: product.internalImages,
                                     });
@@ -11179,6 +11363,11 @@ export default function LocalProductsPage() {
                                 </div>
                               </div>
                               <div className="mt-1 flex flex-wrap gap-1">
+                                {product.contentType === "realEstate" ? (
+                                  <span className="rounded-md border border-amber-300/40 bg-amber-300/15 px-1.5 py-0.5 text-[9px] font-black text-amber-100">
+                                    BĐS
+                                  </span>
+                                ) : null}
                                 {active ? (
                                   <span className="rounded-md bg-cyan-300 px-1.5 py-0.5 text-[9px] font-black text-slate-950">
                                     ACTIVE
@@ -11222,8 +11411,8 @@ export default function LocalProductsPage() {
                       </div>
                       <span
                         className={`shrink-0 rounded-md px-2.5 py-1 text-[10px] font-black ${hourlyNotificationConfig.enabled
-                            ? "bg-emerald-300 text-slate-950"
-                            : "border border-white/10 bg-slate-950 text-slate-400"
+                          ? "bg-emerald-300 text-slate-950"
+                          : "border border-white/10 bg-slate-950 text-slate-400"
                           }`}
                       >
                         {hourlyNotificationConfig.enabled ? "ĐANG BẬT" : "ĐANG TẮT"}
@@ -12555,6 +12744,10 @@ export default function LocalProductsPage() {
                             title: selectedAssignedSlot.product.name,
                             description: selectedAssignedSlot.description,
                             priceText: selectedAssignedSlot.product.priceText,
+                            contentType:
+                              selectedAssignedSlot.product.contentType,
+                            realEstateComment:
+                              selectedAssignedSlot.product.realEstateComment,
                             images: selectedAssignedSlot.product.images,
                             internalImages:
                               selectedAssignedSlot.product.internalImages,
@@ -12592,6 +12785,10 @@ export default function LocalProductsPage() {
                                     description:
                                       selectedAssignedSlot.description,
                                     priceText: selectedAssignedSlot.product.priceText,
+                                    contentType:
+                                      selectedAssignedSlot.product.contentType,
+                                    realEstateComment:
+                                      selectedAssignedSlot.product.realEstateComment,
                                     images: selectedAssignedSlot.product.images,
                                     internalImages:
                                       selectedAssignedSlot.product.internalImages,
