@@ -16,6 +16,7 @@ import {
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
+  FiArrowUp,
   FiArchive,
   FiBattery,
   FiBell,
@@ -29,6 +30,7 @@ import {
   FiEdit3,
   FiFileText,
   FiImage,
+  FiMenu,
   FiMonitor,
   FiPhone,
   FiPlus,
@@ -889,6 +891,10 @@ const normalizeTextKey = (value: string): string => {
 
 const normalizeCategoryName = (value: string): string => {
   return value.trim().replace(/\s+/g, " ");
+};
+
+const normalizeCopiedText = (value: string): string => {
+  return value.normalize("NFKC");
 };
 
 const normalizeCategoryOrder = (value: unknown): string[] => {
@@ -2346,7 +2352,7 @@ const copyTextWithExecCommand = (
   return copied;
 };
 
-const copyText = async (value: string): Promise<void> => {
+const writeClipboardText = async (value: string): Promise<void> => {
   const interactionWindow = getActiveInteractionWindow();
   const clipboard = interactionWindow.navigator.clipboard;
 
@@ -3262,6 +3268,12 @@ export default function LocalProductsPage() {
   } | null>(null);
   const [isMobileCategoryMenuOpen, setIsMobileCategoryMenuOpen] =
     useState<boolean>(false);
+  const [isHeaderActionsMenuOpen, setIsHeaderActionsMenuOpen] =
+    useState<boolean>(false);
+  const [isScrollTopVisible, setIsScrollTopVisible] =
+    useState<boolean>(false);
+  const [isCopyNfkcEnabled, setIsCopyNfkcEnabled] =
+    useState<boolean>(false);
   const prefersReducedMotion = useReducedMotion();
   const [imageDownloadCategory, setImageDownloadCategory] =
     useState<CategoryTab>("all");
@@ -3342,6 +3354,15 @@ export default function LocalProductsPage() {
     useState<HourlyNotificationConfig>(() => loadHourlyNotificationConfig());
   const hourlyNotificationTimeoutRef = useRef<number | null>(null);
   const hourlyAudioContextRef = useRef<AudioContext | null>(null);
+
+  const copyText = useCallback(
+    async (value: string): Promise<void> => {
+      await writeClipboardText(
+        isCopyNfkcEnabled ? normalizeCopiedText(value) : value,
+      );
+    },
+    [isCopyNfkcEnabled],
+  );
 
   useEffect(() => {
     setDownloadedProductIds(loadDownloadedProductIds());
@@ -3806,6 +3827,44 @@ export default function LocalProductsPage() {
       : null;
 
   const today = useMemo(() => nowTick.toISOString().slice(0, 10), [nowTick]);
+
+  useEffect(() => {
+    const interactionWindow =
+      pictureInPictureWindow && !pictureInPictureWindow.closed
+        ? pictureInPictureWindow
+        : window;
+    const updateScrollTopVisibility = (): void => {
+      const shouldShowFloatingControls = interactionWindow.scrollY > 240;
+
+      setIsScrollTopVisible(shouldShowFloatingControls);
+      if (!shouldShowFloatingControls) {
+        setIsHeaderActionsMenuOpen(false);
+      }
+    };
+
+    updateScrollTopVisibility();
+    interactionWindow.addEventListener("scroll", updateScrollTopVisibility, {
+      passive: true,
+    });
+
+    return () => {
+      interactionWindow.removeEventListener(
+        "scroll",
+        updateScrollTopVisibility,
+      );
+    };
+  }, [pictureInPictureWindow]);
+
+  const handleScrollToTop = useCallback((): void => {
+    const interactionWindow = getActiveInteractionWindow();
+
+    setIsMobileCategoryMenuOpen(false);
+    setIsHeaderActionsMenuOpen(false);
+    interactionWindow.scrollTo({
+      top: 0,
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
+  }, [prefersReducedMotion]);
 
   const handleOpenPictureInPicture = useCallback(async (): Promise<void> => {
     const browserWindow = window as WindowWithDocumentPictureInPicture;
@@ -4876,6 +4935,8 @@ export default function LocalProductsPage() {
         !pendingConfirm &&
         !pendingBlobUpload &&
         !isFacebookSearchDialogOpen &&
+        !isHeaderActionsMenuOpen &&
+        !isMobileCategoryMenuOpen &&
         !isTypingTarget(event.target)
       ) {
         event.preventDefault();
@@ -4885,6 +4946,16 @@ export default function LocalProductsPage() {
       }
 
       if (event.key !== "Escape") return;
+
+      if (isHeaderActionsMenuOpen) {
+        setIsHeaderActionsMenuOpen(false);
+        return;
+      }
+
+      if (isMobileCategoryMenuOpen) {
+        setIsMobileCategoryMenuOpen(false);
+        return;
+      }
 
       if (isFacebookSearchDialogOpen) {
         setIsFacebookSearchDialogOpen(false);
@@ -4962,6 +5033,8 @@ export default function LocalProductsPage() {
     isConfirmExecuting,
     pendingBlobUpload,
     isFacebookSearchDialogOpen,
+    isHeaderActionsMenuOpen,
+    isMobileCategoryMenuOpen,
     pictureInPictureWindow,
   ]);
 
@@ -9557,6 +9630,21 @@ export default function LocalProductsPage() {
           background: linear-gradient(90deg, #8f763d, #e6cf8b, #f5e9c7);
         }
 
+        @keyframes headerActionsMenuDrop {
+          from {
+            opacity: 0;
+            transform: translateY(-14px) scale(0.985);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        .local-products-workspace .header-actions-menu-open {
+          animation: headerActionsMenuDrop 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .local-products-workspace *,
           .local-products-workspace *::before,
@@ -9568,14 +9656,34 @@ export default function LocalProductsPage() {
           }
         }
       `}</style>
+      <AnimatePresence initial={false}>
+        {isHeaderActionsMenuOpen ? (
+          <motion.div
+            aria-hidden="true"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0.1 : 0.2 }}
+            className="fixed inset-0 z-[1190] bg-black/55 backdrop-blur-[2px]"
+            onClick={() => setIsHeaderActionsMenuOpen(false)}
+          />
+        ) : null}
+      </AnimatePresence>
       <section className="flex w-full flex-col xl:min-h-[calc(100dvh-4rem)]">
-        <header className="luxury-header sticky top-0 z-30 overflow-hidden border border-white/[0.08] bg-[#090b10]/95 shadow-[0_16px_46px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+        <header
+          data-actions-open={isHeaderActionsMenuOpen ? "true" : undefined}
+          style={isHeaderActionsMenuOpen ? { clipPath: "none" } : undefined}
+          className={`luxury-header overflow-visible border border-white/[0.08] bg-[#090b10]/95 shadow-[0_16px_46px_rgba(0,0,0,0.34)] backdrop-blur-xl ${isHeaderActionsMenuOpen
+            ? "fixed inset-x-0 top-0 z-[1200]"
+            : "relative z-30"
+            }`}
+        >
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#d8c99f]/[0.55] to-transparent"
           />
 
-          <div className="relative grid grid-cols-1 gap-2 w-full xl:flex xl:flex-col xl:items-stretch xl:gap-1.5 xl:p-2">
+          <div className="relative grid w-full grid-cols-1 gap-2 xl:flex xl:flex-col xl:items-stretch xl:gap-1.5 xl:p-2">
             <div className="grid min-w-0 grid-cols-4 divide-x divide-[#d8c99f]/10 overflow-hidden border border-[#d8c99f]/[0.15] bg-[linear-gradient(135deg,rgba(216,201,159,0.055),rgba(255,255,255,0.012))] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] xl:hidden">
               <span className="flex min-w-0 items-center justify-center gap-1 whitespace-nowrap px-2 py-1.5 text-[9px] font-medium text-slate-500 xl:min-h-8 xl:justify-between xl:border-l xl:border-[#d8c99f]/20 xl:bg-black/20 xl:px-3 xl:py-2 xl:text-[8px] xl:font-bold xl:uppercase xl:tracking-[0.08em] xl:text-slate-400">
                 <span className="font-bold tabular-nums text-[#d8c99f] xl:text-xs xl:font-black">
@@ -9603,7 +9711,18 @@ export default function LocalProductsPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-4 gap-1 border border-[#d8c99f]/10 bg-black/25 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] xl:w-full xl:max-w-[1320px] xl:self-end xl:grid-cols-[repeat(17,minmax(0,1fr))] xl:border-[#d8c99f]/[0.16] xl:bg-[linear-gradient(90deg,rgba(255,255,255,0.015),rgba(216,201,159,0.045))] xl:p-1.5 xl:shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_12px_30px_rgba(0,0,0,0.2)]">
+            <div
+              id="header-action-menu"
+              className={`${isHeaderActionsMenuOpen
+                ? "header-actions-menu-open fixed inset-x-2 top-2 z-[1201] grid max-h-[calc(100dvh-1rem)] origin-top overflow-x-hidden overflow-y-auto overscroll-contain shadow-[0_24px_70px_rgba(0,0,0,0.68)]"
+                : "grid"
+                } grid-cols-4 gap-1 border border-[#d8c99f]/10 bg-[#070c13]/98 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] md:grid-cols-6 xl:inset-x-4 xl:grid-cols-[repeat(18,minmax(0,1fr))] xl:border-[#d8c99f]/[0.16] xl:bg-[linear-gradient(90deg,rgba(255,255,255,0.015),rgba(216,201,159,0.045))] xl:p-1.5 xl:shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_12px_30px_rgba(0,0,0,0.2)]`}
+              onClickCapture={() => {
+                if (isHeaderActionsMenuOpen) {
+                  setIsHeaderActionsMenuOpen(false);
+                }
+              }}
+            >
               <button
                 type="button"
                 data-luxury-accent="gold"
@@ -9626,6 +9745,30 @@ export default function LocalProductsPage() {
               >
                 <FiArchive aria-hidden="true" className={iconClassName} />
                 Data
+              </button>
+
+              <button
+                type="button"
+                data-luxury-accent="cyan"
+                title={`${isCopyNfkcEnabled ? "Tắt" : "Bật"} chuẩn hóa NFKC tạm thời cho nội dung copy`}
+                aria-label={`${isCopyNfkcEnabled ? "Tắt" : "Bật"} chuẩn hóa NFKC cho nội dung copy`}
+                aria-pressed={isCopyNfkcEnabled}
+                className={`${headerActionButtonBaseClassName} ${isCopyNfkcEnabled
+                  ? headerActiveButtonClassName
+                  : headerNeutralButtonClassName
+                  }`}
+                onClick={() => {
+                  const nextEnabled = !isCopyNfkcEnabled;
+
+                  setIsCopyNfkcEnabled(nextEnabled);
+                  Toastify(
+                    `Đã ${nextEnabled ? "bật" : "tắt"} NFKC cho nội dung copy`,
+                    200,
+                  );
+                }}
+              >
+                <FiRefreshCcw aria-hidden="true" className={iconClassName} />
+                NFKC {isCopyNfkcEnabled ? "Bật" : "Tắt"}
               </button>
 
               <button
@@ -10023,6 +10166,61 @@ export default function LocalProductsPage() {
             >
               {isMobileCategoryMenuOpen ? "Đóng" : "Danh mục"}
             </motion.button>
+          </div>
+
+          <div
+            className={`fixed bottom-[72px] left-2 flex-row items-center gap-1.5 ${isScrollTopVisible ? "flex" : "hidden"} ${isHeaderActionsMenuOpen ? "z-[1202]" : "z-[1000]"}`}
+          >
+            <motion.button
+              type="button"
+              aria-controls="header-action-menu"
+              aria-expanded={isHeaderActionsMenuOpen}
+              aria-label={
+                isHeaderActionsMenuOpen
+                  ? "Đóng menu chức năng header"
+                  : "Mở menu chức năng header"
+              }
+              title={
+                isHeaderActionsMenuOpen
+                  ? "Đóng menu chức năng"
+                  : "Mở menu chức năng"
+              }
+              whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
+              className={`flex h-9 w-9 shrink-0 items-center justify-center border backdrop-blur-xl transition ${isHeaderActionsMenuOpen
+                ? "border-[#f1e5c2]/80 bg-[linear-gradient(135deg,#f2e8cd,#bda66d)] text-[#17130a] shadow-[0_14px_38px_rgba(190,164,99,0.26)]"
+                : "border-[#d8c99f]/25 bg-[linear-gradient(145deg,rgba(15,18,25,0.96),rgba(5,7,10,0.98))] text-[#eadfbe] shadow-[0_14px_38px_rgba(0,0,0,0.52)]"
+                }`}
+              onClick={() => {
+                setIsMobileCategoryMenuOpen(false);
+                setIsHeaderActionsMenuOpen((current) => !current);
+              }}
+            >
+              {isHeaderActionsMenuOpen ? (
+                <FiX aria-hidden="true" className="h-4 w-4" />
+              ) : (
+                <FiMenu aria-hidden="true" className="h-4 w-4" />
+              )}
+            </motion.button>
+
+            <AnimatePresence initial={false}>
+              {isScrollTopVisible ? (
+                <motion.button
+                  type="button"
+                  initial={{ opacity: 0, x: -8, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -6, scale: 0.9 }}
+                  transition={{
+                    duration: prefersReducedMotion ? 0.1 : 0.2,
+                  }}
+                  aria-label="Cuộn lên đầu trang"
+                  title="Lên đầu trang"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center border border-cyan-200/35 bg-[linear-gradient(145deg,rgba(14,37,50,0.97),rgba(5,13,20,0.98))] text-cyan-100 shadow-[0_12px_32px_rgba(0,0,0,0.42)] backdrop-blur-xl transition hover:border-cyan-200/60 hover:bg-cyan-300/15 active:scale-95"
+                  onClick={handleScrollToTop}
+                >
+                  <FiArrowUp aria-hidden="true" className="h-4 w-4" />
+                </motion.button>
+              ) : null}
+            </AnimatePresence>
           </div>
 
           <AnimatePresence initial={false}>
