@@ -6111,15 +6111,11 @@ export default function LocalProductsPage() {
     });
   };
 
-  const toggleProductDone = async (productId: string): Promise<void> => {
-    const product = products.find((item) => item.id === productId);
-
-    if (!product) {
-      Toastify("Không tìm thấy sản phẩm", 400);
-      return;
-    }
-
-    const nextIsDone = !product.isDone;
+  const updateProductDoneStatus = async (
+    product: LocalProduct,
+    nextIsDone: boolean,
+  ): Promise<void> => {
+    const productId = product.id;
     const now = new Date().toISOString();
     const nextProduct: LocalProduct = {
       ...product,
@@ -6165,11 +6161,39 @@ export default function LocalProductsPage() {
     );
 
     Toastify(
-      product.isDone
-        ? "Đã bỏ trạng thái DONE"
-        : "Đã đánh dấu DONE, sản phẩm sẽ tự xuống cuối sau 2 giây",
+      nextIsDone
+        ? "Đã đánh dấu DONE, sản phẩm sẽ tự xuống cuối sau 2 giây"
+        : "Đã chuyển sản phẩm về Chưa bán",
       200,
     );
+  };
+
+  const toggleProductDone = (productId: string): void => {
+    const product = products.find((item) => item.id === productId);
+
+    if (!product) {
+      Toastify("Không tìm thấy sản phẩm", 400);
+      return;
+    }
+
+    const nextIsDone = !product.isDone;
+    const productName = removeDoneProductPrefix(product.name).trim();
+
+    requestConfirm({
+      title: nextIsDone
+        ? "Đánh dấu sản phẩm đã bán?"
+        : "Chuyển sản phẩm về Chưa bán?",
+      description: nextIsDone
+        ? `${productName} sẽ chuyển sang DONE và tự xuống cuối danh sách sau 2 giây.`
+        : `${productName} sẽ bỏ trạng thái DONE và trở lại danh sách sản phẩm đang bán.`,
+      confirmLabel: nextIsDone
+        ? "Đánh dấu DONE"
+        : "Chuyển về Chưa bán",
+      tone: "warning",
+      onConfirm: async () => {
+        await updateProductDoneStatus(product, nextIsDone);
+      },
+    });
   };
 
   const handleCopyField = async (
