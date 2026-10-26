@@ -1,12 +1,13 @@
 import { FaMobileAlt, FaWindows, FaRegNewspaper, FaMagic } from 'react-icons/fa';
 import { GiLaptop } from 'react-icons/gi';
 import { GoChecklist } from 'react-icons/go';
-import { GrGallery } from 'react-icons/gr';
+import { GrGallery, GrHpi } from 'react-icons/gr';
 import { ImTable } from 'react-icons/im';
 import { IoCheckmarkCircle, IoTabletLandscape } from 'react-icons/io5';
 import { IconType } from 'react-icons/lib';
 import { PiDevicesDuotone, PiDevicesBold } from 'react-icons/pi';
 import { RiMacbookFill, RiPagesLine } from 'react-icons/ri';
+import { SiAcer, SiAsus, SiDell, SiLenovo } from 'react-icons/si';
 
 interface MenuItem {
   name: string;
@@ -14,52 +15,84 @@ interface MenuItem {
   link: string;
   submenu?: { name: string; link: string; icon?: IconType }[];
 }
+const USED_PRODUCT_BASE_PATH = '/san-pham-cu';
 const currentPath = '';
 const menuItems: MenuItem[] = [
   {
-    icon: PiDevicesDuotone,
-    name: 'Máy cũ, Thu cũ',
-    link: currentPath,
-    submenu: [
-      {
-        icon: PiDevicesBold,
-        name: 'Thiết bị đã qua sử dụng',
-        link: '/thiet-bi-da-qua-su-dung',
-      },
-      {
-        icon: ImTable,
-        name: 'Bảng Giá Thu Mua',
-        link: '/bang-gia-thu-mua',
-      },
-    ],
+    icon: SiDell,
+    name: 'Dell',
+    link: `${USED_PRODUCT_BASE_PATH}/dell`,
   },
   {
-    icon: FaMobileAlt,
-    name: 'Điện Thoại',
-    link: '/dien-thoai',
+    icon: SiLenovo,
+    name: 'Lenovo',
+    link: `${USED_PRODUCT_BASE_PATH}/lenovo`,
   },
   {
-    icon: IoTabletLandscape,
-    name: 'Máy tính bảng',
-    link: '/may-tinh-bang',
+    icon: GrHpi,
+    name: 'HP',
+    link: `${USED_PRODUCT_BASE_PATH}/hp`,
   },
   {
-    icon: GiLaptop,
-    name: 'Laptop',
-    link: currentPath,
-    submenu: [
-      {
-        icon: FaWindows,
-        name: 'Windows',
-        link: '/windows',
-      },
-      {
-        icon: RiMacbookFill,
-        name: 'Macbook',
-        link: '/macbook',
-      },
-    ],
+    icon: SiAcer,
+    name: 'Acer',
+    link: `${USED_PRODUCT_BASE_PATH}/acer`,
   },
+  {
+    icon: SiAsus,
+    name: 'Asus',
+    link: `${USED_PRODUCT_BASE_PATH}/asus`,
+  },
+
+  {
+    icon: ImTable,
+    name: 'Bảng Giá Thu Mua',
+    link: '/bang-gia-thu-mua',
+  },
+  // {
+  //   icon: PiDevicesDuotone,
+  //   name: 'Máy cũ, Thu cũ',
+  //   link: currentPath,
+  //   submenu: [
+  //     {
+  //       icon: PiDevicesBold,
+  //       name: 'Thiết bị đã qua sử dụng',
+  //       link: '/thiet-bi-da-qua-su-dung',
+  //     },
+  //     {
+  //       icon: ImTable,
+  //       name: 'Bảng Giá Thu Mua',
+  //       link: '/bang-gia-thu-mua',
+  //     },
+  //   ],
+  // },
+  // {
+  //   icon: FaMobileAlt,
+  //   name: 'Điện Thoại',
+  //   link: '/dien-thoai',
+  // },
+  // {
+  //   icon: IoTabletLandscape,
+  //   name: 'Máy tính bảng',
+  //   link: '/may-tinh-bang',
+  // },
+  // {
+  //   icon: GiLaptop,
+  //   name: 'Laptop',
+  //   link: currentPath,
+  //   submenu: [
+  //     {
+  //       icon: FaWindows,
+  //       name: 'Windows',
+  //       link: '/windows',
+  //     },
+  //     {
+  //       icon: RiMacbookFill,
+  //       name: 'Macbook',
+  //       link: '/macbook',
+  //     },
+  //   ],
+  // },
   {
     icon: FaRegNewspaper,
     name: 'Tin tức',

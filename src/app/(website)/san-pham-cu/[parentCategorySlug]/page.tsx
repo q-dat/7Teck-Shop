@@ -6,35 +6,16 @@ import { getUsedProductsByParentCategorySlug } from '@/services/used-product/use
 type SearchParams = Record<string, string | string[] | undefined>;
 
 type PageProps = {
-  // Next.js App Router: params must be a Promise in Next.js 15+.
   params: Promise<{ parentCategorySlug: string }>;
   searchParams?: Promise<SearchParams>;
 };
-
-function titleFromSlug(slug: string): string {
-  return decodeURIComponent(slug)
-    .split('-')
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-}
-
-function slugFromCategory(category: string): string {
-  return category
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/đ/g, 'd')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-}
 
 function groupProductsByCategory(products: UsedProduct[]): UsedProductCategory[] {
   const groups = new Map<string, UsedProductCategory>();
 
   for (const product of products) {
     const name = product.category?.trim() || 'Khác';
-    const slug = product.categorySlug?.trim() || slugFromCategory(name);
+    const slug = product.categorySlug?.trim() || (name);
     if (!slug) continue;
 
     const key = slug.toLowerCase();
@@ -53,7 +34,7 @@ function groupProductsByCategory(products: UsedProduct[]): UsedProductCategory[]
 function getParentCategoryName(products: UsedProduct[], parentCategorySlug: string): string {
   return (
     products.find((product) => product.parentCategory?.trim())?.parentCategory?.trim() ||
-    titleFromSlug(parentCategorySlug)
+    (parentCategorySlug)
   );
 }
 
@@ -63,12 +44,11 @@ export async function generateMetadata({ params }: Pick<PageProps, 'params'>): P
   const categoryName = getParentCategoryName(products, parentCategorySlug);
 
   return {
-    title: `Laptop ${categoryName} cũ | 7Teck.vn`,
-    description: `Danh sách laptop ${categoryName} đã qua sử dụng, phân loại theo dòng máy. Bảo hành 6 tháng, riêng màn hình và main 3 tháng; bao test 7 ngày 1 đổi 1.`,
+    title: `${categoryName} | 7Teck.vn`,
+    description: `Danh sách ${categoryName}, phân loại theo dòng máy. Bảo hành 6 tháng, riêng màn hình và main 3 tháng; bao test 7 ngày 1 đổi 1.`,
   };
 }
 
-/** Dynamic route: the parent category and child categories are derived from external API data. */
 export default async function UsedProductParentCategoryPage({
   params,
   searchParams,
@@ -80,21 +60,17 @@ export default async function UsedProductParentCategoryPage({
     ? rawSelectedCategory[0] ?? null
     : rawSelectedCategory ?? null;
 
-  // Fetch the parent list once. Child-category filtering is performed against this same result,
-  // rather than making a second API request with combined query params that may return no rows.
   const allProducts = await getUsedProductsByParentCategorySlug(parentCategorySlug);
   const categories = groupProductsByCategory(allProducts);
   const parentCategoryName = getParentCategoryName(allProducts, parentCategorySlug);
 
   const matchedCategory = requestedCategorySlug
     ? categories.find(
-        (category) => category.slug.toLowerCase() === requestedCategorySlug.toLowerCase(),
-      )
+      (category) => category.slug.toLowerCase() === requestedCategorySlug.toLowerCase(),
+    )
     : undefined;
 
   const selectedCategorySlug = matchedCategory?.slug ?? null;
-  // Critical fix: use products already grouped from the parent API response.
-  // This avoids an empty grid if the external API's combined filters do not match.
   const visibleProducts = matchedCategory?.products ?? allProducts;
 
   return (
