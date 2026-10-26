@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Pick<PageProps, 'params'>): P
   const categoryName = getParentCategoryName(products, parentCategorySlug);
 
   return {
-    title: `${categoryName} | 7Teck.vn`,
+    title: `${categoryName}`,
     description: `Danh sách ${categoryName}, phân loại theo dòng máy. Bảo hành 6 tháng, riêng màn hình và main 3 tháng; bao test 7 ngày 1 đổi 1.`,
   };
 }
